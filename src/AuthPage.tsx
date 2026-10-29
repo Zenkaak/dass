@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { ArrowRight, ShieldCheck, Store } from 'lucide-react';
-import { useEffect } from 'react';
 function Brand(){return <a className="brand" href="/" aria-label="DAS.co.ke home"><span className="brand-mark">D</span><span>DAS<span className="brand-dot">.</span>co.ke</span></a>}
 type Mode = 'signup'|'login'|'reset';
 export function AuthPage({initial='signup'}:{initial?:Mode}) {
