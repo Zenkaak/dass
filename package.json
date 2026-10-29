@@ -10,6 +10,7 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.0.2",
     "@vitejs/plugin-react": "latest",
     "vite": "latest",
     "typescript": "latest",
