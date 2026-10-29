@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AuthPage } from './AuthPage';
 import { ArrowRight, Check, ChevronDown, Globe2, Layers3, Search, ShieldCheck, ShoppingBag, Store, WalletCards, Zap } from 'lucide-react';
 
@@ -80,16 +80,18 @@ function MerchantStore({ slug }: { slug: string }) {
   </main>;
 }
 
-function AccountPlaceholder({ dashboard }: { dashboard: boolean }) {
-  return <main className="account-page"><nav className="nav shell"><Brand /><a className="nav-quiet" href="/">Back to home</a></nav><section className="account-card"><div className="account-icon">{dashboard ? <Layers3 size={24} /> : <Store size={24} />}</div><div className="eyebrow">{dashboard ? 'SELLER WORKSPACE' : 'JOIN DAS'}</div><h1>{dashboard ? 'Your dashboard starts here.' : 'Create your seller account.'}</h1><p>{dashboard ? 'Sign-in and account verification will be connected when authentication is implemented.' : 'Seller registration will let you claim a unique shop slug, manage your catalogue and access your dashboard.'}</p><div className="account-notice"><ShieldCheck size={17} /><span>This page is a setup placeholder; account creation and sign-in are not connected yet.</span></div><a className="button primary" href="/">{'Return to DAS.co.ke'} <ArrowRight size={17} /></a></section></main>;
+function SellerDashboard(){
+ const [loading,setLoading]=useState(true); const [user,setUser]=useState<{displayName?:string;phone?:string}|null>(null); const [error,setError]=useState('');
+ useEffect(()=>{fetch('/api/auth?action=session',{credentials:'same-origin'}).then(async r=>{const d=await r.json().catch(()=>({}));if(!r.ok){window.location.href='/login';return;}setUser(d.user);setLoading(false)}).catch(()=>{setError('Could not connect to the account service.');setLoading(false)})},[]);
+ async function logout(){await fetch('/api/auth?action=logout',{method:'POST',credentials:'same-origin'});window.location.href='/'}
+ return <main className="account-page"><nav className="nav shell"><Brand/><button className="nav-quiet" onClick={logout}>Sign out</button></nav><section className="account-card"><div className="account-icon"><Layers3 size={24}/></div><div className="eyebrow">SELLER WORKSPACE</div><h1>{loading?'Loading your workspace…':'Welcome, '+(user?.displayName||'seller')+'.'}</h1><p>{loading?'Checking your secure session.':'Your seller account is connected. Product catalogue and order management are the next integration step.'}</p>{error&&<div className="auth-message error">{error}</div>}{user&&<div className="account-notice"><ShieldCheck size={17}/><span>Signed in as {user.phone||'verified seller'}. Your session is active.</span></div>}<div className="dashboard-actions"><a className="button secondary" href="/">View DAS.co.ke</a><button className="button primary" onClick={logout}>Sign out</button></div></section></main>;
 }
-
 export default function App() {
   const path = window.location.pathname.replace(/^\/+|\/+$/g, '');
   if (!path) return <LandingPage />;
   if (path === 'signup') return <AuthPage initial="signup" />;
   if (path === 'login') return <AuthPage initial="login" />;
   if (path === 'reset-password') return <AuthPage initial="reset" />;
-  if (path === 'dashboard') return <AccountPlaceholder dashboard />;
+  if (path === 'dashboard') return <SellerDashboard />;
   return <MerchantStore slug={path.split('/')[0]} />;
 }
