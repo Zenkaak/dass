@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS public.auth_otp_challenges (
   phone text NOT NULL,
   purpose text NOT NULL CHECK (purpose IN ('signup','password_reset')),
   code_hash text NOT NULL,
+  code_salt text NOT NULL,
   attempts integer NOT NULL DEFAULT 0 CHECK (attempts >= 0),
   expires_at timestamptz NOT NULL,
   consumed_at timestamptz,
