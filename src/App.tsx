@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { AuthPage } from './AuthPage';
 import { ArrowRight, Check, ChevronDown, Globe2, Layers3, Search, ShieldCheck, ShoppingBag, Store, WalletCards, Zap } from 'lucide-react';
 
 type Product = { id: number; name: string; category: 'Data bundles' | 'Shop products'; detail: string; price: number; icon: string; color: string };
@@ -86,7 +87,9 @@ function AccountPlaceholder({ dashboard }: { dashboard: boolean }) {
 export default function App() {
   const path = window.location.pathname.replace(/^\/+|\/+$/g, '');
   if (!path) return <LandingPage />;
-  if (path === 'signup') return <AccountPlaceholder dashboard={false} />;
+  if (path === 'signup') return <AuthPage initial="signup" />;
+  if (path === 'login') return <AuthPage initial="login" />;
+  if (path === 'reset-password') return <AuthPage initial="reset" />;
   if (path === 'dashboard') return <AccountPlaceholder dashboard />;
   return <MerchantStore slug={path.split('/')[0]} />;
 }
