@@ -155,6 +155,16 @@ export default async function handler(req:any,res:any){
    await audit(sql,me.tenant_id,me.user_id,'payout.destination.updated','payment_config',me.tenant_id,{defaultMethod:method,tillConfigured:!!till,paybillConfigured:!!paybill});
    return send(res,200,{ok:true,defaultPayoutMethod:method,accountType:type});
   }
+  if(req.method==='GET'&&action==='api-credentials'){
+   const rows=await sql`SELECT encrypted_credentials,shortcode,environment,account_type FROM public.payment_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
+   const row=rows[0]||{};let bundle:any={};
+   if(row.encrypted_credentials?.ciphertext){try{bundle=decryptBundle(row.encrypted_credentials,env('DASNET_CREDENTIALS_ENCRYPTION_KEY'),'seller')}catch(e:any){console.error('Daraja metadata decrypt failed',e?.message||e);}}
+   const saved=bundle.credentialsByType||{};
+   const legacyKey=row.account_type==='CustomerPayBillOnline'?'paybill':'till';
+   const legacy=!bundle.credentialsByType&&bundle.consumerKey?{[legacyKey]:{...bundle,shortcode:row.shortcode,environment:row.environment}}:{};
+   const sets={...legacy,...saved};
+   return send(res,200,{credentialsByType:{till:{configured:!!(sets.till?.consumerKey&&sets.till?.consumerSecret&&sets.till?.passkey),shortcode:sets.till?.shortcode||'',environment:sets.till?.environment||'production'},paybill:{configured:!!(sets.paybill?.consumerKey&&sets.paybill?.consumerSecret&&sets.paybill?.passkey),shortcode:sets.paybill?.shortcode||'',environment:sets.paybill?.environment||'production'}}});
+  }
   if(req.method==='POST'&&action==='api-credentials'){
    if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner or admin can update API credentials.'});
    const b=req.body||{},type=b.accountType==='CustomerPayBillOnline'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline',shortcode=String(b.shortcode||'').trim().slice(0,20),environment=b.environment==='sandbox'?'sandbox':'production';
