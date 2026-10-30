@@ -106,8 +106,8 @@ export default async function handler(req:any,res:any){
    return send(res,201,{ticket:row[0]});
   }
   if(req.method==='GET'&&action==='profile'){
-   const rows=await sql`SELECT display_name,email,avatar_url FROM public.users WHERE id=${me.user_id} LIMIT 1`;
-   return send(res,200,{profile:{displayName:rows[0]?.display_name||'',email:rows[0]?.email||'',phone:'',avatarUrl:rows[0]?.avatar_url||''}});
+   const rows=await sql`SELECT display_name,email,phone,avatar_url FROM public.users WHERE id=${me.user_id} LIMIT 1`;
+   return send(res,200,{profile:{displayName:rows[0]?.display_name||'',email:rows[0]?.email||'',phone:rows[0]?.phone||'',avatarUrl:rows[0]?.avatar_url||''}});
   }
   if(req.method==='POST'&&action==='profile'){
    const b=req.body||{},name=String(b.displayName||'').trim().slice(0,100),email=String(b.email||'').trim().toLowerCase().slice(0,254),avatar=String(b.avatarUrl||'').trim();
