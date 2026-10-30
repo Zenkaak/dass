@@ -204,7 +204,7 @@ export default async function handler(req:any,res:any){
   if(req.method==='POST'&&action==='settings'){
    if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner or admin can change settings.'});
    const name=String(req.body?.name||'').trim().slice(0,100),description=String(req.body?.description||'').trim().slice(0,1000),logo=String(req.body?.logoUrl||'').trim();
-   if(!name)return send(res,400,{error:'Shop name is required.'});\n   if(logo.length>1500000)return send(res,400,{error:'Store logo is too large.'});\n   if(logo&&!/^https:\\/\\//.test(logo)&&!/^data:image\\/(png|jpeg|webp);base64,/.test(logo))return send(res,400,{error:'Use a PNG, JPEG or WebP store logo.'});
+   if(!name)return send(res,400,{error:'Shop name is required.'});\n   if(logo.length>1500000)return send(res,400,{error:'Store logo is too large.'});\n   if(logo&&!/^https:\/\//.test(logo)&&!/^data:image\/(png|jpeg|webp);base64,/.test(logo))return send(res,400,{error:'Use a PNG, JPEG or WebP store logo.'});
    await sql`UPDATE public.tenants SET name=${name},updated_at=now() WHERE id=${me.tenant_id}`;
    await sql`UPDATE public.sites SET title=${name},description=${description},logo_url=${logo||null},updated_at=now() WHERE tenant_id=${me.tenant_id}`;
    await audit(sql,me.tenant_id,me.user_id,'shop.settings.updated','shop',me.tenant_id,{name});
