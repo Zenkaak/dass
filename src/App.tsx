@@ -1,17 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AuthPage } from './AuthPage';
-import { ArrowRight, Check, ChevronDown, Globe2, Layers3, Search, ShieldCheck, ShoppingBag, Store, WalletCards, Zap } from 'lucide-react';
-
-type Product = { id: number; name: string; category: 'Data bundles' | 'Shop products'; detail: string; price: number; icon: string; color: string };
-
-const starterProducts: Product[] = [
-  { id: 1, name: 'Daily Data Bundle', category: 'Data bundles', detail: 'Affordable daily internet bundle', price: 50, icon: '◉', color: 'blue' },
-  { id: 2, name: 'Weekly Data Bundle', category: 'Data bundles', detail: 'Stay connected all week', price: 250, icon: '⌁', color: 'violet' },
-  { id: 3, name: 'Monthly Data Bundle', category: 'Data bundles', detail: 'Internet for the whole month', price: 1000, icon: '◎', color: 'mint' },
-  { id: 4, name: 'Wireless Earbuds', category: 'Shop products', detail: 'Everyday wireless audio', price: 1800, icon: '♫', color: 'violet' },
-  { id: 5, name: 'Everyday Backpack', category: 'Shop products', detail: 'A practical bag for work and travel', price: 2200, icon: '▤', color: 'blue' },
-  { id: 6, name: 'Phone Charger', category: 'Shop products', detail: 'Compact charging accessory', price: 850, icon: 'ϟ', color: 'mint' },
-];
+import { ArrowRight, Check, ChevronDown, Globe2, Layers3, Search, ShieldCheck, ShoppingBag, Store, WalletCards } from 'lucide-react';
 
 const features = [
   { icon: Store, title: 'Your own online shop', text: 'Start with a ready-to-customise storefront at your own unique DAS link.' },
