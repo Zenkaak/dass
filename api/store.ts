@@ -57,10 +57,10 @@ export default async function handler(req:any,res:any){
   const sql=db(),action=String(req.query?.action||req.body?.action||'');
   if(req.method==='GET'&&action==='storefront'){
    const slug=String(req.query?.slug||'').toLowerCase();
-   const rows=await sql`SELECT t.id AS tenant_id,t.name AS shop_name,t.slug,s.description FROM public.tenants t LEFT JOIN public.sites s ON s.tenant_id=t.id WHERE t.slug=${slug} AND t.status IN ('trial','active') LIMIT 1`;
+   const rows=await sql`SELECT t.id AS tenant_id,t.name AS shop_name,t.slug,s.description,s.logo_url FROM public.tenants t LEFT JOIN public.sites s ON s.tenant_id=t.id WHERE t.slug=${slug} AND t.status IN ('trial','active') LIMIT 1`;
    if(!rows.length)return send(res,404,{error:'Shop not found'});
    const ps=await sql`SELECT id,name,description,product_type,price_minor,currency,stock_quantity,is_active,images FROM public.products WHERE tenant_id=${rows[0].tenant_id} AND is_active=true ORDER BY created_at DESC`;
-   return send(res,200,{shop:{name:rows[0].shop_name,slug:rows[0].slug,description:rows[0].description||''},products:ps.map(productOut)});
+   return send(res,200,{shop:{name:rows[0].shop_name,slug:rows[0].slug,description:rows[0].description||'',logoUrl:rows[0].logo_url||''},products:ps.map(productOut)});
   }
   if(req.method==='POST'&&action==='daraja-callback'){
    const cb=req.body?.Body?.stkCallback||{},checkout=String(cb.CheckoutRequestID||''),resultCode=Number(cb.ResultCode);
@@ -203,16 +203,16 @@ export default async function handler(req:any,res:any){
 
   if(req.method==='POST'&&action==='settings'){
    if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner or admin can change settings.'});
-   const name=String(req.body?.name||'').trim().slice(0,100),description=String(req.body?.description||'').trim().slice(0,1000);
-   if(!name)return send(res,400,{error:'Shop name is required.'});
+   const name=String(req.body?.name||'').trim().slice(0,100),description=String(req.body?.description||'').trim().slice(0,1000),logo=String(req.body?.logoUrl||'').trim();
+   if(!name)return send(res,400,{error:'Shop name is required.'});\n   if(logo.length>1500000)return send(res,400,{error:'Store logo is too large.'});\n   if(logo&&!/^https:\/\//.test(logo)&&!/^data:image\/(png|jpeg|webp);base64,/.test(logo))return send(res,400,{error:'Use a PNG, JPEG or WebP store logo.'});
    await sql`UPDATE public.tenants SET name=${name},updated_at=now() WHERE id=${me.tenant_id}`;
-   await sql`UPDATE public.sites SET title=${name},description=${description},updated_at=now() WHERE tenant_id=${me.tenant_id}`;
+   await sql`UPDATE public.sites SET title=${name},description=${description},logo_url=${logo||null},updated_at=now() WHERE tenant_id=${me.tenant_id}`;
    await audit(sql,me.tenant_id,me.user_id,'shop.settings.updated','shop',me.tenant_id,{name});
    return send(res,200,{ok:true});
   }
   if(req.method==='GET'&&action==='products'){
    const ps=await sql`SELECT id,name,description,product_type,price_minor,currency,stock_quantity,is_active,sku,images FROM public.products WHERE tenant_id=${me.tenant_id} ORDER BY created_at DESC`;
-   return send(res,200,{shop:{name:me.shop_name,slug:me.slug,description:me.shop_description||''},products:ps.map(productOut)});
+   const site=await sql`SELECT logo_url FROM public.sites WHERE tenant_id=${me.tenant_id} LIMIT 1`;\n   return send(res,200,{shop:{name:me.shop_name,slug:me.slug,description:me.shop_description||'',logoUrl:site[0]?.logo_url||''},products:ps.map(productOut)});
   }
   if(req.method==='GET'&&action==='orders'){
    const os=await sql`SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.total_minor,o.currency,o.status,o.created_at,COALESCE(json_agg(json_build_object('name',i.product_name,'quantity',i.quantity,'lineTotal',i.line_total_minor)) FILTER (WHERE i.id IS NOT NULL),'[]'::json) AS items FROM public.orders o LEFT JOIN public.order_items i ON i.tenant_id=o.tenant_id AND i.order_id=o.id WHERE o.tenant_id=${me.tenant_id} GROUP BY o.id ORDER BY o.created_at DESC LIMIT 100`;
