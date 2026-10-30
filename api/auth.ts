@@ -12,7 +12,7 @@ function getToken(req:any){const c=String(req.headers.cookie||'').split(';').map
 async function sms(phone:string,code:string,purpose:string){
  const tokenName=env('SMS_OTS_API_TOKEN')?'SMS_OTS_API_TOKEN':'OTS_API_TOKEN';
  const senderName=env('SMS_OTS_SENDER_ID')?'SMS_OTS_SENDER_ID':'SENDER_ID';
- const key=env(tokenName),senderLines=env(senderName).split(/\\r?\\n/).map(s=>s.trim()).filter(Boolean);
+ const key=env(tokenName),senderLines=env(senderName).split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
  const distinctSenders=[...new Set(senderLines)];
  // Tolerate a sender ID pasted twice on separate lines, but reject conflicting values.
  const sender=distinctSenders.length===1?distinctSenders[0]:'';
