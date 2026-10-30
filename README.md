@@ -1,27 +1,46 @@
-# DAS.co.ke
+# DASNET
 
-DAS.co.ke is a seller-first, multi-tenant commerce platform inspired by the seller experience of Bingwa Sokoni. The first release focuses on merchant registration, a unique shop URL, product listings, order management and merchant-specific payment setup.
+DASNET is a seller-first, multi-tenant commerce platform. Each seller has a separate account, catalogue, storefront URL and order workspace.
 
-## First-release experience
-- Public landing page explains the platform and has clear **Sign up** and **Go to dashboard** actions.
-- Each merchant's storefront is served at `das.co.ke/<merchant-slug>`.
-- The public landing page does **not** show product listings. The catalogue appears only inside a merchant storefront.
-- Support both data bundles/digital offers and ordinary physical shop products.
-- Start with the existing Bingw active offers as the initial data-bundle catalogue, then let each merchant manage their own listings. The source catalogue still needs to be imported into the tenant-scoped database; sample UI cards are not live product records.
-- Subdomains and additional capabilities can be added after the path-based storefront flow is working.
+## Current implemented scope
 
-## Architecture
-- TypeScript + React application
-- Neon PostgreSQL for shared, tenant-scoped data
-- Tenant-aware merchant sites, catalogues, orders, and settings
-- Server-side M-PESA Daraja integration with verified callbacks and idempotency
-- Subscription and platform-admin controls
+- Phone-based seller registration, SMS verification, login, password reset and session handling.
+- Path-based storefronts at `/<merchant-slug>`; the public landing page does not expose a global product catalogue.
+- Tenant-scoped product records for physical products, data bundles and digital products.
+- Seller catalogue management: create, edit, publish, hide and delete products.
+- Public customer checkout that validates Kenyan mobile numbers, reloads current prices and availability from the database, and records pending orders.
+- Seller order list and status updates.
+- Shop name and description settings.
+- Tenant-scoped audit events for shop settings, product changes and order status changes.
+- Platform admin API and dashboard, protected by an environment allowlist.
 
-## Security principles
-- Resolve tenant from a validated path slug or host/domain mapping; never trust a client-supplied tenant ID.
-- Authorize every tenant-owned database operation server-side.
-- Encrypt merchant payment credentials at rest and never return them to browser clients.
-- Do not enable live payments until callback reachability, credentials, schema, and payment flows are tested.
+## Platform admin setup
 
-## Status
-The current frontend contains the seller-first landing page, path-based storefront layout and placeholder account pages. Registration, dashboard authentication, tenant-scoped catalogue loading, source-offer import, order persistence and payment processing are not yet connected. The initial SQL migration has not been applied or validated against Neon. This is not production-ready; live payments remain disabled until the required checks pass.
+Set `DAS_PLATFORM_ADMIN_PHONES` in the DASNET Vercel project to a comma-separated list of already-registered administrator phone numbers. Use Kenyan international or local digits; the API normalizes to digits before comparison. Only allowlisted users with a valid DASNET session can access `/platform-admin`. Admin actions can activate or suspend a tenant and are audit logged.
+
+## Required database setup
+
+Apply migrations in order to the Neon database used by the DASNET deployment:
+
+1. `db/migrations/0001_initial_schema.sql`
+2. `db/migrations/0002_seller_auth_sms.sql`
+
+The migration files define users, tenants, memberships, sites, products, orders, payments, subscriptions and audit records. Confirm the migration completed successfully before using the application.
+
+## Still not implemented / not enabled
+
+- Automatic import of the Bingw active-offer catalogue. Bingw is a separate application/repository and must not be modified as part of DASNET work.
+- Merchant Daraja credential entry, encryption/key management, STK push initiation, callback verification, reconciliation and refunds.
+- Live payment collection. Checkout currently creates a pending order only; it does not request or accept money.
+- Subscription billing, automatic expiry/renewal and plan enforcement.
+- Custom domains and subdomains.
+- Full platform-admin reporting, staff roles and advanced audit-log browsing.
+
+## Security and release notes
+
+- Every merchant product/order operation is scoped by the authenticated membership's tenant ID; the API does not trust a client-supplied tenant ID for seller management.
+- Public checkout resolves the tenant from the shop slug and validates product IDs and prices against that tenant's active catalogue.
+- Payment credentials must never be returned to browser clients or logged.
+- Do not enable live payments until provider credentials, encrypted storage, callback verification, idempotency, database migrations and end-to-end reconciliation have been independently tested.
+
+DASNET must not be described as production-ready until the remaining items above have been implemented and tested against the production database and payment provider.
