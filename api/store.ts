@@ -13,10 +13,10 @@ async function seller(sql:any,req:any){
 }
 const slugify=(s:string)=>s.toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,70);
 function normalizePhone(value:any){
- let p=String(value||'').trim().replace(/[\\s().-]/g,'');
- if(/^0[17]\\d{8}$/.test(p))p='+254'+p.slice(1);
- else if(/^254[17]\\d{8}$/.test(p))p='+'+p;
- return /^\\+254[17]\\d{8}$/.test(p)?p:'';
+ let p=String(value||'').trim().replace(/[\s().-]/g,'');
+ if(/^0[17]\d{8}$/.test(p))p='+254'+p.slice(1);
+ else if(/^254[17]\d{8}$/.test(p))p='+'+p;
+ return /^\+254[17]\d{8}$/.test(p)?p:'';
 }
 function productOut(p:any){return {id:p.id,name:p.name,description:p.description,category:p.product_type==='data_bundle'?'Data bundles':p.product_type==='digital'?'Digital products':'Shop products',type:p.product_type,price:Number(p.price_minor)/100,currency:p.currency,stockQuantity:p.stock_quantity,active:p.is_active,sku:p.sku||''};}
 export default async function handler(req:any,res:any){
@@ -90,7 +90,7 @@ export default async function handler(req:any,res:any){
   }
   if(req.method==='POST'&&action==='order'){
    const b=req.body||{},name=String(b.customerName||'').trim().slice(0,120),phone=String(b.customerPhone||'').replace(/[^0-9+]/g,'').slice(0,20),items=Array.isArray(b.items)?b.items:[];
-   if(!name||!/^\+?\d{9,15}$/.test(phone)||!items.length||items.length>30)return send(res,400,{error:'Enter your name, valid phone number and at least one item.'});
+   if(!name||!phone||!items.length||items.length>30)return send(res,400,{error:'Enter your name, valid phone number and at least one item.'});
    const ids=items.map((x:any)=>String(x.id||'')).filter(Boolean);
    const ps=await sql`SELECT id,name,price_minor,stock_quantity FROM public.products WHERE tenant_id=${me.tenant_id} AND is_active=true AND id=ANY(${ids}::uuid[])`;
    if(ps.length!==new Set(ids).size)return send(res,400,{error:'One or more products are no longer available.'});
