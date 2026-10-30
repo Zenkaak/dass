@@ -48,13 +48,6 @@ export default async function handler(req:any,res:any){
    await sql`INSERT INTO public.audit_logs(actor_user_id,action,resource_type,resource_id,metadata) VALUES(${users[0].id},'platform.daraja.credentials.updated','payment_config','central',${JSON.stringify({shortcode:shortcode||existing[0]?.shortcode,environment,accountType})}::jsonb)`;
    return send(res,200,{ok:true});
   }
-
-   const [summary,tenants]=await Promise.all([
-    sql\`SELECT (SELECT count(*)::int FROM public.tenants) AS sellers,(SELECT count(*)::int FROM public.products) AS products,(SELECT count(*)::int FROM public.orders) AS orders,(SELECT count(*)::int FROM public.orders WHERE status='pending') AS pending_orders\`,
-    sql\`SELECT t.id,t.name,t.slug,t.status,t.created_at,u.display_name AS owner_name,u.phone AS owner_phone,(SELECT count(*)::int FROM public.products p WHERE p.tenant_id=t.id) AS products,(SELECT count(*)::int FROM public.orders o WHERE o.tenant_id=t.id) AS orders FROM public.tenants t LEFT JOIN public.users u ON u.id=t.created_by ORDER BY t.created_at DESC LIMIT 200\`
-   ]);
-   return send(res,200,{summary:summary[0],tenants});
-  }
   const id=String(req.body?.tenantId||''),status=String(req.body?.status||'');
   if(!/^[0-9a-f-]{36}$/i.test(id)||!['active','suspended'].includes(status))return send(res,400,{error:'Invalid seller or status.'});
   const updated=await sql\`UPDATE public.tenants SET status=\${status},updated_at=now() WHERE id=\${id} RETURNING id,name\`;
