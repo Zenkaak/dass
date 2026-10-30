@@ -8,9 +8,10 @@ const db=()=>{const u=env('POSTGRES_URL')||env('DATABASE_URL')||env('NEON_DATABA
 function token(req:any){const c=String(req.headers.cookie||'').split(';').map((s:string)=>s.trim()).find((s:string)=>s.startsWith('das_session='));try{return c?decodeURIComponent(c.slice(12)):''}catch{return ''}}
 async function seller(sql:any,req:any){
  const t=token(req);if(!t)return null;
- const rows=await sql`SELECT u.id AS user_id,m.tenant_id,t.slug,t.name AS shop_name,m.role FROM public.auth_sessions s JOIN public.users u ON u.id=s.user_id JOIN public.memberships m ON m.user_id=u.id JOIN public.tenants t ON t.id=m.tenant_id WHERE s.token_hash=${hash(t)} AND s.expires_at>now() AND t.status IN ('trial','active') ORDER BY m.created_at LIMIT 1`;
+ const rows=await sql`SELECT u.id AS user_id,m.tenant_id,t.slug,t.name AS shop_name,m.role,s.description AS shop_description FROM public.auth_sessions s JOIN public.users u ON u.id=s.user_id JOIN public.memberships m ON m.user_id=u.id JOIN public.tenants t ON t.id=m.tenant_id LEFT JOIN public.sites s ON s.tenant_id=t.id WHERE s.token_hash=${hash(t)} AND s.expires_at>now() AND t.status IN ('trial','active') ORDER BY m.created_at LIMIT 1`;
  return rows[0]||null;
 }
+async function audit(sql:any,tenantId:string,actorId:string,action:string,type:string,id:string|null,metadata:any={}){await sql`INSERT INTO public.audit_logs(tenant_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${tenantId},${actorId},${action},${type},${id},${JSON.stringify(metadata)}::jsonb)`}
 const slugify=(s:string)=>s.toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,70);
 function normalizePhone(value:any){
  let p=String(value||'').trim().replace(/[\s().-]/g,'');
@@ -48,9 +49,18 @@ export default async function handler(req:any,res:any){
    return send(res,201,{ok:true,orderNumber:o[0].order_number,message:'Order received. Payment is not enabled yet.'});
   }
   if(!me)return send(res,401,{error:'Sign in to manage your shop.'});
+  if(req.method==='POST'&&action==='settings'){
+   if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner or admin can change settings.'});
+   const name=String(req.body?.name||'').trim().slice(0,100),description=String(req.body?.description||'').trim().slice(0,1000);
+   if(!name)return send(res,400,{error:'Shop name is required.'});
+   await sql`UPDATE public.tenants SET name=${name},updated_at=now() WHERE id=${me.tenant_id}`;
+   await sql`UPDATE public.sites SET title=${name},description=${description},updated_at=now() WHERE tenant_id=${me.tenant_id}`;
+   await audit(sql,me.tenant_id,me.user_id,'shop.settings.updated','shop',me.tenant_id,{name});
+   return send(res,200,{ok:true});
+  }
   if(req.method==='GET'&&action==='products'){
    const ps=await sql`SELECT id,name,description,product_type,price_minor,currency,stock_quantity,is_active,sku FROM public.products WHERE tenant_id=${me.tenant_id} ORDER BY created_at DESC`;
-   return send(res,200,{shop:{name:me.shop_name,slug:me.slug},products:ps.map(productOut)});
+   return send(res,200,{shop:{name:me.shop_name,slug:me.slug,description:me.shop_description||''},products:ps.map(productOut)});
   }
   if(req.method==='GET'&&action==='orders'){
    const os=await sql`SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.total_minor,o.currency,o.status,o.created_at,COALESCE(json_agg(json_build_object('name',i.product_name,'quantity',i.quantity,'lineTotal',i.line_total_minor)) FILTER (WHERE i.id IS NOT NULL),'[]'::json) AS items FROM public.orders o LEFT JOIN public.order_items i ON i.tenant_id=o.tenant_id AND i.order_id=o.id WHERE o.tenant_id=${me.tenant_id} GROUP BY o.id ORDER BY o.created_at DESC LIMIT 100`;
@@ -64,21 +74,25 @@ export default async function handler(req:any,res:any){
    if(id){
     const updated=await sql`UPDATE public.products SET name=${name},slug=${slugify(name)+'-'+id.slice(0,8)},description=${description},product_type=${type},price_minor=${Math.round(price*100)},stock_quantity=${stock},sku=${sku},updated_at=now() WHERE id=${id} AND tenant_id=${me.tenant_id} RETURNING id`;
     if(!updated.length)return send(res,404,{error:'Product not found.'});
+    await audit(sql,me.tenant_id,me.user_id,'product.updated','product',id,{name,type,price});
     return send(res,200,{ok:true});
    }
-   await sql`INSERT INTO public.products(tenant_id,name,slug,description,product_type,price_minor,stock_quantity,sku) VALUES(${me.tenant_id},${name},${slugify(name)+'-'+crypto.randomBytes(4).toString('hex')},${description},${type},${Math.round(price*100)},${stock},${sku})`;
+   const inserted=await sql`INSERT INTO public.products(tenant_id,name,slug,description,product_type,price_minor,stock_quantity,sku) VALUES(${me.tenant_id},${name},${slugify(name)+'-'+crypto.randomBytes(4).toString('hex')},${description},${type},${Math.round(price*100)},${stock},${sku}) RETURNING id`;
+   await audit(sql,me.tenant_id,me.user_id,'product.created','product',inserted[0].id,{name,type,price});
    return send(res,201,{ok:true});
   }
   if(req.method==='POST'&&action==='product-status'){
    if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission.'});
    const id=String(req.body?.id||''),active=!!req.body?.active;
    const r=await sql`UPDATE public.products SET is_active=${active},updated_at=now() WHERE id=${id} AND tenant_id=${me.tenant_id} RETURNING id`;
+   if(r.length)await audit(sql,me.tenant_id,me.user_id,active?'product.published':'product.hidden','product',id,{active});
    return r.length?send(res,200,{ok:true}):send(res,404,{error:'Product not found.'});
   }
   if(req.method==='DELETE'&&action==='product'){
    if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only an owner or admin can delete products.'});
    const id=String(req.query?.id||'');
    const r=await sql`DELETE FROM public.products WHERE id=${id} AND tenant_id=${me.tenant_id} RETURNING id`;
+   if(r.length)await audit(sql,me.tenant_id,me.user_id,'product.deleted','product',id);
    return r.length?send(res,200,{ok:true}):send(res,404,{error:'Product not found.'});
   }
   if(req.method==='POST'&&action==='order-status'){
@@ -86,6 +100,7 @@ export default async function handler(req:any,res:any){
    const id=String(req.body?.id||''),status=String(req.body?.status||'');
    if(!['confirmed','processing','fulfilled','cancelled'].includes(status))return send(res,400,{error:'Invalid order status.'});
    const r=await sql`UPDATE public.orders SET status=${status},updated_at=now() WHERE id=${id} AND tenant_id=${me.tenant_id} RETURNING id`;
+   if(r.length)await audit(sql,me.tenant_id,me.user_id,'order.status.updated','order',id,{status});
    return r.length?send(res,200,{ok:true}):send(res,404,{error:'Order not found.'});
   }
   if(req.method==='POST'&&action==='order'){
