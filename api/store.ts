@@ -71,7 +71,7 @@ export default async function handler(req:any,res:any){
    const key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');let c:any=null;
    try{
     const method=(p.default_payout_method||p.payout_method||'till')==='paybill'?'paybill':'till';
-    if(p.encrypted_credentials?.ciphertext){const bundle=decryptBundle(p.encrypted_credentials,key,'seller'),sec=bundle.credentialsByType?.[method]||bundle;c={...sec,partyB:method==='paybill'?(p.paybill_party_b||p.party_b):(p.till_party_b||p.party_b),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
+    if(p.encrypted_credentials?.ciphertext){const bundle=decryptBundle(p.encrypted_credentials,key,'seller'),sec=bundle.credentialsByType?.[method]||{...bundle,shortcode:p.shortcode,environment:p.environment};c={...sec,partyB:method==='paybill'?(p.paybill_party_b||p.party_b):(p.till_party_b||p.party_b),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
     else if(p.central_credentials?.data){const sec=decryptBundle(p.central_credentials,key,'platform');c={...sec,shortcode:p.central_shortcode,environment:p.central_environment,partyB:method==='paybill'?(p.paybill_party_b||p.party_b||p.central_party_b):(p.till_party_b||p.party_b||p.central_party_b),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
     if(!c)throw Error('No payment credentials available');
     if(resultCode!==0){
@@ -106,7 +106,7 @@ export default async function handler(req:any,res:any){
    try{
     const method=(cfg.default_payout_method||cfg.payout_method||'till')==='paybill'?'paybill':'till';
     if(cfg.encrypted_credentials?.ciphertext){
-     const bundle=decryptBundle(cfg.encrypted_credentials,key,'seller'),sec=bundle.credentialsByType?.[method]||bundle;
+     const bundle=decryptBundle(cfg.encrypted_credentials,key,'seller'),sec=bundle.credentialsByType?.[method]||{...bundle,shortcode:cfg.shortcode,environment:cfg.environment};
      payment={...sec,partyB:method==='paybill'?(cfg.paybill_party_b||cfg.party_b):(cfg.till_party_b||cfg.party_b),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};
     }else if(cfg.central_credentials?.data){
      const sec=decryptBundle(cfg.central_credentials,key,'platform');
