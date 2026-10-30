@@ -26,7 +26,7 @@ export default async function handler(req:any,res:any){
    return send(res,200,{shop:{name:rows[0].shop_name,slug:rows[0].slug,description:rows[0].description||''},products:ps.map(productOut)});
   }
   const me=await seller(sql,req);
-  if(!me&&req.method==='POST'&&action==='order'){
+  if(req.method==='POST'&&action==='order'){
    const b=req.body||{},slug=String(b.slug||'').toLowerCase(),name=String(b.customerName||'').trim().slice(0,120),phone=String(b.customerPhone||'').replace(/[^0-9+]/g,'').slice(0,20),items=Array.isArray(b.items)?b.items:[];
    const shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
    if(!shops.length)return send(res,404,{error:'Shop not found.'});
