@@ -158,6 +158,8 @@ function SellerDashboard(){
     </>}
    </div>
   </section>
+  <nav className="seller-mobile-bottom" aria-label="Seller shortcuts">{[{id:'overview',label:'Home',icon:LayoutDashboard},{id:'orders',label:'Orders',icon:ShoppingBag},{id:'products',label:'Products',icon:Package},{id:'transactions',label:'Activity',icon:WalletCards},{id:'account',label:'Account',icon:Store}].map(x=><button key={x.id} className={tab===x.id?'active':''} onClick={()=>{setTab(x.id as any);setMobileMenuOpen(false)}}><x.icon size={18}/><span>{x.label}</span></button>)}</nav>
+  <a className="seller-whatsapp-float" href="https://wa.me/254758884861" target="_blank" rel="noreferrer" aria-label="Chat with DASNET support on WhatsApp"><HelpCircle size={23}/></a>
  </main>;
 }
 function PlatformAdmin(){
