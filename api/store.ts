@@ -133,21 +133,25 @@ export default async function handler(req:any,res:any){
   if(!me)return send(res,401,{error:'Sign in to manage your shop.'});
 
   if(req.method==='GET'&&action==='payment-settings'){
-   const rows=await sql`SELECT payout_method,party_b,account_reference,shortcode,account_type,environment,encrypted_credentials FROM public.payment_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
+   const rows=await sql`SELECT payout_method,party_b,account_reference,shortcode,account_type,environment,encrypted_credentials,till_party_b,paybill_party_b,default_payout_method FROM public.payment_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
    const c=rows[0]||{};
    let credentialFlags:any={consumerKey:false,consumerSecret:false,passkey:false};
    if(c.encrypted_credentials&&c.encrypted_credentials.ciphertext)credentialFlags={consumerKey:true,consumerSecret:true,passkey:true};
-   return send(res,200,{payoutMethod:c.payout_method||'till',partyB:c.party_b||'',accountReference:c.account_reference||'',shortcode:c.shortcode||'',accountType:c.account_type||null,environment:c.environment||'production',credentialsConfigured:credentialFlags});
+   return send(res,200,{payoutMethod:c.payout_method||'till',partyB:c.party_b||'',accountReference:c.account_reference||'',tillPartyB:c.till_party_b||((c.payout_method||'till')==='till'?c.party_b||'':''),paybillPartyB:c.paybill_party_b||((c.payout_method||'till')==='paybill'?c.party_b||'':''),defaultPayoutMethod:c.default_payout_method||c.payout_method||'till',shortcode:c.shortcode||'',accountType:c.account_type||null,environment:c.environment||'production',credentialsConfigured:credentialFlags});
   }
   if(req.method==='POST'&&action==='payout-settings'){
    if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner or admin can update payout settings.'});
-   const b=req.body||{},method=b.payoutMethod==='paybill'?'paybill':'till',partyB=String(b.partyB||'').replace(/\s/g,'').slice(0,20),account=String(b.accountReference||'').trim().slice(0,32);
-   if(!/^\d{5,12}$/.test(partyB))return send(res,400,{error:'Enter a valid merchant Till or PayBill number.'});
-   if(method==='paybill'&&!/^[A-Za-z0-9-]{1,32}$/.test(account))return send(res,400,{error:'Enter the account number/reference required by the merchant PayBill.'});
-   const type=method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline';
-   await sql`INSERT INTO public.payment_configs(tenant_id,provider,environment,party_b,account_reference,payout_method,account_type,is_enabled) VALUES(${me.tenant_id},'mpesa_daraja','production',${partyB},${method==='paybill'?account:null},${method},${type},true) ON CONFLICT(tenant_id) DO UPDATE SET party_b=EXCLUDED.party_b,account_reference=EXCLUDED.account_reference,payout_method=EXCLUDED.payout_method,account_type=EXCLUDED.account_type,updated_at=now()`;
-   await audit(sql,me.tenant_id,me.user_id,'payout.destination.updated','payment_config',me.tenant_id,{method,partyB,accountReference:method==='paybill'?account:'[not-required]'});
-   return send(res,200,{ok:true,payoutMethod:method,accountType:type});
+   const b=req.body||{},till=String(b.tillPartyB||'').replace(/\s/g,'').slice(0,20),paybill=String(b.paybillPartyB||'').replace(/\s/g,'').slice(0,20),account=String(b.accountReference||'').trim().slice(0,32),method=b.defaultPayoutMethod==='paybill'?'paybill':'till';
+   if(till&&!/^\d{5,12}$/.test(till))return send(res,400,{error:'Enter a valid Till number (5–12 digits).'});
+   if(paybill&&!/^\d{5,12}$/.test(paybill))return send(res,400,{error:'Enter a valid PayBill number (5–12 digits).'});
+   if(!till&&!paybill)return send(res,400,{error:'Enter at least one Till or PayBill destination.'});
+   if(paybill&&!/^[A-Za-z0-9-]{1,32}$/.test(account))return send(res,400,{error:'Enter the account number/reference required by the PayBill.'});
+   if(method==='till'&&!till)return send(res,400,{error:'Add a Till number or choose PayBill as the default.'});
+   if(method==='paybill'&&!paybill)return send(res,400,{error:'Add a PayBill number or choose Till as the default.'});
+   const partyB=method==='paybill'?paybill:till,type=method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline';
+   await sql`INSERT INTO public.payment_configs(tenant_id,provider,environment,party_b,account_reference,payout_method,account_type,till_party_b,paybill_party_b,default_payout_method,is_enabled) VALUES(${me.tenant_id},'mpesa_daraja','production',${partyB},${paybill?account:null},${method},${type},${till||null},${paybill||null},${method},true) ON CONFLICT(tenant_id) DO UPDATE SET party_b=EXCLUDED.party_b,account_reference=EXCLUDED.account_reference,payout_method=EXCLUDED.payout_method,account_type=EXCLUDED.account_type,till_party_b=COALESCE(EXCLUDED.till_party_b,payment_configs.till_party_b),paybill_party_b=COALESCE(EXCLUDED.paybill_party_b,payment_configs.paybill_party_b),default_payout_method=EXCLUDED.default_payout_method,updated_at=now()`;
+   await audit(sql,me.tenant_id,me.user_id,'payout.destination.updated','payment_config',me.tenant_id,{defaultMethod:method,tillConfigured:!!till,paybillConfigured:!!paybill});
+   return send(res,200,{ok:true,defaultPayoutMethod:method,accountType:type});
   }
   if(req.method==='POST'&&action==='api-credentials'){
    if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner or admin can update API credentials.'});
