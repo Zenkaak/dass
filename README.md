@@ -16,7 +16,7 @@ DASNET is a seller-first, multi-tenant commerce platform. Each seller has a sepa
 
 ## Platform admin setup
 
-Set `DAS_PLATFORM_ADMIN_PHONES` in the DASNET Vercel project to a comma-separated list of already-registered administrator phone numbers. Use Kenyan international or local digits; the API normalizes to digits before comparison. Only allowlisted users with a valid DASNET session can access `/platform-admin`. Admin actions can activate or suspend a tenant and are audit logged.
+Set `DAS_PLATFORM_ADMIN_PHONES` in the DASNET Vercel project to a comma-separated list of already-registered administrator phone numbers. Use Kenyan international or local digits (for example `0758884861` or `+254758884861`); the API converts both forms to the same canonical Kenyan number before comparison. After changing this variable, redeploy the production project for the running API to read the updated allowlist. Only allowlisted users with a valid DASNET session can access `/platform-admin`. Admin actions can activate or suspend a tenant and are audit logged.
 
 ## Required database setup
 
