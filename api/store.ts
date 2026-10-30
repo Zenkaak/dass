@@ -65,13 +65,14 @@ export default async function handler(req:any,res:any){
   if(req.method==='POST'&&action==='daraja-callback'){
    const cb=req.body?.Body?.stkCallback||{},checkout=String(cb.CheckoutRequestID||''),resultCode=Number(cb.ResultCode);
    if(!checkout)return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
-   const rows=await sql`SELECT p.id,p.tenant_id,p.order_id,p.phone,p.amount_minor,p.status,pc.shortcode,pc.party_b,pc.account_type,pc.environment,pc.encrypted_credentials,pc.payout_method,pc.account_reference,pp.shortcode AS central_shortcode,pp.party_b AS central_party_b,pp.account_type AS central_type,pp.environment AS central_environment,pp.encrypted_credentials AS central_credentials FROM public.payments p LEFT JOIN public.payment_configs pc ON pc.tenant_id=p.tenant_id LEFT JOIN public.platform_payment_config pp ON pp.id=1 WHERE p.provider_checkout_id=${checkout} LIMIT 1`;
+   const rows=await sql`SELECT p.id,p.tenant_id,p.order_id,p.phone,p.amount_minor,p.status,pc.shortcode,pc.party_b,pc.account_type,pc.environment,pc.encrypted_credentials,pc.payout_method,pc.account_reference,pc.till_party_b,pc.paybill_party_b,pc.default_payout_method,pp.shortcode AS central_shortcode,pp.party_b AS central_party_b,pp.account_type AS central_type,pp.environment AS central_environment,pp.encrypted_credentials AS central_credentials FROM public.payments p LEFT JOIN public.payment_configs pc ON pc.tenant_id=p.tenant_id LEFT JOIN public.platform_payment_config pp ON pp.id=1 WHERE p.provider_checkout_id=${checkout} LIMIT 1`;
    if(!rows.length)return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
    const p=rows[0];if(p.status==='succeeded')return send(res,200,{ResultCode:0,ResultDesc:'Already processed'});
    const key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');let c:any=null;
    try{
-    if(p.encrypted_credentials?.ciphertext){const sec=decryptBundle(p.encrypted_credentials,key,'seller');c={...sec,shortcode:p.shortcode,environment:p.environment,partyB:p.party_b,accountType:p.payout_method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
-    else if(p.central_credentials?.data){const sec=decryptBundle(p.central_credentials,key,'platform');c={...sec,shortcode:p.central_shortcode,environment:p.central_environment,partyB:p.party_b||p.central_party_b,accountType:p.payout_method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
+    const method=(p.default_payout_method||p.payout_method||'till')==='paybill'?'paybill':'till';
+    if(p.encrypted_credentials?.ciphertext){const bundle=decryptBundle(p.encrypted_credentials,key,'seller'),sec=bundle.credentialsByType?.[method]||bundle;c={...sec,partyB:method==='paybill'?(p.paybill_party_b||p.party_b):(p.till_party_b||p.party_b),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
+    else if(p.central_credentials?.data){const sec=decryptBundle(p.central_credentials,key,'platform');c={...sec,shortcode:p.central_shortcode,environment:p.central_environment,partyB:method==='paybill'?(p.paybill_party_b||p.party_b||p.central_party_b):(p.till_party_b||p.party_b||p.central_party_b),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
     if(!c)throw Error('No payment credentials available');
     if(resultCode!==0){
      await sql`UPDATE public.payments SET status='failed',provider_result=${JSON.stringify(cb)}::jsonb,updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
@@ -103,12 +104,13 @@ export default async function handler(req:any,res:any){
    const configs=await sql`SELECT pc.*,pp.shortcode AS central_shortcode,pp.party_b AS central_party_b,pp.account_type AS central_type,pp.environment AS central_environment,pp.encrypted_credentials AS central_credentials FROM public.tenants t LEFT JOIN public.payment_configs pc ON pc.tenant_id=t.id LEFT JOIN public.platform_payment_config pp ON pp.id=1 WHERE t.id=${tenantId} LIMIT 1`;
    const cfg=configs[0]||{},key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');let payment:any=null;
    try{
+    const method=(cfg.default_payout_method||cfg.payout_method||'till')==='paybill'?'paybill':'till';
     if(cfg.encrypted_credentials?.ciphertext){
-     const sec=decryptBundle(cfg.encrypted_credentials,key,'seller');
-     payment={...sec,shortcode:cfg.shortcode,partyB:cfg.party_b,environment:cfg.environment,accountType:cfg.payout_method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};
+     const bundle=decryptBundle(cfg.encrypted_credentials,key,'seller'),sec=bundle.credentialsByType?.[method]||bundle;
+     payment={...sec,partyB:method==='paybill'?(cfg.paybill_party_b||cfg.party_b):(cfg.till_party_b||cfg.party_b),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};
     }else if(cfg.central_credentials?.data){
      const sec=decryptBundle(cfg.central_credentials,key,'platform');
-     payment={...sec,shortcode:cfg.central_shortcode,partyB:cfg.party_b||cfg.central_party_b,environment:cfg.central_environment,accountType:cfg.payout_method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};
+     payment={...sec,shortcode:cfg.central_shortcode,partyB:method==='paybill'?(cfg.paybill_party_b||cfg.party_b||cfg.central_party_b):(cfg.till_party_b||cfg.party_b||cfg.central_party_b),environment:cfg.central_environment,accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};
     }
    }catch(e:any){console.error('Daraja credential load failed',e?.message||e);return send(res,503,{error:'Payment credentials could not be loaded securely. Contact the shop owner.'});}
    if(!payment?.consumerKey||!payment?.consumerSecret||!payment?.passkey||!payment?.shortcode||!payment?.partyB)return send(res,503,{error:'This shop has not completed M-PESA payment setup yet.'});
@@ -121,7 +123,7 @@ export default async function handler(req:any,res:any){
    try{
     const callbackBase=env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dass-gamma.vercel.app'));
     const callbackUrl=callbackBase.replace(/\/$/,'')+'/api/store?action=daraja-callback';
-    const stk=await startStk(payment,o[0],phone,total/100,payment.payout_method==='paybill'?(payment.account_reference||''):orderNo.slice(-12),callbackUrl);
+    const stk=await startStk(payment,o[0],phone,total/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):orderNo.slice(-12),callbackUrl);
     await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
     return send(res,201,{ok:true,orderNumber:o[0].order_number,paymentStatus:'pending',checkoutRequestId:stk.checkoutId,message:'M-PESA prompt sent. Enter your PIN on your phone to complete payment.'});
    }catch(e:any){
