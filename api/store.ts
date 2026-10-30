@@ -121,7 +121,7 @@ export default async function handler(req:any,res:any){
    try{
     const callbackBase=env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dass-gamma.vercel.app'));
     const callbackUrl=callbackBase.replace(/\/$/,'')+'/api/store?action=daraja-callback';
-    const stk=await startStk(payment,o[0],phone,total/100,orderNo.slice(-12),callbackUrl);
+    const stk=await startStk(payment,o[0],phone,total/100,payment.payout_method==='paybill'?(payment.account_reference||''):orderNo.slice(-12),callbackUrl);
     await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
     return send(res,201,{ok:true,orderNumber:o[0].order_number,paymentStatus:'pending',checkoutRequestId:stk.checkoutId,message:'M-PESA prompt sent. Enter your PIN on your phone to complete payment.'});
    }catch(e:any){
