@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AuthPage } from './AuthPage';
-import { Activity, ArrowRight, ArrowUpRight, Bell, Check, CircleAlert, Download, Globe2, HelpCircle, Layers3, LayoutDashboard, LogOut, Package, Plus, RefreshCw, Search, Settings, ShieldCheck, ShoppingBag, Store, Wallet, WalletCards } from 'lucide-react';
+import { Activity, ArrowRight, ArrowUpRight, Bell, Check, ChevronDown, CircleAlert, Download, Globe2, HelpCircle, Layers3, LayoutDashboard, LogOut, Package, Plus, RefreshCw, Search, Settings, ShieldCheck, ShoppingBag, Store, Wallet, WalletCards } from 'lucide-react';
 
 const features = [
   { icon: Store, title: 'Your own online shop', text: 'Start with a ready-to-customise storefront at your own unique DAS link.' },
