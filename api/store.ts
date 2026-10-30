@@ -159,14 +159,17 @@ export default async function handler(req:any,res:any){
    const key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');
    if(!key)return send(res,503,{error:'Secure credential storage is not configured. Contact DASNET support.'});
    const raw=Buffer.from(key,'base64');if(raw.length!==32)return send(res,503,{error:'Credential encryption configuration is invalid.'});
-   const current=await sql`SELECT encrypted_credentials FROM public.payment_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
-   let secrets:any={};
+   const current=await sql`SELECT encrypted_credentials,account_type,shortcode,environment FROM public.payment_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
+   let stored:any={credentialsByType:{}};
    if(current[0]?.encrypted_credentials?.ciphertext){
-    try{const old=current[0].encrypted_credentials,dec=crypto.createDecipheriv('aes-256-gcm',raw,Buffer.from(old.iv,'base64'));dec.setAuthTag(Buffer.from(old.tag,'base64'));secrets=JSON.parse(Buffer.concat([dec.update(Buffer.from(old.ciphertext,'base64')),dec.final()]).toString('utf8'));}catch{return send(res,500,{error:'Saved credentials could not be decrypted. Contact support before replacing them.'});}
+    try{const old=current[0].encrypted_credentials,dec=crypto.createDecipheriv('aes-256-gcm',raw,Buffer.from(old.iv,'base64'));dec.setAuthTag(Buffer.from(old.tag,'base64'));const prior=JSON.parse(Buffer.concat([dec.update(Buffer.from(old.ciphertext,'base64')),dec.final()]).toString('utf8'));if(prior.credentialsByType)stored=prior;else{const oldKey=current[0].account_type==='CustomerPayBillOnline'?'paybill':'till';stored.credentialsByType[oldKey]={...prior,shortcode:current[0].shortcode,environment:current[0].environment||'production'};}}catch{return send(res,500,{error:'Saved credentials could not be decrypted. Contact support before replacing them.'});}
    }
-   for(const field of ['consumerKey','consumerSecret','passkey'])if(typeof b[field]==='string'&&b[field].trim())secrets[field]=b[field].trim();
-   if(!shortcode||!secrets.consumerKey||!secrets.consumerSecret||!secrets.passkey)return send(res,400,{error:'Enter shortcode, consumer key, consumer secret and passkey. Blank secret fields preserve saved values.'});
-   const iv=crypto.randomBytes(12),cipher=crypto.createCipheriv('aes-256-gcm',raw,iv),encrypted=Buffer.concat([cipher.update(JSON.stringify(secrets),'utf8'),cipher.final()]);
+   const method=type==='CustomerPayBillOnline'?'paybill':'till',previous=stored.credentialsByType[method]||{};
+   const config:any={...previous,shortcode,environment};
+   for(const field of ['consumerKey','consumerSecret','passkey'])if(typeof b[field]==='string'&&b[field].trim())config[field]=b[field].trim();
+   if(!config.shortcode||!config.consumerKey||!config.consumerSecret||!config.passkey)return send(res,400,{error:'Enter shortcode, consumer key, consumer secret and passkey for this transaction type. Blank secret fields preserve that type’s saved values.'});
+   stored.credentialsByType[method]=config;
+   const iv=crypto.randomBytes(12),cipher=crypto.createCipheriv('aes-256-gcm',raw,iv),encrypted=Buffer.concat([cipher.update(JSON.stringify(stored),'utf8'),cipher.final()]);
    const bundle={iv:iv.toString('base64'),tag:cipher.getAuthTag().toString('base64'),ciphertext:encrypted.toString('base64')};
    await sql`INSERT INTO public.payment_configs(tenant_id,provider,environment,shortcode,account_type,encrypted_credentials,is_enabled) VALUES(${me.tenant_id},'mpesa_daraja',${environment},${shortcode},${type},${JSON.stringify(bundle)}::jsonb,true) ON CONFLICT(tenant_id) DO UPDATE SET environment=EXCLUDED.environment,shortcode=EXCLUDED.shortcode,account_type=EXCLUDED.account_type,encrypted_credentials=EXCLUDED.encrypted_credentials,is_enabled=true,updated_at=now()`;
    await audit(sql,me.tenant_id,me.user_id,'daraja.credentials.updated','payment_config',me.tenant_id,{accountType:type,environment,shortcode,credentialsEncrypted:true});
