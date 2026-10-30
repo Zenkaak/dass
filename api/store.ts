@@ -141,8 +141,8 @@ export default async function handler(req:any,res:any){
   }
   if(req.method==='POST'&&action==='payout-settings'){
    if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner or admin can update payout settings.'});
-   const b=req.body||{},method=b.payoutMethod==='paybill'?'paybill':'till',partyB=String(b.partyB||'').replace(/\\s/g,'').slice(0,20),account=String(b.accountReference||'').trim().slice(0,32);
-   if(!/^\\d{5,12}$/.test(partyB))return send(res,400,{error:'Enter a valid merchant Till or PayBill number.'});
+   const b=req.body||{},method=b.payoutMethod==='paybill'?'paybill':'till',partyB=String(b.partyB||'').replace(/\s/g,'').slice(0,20),account=String(b.accountReference||'').trim().slice(0,32);
+   if(!/^\d{5,12}$/.test(partyB))return send(res,400,{error:'Enter a valid merchant Till or PayBill number.'});
    if(method==='paybill'&&!/^[A-Za-z0-9-]{1,32}$/.test(account))return send(res,400,{error:'Enter the account number/reference required by the merchant PayBill.'});
    const type=method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline';
    await sql`INSERT INTO public.payment_configs(tenant_id,provider,environment,party_b,account_reference,payout_method,account_type,is_enabled) VALUES(${me.tenant_id},'mpesa_daraja','production',${partyB},${method==='paybill'?account:null},${method},${type},true) ON CONFLICT(tenant_id) DO UPDATE SET party_b=EXCLUDED.party_b,account_reference=EXCLUDED.account_reference,payout_method=EXCLUDED.payout_method,account_type=EXCLUDED.account_type,updated_at=now()`;
@@ -193,9 +193,9 @@ export default async function handler(req:any,res:any){
   if(req.method==='POST'&&action==='profile'){
    const b=req.body||{},name=String(b.displayName||'').trim().slice(0,100),email=String(b.email||'').trim().toLowerCase().slice(0,254),avatar=String(b.avatarUrl||'').trim();
    if(name.length<2)return send(res,400,{error:'Enter your full name.'});
-   if(email&&!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))return send(res,400,{error:'Enter a valid email address.'});
+   if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return send(res,400,{error:'Enter a valid email address.'});
    if(avatar&&avatar.length>1500000)return send(res,400,{error:'Profile image is too large. Choose an image under 1 MB.'});
-   if(avatar&&!/^https:\\/\\//.test(avatar)&&!/^data:image\\/(png|jpeg|webp);base64,/.test(avatar))return send(res,400,{error:'Use a PNG, JPEG or WebP profile image.'});
+   if(avatar&&!/^https:\/\//.test(avatar)&&!/^data:image\/(png|jpeg|webp);base64,/.test(avatar))return send(res,400,{error:'Use a PNG, JPEG or WebP profile image.'});
    await sql`UPDATE public.users SET display_name=${name},email=${email||null},avatar_url=${avatar||null},updated_at=now() WHERE id=${me.user_id}`;
    await audit(sql,me.tenant_id,me.user_id,'profile.updated','user',me.user_id,{name,email:email||null,avatarUpdated:!!avatar});
    return send(res,200,{ok:true});
