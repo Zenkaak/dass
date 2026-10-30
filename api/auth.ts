@@ -29,7 +29,7 @@ async function sms(phone:string,code:string,purpose:string){
     const v=d[k];
     if(typeof v==='string'||typeof v==='number'||typeof v==='boolean'){
      let s=String(v).slice(0,240);
-     s=s.replace(/\\+254[17]\\d{8}|0[17]\\d{8}/g,'[phone]').replace(/\\b\\d{6}\\b/g,'[code]').replace(/Bearer\\s+\\S+/gi,'Bearer [redacted]');
+     s=s.replace(/\+254[17]\d{8}|0[17]\d{8}/g,'[phone]').replace(/\b\d{6}\b/g,'[code]').replace(/Bearer\s+\S+/gi,'Bearer [redacted]');
      safeFields[k]=s;
     }
    }
