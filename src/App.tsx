@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AuthPage } from './AuthPage';
-import { Activity, ArrowRight, ArrowUpRight, Bell, Check, ChevronDown, CircleAlert, Download, Globe2, HelpCircle, Layers3, LayoutDashboard, LogOut, Package, Plus, RefreshCw, Search, Settings, ShieldCheck, ShoppingBag, Store, Wallet, WalletCards } from 'lucide-react';
+import { Activity, ArrowRight, ArrowUpRight, Bell, Check, ChevronDown, CircleAlert, Download, Globe2, HelpCircle, Layers3, LayoutDashboard, LogOut, Menu, X, Package, Plus, RefreshCw, Search, Settings, ShieldCheck, ShoppingBag, Store, Wallet, WalletCards } from 'lucide-react';
 
 const features = [
   { icon: Store, title: 'Your own online shop', text: 'Start with a ready-to-customise storefront at your own unique DAS link.' },
@@ -99,16 +99,16 @@ function SellerDashboard(){
  async function copyStore(){if(!shop)return;try{await navigator.clipboard.writeText(window.location.origin+'/'+shop.slug);setNotice('Store link copied.')}catch{setNotice(window.location.origin+'/'+shop.slug)}}
  const nav=[{id:'overview',label:'Overview',icon:LayoutDashboard},{id:'orders',label:'Orders & Sales',icon:ShoppingBag},{id:'products',label:'Products',icon:Package},{id:'payments',label:'Payments',icon:WalletCards},{id:'payouts',label:'Payout Settings',icon:Wallet},{id:'api',label:'API Credentials',icon:ShieldCheck},{id:'notifications',label:'Notifications',icon:Bell},{id:'settings',label:'Shop Settings',icon:Settings}];
  const title=nav.find(x=>x.id===tab)?.label||'Overview';
- return <main className="seller-app">
-  <aside className="seller-rail">
+ return <main className={mobileMenuOpen?"seller-app mobile-menu-open":"seller-app"}>
+  <>{mobileMenuOpen&&<button className="seller-mobile-scrim" aria-label="Close navigation" onClick={()=>setMobileMenuOpen(false)}/>}<aside className="seller-rail">
    <div className="seller-brand"><Brand/></div>
    <div className="seller-profile"><div className="seller-avatar">{(user?.displayName||'S').slice(0,1).toUpperCase()}</div><div className="seller-profile-copy"><strong>{user?.displayName||'Seller'}</strong><span><i/> Verified seller</span><small>Seller workspace</small></div></div>
    <div className="seller-nav-caption">WORKSPACE</div>
-   <nav className="seller-nav">{nav.map(item=><button key={item.id} className={tab===item.id?'seller-nav-link active':'seller-nav-link'} onClick={()=>{setTab(item.id as any);setError('');setNotice('')}}><item.icon size={16}/><span>{item.label}</span>{item.id==='orders'&&pending.length>0&&<b>{pending.length}</b>}{item.id==='notifications'&&notifications.length>0&&<b>{notifications.length}</b>}</button>)}</nav>
+   <nav className="seller-nav">{nav.map(item=><button key={item.id} className={tab===item.id?'seller-nav-link active':'seller-nav-link'} onClick={()=>{setTab(item.id as any);setError('');setNotice('');setMobileMenuOpen(false)}}><item.icon size={16}/><span>{item.label}</span>{item.id==='orders'&&pending.length>0&&<b>{pending.length}</b>}{item.id==='notifications'&&notifications.length>0&&<b>{notifications.length}</b>}</button>)}</nav>
    <div className="seller-rail-bottom"><button className="seller-nav-link" onClick={()=>setNotice('For help, contact support@das.co.ke')}><HelpCircle size={16}/>Help & Support</button><button className="seller-nav-link" onClick={logout}><LogOut size={16}/>Sign out</button><div className="seller-help-card"><strong>Need a hand?</strong><span>Manage your shop with confidence.</span><button onClick={()=>setNotice('For help, contact support@das.co.ke')}>Contact support</button></div><small>DASNET Seller Workspace · v1</small></div>
-  </aside>
+  </aside></>
   <section className="seller-workarea">
-   <header className="seller-topbar"><div><h1>{tab==='overview'?'Seller Dashboard':title}</h1><p>Track your performance and manage your store</p></div><div className="seller-top-actions"><button className="seller-icon-btn" title="Refresh dashboard" onClick={()=>{setLoading(true);load().catch(e=>setError(e.message)).finally(()=>setLoading(false))}}><RefreshCw size={17}/></button><div className="seller-top-user"><span>{(user?.displayName||'S').slice(0,1).toUpperCase()}</span><div><strong>{user?.displayName||'Seller'}</strong><small>Seller account</small></div></div></div></header>
+   <header className="seller-topbar"><div className="seller-topbar-title"><button className="seller-mobile-menu-btn" aria-label="Toggle navigation" onClick={()=>setMobileMenuOpen(v=>!v)}>{mobileMenuOpen?<X size={20}/>:<Menu size={20}/>}</button><div><h1>{tab==='overview'?'Seller Dashboard':title}</h1><p>Track your performance and manage your store</p></div></div><div className="seller-top-actions"><button className="seller-icon-btn" title="Refresh dashboard" onClick={()=>{setLoading(true);load().catch(e=>setError(e.message)).finally(()=>setLoading(false))}}><RefreshCw size={17}/></button><div className="seller-top-user"><span>{(user?.displayName||'S').slice(0,1).toUpperCase()}</span><div><strong>{user?.displayName||'Seller'}</strong><small>Seller account</small></div></div></div></header>
    <div className="seller-content">
     {error&&<div className="auth-message error seller-alert">{error}</div>}{notice&&<div className="auth-message success seller-alert">{notice}</div>}
     {loading?<div className="seller-loading"><span className="seller-spinner"/>Loading your workspace…</div>:<>

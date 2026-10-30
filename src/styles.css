@@ -89,3 +89,36 @@
 @media(max-width:850px){.seller-app{grid-template-columns:1fr}.seller-rail{position:relative;height:auto;min-height:0;padding:0 12px 10px}.seller-brand{height:58px;margin-bottom:8px}.seller-profile{display:none}.seller-nav-caption{display:none}.seller-nav{display:flex;overflow-x:auto;gap:5px;padding:3px 0 6px}.seller-nav-link{width:auto;min-width:max-content;min-height:34px;padding:0 10px;font-size:10px}.seller-nav-link b{margin-left:2px}.seller-rail-bottom{display:none}.seller-topbar{position:relative;height:58px;padding:0 15px}.seller-content{padding:14px}.seller-welcome-strip{grid-template-columns:1fr}.seller-store-summary{border-left:0;border-top:1px solid rgba(173,194,230,.13);padding:11px 0 0}.seller-dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.seller-trend-panel{grid-column:1/-1}.seller-recent-panel{grid-column:1/-1;grid-row:auto}.seller-products-panel,.seller-category-panel,.seller-quick-panel,.seller-notification-panel{grid-column:auto;grid-row:auto}.seller-mini-head,.seller-mini-row{grid-template-columns:1.2fr 1fr .9fr auto}}
 @media(max-width:560px){.seller-content{padding:11px}.seller-topbar h1{font-size:13px}.seller-topbar p{font-size:9px}.seller-top-user div{display:none}.seller-top-user{padding-left:9px}.seller-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.seller-kpis article{padding:12px}.seller-kpis strong{font-size:19px}.seller-kpi-icon{width:29px;height:29px;right:9px;top:9px}.seller-dashboard-grid{grid-template-columns:1fr}.seller-trend-panel,.seller-recent-panel,.seller-products-panel,.seller-category-panel,.seller-quick-panel,.seller-notification-panel{grid-column:1;grid-row:auto}.seller-chart{height:135px;gap:5px}.seller-chart-bar-wrap{height:105px}.seller-mini-head,.seller-mini-row{grid-template-columns:1.1fr 1fr .9fr auto;gap:4px}.seller-mini-row{font-size:7px}.seller-page-heading{align-items:flex-start}.seller-page-heading h2{font-size:18px}.seller-orders-toolbar{flex-wrap:wrap}.seller-orders-toolbar input{flex-basis:100%}.seller-editor-grid,.seller-feature-grid{grid-template-columns:1fr}.seller-editor label.wide{grid-column:auto}.seller-table-panel{padding:10px}.seller-store-summary{gap:8px}.seller-store-summary .seller-primary-btn{padding:8px}.seller-welcome-strip{padding:13px}}
 @media(prefers-reduced-motion:reduce){.seller-nav-link,.seller-primary-btn{transition:none}.seller-spinner{animation:none}}
+
+
+/* Mobile seller navigation: use an off-canvas vertical drawer, never a top tab strip */
+.seller-mobile-menu-btn{display:none;width:36px;height:36px;flex:0 0 36px;align-items:center;justify-content:center;border:1px solid rgba(132,164,209,.24);border-radius:8px;background:#10223a;color:#d9e8ff;cursor:pointer}
+.seller-topbar-title{display:flex;align-items:center;gap:11px}
+.seller-mobile-scrim{display:none}
+@media(max-width:850px){
+ .seller-app{display:block;min-height:100vh}
+ .seller-rail{position:fixed!important;top:0;left:0;bottom:0;width:min(290px,84vw);height:100dvh;min-height:0;padding:0 14px 14px;overflow-y:auto;transform:translateX(-105%);transition:transform .24s ease;z-index:30;box-shadow:18px 0 55px #0008}
+ .seller-app.mobile-menu-open .seller-rail{transform:translateX(0)}
+ .seller-mobile-scrim{display:block;position:fixed;inset:0;width:100%;height:100%;border:0;background:rgba(2,8,18,.68);backdrop-filter:blur(3px);z-index:29}
+ .seller-brand{height:65px;margin:0 -14px 13px;padding-left:18px}
+ .seller-profile{display:flex;padding:8px 5px 17px;margin-bottom:14px}
+ .seller-nav-caption{display:block}
+ .seller-nav{display:grid;overflow:visible;gap:5px;padding:0}
+ .seller-nav-link{width:100%;min-width:0;min-height:43px;padding:0 12px;font-size:12px;border-radius:8px}
+ .seller-rail-bottom{display:grid;margin-top:auto;padding-bottom:8px}
+ .seller-rail-bottom>small{display:block}
+ .seller-help-card{display:grid}
+ .seller-mobile-menu-btn{display:inline-flex}
+ .seller-topbar{height:64px;padding:0 14px;position:sticky;top:0;z-index:10}
+ .seller-topbar-title{min-width:0}
+ .seller-topbar-title>div{min-width:0}
+ .seller-topbar h1{font-size:14px}
+ .seller-topbar p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:48vw}
+}
+@media(max-width:560px){
+ .seller-rail{width:min(300px,86vw)}
+ .seller-topbar{height:60px}
+ .seller-top-actions{gap:8px}
+ .seller-top-user{border-left:0;padding-left:0}
+}
+@media(prefers-reduced-motion:reduce){.seller-rail{transition:none}}
