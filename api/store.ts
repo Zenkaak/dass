@@ -19,6 +19,36 @@ function normalizePhone(value:any){
  else if(/^254[17]\d{8}$/.test(p))p='+'+p;
  return /^\+254[17]\d{8}$/.test(p)?p:'';
 }
+function decryptBundle(blob:any,key:string,kind:'seller'|'platform') {
+ const raw=/^[0-9a-f]{64}$/i.test(key)?Buffer.from(key,'hex'):Buffer.from(key,'base64');
+ if(raw.length!==32)throw Error('Credential encryption key is invalid.');
+ const iv=Buffer.from(blob.iv||'','base64'),tag=Buffer.from(blob.tag||'','base64'),data=Buffer.from(kind==='seller'?(blob.ciphertext||''):(blob.data||''),'base64');
+ const d=crypto.createDecipheriv('aes-256-gcm',raw,iv);d.setAuthTag(tag);
+ return JSON.parse(Buffer.concat([d.update(data),d.final()]).toString('utf8'));
+}
+async function darajaToken(c:any){
+ const host=c.environment==='sandbox'?'https://sandbox.safaricom.co.ke':'https://api.safaricom.co.ke';
+ const auth=Buffer.from(c.consumerKey+':'+c.consumerSecret).toString('base64');
+ const r=await fetch(host+'/oauth/v1/generate?grant_type=client_credentials',{headers:{Authorization:'Basic '+auth}});
+ const d:any=await r.json();if(!r.ok||!d.access_token)throw Error('Daraja authentication failed. Check the selected credentials and environment.');
+ return {host,accessToken:d.access_token};
+}
+function darajaPassword(shortcode:string,passkey:string,stamp:string){return Buffer.from(shortcode+passkey+stamp).toString('base64')}
+function timestamp(){const d=new Date();return d.getUTCFullYear()+String(d.getUTCMonth()+1).padStart(2,'0')+String(d.getUTCDate()).padStart(2,'0')+String(d.getUTCHours()).padStart(2,'0')+String(d.getUTCMinutes()).padStart(2,'0')+String(d.getUTCSeconds()).padStart(2,'0')}
+async function startStk(c:any,order:any,phone:string,amount:number,reference:string,callbackUrl:string){
+ const {host,accessToken}=await darajaToken(c),stamp=timestamp(),shortcode=String(c.shortcode),type=c.accountType;
+ const payload:any={BusinessShortCode:shortcode,Password:darajaPassword(shortcode,c.passkey,stamp),Timestamp:stamp,TransactionType:type,Amount:Math.max(1,Math.round(amount)),PartyA:phone.replace('+',''),PartyB:String(c.partyB||shortcode),PhoneNumber:phone.replace('+',''),CallBackURL:callbackUrl,AccountReference:String(reference).slice(0,12),TransactionDesc:'Order '+order.order_number};
+ const r=await fetch(host+'/mpesa/stkpush/v1/processrequest',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify(payload)});
+ const d:any=await r.json();if(!r.ok||!d.CheckoutRequestID||String(d.ResponseCode)!=='0')throw Error(d.errorMessage||d.ResponseDescription||'Safaricom did not accept the STK request.');
+ return {checkoutId:d.CheckoutRequestID,merchantRequestId:d.MerchantRequestID,response:d};
+}
+async function verifyStk(c:any,checkoutId:string){
+ const {host,accessToken}=await darajaToken(c),stamp=timestamp(),shortcode=String(c.shortcode);
+ const payload={BusinessShortCode:shortcode,Password:darajaPassword(shortcode,c.passkey,stamp),Timestamp:stamp,CheckoutRequestID:checkoutId};
+ const r=await fetch(host+'/mpesa/stkpushquery/v1/query',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify(payload)});
+ const d:any=await r.json();if(!r.ok)throw Error('Safaricom payment verification query failed.');
+ return d;
+}
 function productOut(p:any){return {id:p.id,name:p.name,description:p.description,images:Array.isArray(p.images)?p.images:[],imageUrl:Array.isArray(p.images)?(p.images[0]||''):'',category:p.product_type==='data_bundle'?'Data bundles':p.product_type==='digital'?'Digital products':'Shop products',type:p.product_type,price:Number(p.price_minor)/100,currency:p.currency,stockQuantity:p.stock_quantity,active:p.is_active,sku:p.sku||''};}
 export default async function handler(req:any,res:any){
  res.setHeader('Cache-Control','no-store');
