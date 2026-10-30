@@ -9,7 +9,46 @@ const db=()=>{const u=env('POSTGRES_URL')||env('DATABASE_URL')||env('NEON_DATABA
 function phoneOf(v:unknown){const p=String(v||'').replace(/[\s()+-]/g,'');if(/^0[17]\d{8}$/.test(p))return '+254'+p.slice(1);if(/^254[17]\d{8}$/.test(p))return '+'+p;return ''}
 function cookie(res:any,t:string,a:number){res.setHeader('Set-Cookie',`das_session=${encodeURIComponent(t)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${a}`)}
 function getToken(req:any){const c=String(req.headers.cookie||'').split(';').map((s:string)=>s.trim()).find((s:string)=>s.startsWith('das_session='));return c?decodeURIComponent(c.slice('das_session='.length)):''}
-async function sms(phone:string,code:string,purpose:string){const key=env('SMS_OTS_API_TOKEN')||env('OTS_API_TOKEN'),sender=env('SMS_OTS_SENDER_ID')||env('SENDER_ID');if(!key||!sender)throw Error('SMS_CONFIG');const r=await fetch('https://sms.ots.co.ke/api/v3/sms/send',{method:'POST',headers:{Authorization:'Bearer '+key,Accept:'application/json','Content-Type':'application/json'},body:JSON.stringify({recipient:phone,sender_id:sender,type:'plain',message:`DASNET ${purpose==='signup'?'verification':'password reset'} code: ${code}. Expires in 10 minutes. Never share this code.`})});let d:any=null;try{d=JSON.parse(await r.text())}catch{}if(!r.ok||!d||d.status===false||d.success===false||d.error){console.error('DAS SMS provider rejected request',{status:r.status,message:d?.message});throw Error('SMS_FAILED')}}
+async function sms(phone:string,code:string,purpose:string){
+ const tokenName=env('SMS_OTS_API_TOKEN')?'SMS_OTS_API_TOKEN':'OTS_API_TOKEN';
+ const senderName=env('SMS_OTS_SENDER_ID')?'SMS_OTS_SENDER_ID':'SENDER_ID';
+ const key=env(tokenName),sender=env(senderName);
+ if(!key||!sender)throw Error('SMS_CONFIG');
+ const r=await fetch('https://sms.ots.co.ke/api/v3/sms/send',{
+  method:'POST',
+  headers:{Authorization:'Bearer '+key,Accept:'application/json','Content-Type':'application/json'},
+  body:JSON.stringify({recipient:phone,sender_id:sender,type:'plain',message:`DASNET ${purpose==='signup'?'verification':'password reset'} code: ${code}. Expires in 10 minutes. Never share this code.`})
+ });
+ const raw=await r.text();
+ let d:any=null;
+ try{d=JSON.parse(raw)}catch{}
+ if(!r.ok||!d||d.status===false||d.success===false||d.error){
+  const safeFields:any={};
+  if(d&&typeof d==='object'){
+   for(const k of ['status','success','code','message','error']){
+    const v=d[k];
+    if(typeof v==='string'||typeof v==='number'||typeof v==='boolean'){
+     let s=String(v).slice(0,240);
+     s=s.replace(/\\+254[17]\\d{8}|0[17]\\d{8}/g,'[phone]').replace(/\\b\\d{6}\\b/g,'[code]').replace(/Bearer\\s+\\S+/gi,'Bearer [redacted]');
+     safeFields[k]=s;
+    }
+   }
+  }
+  console.error('DAS OTS SMS diagnostic',{
+   httpStatus:r.status,
+   contentType:r.headers.get('content-type')||'',
+   tokenSource:tokenName,
+   tokenFingerprint:hash(key).slice(0,8),
+   senderSource:senderName,
+   senderId:sender,
+   recipientFormat:phone.startsWith('+254')?'E.164 +254':'unexpected',
+   recipientLast4:phone.slice(-4),
+   providerResponse:safeFields,
+   responseWasJson:!!d
+  });
+  throw Error('SMS_FAILED');
+ }
+}
 async function issue(sql:any,phone:string,purpose:'signup'|'password_reset',ip:string){const recent=await sql`SELECT id FROM public.auth_otp_challenges WHERE phone=${phone} AND purpose=${purpose} AND created_at>now()-interval '60 seconds' LIMIT 1`;if(recent.length)return false;const count=await sql`SELECT count(*)::int n FROM public.auth_otp_challenges WHERE phone=${phone} AND purpose=${purpose} AND created_at>now()-interval '1 hour'`;if(Number(count[0]?.n||0)>=5)return false;const code=String(crypto.randomInt(0,1000000)).padStart(6,'0'),salt=crypto.randomBytes(16).toString('hex'),ch=hash(`${phone}:${purpose}:${salt}:${code}`);const row=await sql`INSERT INTO public.auth_otp_challenges(phone,purpose,code_hash,code_salt,request_ip_hash,expires_at) VALUES(${phone},${purpose},${ch},${salt},${hash(ip).slice(0,32)},now()+interval '10 minutes') RETURNING id`;try{await sms(phone,code,purpose)}catch(e){await sql`UPDATE public.auth_otp_challenges SET consumed_at=now() WHERE id=${row[0].id}`;throw e}return true}
 async function verify(sql:any,phone:string,purpose:'signup'|'password_reset',code:string){const rows=await sql`SELECT id,code_hash,code_salt FROM public.auth_otp_challenges WHERE phone=${phone} AND purpose=${purpose} AND consumed_at IS NULL AND expires_at>now() AND attempts<5 ORDER BY created_at DESC LIMIT 1`;const c=rows[0];if(!c||!/^\d{6}$/.test(code))return false;if(!equal(hash(`${phone}:${purpose}:${c.code_salt}:${code}`),c.code_hash)){await sql`UPDATE public.auth_otp_challenges SET attempts=attempts+1 WHERE id=${c.id}`;return false}await sql`UPDATE public.auth_otp_challenges SET consumed_at=now() WHERE id=${c.id}`;return true}
 function validPassword(p:string){return p.length>=10&&p.length<=128&&/[A-Za-z]/.test(p)&&/\d/.test(p)}
