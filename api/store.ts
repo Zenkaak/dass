@@ -62,6 +62,32 @@ export default async function handler(req:any,res:any){
    const ps=await sql`SELECT id,name,description,product_type,price_minor,currency,stock_quantity,is_active FROM public.products WHERE tenant_id=${rows[0].tenant_id} AND is_active=true ORDER BY created_at DESC`;
    return send(res,200,{shop:{name:rows[0].shop_name,slug:rows[0].slug,description:rows[0].description||''},products:ps.map(productOut)});
   }
+  if(req.method==='POST'&&action==='daraja-callback'){
+   const cb=req.body?.Body?.stkCallback||{},checkout=String(cb.CheckoutRequestID||''),resultCode=Number(cb.ResultCode);
+   if(!checkout)return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
+   const rows=await sql`SELECT p.id,p.tenant_id,p.order_id,p.phone,p.amount_minor,p.status,pc.shortcode,pc.party_b,pc.account_type,pc.environment,pc.encrypted_credentials,pc.payout_method,pc.account_reference,pp.shortcode AS central_shortcode,pp.party_b AS central_party_b,pp.account_type AS central_type,pp.environment AS central_environment,pp.encrypted_credentials AS central_credentials FROM public.payments p LEFT JOIN public.payment_configs pc ON pc.tenant_id=p.tenant_id LEFT JOIN public.platform_payment_config pp ON pp.id=1 WHERE p.provider_checkout_id=${checkout} LIMIT 1`;
+   if(!rows.length)return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
+   const p=rows[0];if(p.status==='succeeded')return send(res,200,{ResultCode:0,ResultDesc:'Already processed'});
+   const key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');let c:any=null;
+   try{
+    if(p.encrypted_credentials?.ciphertext){const sec=decryptBundle(p.encrypted_credentials,key,'seller');c={...sec,shortcode:p.shortcode,environment:p.environment,partyB:p.party_b,accountType:p.payout_method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
+    else if(p.central_credentials?.data){const sec=decryptBundle(p.central_credentials,key,'platform');c={...sec,shortcode:p.central_shortcode,environment:p.central_environment,partyB:p.party_b||p.central_party_b,accountType:p.payout_method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
+    if(!c)throw Error('No payment credentials available');
+    if(resultCode!==0){
+     await sql`UPDATE public.payments SET status='failed',provider_result=${JSON.stringify(cb)}::jsonb,updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
+     return send(res,200,{ResultCode:0,ResultDesc:'Payment failure recorded'});
+    }
+    const checked=await verifyStk(c,checkout);
+    if(Number(checked.ResultCode)!==0||!checked.ResultCode&&checked.ResultCode!==0)throw Error('Provider has not confirmed successful payment.');
+    const meta=cb.CallbackMetadata?.Item||[],val=(n:string)=>meta.find((x:any)=>x.Name===n)?.Value;
+    const amount=Number(val('Amount')??checked.Amount),receipt=String(val('MpesaReceiptNumber')??checked.MpesaReceiptNumber??''),phone=String(val('PhoneNumber')??checked.PhoneNumber??'');
+    if(!receipt||Math.round(amount*100)!==Number(p.amount_minor)||phone.replace(/^\+/, '')!==String(p.phone).replace(/^\+/,''))throw Error('Callback details do not match the pending order.');
+    await sql`UPDATE public.payments SET status='succeeded',provider_receipt=${receipt},provider_result=${JSON.stringify({callback:cb,query:checked})}::jsonb,verified_at=now(),updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
+    await sql`UPDATE public.orders SET status='confirmed',updated_at=now() WHERE id=${p.order_id} AND status='pending'`;
+    await sql`UPDATE public.payment_configs SET callback_verified_at=now() WHERE tenant_id=${p.tenant_id}`;
+   }catch(err:any){console.error('Daraja callback verification failed',err?.message||err);}
+   return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
+  }
   const me=await seller(sql,req);
   if(!me && action!=='order')return send(res,401,{error:'Please sign in to access your seller workspace.'});
   if(req.method==='POST'&&action==='order'){
