@@ -8,7 +8,7 @@ const db=()=>{const u=env('POSTGRES_URL')||env('DATABASE_URL')||env('NEON_DATABA
 function token(req:any){const c=String(req.headers.cookie||'').split(';').map((s:string)=>s.trim()).find((s:string)=>s.startsWith('das_session='));try{return c?decodeURIComponent(c.slice(12)):''}catch{return ''}}
 async function seller(sql:any,req:any){
  const t=token(req);if(!t)return null;
- const rows=await sql`SELECT u.id AS user_id,m.tenant_id,t.slug,t.name AS shop_name,m.role,s.description AS shop_description FROM public.auth_sessions s JOIN public.users u ON u.id=s.user_id JOIN public.memberships m ON m.user_id=u.id JOIN public.tenants t ON t.id=m.tenant_id LEFT JOIN public.sites s ON s.tenant_id=t.id WHERE s.token_hash=${hash(t)} AND s.expires_at>now() AND t.status IN ('trial','active') ORDER BY m.created_at LIMIT 1`;
+ const rows=await sql`SELECT u.id AS user_id,m.tenant_id,t.slug,t.name AS shop_name,m.role,si.description AS shop_description FROM public.auth_sessions ss JOIN public.users u ON u.id=ss.user_id JOIN public.memberships m ON m.user_id=u.id JOIN public.tenants t ON t.id=m.tenant_id LEFT JOIN public.sites si ON si.tenant_id=t.id WHERE ss.token_hash=${hash(t)} AND ss.expires_at>now() AND t.status IN ('trial','active') ORDER BY m.created_at LIMIT 1`;
  return rows[0]||null;
 }
 async function audit(sql:any,tenantId:string,actorId:string,action:string,type:string,id:string|null,metadata:any={}){await sql`INSERT INTO public.audit_logs(tenant_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${tenantId},${actorId},${action},${type},${id},${JSON.stringify(metadata)}::jsonb)`}
