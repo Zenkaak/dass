@@ -13,7 +13,7 @@ export default async function handler(req:any,res:any){
   const allow=env('DAS_PLATFORM_ADMIN_PHONES').split(',').map(phone).filter(Boolean);
   if(!allow.length)return send(res,503,{error:'Platform admin access is not configured.'});
   const token=sessionToken(req);if(!token)return send(res,401,{error:'Sign in required.'});
-  const sql=db(),users=await sql`SELECT id,phone,display_name FROM public.users u JOIN public.auth_sessions s ON s.user_id=u.id WHERE s.token_hash=${hash(token)} AND s.expires_at>now() LIMIT 1`;
+  const sql=db(),users=await sql`SELECT u.id,u.phone,u.display_name FROM public.users u JOIN public.auth_sessions s ON s.user_id=u.id WHERE s.token_hash=${hash(token)} AND s.expires_at>now() LIMIT 1`;
   if(!users.length||!allow.includes(phone(users[0].phone||'')))return send(res,403,{error:'Platform administrator access required.'});
   if(req.method==='GET'){
    const [summary,tenants]=await Promise.all([
