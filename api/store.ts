@@ -25,7 +25,23 @@ export default async function handler(req:any,res:any){
    const ps=await sql`SELECT id,name,description,product_type,price_minor,currency,stock_quantity,is_active FROM public.products WHERE tenant_id=${rows[0].tenant_id} AND is_active=true ORDER BY created_at DESC`;
    return send(res,200,{shop:{name:rows[0].shop_name,slug:rows[0].slug,description:rows[0].description||''},products:ps.map(productOut)});
   }
-  const me=await seller(sql,req);if(!me)return send(res,401,{error:'Sign in to manage your shop.'});
+  const me=await seller(sql,req);
+  if(!me&&req.method==='POST'&&action==='order'){
+   const b=req.body||{},slug=String(b.slug||'').toLowerCase(),name=String(b.customerName||'').trim().slice(0,120),phone=String(b.customerPhone||'').replace(/[^0-9+]/g,'').slice(0,20),items=Array.isArray(b.items)?b.items:[];
+   const shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
+   if(!shops.length)return send(res,404,{error:'Shop not found.'});
+   if(!name||!/^\\+?\\d{9,15}$/.test(phone)||!items.length||items.length>30)return send(res,400,{error:'Enter your name, valid phone number and at least one item.'});
+   const tenantId=shops[0].id,ids=items.map((x:any)=>String(x.id||'')).filter(Boolean);
+   const ps=await sql`SELECT id,name,price_minor,stock_quantity FROM public.products WHERE tenant_id=${tenantId} AND is_active=true AND id=ANY(${ids}::uuid[])`;
+   if(ps.length!==new Set(ids).size)return send(res,400,{error:'One or more products are no longer available.'});
+   let total=0;const lines=ps.map((p:any)=>{const qty=Math.max(1,Math.min(99,Math.floor(Number(items.find((x:any)=>x.id===p.id)?.quantity)||1)));if(p.stock_quantity!==null&&p.stock_quantity<qty)throw Error('OUT_OF_STOCK');const line=Number(p.price_minor)*qty;total+=line;return {p,qty,line};});
+   if(total<=0)return send(res,400,{error:'Order total must be greater than zero.'});
+   const orderNo='DAS-'+Date.now().toString(36).toUpperCase()+'-'+crypto.randomBytes(2).toString('hex').toUpperCase();
+   const o=await sql`INSERT INTO public.orders(tenant_id,order_number,customer_name,customer_phone,subtotal_minor,total_minor,status) VALUES(${tenantId},${orderNo},${name},${phone},${total},${total},'pending') RETURNING id,order_number`;
+   for(const l of lines){await sql`INSERT INTO public.order_items(tenant_id,order_id,product_id,product_name,quantity,unit_price_minor,line_total_minor) VALUES(${tenantId},${o[0].id},${l.p.id},${l.p.name},${l.qty},${Number(l.p.price_minor)},${l.line})`;}
+   return send(res,201,{ok:true,orderNumber:o[0].order_number,message:'Order received. Payment is not enabled yet.'});
+  }
+  if(!me)return send(res,401,{error:'Sign in to manage your shop.'});
   if(req.method==='GET'&&action==='products'){
    const ps=await sql`SELECT id,name,description,product_type,price_minor,currency,stock_quantity,is_active,sku FROM public.products WHERE tenant_id=${me.tenant_id} ORDER BY created_at DESC`;
    return send(res,200,{shop:{name:me.shop_name,slug:me.slug},products:ps.map(productOut)});
