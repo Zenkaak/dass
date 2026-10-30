@@ -59,7 +59,7 @@ export default async function handler(req:any,res:any){
    const slug=String(req.query?.slug||'').toLowerCase();
    const rows=await sql`SELECT t.id AS tenant_id,t.name AS shop_name,t.slug,s.description FROM public.tenants t LEFT JOIN public.sites s ON s.tenant_id=t.id WHERE t.slug=${slug} AND t.status IN ('trial','active') LIMIT 1`;
    if(!rows.length)return send(res,404,{error:'Shop not found'});
-   const ps=await sql`SELECT id,name,description,product_type,price_minor,currency,stock_quantity,is_active FROM public.products WHERE tenant_id=${rows[0].tenant_id} AND is_active=true ORDER BY created_at DESC`;
+   const ps=await sql`SELECT id,name,description,product_type,price_minor,currency,stock_quantity,is_active,images FROM public.products WHERE tenant_id=${rows[0].tenant_id} AND is_active=true ORDER BY created_at DESC`;
    return send(res,200,{shop:{name:rows[0].shop_name,slug:rows[0].slug,description:rows[0].description||''},products:ps.map(productOut)});
   }
   if(req.method==='POST'&&action==='daraja-callback'){
