@@ -290,5 +290,5 @@ export default async function handler(req:any,res:any){
    return send(res,201,{ok:true,orderNumber:o[0].order_number,message:'Order received. Payment is not enabled yet.'});
   }
   return send(res,404,{error:'Unknown store action.'});
- }catch(e:any){if(e?.message==='DB_CONFIG')return send(res,503,{error:'Database connection is not configured.'});if(e?.message==='OUT_OF_STOCK')return send(res,409,{error:'Insufficient stock for one or more items.'});console.error('DAS store API error',e);return send(res,500,{error:'Store operation failed. Check database schema and server logs.'});}
+ }catch(e:any){if(e?.message==='DB_CONFIG')return send(res,503,{error:'Database connection is not configured.'});if(e?.message==='OUT_OF_STOCK')return send(res,409,{error:'Insufficient stock for one or more items.'});const reference=crypto.randomUUID();console.error('DAS store API error',{reference,action,error:e?.message||String(e),code:e?.code,detail:e?.detail});return send(res,500,{error:'Store operation failed. Share reference '+reference+' with DASNET support.',reference});}
 }
