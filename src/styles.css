@@ -1416,3 +1416,36 @@
 .kasuku-faq{width:min(1050px,calc(100% - 48px));margin:70px auto 55px;border:1px solid #e6eaed;border-radius:16px;overflow:hidden;box-shadow:0 5px 18px rgba(18,47,69,.05)}.kasuku-faq-heading{padding:20px 24px;border-bottom:1px solid #e8edf0;display:flex;align-items:center;gap:12px;font-size:15px}.kasuku-faq-heading svg{color:#d69a16}.kasuku-faq details{border-bottom:1px solid #e8edf0}.kasuku-faq details:last-child{border-bottom:0}.kasuku-faq summary{padding:19px 24px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:14px;list-style:none}.kasuku-faq summary::-webkit-details-marker{display:none}.kasuku-faq summary span{color:#657583}.kasuku-faq details p{margin:0;padding:0 24px 19px;color:#687783;font-size:13px;line-height:1.6}
 .kasuku-footer{border-top:1px solid #e8edf0;padding:35px max(24px,calc((100% - 1240px)/2)) 18px;color:#65727d}.kasuku-footer-columns{display:grid;grid-template-columns:2fr 1fr 1fr;gap:45px}.kasuku-footer-columns>div{display:flex;flex-direction:column;align-items:flex-start;gap:10px}.kasuku-footer-columns>div:first-child p{max-width:330px;font-size:12px;line-height:1.6;margin:8px 0}.kasuku-footer-columns>div>b{font-size:13px;color:#253b4b}.kasuku-footer-columns a:not(.kasuku-brand){font-size:12px}.kasuku-footer-bottom{border-top:1px solid #edf0f2;margin-top:28px;padding-top:17px;display:flex;justify-content:space-between;font-size:11px}
 @media(max-width:700px){.kasuku-topline{height:25px;padding:0 14px;font-size:9px;gap:8px}.kasuku-topline span:nth-child(2){display:none}.kasuku-header{height:58px;padding:0 14px;gap:10px}.kasuku-header nav{display:none}.kasuku-header-actions{margin-left:auto;gap:12px}.kasuku-header-actions>a{font-size:12px}.kasuku-header-actions .kasuku-sell{padding:9px 12px}.kasuku-hero{width:calc(100% - 28px);min-height:310px;margin-top:12px;padding:28px 22px;align-items:flex-start}.kasuku-hero-copy{max-width:72%}.kasuku-hero-copy h1{font-size:32px;letter-spacing:-1px;margin:14px 0}.kasuku-hero-copy p{font-size:13px;line-height:1.45}.kasuku-hero-copy>a{font-size:12px;padding:11px 14px}.kasuku-hero-art{right:-12%;width:42%;opacity:.62}.kasuku-hero-phone{transform:rotate(9deg) scale(.76)}.kasuku-audience,.kasuku-safety{width:calc(100% - 32px);margin-top:44px}.kasuku-section-title{margin-bottom:20px}.kasuku-section-title h2{font-size:25px}.kasuku-audience-grid{gap:12px}.kasuku-audience-grid article{padding:16px 13px;border-radius:13px}.kasuku-audience-grid h3{font-size:15px}.kasuku-audience-grid ul{font-size:11px;line-height:1.7}.kasuku-audience-grid article>a{font-size:11px}.kasuku-safety-grid{gap:10px}.kasuku-safety-grid article{padding:15px;min-height:135px}.kasuku-safety-grid h3{font-size:12px}.kasuku-safety-grid p{font-size:11px}.kasuku-faq{width:calc(100% - 32px);margin:45px auto}.kasuku-faq summary{font-size:12px;padding:16px}.kasuku-faq details p{font-size:12px;padding:0 16px 16px}.kasuku-footer{padding:28px 16px 16px}.kasuku-footer-columns{grid-template-columns:1.5fr 1fr;gap:24px}.kasuku-footer-columns>div:first-child{grid-column:1/-1}.kasuku-footer-bottom{font-size:10px;gap:12px;line-height:1.5}.kasuku-footer-bottom span{max-width:45%;text-align:right}}
+
+
+/* Marketplace storefront with category sidebar */
+.market-store-layout{width:min(100% - 40px,1320px);margin:16px auto 60px;display:grid;grid-template-columns:220px minmax(0,1fr);gap:18px;align-items:start}
+.market-home{width:100%;margin:0;min-width:0;display:grid;gap:20px}
+.market-main{min-width:0;display:grid;gap:18px}
+.market-sidebar{position:sticky;top:82px;display:flex;flex-direction:column;gap:5px;padding:14px 12px;border:1px solid #e6ebef;border-radius:14px;background:#fff;box-shadow:0 4px 16px rgba(20,45,65,.035)}
+.market-sidebar-shop{display:flex;align-items:center;gap:10px;padding:10px 8px 14px;border-bottom:1px solid #edf0f2;color:#243849}
+.market-sidebar-shop>svg{color:var(--store-accent)}
+.market-sidebar-shop span{display:flex;flex-direction:column;gap:3px;min-width:0}
+.market-sidebar-shop b{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.market-sidebar-shop small{font-size:10px;color:#87939d}
+.market-sidebar-title{padding:14px 8px 7px;font-size:9px;font-weight:800;letter-spacing:.1em;color:#8b98a3}
+.market-sidebar>button{display:flex;align-items:center;gap:8px;padding:9px 8px;border:0;border-radius:8px;background:transparent;color:#465767;text-align:left;font-size:11px;cursor:pointer}
+.market-sidebar>button svg{color:#7890a2;flex:0 0 auto}
+.market-sidebar>button small{margin-left:auto;color:#8996a0;font-size:9px}
+.market-sidebar>button.active,.market-sidebar>button:hover{background:#fff4e7;color:#9b560b}
+.market-sidebar>button.active svg{color:var(--store-accent)}
+.market-sidebar-help{margin-top:14px;padding:12px;border-radius:10px;background:#edf5fa;color:#225474}
+.market-sidebar-help b{display:block;margin-top:7px;font-size:11px}
+.market-sidebar-help p{font-size:10px;line-height:1.5;color:#607b8d;margin:5px 0 0}
+.market-product-art>small{letter-spacing:.01em}
+@media(max-width:760px){
+ .market-store-layout{width:calc(100% - 24px);margin:12px auto 40px;display:block}
+ .market-sidebar{position:static;display:flex;flex-direction:row;align-items:center;gap:6px;margin-bottom:12px;padding:8px;overflow-x:auto;white-space:nowrap;border-radius:10px}
+ .market-sidebar-shop{display:none}
+ .market-sidebar-title{display:none}
+ .market-sidebar>button{flex:0 0 auto;padding:8px 10px;font-size:10px;background:#f6f8fa}
+ .market-sidebar>button small{margin-left:3px}
+ .market-sidebar-help{display:none}
+ .market-main{gap:12px}
+ .market-home{width:100%;margin:0;gap:12px}
+}
