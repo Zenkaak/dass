@@ -41,6 +41,24 @@ jobs:
           npm run typecheck
           npm run build
 
+      - name: Attach wildcard merchant domain
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: team_FUjJJLDSAITzmg32U4dQzNw
+          VERCEL_PROJECT_ID: prj_vZuYn5UoOgZbJ9NGLvyiTAFHfWPe
+        run: |
+          response=$(curl -sS -w '\n%{http_code}' -X POST "https://api.vercel.com/v10/projects/$VERCEL_PROJECT_ID/domains?teamId=$VERCEL_ORG_ID" -H "Authorization: Bearer $VERCEL_TOKEN" -H "Content-Type: application/json" --data '{"name":"*.dasmarket.co.ke"}')
+          status=$(printf '%s' "$response" | tail -n1)
+          body=$(printf '%s' "$response" | sed '$d')
+          if [ "$status" = "200" ] || [ "$status" = "201" ]; then
+            echo "Wildcard merchant domain attached to the DASNET project."
+          elif printf '%s' "$body" | grep -Eqi 'already exists|already assigned|domain is already'; then
+            echo "Wildcard merchant domain is already attached."
+          else
+            echo "Could not attach wildcard merchant domain (HTTP $status): $body"
+            exit 1
+          fi
+
       - name: Deploy to Vercel production
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
