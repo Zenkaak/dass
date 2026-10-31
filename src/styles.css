@@ -873,3 +873,25 @@
 .store-market-content .product-buy button:hover:not(:disabled){background:#f28a1c;color:#fff;border-color:#f28a1c}
 .store-market-content .product-buy button:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:700px){.store-market-content .product-art>small{font-size:8px;padding:4px 6px}}
+
+
+/* Public merchant identity: platform branding appears only in the footer attribution */
+.store-merchant-brand{min-width:0;max-width:220px}
+.store-market-brand-logo{width:40px;height:40px;flex:0 0 40px;object-fit:contain;border-radius:8px;background:#fff;border:1px solid #eceef1}
+.store-merchant-brand-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#252a32!important;font-size:15px;font-weight:800;letter-spacing:-.25px}
+.store-merchant-footer{width:min(1440px,100%);margin:0 auto;padding:22px 28px;display:flex;align-items:center;justify-content:space-between;gap:18px;border-top:1px solid #e8eaee;background:#fff;color:#858c97}
+.store-merchant-footer-brand{display:flex;align-items:center;gap:9px;min-width:0;color:#303640;text-decoration:none}
+.store-merchant-footer-brand img,.store-merchant-footer-brand>span{width:32px;height:32px;flex:0 0 32px;object-fit:contain;display:grid;place-items:center;border-radius:6px;background:#fff2e4;color:#d87310;font-weight:900}
+.store-merchant-footer-brand strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.store-merchant-copyright{font-size:10px;text-align:center}
+.store-powered-by{display:inline-flex;align-items:center;gap:4px;color:#858c97;text-decoration:none;font-size:10px;white-space:nowrap}
+.store-powered-by strong{color:#d87310;font-size:11px;font-weight:900;letter-spacing:.2px}
+.store-powered-by:hover strong{text-decoration:underline}
+@media(max-width:700px){
+ .store-market-header-inner{grid-template-columns:minmax(0,1fr) auto}
+ .store-merchant-brand{max-width:180px}
+ .store-market-brand-logo{width:34px;height:34px;flex-basis:34px}
+ .store-merchant-brand-name{font-size:13px}
+ .store-merchant-footer{padding:17px 14px;gap:10px;flex-wrap:wrap}
+ .store-merchant-copyright{order:3;width:100%;text-align:left}
+}
