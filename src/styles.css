@@ -198,3 +198,73 @@
 .seller-product-sections dt{font-size:10px;color:#8998a4}.seller-product-sections dd{margin:0;font-size:12px;color:#40596c;overflow-wrap:anywhere;white-space:pre-wrap}
 .seller-product-gallery{display:flex;gap:8px;flex-wrap:wrap}.seller-product-gallery img{width:72px;height:72px;object-fit:cover;border:1px solid #e1e8ee;border-radius:8px}
 @media(max-width:650px){.seller-detail-overlay:has(.seller-product-detail){padding:10px}.seller-product-detail-head{flex-wrap:wrap;padding:16px;gap:12px}.seller-product-actions{width:100%}.seller-product-metrics{grid-template-columns:1fr;padding:12px 0}.seller-product-metrics article{padding:12px}.seller-product-sections{grid-template-columns:1fr}.seller-product-sections>section.wide{grid-column:auto}.seller-product-sections dl{column-gap:12px}}
+
+
+/* Professional order workspace */
+.seller-detail-overlay:has(.seller-order-document){align-items:flex-start;padding:20px 14px;overflow:auto}
+.seller-detail-overlay:has(.seller-order-document) .seller-detail-card{width:min(960px,100%);max-height:none;min-height:0;overflow:visible;background:#f3f6fa;color:#263e52;border:1px solid #dce5ed;border-radius:20px;padding:24px;box-shadow:0 24px 80px #06132666}
+.seller-detail-overlay:has(.seller-order-document) .seller-detail-card>h2{font-size:28px;letter-spacing:-.6px;color:#172d43;margin:2px 0 4px}
+.seller-detail-overlay:has(.seller-order-document) .seller-detail-subtitle{font-size:13px;margin-bottom:20px;color:#73879a}
+.seller-order-document{gap:14px;margin-top:0}
+.seller-order-document-head{align-items:center;background:linear-gradient(115deg,#fff,#f8fbff);border-color:#dce6ef;border-radius:17px;padding:24px}
+.seller-order-document-head h3{font-size:25px;letter-spacing:-.5px;color:#172d43}
+.seller-order-kicker{display:inline-block;font-size:10px;letter-spacing:1.6px;color:#6b8297}
+.seller-order-status{padding:8px 13px;font-size:12px}
+.seller-order-info-grid section,.seller-order-payment,.seller-order-items,.seller-order-status-editor,.seller-order-prompt,.seller-order-chat{border-color:#dce5ed;border-radius:16px;box-shadow:0 2px 8px #20364a08}
+.seller-order-info-grid section{padding:19px;background:#fff}
+.seller-order-info-grid strong{font-size:16px;color:#203a51}
+.seller-order-payment{padding:20px;background:#fff}
+.seller-order-payment>div{padding:2px 4px}
+.seller-order-payment strong{font-size:16px}
+.seller-order-items{padding:22px;background:#fff}
+.seller-order-section-title h3,.seller-order-status-editor h3{font-size:16px;color:#203a51}
+.seller-order-table-head,.seller-order-table-row{grid-template-columns:minmax(0,1fr) 52px 120px 120px;font-size:12px;padding:14px 4px}
+.seller-order-table-head{background:#f7f9fc;color:#6c8093;border-radius:8px;padding:12px 10px}
+.seller-order-total{border-top:1px solid #e9eef3;margin-top:8px}
+.seller-order-total strong{font-size:23px;color:#142f47}
+.seller-order-status-editor{padding:20px;background:#fff}
+.seller-order-security-note{border-left:3px solid #4b91d0;background:#edf5fc;border-radius:8px;padding:12px 15px;color:#536f86;font-size:12px;line-height:1.6}
+.seller-order-prompt,.seller-order-chat{padding:21px;background:#fff;display:grid;gap:14px}
+.seller-order-prompt .seller-order-section-title,.seller-order-chat .seller-order-section-title{margin:0}
+.seller-order-section-title p{font-size:12px;color:#8091a0;margin:5px 0 0}
+.seller-order-prompt-method,.store-chat-live{display:inline-flex;align-items:center;white-space:nowrap;padding:7px 11px;border-radius:999px;background:#eaf3fc;color:#23669e;font-size:11px;font-weight:700}
+.seller-order-prompt label{display:grid;gap:7px;color:#687f92;font-size:12px;font-weight:650}
+.seller-order-prompt label input,.seller-chat-compose input,.store-chat-compose input{width:100%;min-width:0;border:1px solid #d8e2eb;background:#fbfdff;border-radius:10px;padding:12px 14px;color:#213a50;font:inherit;outline:none}
+.seller-order-prompt label input:focus,.seller-chat-compose input:focus,.store-chat-compose input:focus{border-color:#368be0;box-shadow:0 0 0 3px #368be01c}
+.seller-order-prompt-footer{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.seller-order-prompt-footer>div{display:grid;gap:4px}
+.seller-order-prompt-footer small{color:#8191a0;font-size:11px}
+.seller-order-prompt-footer strong{color:#18334c;font-size:23px}
+.seller-order-prompt-footer button,.seller-chat-compose button,.store-chat-compose button{min-height:44px}
+.seller-order-prompt-message{margin:0;color:#a23c42;background:#fff0f0;border-radius:8px;padding:10px 12px;font-size:12px}
+.seller-chat-messages,.store-chat-messages{display:grid;gap:10px;max-height:300px;overflow:auto;padding:4px}
+.seller-chat-message,.store-chat-message{max-width:min(82%,560px);padding:11px 13px;border-radius:13px;background:#f0f4f8;border:1px solid #e5ebf1;justify-self:start}
+.seller-chat-message.mine,.store-chat-message.mine{justify-self:end;background:#eaf4ff;border-color:#d6e9fb}
+.seller-chat-message span,.store-chat-message span{display:block;color:#4c7291;font-size:10px;font-weight:750;margin-bottom:5px}
+.seller-chat-message p,.store-chat-message p{margin:0;color:#243d52;font-size:13px;line-height:1.5;overflow-wrap:anywhere;white-space:pre-wrap}
+.seller-chat-message small,.store-chat-message small{display:block;color:#8797a5;font-size:10px;margin-top:6px}
+.seller-chat-compose,.store-chat-compose{display:flex;align-items:center;gap:9px}
+.store-chat-panel{width:min(920px,calc(100% - 32px));margin:0 auto 42px;background:#fff;border:1px solid #dce5ed;border-radius:18px;padding:22px;box-shadow:0 12px 34px #18334c0d}
+.store-chat-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.store-chat-heading h2{font-size:21px;color:#213b52;margin:5px 0}
+.store-chat-heading p{font-size:12px;color:#7b8fa1;margin:0}
+.store-chat-message{max-width:80%}
+@media(max-width:650px){
+ .seller-detail-overlay:has(.seller-order-document){padding:8px 6px 90px}
+ .seller-detail-overlay:has(.seller-order-document) .seller-detail-card{padding:14px;border-radius:16px}
+ .seller-detail-overlay:has(.seller-order-document) .seller-detail-card>h2{font-size:23px}
+ .seller-order-document{gap:10px}
+ .seller-order-document-head{padding:16px;flex-direction:column;align-items:flex-start}
+ .seller-order-document-head h3{font-size:20px;overflow-wrap:anywhere}
+ .seller-order-info-grid{grid-template-columns:1fr;gap:9px}
+ .seller-order-info-grid section,.seller-order-payment,.seller-order-items,.seller-order-status-editor,.seller-order-prompt,.seller-order-chat{padding:15px}
+ .seller-order-payment{grid-template-columns:1fr;gap:12px}
+ .seller-order-payment>div{padding-bottom:10px;border-bottom:1px solid #edf1f4}
+ .seller-order-table-head,.seller-order-table-row{grid-template-columns:minmax(0,1fr) 32px 75px 78px;gap:5px;font-size:10px}
+ .seller-order-status-editor{align-items:flex-start;flex-direction:column}
+ .seller-order-prompt-footer{align-items:stretch;flex-direction:column}
+ .seller-order-prompt-footer button{width:100%}
+ .seller-chat-compose,.store-chat-compose{align-items:stretch;flex-direction:column}
+ .seller-chat-compose button,.store-chat-compose button{width:100%}
+ .store-chat-panel{padding:15px;margin-bottom:28px}
+}
