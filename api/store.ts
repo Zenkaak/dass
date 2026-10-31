@@ -321,6 +321,7 @@ export default async function handler(req:any,res:any){
    for(const p of clean){await sql`INSERT INTO public.products(tenant_id,name,slug,description,product_type,price_minor,stock_quantity,sku,images,metadata) VALUES(${me.tenant_id},${p.name},${slugify(p.name)+'-'+crypto.randomBytes(4).toString('hex')},${p.description},${p.type},${Math.round(p.price*100)},${p.stock},${p.sku},${JSON.stringify(p.images)}::jsonb,'{}'::jsonb)`;}
    await audit(sql,me.tenant_id,me.user_id,'products.bulk_imported','product',null,{count:clean.length});return send(res,201,{ok:true,imported:clean.length,message:clean.length+' products imported successfully.'});
   }
+  if(req.method==='POST'&&action==='product'){
    if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission to edit products.'});
    const b=req.body||{},name=String(b.name||'').trim().slice(0,120),description=String(b.description||'').trim().slice(0,2000),type=['physical','data_bundle','digital'].includes(b.type)?b.type:'physical',price=Number(b.price),stock=b.stock===''||b.stock==null?null:Number(b.stock),sku=String(b.sku||'').trim().slice(0,80)||null,rawMeta=b.metadata&&typeof b.metadata==='object'?b.metadata:{};
    const purchaseCost=rawMeta.purchaseCost===''||rawMeta.purchaseCost==null?null:Number(rawMeta.purchaseCost),taxRate=rawMeta.taxRate===''||rawMeta.taxRate==null?null:Number(rawMeta.taxRate),reorderLevel=rawMeta.reorderLevel===''||rawMeta.reorderLevel==null?null:Number(rawMeta.reorderLevel);
