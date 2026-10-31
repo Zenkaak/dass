@@ -42,14 +42,13 @@ function hmac(key:any,value:string,encoding?:any){return crypto.createHmac('sha2
 function storageUrl(key:string,method:'PUT'|'GET',mime='application/octet-stream'){
  const endpoint=storageEnv('AWS_ENDPOINT_URL_S3'),access=storageEnv('AWS_ACCESS_KEY_ID'),secret=storageEnv('AWS_SECRET_ACCESS_KEY'),region=storageEnv('AWS_REGION')||'us-east-2',bucket=storageEnv('NEON_STORAGE_BUCKET')||'documents';
  if(!endpoint||!access||!secret)throw Error('ATTACHMENT_STORAGE_CONFIG');
- const host=new URL(endpoint).host,now=new Date(),amz=now.toISOString().replace(/[:-]|\\.\\d{3}/g,''),day=amz.slice(0,8),scope=day+'/'+region+'/s3/aws4_request',path='/'+bucket+'/'+key.split('/').map(awsEncode).join('/');
+ const host=new URL(endpoint).host,now=new Date(),amz=now.toISOString().slice(0,19).replace(/[-:T]/g,'')+'Z',day=amz.slice(0,8),scope=day+'/'+region+'/s3/aws4_request',path='/'+bucket+'/'+key.split('/').map(awsEncode).join('/');
  const params:any={'X-Amz-Algorithm':'AWS4-HMAC-SHA256','X-Amz-Credential':access+'/'+scope,'X-Amz-Date':amz,'X-Amz-Expires':'300','X-Amz-SignedHeaders':'host'};
  const canonicalQuery=Object.keys(params).sort().map(k=>awsEncode(k)+'='+awsEncode(params[k])).join('&');
- const canonical=[''+method,path,canonicalQuery,'host:'+host+'\\n','host','UNSIGNED-PAYLOAD'].join('\\n');
- const toSign=['AWS4-HMAC-SHA256',amz,scope,crypto.createHash('sha256').update(canonical).digest('hex')].join('\\n');
+ const canonical=[method,path,canonicalQuery,'host:'+host+'\n','host','UNSIGNED-PAYLOAD'].join('\n');
+ const toSign=['AWS4-HMAC-SHA256',amz,scope,crypto.createHash('sha256').update(canonical).digest('hex')].join('\n');
  const kDate=hmac('AWS4'+secret,day),kRegion=hmac(kDate,region),kService=hmac(kRegion,'s3'),kSigning=hmac(kService,'aws4_request'),signature=hmac(kSigning,toSign,'hex');
- const extra=method==='PUT'?'&Content-Type='+awsEncode(mime):'';
- return endpoint.replace(/\\/$/,'')+path+'?'+canonicalQuery+'&X-Amz-Signature='+signature+extra;
+ return endpoint.replace(/\/$/,'')+path+'?'+canonicalQuery+'&X-Amz-Signature='+signature;
 }
 function safeFileName(s:string){return s.replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,120)||'attachment'}
 function timestamp(){const d=new Date();return d.getUTCFullYear()+String(d.getUTCMonth()+1).padStart(2,'0')+String(d.getUTCDate()).padStart(2,'0')+String(d.getUTCHours()).padStart(2,'0')+String(d.getUTCMinutes()).padStart(2,'0')+String(d.getUTCSeconds()).padStart(2,'0')}
