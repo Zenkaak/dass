@@ -926,3 +926,39 @@
 .seller-theme-swatch{width:28px;height:28px;flex:0 0 28px;border-radius:9px;background:#f28a1c}.seller-theme-swatch.theme-minimalist,.seller-theme-swatch.theme-electronics,.seller-theme-swatch.theme-education{background:#2563eb}.seller-theme-swatch.theme-fashion,.seller-theme-swatch.theme-beauty,.seller-theme-swatch.theme-kids{background:#db2777}.seller-theme-swatch.theme-home,.seller-theme-swatch.theme-grocery,.seller-theme-swatch.theme-fresh-food{background:#16803d}.seller-theme-swatch.theme-sports{background:#ea580c}.seller-theme-swatch.theme-luxury{background:#9a7628}.seller-theme-swatch.theme-automotive{background:#c62828}.seller-theme-swatch.theme-gadgets{background:#7c3aed}.seller-theme-swatch.theme-pets{background:#0f766e}
 .seller-theme-option-copy{display:grid;gap:3px;flex:1;min-width:0}.seller-theme-option-copy strong{font-size:11px}.seller-theme-option-copy small{font-size:10px;color:#718096;line-height:1.35}.seller-theme-check{font-size:9px;font-weight:800;color:#2563eb;white-space:nowrap}
 @media(max-width:700px){.seller-theme-options{grid-template-columns:1fr}}
+
+
+/* Visual storefront theme gallery */
+.seller-theme-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.seller-theme-option{display:grid;grid-template-columns:1fr;gap:0;overflow:hidden;padding:7px;border:1px solid #dfe6ef;border-radius:13px;background:#fff;text-align:left;cursor:pointer;color:#26364b;transition:border-color .18s,box-shadow .18s,transform .18s}
+.seller-theme-option:hover{border-color:#91a9ca;box-shadow:0 5px 16px #182b4512;transform:translateY(-2px);background:#fff}
+.seller-theme-option.selected{padding:6px;border:2px solid #2563eb;background:#f5f8ff;box-shadow:0 0 0 2px #2563eb16}
+.seller-theme-preview{--preview-accent:#f28a1c;--preview-soft:#fff0df;display:block;aspect-ratio:1.58/1;width:100%;overflow:hidden;border-radius:8px;background:#f6f7f9;border:1px solid #e8ebf0}
+.seller-theme-preview[class*="theme-preview-"]{--preview-accent:#f28a1c;--preview-soft:#fff0df}
+.theme-preview-minimalist,.theme-preview-electronics,.theme-preview-education{--preview-accent:#2563eb!important;--preview-soft:#eff6ff!important}
+.theme-preview-fashion,.theme-preview-beauty,.theme-preview-kids{--preview-accent:#db2777!important;--preview-soft:#fff1f7!important}
+.theme-preview-home,.theme-preview-grocery,.theme-preview-fresh-food{--preview-accent:#16803d!important;--preview-soft:#effaf1!important}
+.theme-preview-sports{--preview-accent:#ea580c!important;--preview-soft:#fff7ed!important}
+.theme-preview-luxury{--preview-accent:#9a7628!important;--preview-soft:#f8f3e6!important}
+.theme-preview-automotive{--preview-accent:#c62828!important;--preview-soft:#fff1f1!important}
+.theme-preview-gadgets{--preview-accent:#7c3aed!important;--preview-soft:#f5f0ff!important}
+.theme-preview-pets{--preview-accent:#0f766e!important;--preview-soft:#ecfdf9!important}
+.theme-preview-top{height:17%;min-height:12px;display:flex;align-items:center;gap:3px;padding:0 5px;background:#fff;border-bottom:1px solid #e9edf2}
+.theme-preview-top i{width:4px;height:4px;border-radius:50%;background:#cbd3df}
+.theme-preview-top b{height:5px;width:25%;margin-left:auto;border-radius:5px;background:var(--preview-accent)}
+.theme-preview-body{height:83%;display:flex;gap:4%;padding:5% 4%;background:#fff}
+.theme-preview-side{width:19%;display:flex;flex-direction:column;gap:7%;padding-top:3%}
+.theme-preview-side i{height:4px;border-radius:4px;background:#e5e9ef}
+.theme-preview-side i:first-child{background:var(--preview-accent);width:90%}
+.theme-preview-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:7%}
+.theme-preview-banner{height:34%;width:100%;border-radius:3px;background:linear-gradient(110deg,var(--preview-soft),#f5f6f8)}
+.theme-preview-products{display:grid;grid-template-columns:repeat(3,1fr);gap:5%;height:37%}
+.theme-preview-products i{border-radius:3px;background:linear-gradient(145deg,var(--preview-soft) 0 58%,#e8ebef 58% 65%,#fff 65%)}
+.theme-preview-lines{display:flex;gap:5%;height:4px}
+.theme-preview-lines i{width:30%;border-radius:4px;background:#dfe4eb}
+.seller-theme-option-footer{display:flex;align-items:center;justify-content:space-between;gap:5px;padding:9px 4px 3px;min-width:0}
+.seller-theme-option-footer strong{font-size:11px;line-height:1.3}
+.seller-theme-check{font-size:9px;font-weight:800;color:#6b7b91;white-space:nowrap}
+.seller-theme-option.selected .seller-theme-check{color:#1d4ed8}
+@media(max-width:900px){.seller-theme-options{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:420px){.seller-theme-options{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.seller-theme-option{padding:5px}.seller-theme-option.selected{padding:4px}.seller-theme-option-footer{align-items:flex-start;flex-direction:column;gap:3px}.seller-theme-option-footer strong{font-size:10px}}
