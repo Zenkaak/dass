@@ -138,7 +138,7 @@ export default async function handler(req:any,res:any){
     if(!allowed||allowed.mime!==mime)return send(res,415,{error:'File type not allowed. Use PDF, DOC/DOCX, XLS/XLSX, TXT, JPG, PNG or WEBP.'});
     if(!Number.isSafeInteger(size)||size<1||size>10485760)return send(res,413,{error:'Each attachment must be 10 MB or smaller.'});
     const id=crypto.randomUUID(),key=tenantId+'/'+order.id+'/'+id+'-'+safeFileName(name);
-    await sql`INSERT INTO public.order_message_attachments(tenant_id,order_id,uploader_type,uploaded_by,object_key,file_name,content_type,size_bytes) VALUES(${tenantId},${order.id},${uploader},${userId},${key},${safeFileName(name)},${mime},${size})`;
+    await sql`INSERT INTO public.order_message_attachments(id,tenant_id,order_id,uploader_type,uploaded_by,object_key,file_name,content_type,size_bytes) VALUES(${id},${tenantId},${order.id},${uploader},${userId},${key},${safeFileName(name)},${mime},${size})`;
     return send(res,200,{ok:true,attachmentId:id,uploadUrl:storageUrl(key,'PUT',mime),expiresIn:300});
    }
    if(mode==='complete'){
