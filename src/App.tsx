@@ -19,7 +19,12 @@ async function uploadToObjectStorage(url:string,file:File,label='File'){
  let response:Response;
  try{response=await fetch(url,{method:'PUT',headers:{'Content-Type':file.type||'application/octet-stream'},body:file})}
  catch(e:any){throw Error(label+' could not reach object storage. Check the storage endpoint and browser network access, then retry. '+(e?.message||''))}
- if(!response.ok){const body=await response.text().catch(()=>''),code=body.match(/<Code>([^<]+)<\\/Code>/i)?.[1],message=body.match(/<Message>([^<]+)<\\/Message>/i)?.[1];throw Error(label+' rejected by storage (HTTP '+response.status+')'+(code?' · '+code:'')+(message?' · '+message:''))}
+  if(!response.ok){
+    const body=await response.text().catch(()=>'');
+    const code=new RegExp('<Code>([^<]+)</Code>','i').exec(body)?.[1];
+    const message=new RegExp('<Message>([^<]+)</Message>','i').exec(body)?.[1];
+    throw Error(label+' rejected by storage (HTTP '+response.status+')'+(code?' · '+code:'')+(message?' · '+message:''));
+  }
  return response;
 }
 function Brand() {
