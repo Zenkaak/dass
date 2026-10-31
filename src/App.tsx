@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { unzipSync } from 'fflate';
 import { AuthPage } from './AuthPage';
-import { Activity, ArrowRight, ArrowUpRight, Bell, Check, ChevronRight, CircleAlert, Download, HelpCircle, Layers3, LayoutDashboard, LogOut, Menu, X, MessageCircle, Package, Plus, RefreshCw, Search, Send, Settings, ShieldCheck, ShoppingBag, Store, Wallet, WalletCards } from 'lucide-react';
+import { Activity, ArrowRight, ArrowUpRight, Bell, Check, ChevronRight, CircleAlert, Download, HelpCircle, Layers3, LayoutDashboard, LogOut, Menu, X, MapPin, ScanLine, ThumbsUp, Flag, MessageCircle, Package, Plus, RefreshCw, Search, Send, Settings, ShieldCheck, ShoppingBag, Store, Wallet, WalletCards } from 'lucide-react';
 
 const storeAccentColors = [
   {name:'Marketplace orange',value:'#e47a13'},
