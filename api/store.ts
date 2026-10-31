@@ -49,7 +49,7 @@ async function verifyStk(c:any,checkoutId:string){
  const d:any=await r.json();if(!r.ok)throw Error('Safaricom payment verification query failed.');
  return d;
 }
-function productOut(p:any){return {id:p.id,name:p.name,description:p.description,images:Array.isArray(p.images)?p.images:[],imageUrl:Array.isArray(p.images)?(p.images[0]||''):'',category:p.product_type==='data_bundle'?'Data bundles':p.product_type==='digital'?'Digital products':'Shop products',type:p.product_type,price:Number(p.price_minor)/100,currency:p.currency,stockQuantity:p.stock_quantity,active:p.is_active,sku:p.sku||''};}
+function productOut(p:any,includeMetadata=false){return {id:p.id,name:p.name,description:p.description,images:Array.isArray(p.images)?p.images:[],imageUrl:Array.isArray(p.images)?(p.images[0]||''):'',category:p.product_type==='data_bundle'?'Data bundles':p.product_type==='digital'?'Digital products':'Shop products',type:p.product_type,price:Number(p.price_minor)/100,currency:p.currency,stockQuantity:p.stock_quantity,active:p.is_active,sku:p.sku||'',...(includeMetadata?{metadata:p.metadata||{}}:{})};}
 export default async function handler(req:any,res:any){
  res.setHeader('Cache-Control','no-store');
  if(!['GET','POST','DELETE'].includes(req.method)){res.setHeader('Allow','GET, POST, DELETE');return send(res,405,{error:'Method not allowed'});}
@@ -61,7 +61,7 @@ export default async function handler(req:any,res:any){
    const rows=await sql`SELECT t.id AS tenant_id,t.name AS shop_name,t.slug,s.description,s.logo_url FROM public.tenants t LEFT JOIN public.sites s ON s.tenant_id=t.id WHERE t.slug=${slug} AND t.status IN ('trial','active') LIMIT 1`;
    if(!rows.length)return send(res,404,{error:'Shop not found'});
    const ps=await sql`SELECT id,name,description,product_type,price_minor,currency,stock_quantity,is_active,images FROM public.products WHERE tenant_id=${rows[0].tenant_id} AND is_active=true ORDER BY created_at DESC`;
-   return send(res,200,{shop:{name:rows[0].shop_name,slug:rows[0].slug,description:rows[0].description||'',logoUrl:rows[0].logo_url||''},products:ps.map(productOut)});
+   return send(res,200,{shop:{name:rows[0].shop_name,slug:rows[0].slug,description:rows[0].description||'',logoUrl:rows[0].logo_url||''},products:ps.map((p:any)=>productOut(p,true))});
   }
   if(req.method==='POST'&&action==='daraja-callback'){
    const cb=req.body?.Body?.stkCallback||{},checkout=String(cb.CheckoutRequestID||''),resultCode=Number(cb.ResultCode);
@@ -233,28 +233,30 @@ export default async function handler(req:any,res:any){
    return send(res,200,{ok:true});
   }
   if(req.method==='GET'&&action==='products'){
-   const ps=await sql`SELECT id,name,description,product_type,price_minor,currency,stock_quantity,is_active,sku,images FROM public.products WHERE tenant_id=${me.tenant_id} ORDER BY created_at DESC`;
+   const ps=await sql`SELECT id,name,description,product_type,price_minor,currency,stock_quantity,is_active,sku,images,metadata FROM public.products WHERE tenant_id=${me.tenant_id} ORDER BY created_at DESC`;
    const site=await sql`SELECT logo_url FROM public.sites WHERE tenant_id=${me.tenant_id} LIMIT 1`;
    return send(res,200,{shop:{name:me.shop_name,slug:me.slug,description:me.shop_description||'',logoUrl:site[0]?.logo_url||''},products:ps.map(productOut)});
   }
   if(req.method==='GET'&&action==='orders'){
-   const os=await sql`SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.total_minor,o.currency,o.status,o.created_at,pay.status AS payment_status,pay.provider_receipt,COALESCE(json_agg(json_build_object('name',i.product_name,'quantity',i.quantity,'lineTotal',i.line_total_minor)) FILTER (WHERE i.id IS NOT NULL),'[]'::json) AS items FROM public.orders o LEFT JOIN public.order_items i ON i.tenant_id=o.tenant_id AND i.order_id=o.id LEFT JOIN LATERAL (SELECT p.status,p.provider_receipt FROM public.payments p WHERE p.tenant_id=o.tenant_id AND p.order_id=o.id ORDER BY p.created_at DESC LIMIT 1) pay ON true WHERE o.tenant_id=${me.tenant_id} GROUP BY o.id,pay.status,pay.provider_receipt ORDER BY o.created_at DESC LIMIT 100`;
+   const os=await sql`SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.total_minor,o.currency,o.status,o.created_at,pay.status AS payment_status,pay.provider_receipt,COALESCE(json_agg(json_build_object('name',i.product_name,'quantity',i.quantity,'unitPrice',i.unit_price_minor,'lineTotal',i.line_total_minor)) FILTER (WHERE i.id IS NOT NULL),'[]'::json) AS items FROM public.orders o LEFT JOIN public.order_items i ON i.tenant_id=o.tenant_id AND i.order_id=o.id LEFT JOIN LATERAL (SELECT p.status,p.provider_receipt FROM public.payments p WHERE p.tenant_id=o.tenant_id AND p.order_id=o.id ORDER BY p.created_at DESC LIMIT 1) pay ON true WHERE o.tenant_id=${me.tenant_id} GROUP BY o.id,pay.status,pay.provider_receipt ORDER BY o.created_at DESC LIMIT 100`;
    return send(res,200,{orders:os.map((o:any)=>({...o,total:Number(o.total_minor)/100,items:o.items}))});
   }
   if(req.method==='POST'&&action==='product'){
    if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission to edit products.'});
-   const b=req.body||{},name=String(b.name||'').trim().slice(0,120),description=String(b.description||'').trim().slice(0,2000),type=['physical','data_bundle','digital'].includes(b.type)?b.type:'physical',price=Number(b.price),stock=b.stock===''||b.stock==null?null:Number(b.stock),sku=String(b.sku||'').trim().slice(0,80)||null;
-   if(!name||!Number.isFinite(price)||price<0||price>100000000|| (stock!==null&&(!Number.isInteger(stock)||stock<0)))return send(res,400,{error:'Enter a product name, valid KES price and valid stock quantity.'});
+   const b=req.body||{},name=String(b.name||'').trim().slice(0,120),description=String(b.description||'').trim().slice(0,2000),type=['physical','data_bundle','digital'].includes(b.type)?b.type:'physical',price=Number(b.price),stock=b.stock===''||b.stock==null?null:Number(b.stock),sku=String(b.sku||'').trim().slice(0,80)||null,rawMeta=b.metadata&&typeof b.metadata==='object'?b.metadata:{};
+   const purchaseCost=rawMeta.purchaseCost===''||rawMeta.purchaseCost==null?null:Number(rawMeta.purchaseCost),taxRate=rawMeta.taxRate===''||rawMeta.taxRate==null?null:Number(rawMeta.taxRate),reorderLevel=rawMeta.reorderLevel===''||rawMeta.reorderLevel==null?null:Number(rawMeta.reorderLevel);
+   if(!name||!Number.isFinite(price)||price<0||price>100000000||(stock!==null&&(!Number.isInteger(stock)||stock<0))||(purchaseCost!==null&&(!Number.isFinite(purchaseCost)||purchaseCost<0||purchaseCost>100000000))||(taxRate!==null&&(!Number.isFinite(taxRate)||taxRate<0||taxRate>100))||(reorderLevel!==null&&(!Number.isInteger(reorderLevel)||reorderLevel<0)))return send(res,400,{error:'Enter valid product name, price, stock, purchase cost, tax rate and reorder level.'});
+   const metadata={itemType:String(rawMeta.itemType||'').trim().slice(0,60),unitOfMeasure:String(rawMeta.unitOfMeasure||'').trim().slice(0,40),purchaseCost,taxRate,reorderLevel,preferredVendor:String(rawMeta.preferredVendor||'').trim().slice(0,120),salesAccount:String(rawMeta.salesAccount||'').trim().slice(0,80),purchaseAccount:String(rawMeta.purchaseAccount||'').trim().slice(0,80),inventoryAccount:String(rawMeta.inventoryAccount||'').trim().slice(0,80),tags:String(rawMeta.tags||'').trim().slice(0,250)};
    const images=Array.isArray(b.images)?b.images.filter((x:any)=>typeof x==='string'&&x.length<=1600000).slice(0,5):[];
    if(images.some((x:string)=>!/^https:\/\//.test(x)&&!/^data:image\/(png|jpeg|webp);base64,/.test(x)))return send(res,400,{error:'Product images must be HTTPS URLs or PNG, JPEG or WebP image files.'});
    const id=String(b.id||'');
    if(id){
-    const updated=await sql`UPDATE public.products SET name=${name},slug=${slugify(name)+'-'+id.slice(0,8)},description=${description},product_type=${type},price_minor=${Math.round(price*100)},stock_quantity=${stock},sku=${sku},images=${JSON.stringify(images)}::jsonb,updated_at=now() WHERE id=${id} AND tenant_id=${me.tenant_id} RETURNING id`;
+    const updated=await sql`UPDATE public.products SET name=${name},slug=${slugify(name)+'-'+id.slice(0,8)},description=${description},product_type=${type},price_minor=${Math.round(price*100)},stock_quantity=${stock},sku=${sku},images=${JSON.stringify(images)}::jsonb,metadata=${JSON.stringify(metadata)}::jsonb,updated_at=now() WHERE id=${id} AND tenant_id=${me.tenant_id} RETURNING id`;
     if(!updated.length)return send(res,404,{error:'Product not found.'});
     await audit(sql,me.tenant_id,me.user_id,'product.updated','product',id,{name,type,price});
     return send(res,200,{ok:true});
    }
-   const inserted=await sql`INSERT INTO public.products(tenant_id,name,slug,description,product_type,price_minor,stock_quantity,sku,images) VALUES(${me.tenant_id},${name},${slugify(name)+'-'+crypto.randomBytes(4).toString('hex')},${description},${type},${Math.round(price*100)},${stock},${sku},${JSON.stringify(images)}::jsonb) RETURNING id`;
+   const inserted=await sql`INSERT INTO public.products(tenant_id,name,slug,description,product_type,price_minor,stock_quantity,sku,images,metadata) VALUES(${me.tenant_id},${name},${slugify(name)+'-'+crypto.randomBytes(4).toString('hex')},${description},${type},${Math.round(price*100)},${stock},${sku},${JSON.stringify(images)}::jsonb,${JSON.stringify(metadata)}::jsonb) RETURNING id`;
    await audit(sql,me.tenant_id,me.user_id,'product.created','product',inserted[0].id,{name,type,price});
    return send(res,201,{ok:true});
   }
