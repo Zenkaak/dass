@@ -514,3 +514,72 @@
  .seller-order-timeline ol{padding-left:19px}
  .seller-order-timeline ol:before{left:33px}
 }
+
+
+/* Seller order detail follows the active DASNET workspace theme. */
+.seller-app{--order-surface:#0b1b2d;--order-surface-raised:#10243b;--order-surface-soft:#0e2035;--order-line:rgba(143,177,224,.2);--order-text:#eaf2ff;--order-muted:#9bb0cc;--order-blue:#62adff;--order-green:#24d58b;--order-panel:#0b1a2c}
+.seller-app[data-theme="light"]{--order-surface:#fff;--order-surface-raised:#f4f8ff;--order-surface-soft:#edf4ff;--order-line:#dce7f5;--order-text:#142b4e;--order-muted:#6b809b;--order-blue:#0874e8;--order-green:#078b49;--order-panel:#f5f9ff}
+.seller-order-route{color:var(--order-text)}
+.seller-order-route-top .seller-secondary-btn{background:var(--order-surface-raised);border-color:var(--order-line);color:var(--order-text)}
+.seller-order-approved{background:var(--order-surface);border-color:var(--order-line);color:var(--order-text);box-shadow:0 12px 32px rgba(0,0,0,.16)}
+.seller-order-hero-main h2,.seller-order-customer-payment strong,.seller-order-item-name strong,.seller-order-approved-total,.seller-order-status-pill select{color:var(--order-text)}
+.seller-order-hero-main>span,.seller-order-hero-main p,.seller-order-customer-payment small,.seller-order-item-name small{color:var(--order-muted)}
+.seller-order-hero-icon{background:rgba(36,213,139,.13);border:1px solid rgba(36,213,139,.3);color:var(--order-green)}
+.seller-order-amount{background:rgba(36,213,139,.09);border-color:rgba(36,213,139,.32)}
+.seller-order-amount strong,.seller-order-approved-total strong:last-child{color:var(--order-green)}
+.seller-order-amount span{color:var(--order-text)}
+.seller-order-customer-payment{background:var(--order-surface-raised);border-color:var(--order-line)}
+.seller-order-mpesa{border-color:var(--order-line)}
+.seller-order-round-icon{background:rgba(98,173,255,.13);color:var(--order-blue)}
+.seller-order-customer-payment a,.seller-order-receipt{color:var(--order-blue)!important}
+.seller-order-fulfilment-pill{background:rgba(52,139,255,.12);border-color:rgba(98,173,255,.35);color:var(--order-blue)}
+.seller-order-status-pill{background:rgba(36,213,139,.1);border-color:rgba(36,213,139,.3);color:var(--order-green)}
+.seller-order-status-pill select{background:transparent;color:var(--order-text)}
+.seller-order-approved-items{background:var(--order-surface)!important;border-color:var(--order-line)!important}
+.seller-order-approved-items-body{background:var(--order-surface)}
+.seller-order-approved-table-head{color:var(--order-muted)}
+.seller-order-approved-item{border-color:var(--order-line);color:var(--order-text)}
+.seller-order-approved-total{color:var(--order-text)}
+.seller-order-approved-delivery{background:var(--order-surface-raised)!important;border-color:var(--order-line)!important}
+.seller-order-delivery-head h3{color:var(--order-text)!important}
+.seller-order-delivery-head p,.seller-order-approved-delivery>label{color:var(--order-muted)}
+.seller-order-approved-delivery select{background:var(--order-surface);border-color:var(--order-line);color:var(--order-text);color-scheme:dark}
+.seller-order-approved-prompt{background:linear-gradient(125deg,rgba(20,110,70,.23),rgba(12,42,42,.78))!important;border-color:rgba(36,213,139,.32)!important}
+.seller-order-approved-panel-title h3{color:var(--order-text)}
+.seller-order-approved-panel-title p,.seller-order-daraja-note{color:var(--order-muted)}
+.seller-order-phone-field{display:flex;align-items:center;gap:12px;min-height:72px;padding:11px 14px;border:1px solid var(--order-line);border-radius:13px;background:var(--order-surface);color:var(--order-blue)}
+.seller-order-phone-icon{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border-radius:11px;background:rgba(98,173,255,.12);font-size:18px}
+.seller-order-phone-copy{min-width:0;flex:1}
+.seller-order-phone-copy>small{display:block;margin-bottom:6px;color:var(--order-muted);font-size:10px;font-weight:700}
+.seller-order-phone-input{display:flex;align-items:center;gap:9px}
+.seller-order-country-code{display:inline-flex;align-items:center;min-height:30px;padding:0 9px;border-right:1px solid var(--order-line);color:var(--order-text);font-size:14px;font-weight:800}
+.seller-order-phone-input input{width:100%;min-width:0;min-height:30px;border:0!important;outline:none!important;background:transparent!important;color:var(--order-text)!important;padding:0!important;font:700 17px 'DM Sans',sans-serif!important;letter-spacing:.04em}
+.seller-order-phone-input input::placeholder{color:var(--order-muted);opacity:.7}
+.seller-order-method-picker{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.seller-order-method-picker button{display:flex;align-items:center;gap:10px;min-width:0;min-height:64px;padding:10px 12px;border:1px solid var(--order-line);border-radius:13px;background:var(--order-surface);color:var(--order-text);text-align:left;cursor:pointer}
+.seller-order-method-picker button.selected{border-color:var(--order-green);background:rgba(36,213,139,.09);box-shadow:inset 0 0 0 1px rgba(36,213,139,.2)}
+.seller-order-method-picker button:disabled{opacity:.38;cursor:not-allowed}
+.seller-order-method-radio{width:17px;height:17px;flex:0 0 17px;border:1.5px solid var(--order-muted);border-radius:50%;display:grid;place-items:center}
+.seller-order-method-picker button.selected .seller-order-method-radio{border:5px solid var(--order-green)}
+.seller-order-method-picker button>span:last-child{display:grid;gap:4px;min-width:0}
+.seller-order-method-picker strong{font-size:12px;color:var(--order-text)}
+.seller-order-method-picker small{font-size:9px;color:var(--order-muted);overflow-wrap:anywhere}
+.seller-order-send-prompt{background:linear-gradient(90deg,#079b4c,#08b45e)}
+.seller-order-approved-chat{background:var(--order-surface)!important;border-color:var(--order-line)!important}
+.seller-order-approved-chat .seller-chat-messages{background:var(--order-surface)}
+.seller-order-approved-chat .seller-chat-message.theirs{background:var(--order-surface-raised);color:var(--order-text)}
+.seller-order-approved-chat .seller-chat-message.mine{background:rgba(52,139,255,.16);color:var(--order-text)}
+.seller-order-approved-chat .seller-chat-message span,.seller-order-approved-chat .seller-chat-message small{color:var(--order-muted)}
+.seller-order-approved-chat .seller-chat-compose input{background:var(--order-surface-raised)!important;border-color:var(--order-line)!important;color:var(--order-text)!important}
+.seller-order-route-footer{border-color:var(--order-line);color:var(--order-muted)}
+.seller-order-not-found{background:var(--order-surface);border-color:var(--order-line);color:var(--order-text)}
+.seller-order-not-found h2{color:var(--order-text)}
+.seller-order-not-found p{color:var(--order-muted)}
+@media(max-width:700px){
+ .seller-order-phone-field{min-height:68px;padding:10px 12px}
+ .seller-order-phone-input input{font-size:16px!important}
+ .seller-order-method-picker{grid-template-columns:1fr 1fr;gap:7px}
+ .seller-order-method-picker button{min-height:66px;padding:9px 8px;gap:7px}
+ .seller-order-method-picker strong{font-size:11px}
+ .seller-order-method-picker small{font-size:8px}
+}
