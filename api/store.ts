@@ -76,8 +76,9 @@ export default async function handler(req:any,res:any){
     else if(p.central_credentials?.data){const sec=decryptBundle(p.central_credentials,key,'platform');c={...sec,shortcode:p.central_shortcode,environment:p.central_environment,partyB:method==='paybill'?(p.paybill_party_b||p.party_b||p.central_party_b):(p.till_party_b||p.party_b||p.central_party_b),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
     if(!c)throw Error('No payment credentials available');
     if(resultCode!==0){
-     await sql`UPDATE public.payments SET status='failed',provider_result=${JSON.stringify(cb)}::jsonb,updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
-     return send(res,200,{ResultCode:0,ResultDesc:'Payment failure recorded'});
+     const terminalStatus=resultCode===1032?'cancelled':'failed';
+     await sql`UPDATE public.payments SET status=${terminalStatus},provider_result=${JSON.stringify({callback:cb,resultCode,resultDescription:String(cb.ResultDesc||'')})}::jsonb,updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
+     return send(res,200,{ResultCode:0,ResultDesc:terminalStatus==='cancelled'?'Customer cancelled payment':'Payment failure recorded'});
     }
     const checked=await verifyStk(c,checkout);
     if(Number(checked.ResultCode)!==0||!checked.ResultCode&&checked.ResultCode!==0)throw Error('Provider has not confirmed successful payment.');
@@ -94,7 +95,7 @@ export default async function handler(req:any,res:any){
   if((req.method==='GET'||req.method==='POST')&&action==='customer-chat'){
    const b=req.body||{},tokenValue=String(req.method==='GET'?req.query?.token:b.token||'').trim();
    if(!/^[a-f0-9]{64}$/.test(tokenValue))return send(res,401,{error:'This chat link is invalid or expired.'});
-   const rows=await sql`SELECT id,tenant_id,order_number FROM public.orders WHERE customer_chat_token_hash=${hash(tokenValue)} LIMIT 1`;
+   const rows=await sql`SELECT id,tenant_id,order_number,customer_name,status,delivery_status,delivery_updated_at,created_at,total_minor FROM public.orders WHERE customer_chat_token_hash=${hash(tokenValue)} LIMIT 1`;
    if(!rows.length)return send(res,401,{error:'This chat link is invalid or expired.'});
    const order=rows[0];
    if(req.method==='POST'){
@@ -104,7 +105,8 @@ export default async function handler(req:any,res:any){
     await sql`INSERT INTO public.order_messages(tenant_id,order_id,sender_type,message) VALUES(${order.tenant_id},${order.id},'customer',${message})`;
    }
    const messages=await sql`SELECT id,sender_type,message,created_at FROM public.order_messages WHERE tenant_id=${order.tenant_id} AND order_id=${order.id} ORDER BY created_at ASC LIMIT 100`;
-   return send(res,200,{orderNumber:order.order_number,messages});
+   const payment=await sql`SELECT status,provider_receipt,updated_at FROM public.payments WHERE tenant_id=${order.tenant_id} AND order_id=${order.id} ORDER BY created_at DESC LIMIT 1`;
+   return send(res,200,{orderNumber:order.order_number,order:{orderNumber:order.order_number,customerName:order.customer_name,status:order.status,deliveryStatus:order.delivery_status||'pending_delivery',deliveryUpdatedAt:order.delivery_updated_at,total:Number(order.total_minor)/100,paymentStatus:payment[0]?.status||'unpaid',receipt:payment[0]?.provider_receipt||null},messages});
   }
   if(!me && action!=='order')return send(res,401,{error:'Please sign in to access your seller workspace.'});
   if(req.method==='POST'&&action==='order'){
@@ -254,7 +256,7 @@ export default async function handler(req:any,res:any){
    return send(res,200,{shop:{name:me.shop_name,slug:me.slug,description:me.shop_description||'',logoUrl:site[0]?.logo_url||''},products:ps.map(productOut)});
   }
   if(req.method==='GET'&&action==='orders'){
-   const os=await sql`SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.total_minor,o.currency,o.status,o.created_at,pay.status AS payment_status,pay.provider_receipt,COALESCE(json_agg(json_build_object('name',i.product_name,'quantity',i.quantity,'unitPrice',i.unit_price_minor,'lineTotal',i.line_total_minor)) FILTER (WHERE i.id IS NOT NULL),'[]'::json) AS items FROM public.orders o LEFT JOIN public.order_items i ON i.tenant_id=o.tenant_id AND i.order_id=o.id LEFT JOIN LATERAL (SELECT p.status,p.provider_receipt FROM public.payments p WHERE p.tenant_id=o.tenant_id AND p.order_id=o.id ORDER BY p.created_at DESC LIMIT 1) pay ON true WHERE o.tenant_id=${me.tenant_id} GROUP BY o.id,pay.status,pay.provider_receipt ORDER BY o.created_at DESC LIMIT 100`;
+   const os=await sql`SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.total_minor,o.currency,o.status,o.delivery_status,o.delivery_updated_at,o.created_at,pay.status AS payment_status,pay.provider_receipt,pay.payment_message,COALESCE(json_agg(json_build_object('name',i.product_name,'quantity',i.quantity,'unitPrice',i.unit_price_minor,'lineTotal',i.line_total_minor)) FILTER (WHERE i.id IS NOT NULL),'[]'::json) AS items FROM public.orders o LEFT JOIN public.order_items i ON i.tenant_id=o.tenant_id AND i.order_id=o.id LEFT JOIN LATERAL (SELECT p.status,p.provider_receipt,COALESCE(p.provider_result->>'error',p.provider_result->'callback'->'ResultDesc'->>0,p.provider_result->'callback'->'Body'->'stkCallback'->>'ResultDesc') AS payment_message FROM public.payments p WHERE p.tenant_id=o.tenant_id AND p.order_id=o.id ORDER BY p.created_at DESC LIMIT 1) pay ON true WHERE o.tenant_id=${me.tenant_id} GROUP BY o.id,pay.status,pay.provider_receipt,pay.payment_message ORDER BY o.created_at DESC LIMIT 100`;
    return send(res,200,{orders:os.map((o:any)=>({...o,total:Number(o.total_minor)/100,items:o.items}))});
   }
   if(req.method==='POST'&&action==='product'){
@@ -346,6 +348,14 @@ export default async function handler(req:any,res:any){
    if(!['pending','confirmed','processing','fulfilled','cancelled'].includes(status))return send(res,400,{error:'Invalid order status.'});
    const r=await sql`UPDATE public.orders SET status=${status},updated_at=now() WHERE id=${id} AND tenant_id=${me.tenant_id} RETURNING id`;
    if(r.length)await audit(sql,me.tenant_id,me.user_id,'order.status.updated','order',id,{status});
+   return r.length?send(res,200,{ok:true}):send(res,404,{error:'Order not found.'});
+  }
+  if(req.method==='POST'&&action==='order-delivery-status'){
+   if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission to update delivery.'});
+   const id=String(req.body?.id||''),deliveryStatus=String(req.body?.deliveryStatus||'');
+   if(!['pending_delivery','in_transit','delivered'].includes(deliveryStatus))return send(res,400,{error:'Invalid delivery status.'});
+   const r=await sql`UPDATE public.orders SET delivery_status=${deliveryStatus},delivery_updated_at=now(),updated_at=now() WHERE id=${id} AND tenant_id=${me.tenant_id} RETURNING id`;
+   if(r.length)await audit(sql,me.tenant_id,me.user_id,'order.delivery.updated','order',id,{deliveryStatus});
    return r.length?send(res,200,{ok:true}):send(res,404,{error:'Order not found.'});
   }
   if(req.method==='POST'&&action==='order'){
