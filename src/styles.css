@@ -1242,3 +1242,155 @@
  .das-footer-main{width:calc(100% - 28px);padding:25px 0;grid-template-columns:1fr 1fr;gap:22px}
  .das-footer-brand{grid-column:1/-1}
 }
+
+
+/* Refined DASNET marketplace landing page */
+.das-landing{background:#fff;color:#172b3d;overflow:hidden}
+.das-topline{height:34px;padding:0 max(24px,calc((100% - 1240px)/2));background:#0c304b;font-size:10px;letter-spacing:.01em}
+.das-topline>span:first-child{display:flex;align-items:center;gap:8px}
+.das-topline-dot{width:6px;height:6px;border-radius:50%;background:#f4a51c;display:inline-block}
+.das-topline a{color:#dbe9f2;text-decoration:none;font-size:10px}
+.das-site-header{position:sticky;top:0;z-index:30;background:#fff}
+.das-market-nav{width:min(100%,1288px);min-height:76px;margin:auto;padding:10px 24px;border-bottom:0;gap:36px}
+.das-market-nav .brand{font-size:21px;letter-spacing:-.04em}
+.das-market-nav .brand-mark{width:39px;height:39px;border-radius:11px;background:#0c4f78;font-size:20px}
+.das-market-nav-links{gap:30px}
+.das-market-nav-links a,.das-market-nav-actions>a{font-size:13px;font-weight:600;color:#43586a}
+.das-market-nav-actions{gap:22px}
+.das-market-nav-actions .das-nav-signup{display:inline-flex;align-items:center;gap:8px;padding:12px 17px;border-radius:7px;background:#f2a51b;color:#1b2d3c}
+.das-landing-hero{width:min(100% - 48px,1288px);min-height:490px;margin:22px auto 62px;padding:65px 70px;border-radius:19px;background:linear-gradient(115deg,#082f4d 0%,#0b527e 58%,#12638a 100%);box-shadow:0 20px 55px #123e5918}
+.das-landing-hero:after{right:-160px;top:-330px;width:780px;height:780px;border-color:#ffffff1c;box-shadow:0 0 0 65px #ffffff0a,0 0 0 130px #ffffff08}
+.das-landing-hero-copy{max-width:560px}
+.das-landing-hero .das-kicker{display:flex;align-items:center;gap:9px;color:#c5deed}
+.das-landing-hero .das-kicker i{width:7px;height:7px;border-radius:50%;background:#f2a51b}
+.das-landing-hero h1{margin:20px 0 18px;font-family:inherit;font-size:clamp(43px,5vw,64px);font-weight:800;line-height:1.04;letter-spacing:-.055em}
+.das-landing-hero h1 em{color:#f4b63e;font-style:normal}
+.das-landing-hero p{max-width:510px;font-size:15px;line-height:1.75;color:#d7e5ee}
+.das-landing-actions{margin-top:29px;gap:13px}
+.das-primary-action,.das-secondary-action{min-height:48px;padding:0 20px;border-radius:7px;font-size:13px}
+.das-primary-action{background:#f3ab24;color:#1b2d3c}
+.das-secondary-action{border-color:#ffffff70;background:#ffffff0a}
+.das-hero-note{display:flex;align-items:center;gap:8px;margin-top:28px;color:#c4dce9;font-size:11px}
+.das-hero-note svg{color:#f3b43c}
+.das-hero-art{width:470px;height:345px;flex-basis:470px}
+.das-hero-art-glow{position:absolute;width:330px;height:330px;border-radius:50%;background:#2a8ab444;filter:blur(45px)}
+.das-market-visual{position:relative;width:345px;padding:17px;border:1px solid #ffffffb0;border-radius:15px;background:#fff;color:#20384a;box-shadow:0 28px 65px #041e3266;transform:rotate(2deg)}
+.das-visual-top{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:800}
+.das-visual-brand{display:flex;align-items:center;gap:7px}
+.das-visual-brand b{display:grid;place-items:center;width:23px;height:23px;border-radius:6px;background:#0c527e;color:#fff}
+.das-visual-dots{letter-spacing:2px;color:#94a2ad}
+.das-visual-search{display:flex;align-items:center;gap:8px;margin:14px 0;padding:9px 11px;border:1px solid #e5eaee;border-radius:6px;color:#8b98a3;font-size:9px}
+.das-visual-feature{display:flex;align-items:center;justify-content:space-between;min-height:132px;padding:16px;border-radius:9px;background:linear-gradient(110deg,#f7e7c8,#f4c36c)}
+.das-visual-feature>div:first-child{display:grid;gap:7px}
+.das-visual-feature small{font-size:7px;font-weight:800;letter-spacing:.1em;color:#805b24}
+.das-visual-feature strong{font-family:Georgia,serif;font-size:25px;line-height:1.02;color:#253c4c}
+.das-visual-feature i{display:flex;align-items:center;gap:4px;font-size:9px;font-style:normal;font-weight:800;color:#805b24}
+.das-visual-bag{position:relative;display:grid;place-items:center;width:85px;height:85px;border-radius:50%;background:#fff8e8;color:#c37d14}
+.das-visual-bag span{position:absolute;right:4px;bottom:7px;width:21px;height:21px;border:4px solid #fff;border-radius:50%;background:#0d8b66}
+.das-visual-categories{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:12px 0}
+.das-visual-categories span{display:flex;align-items:center;gap:5px;padding:8px 5px;border:1px solid #e8edf0;border-radius:5px;font-size:8px;color:#526677}
+.das-visual-categories b{color:#0c628d;font-size:12px}
+.das-visual-products{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.das-visual-products i{height:46px;border-radius:5px;background:linear-gradient(135deg,#eef2f3,#dce5e9)}
+.das-visual-float{position:absolute;z-index:2;display:grid;grid-template-columns:34px 1fr;column-gap:8px;align-items:center;min-width:175px;padding:11px 13px;border:1px solid #ffffff;border-radius:9px;background:#fff;color:#263d4f;box-shadow:0 12px 32px #082d4640}
+.das-visual-float>span{grid-row:span 2;display:grid;place-items:center;width:32px;height:32px;border-radius:8px;background:#e7f2f7;color:#0c5d88}
+.das-visual-float b{font-size:10px}.das-visual-float small{font-size:8px;color:#83919c}
+.das-visual-float-one{left:-24px;top:35px}.das-visual-float-two{right:-26px;bottom:25px}
+.das-audience-section,.das-safety-section{width:min(100% - 48px,1160px);padding:10px 0 68px}
+.das-section-intro{text-align:center;margin:0 auto 30px}
+.das-section-intro .das-kicker,.das-faq-heading .das-kicker{color:#a46a12}
+.das-section-intro h2,.das-faq-heading h2{margin:12px 0 9px;font-family:inherit;font-size:clamp(29px,3.2vw,39px);font-weight:800;line-height:1.13;letter-spacing:-.04em;color:#16354b}
+.das-section-intro>p,.das-faq-heading>p{margin:0;color:#748391;font-size:13px;line-height:1.6}
+.das-audience-grid{gap:22px}
+.das-info-card{position:relative;min-height:360px;padding:30px 32px;border-radius:13px;box-shadow:0 10px 35px #153a520b}
+.das-buyer-card{background:#f6f9fb;border-color:#e6edf1}
+.das-seller-card{background:#fffaf0;border-color:#f0e7d4}
+.das-card-icon{display:grid;place-items:center;width:48px;height:48px;margin-bottom:18px;border-radius:12px;background:#e4f0f6;color:#0c5c88}
+.das-seller-card .das-card-icon{background:#f8e9c9;color:#a66c13}
+.das-card-eyebrow{font-size:9px;font-weight:850;letter-spacing:.15em;color:#7a8b98}
+.das-info-card h3{margin:10px 0 10px;font-size:25px;line-height:1.15;letter-spacing:-.035em;color:#17384f}
+.das-info-card>p{max-width:440px;margin:0 0 18px;color:#71808d;font-size:12px;line-height:1.65}
+.das-info-card ul{gap:10px;margin-bottom:22px}
+.das-info-card li{font-size:12px;color:#596b79}
+.das-info-card li:before{content:"✓";color:#0e7c66}
+.das-info-card>a{display:inline-flex;min-height:42px;padding:0 16px;border-color:#dce5eb;background:#fff;color:#174c6c;font-weight:750}
+.das-seller-card>a{border-color:#eeddb9;color:#80550f}
+.das-safety-section{padding-top:20px;padding-bottom:68px}
+.das-safety-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.das-safety-grid article{display:flex;gap:13px;min-height:148px;padding:20px;border-radius:11px;box-shadow:none}
+.das-safety-icon{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border-radius:9px;background:#e9f2f7;color:#155d84}
+.das-safety-grid h3{margin:2px 0 7px;font-size:13px;font-weight:750;color:#274357}
+.das-safety-grid p{font-size:11px;line-height:1.6}
+.das-safety-help{display:flex;align-items:center;gap:13px;margin-top:18px;padding:17px 20px;border-radius:9px;background:#f1f6f8;color:#155d84}
+.das-safety-help>p{display:grid;gap:3px;flex:1;margin:0}
+.das-safety-help strong{font-size:12px;color:#274357}
+.das-safety-help span{font-size:11px;color:#71808d}
+.das-safety-help>a{display:flex;align-items:center;gap:6px;color:#155d84;text-decoration:none;font-size:11px;font-weight:750}
+.das-faq-section{width:min(100% - 48px,1000px);padding:20px 0 72px;display:grid;grid-template-columns:.8fr 1.2fr;gap:45px;align-items:start}
+.das-faq-heading{padding-top:18px}
+.das-faq-heading h2{font-size:32px}
+.das-faq-panel{border-radius:12px;box-shadow:0 10px 35px #153a520b}
+.das-faq-panel summary{padding:18px 20px;font-size:12px;font-weight:700}
+.das-faq-panel details p{font-size:11px;line-height:1.7}
+.das-landing-footer{background:#0b2d45;color:#d8e5ed;border:0}
+.das-footer-main{width:min(100% - 48px,1160px);padding:45px 0;gap:65px}
+.das-footer-brand .brand{color:#fff}
+.das-footer-brand .brand-mark{background:#f1a51c;color:#17344a}
+.das-footer-brand p{max-width:360px;color:#b8cbd7;font-size:11px}
+.das-footer-main strong{color:#fff;font-size:12px}
+.das-footer-main a{color:#bfd0db;font-size:11px}
+.das-footer-main .das-footer-email{color:#f3bd52}
+.das-footer-bottom{display:flex;justify-content:space-between;width:min(100% - 48px,1160px);margin:auto;padding:17px 0;border-top:1px solid #ffffff20;color:#a9bdca;font-size:10px;text-align:left}
+@media(max-width:850px){
+ .das-landing-hero{padding:48px 36px;min-height:430px}
+ .das-hero-art{width:350px;height:300px;flex-basis:350px;transform:scale(.88);transform-origin:center right}
+ .das-visual-float-one{left:-8px}.das-visual-float-two{right:-8px}
+ .das-safety-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .das-faq-section{grid-template-columns:1fr;gap:18px}
+ .das-faq-heading{text-align:center;padding-top:0}
+}
+@media(max-width:600px){
+ .das-topline{height:30px;padding:0 12px;font-size:8px}
+ .das-topline>span:nth-child(2){display:none}
+ .das-market-nav{min-height:62px;padding:8px 14px}
+ .das-market-nav .brand{font-size:18px}
+ .das-market-nav-actions{gap:11px}
+ .das-market-nav-actions>a{font-size:11px}
+ .das-market-nav-actions .das-nav-signup{padding:10px 12px}
+ .das-landing-hero{width:calc(100% - 24px);min-height:0;margin:12px auto 42px;padding:36px 23px 32px;border-radius:13px}
+ .das-landing-hero h1{font-size:39px;line-height:1.04}
+ .das-landing-hero p{font-size:12px;line-height:1.7}
+ .das-landing-actions{gap:9px;margin-top:22px}
+ .das-primary-action,.das-secondary-action{min-height:44px;padding:0 13px;font-size:11px}
+ .das-hero-note{align-items:flex-start;font-size:9px;line-height:1.5}
+ .das-hero-art{width:100%;height:245px;margin:23px auto 0;flex-basis:auto;transform:none;transform-origin:center}
+ .das-market-visual{width:min(100%,310px);padding:13px;transform:rotate(1deg)}
+ .das-visual-feature{min-height:105px}
+ .das-visual-feature strong{font-size:21px}
+ .das-visual-bag{width:68px;height:68px}
+ .das-visual-float{min-width:145px;padding:8px 9px}
+ .das-visual-float-one{left:-5px;top:4px}
+ .das-visual-float-two{right:-5px;bottom:2px}
+ .das-audience-section,.das-safety-section{width:calc(100% - 26px);padding:0 0 45px}
+ .das-section-intro{margin-bottom:19px}
+ .das-section-intro h2,.das-faq-heading h2{font-size:27px}
+ .das-section-intro>p,.das-faq-heading>p{font-size:11px}
+ .das-audience-grid{grid-template-columns:1fr;gap:11px}
+ .das-info-card{min-height:0;padding:22px 20px}
+ .das-info-card h3{font-size:22px}
+ .das-info-card>p{font-size:11px}
+ .das-info-card li{font-size:11px}
+ .das-safety-grid{grid-template-columns:1fr;gap:9px}
+ .das-safety-grid article{min-height:0;padding:15px}
+ .das-safety-grid p{font-size:10px}
+ .das-safety-help{align-items:flex-start;flex-wrap:wrap;padding:14px}
+ .das-safety-help>p{min-width:calc(100% - 40px)}
+ .das-safety-help>a{margin-left:32px}
+ .das-faq-section{width:calc(100% - 26px);padding:0 0 48px;gap:14px}
+ .das-faq-heading h2{font-size:26px}
+ .das-faq-panel summary{padding:15px 13px;font-size:11px}
+ .das-faq-panel details p{padding:0 13px 14px;font-size:10px}
+ .das-footer-main{width:calc(100% - 30px);padding:30px 0;grid-template-columns:1fr 1fr;gap:23px}
+ .das-footer-brand{grid-column:1/-1}
+ .das-footer-bottom{width:calc(100% - 30px);gap:10px;flex-direction:column;font-size:9px}
+}
