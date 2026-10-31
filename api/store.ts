@@ -129,8 +129,8 @@ export default async function handler(req:any,res:any){
   }
   if(req.method==='POST'&&action==='chat-attachment'){
    const b=req.body||{},mode=String(b.mode||''),tokenValue=String(b.token||'').trim();let order:any=null,tenantId='',uploader='merchant',userId:string|null=null;
-   if(tokenValue){if(!/^[a-f0-9]{64}$/.test(tokenValue))return send(res,401,{error:'This chat link is invalid or expired.'});const rows=await sql\`SELECT id,tenant_id FROM public.orders WHERE customer_chat_token_hash=\${hash(tokenValue)} LIMIT 1\`;order=rows[0];uploader='customer';}
-   else if(me){const orderId=String(b.orderId||'');if(!orderId)return send(res,400,{error:'Order reference is required.'});if(!['owner','admin','editor','viewer'].includes(me.role))return send(res,403,{error:'You do not have permission to access order conversations.'});const rows=await sql\`SELECT id,tenant_id FROM public.orders WHERE id=\${orderId} AND tenant_id=\${me.tenant_id} LIMIT 1\`;order=rows[0];tenantId=me.tenant_id;userId=me.user_id;}
+   if(tokenValue){if(!/^[a-f0-9]{64}$/.test(tokenValue))return send(res,401,{error:'This chat link is invalid or expired.'});const rows=await sql`SELECT id,tenant_id FROM public.orders WHERE customer_chat_token_hash=${hash(tokenValue)} LIMIT 1`;order=rows[0];uploader='customer';}
+   else if(me){const orderId=String(b.orderId||'');if(!orderId)return send(res,400,{error:'Order reference is required.'});if(!['owner','admin','editor','viewer'].includes(me.role))return send(res,403,{error:'You do not have permission to access order conversations.'});const rows=await sql`SELECT id,tenant_id FROM public.orders WHERE id=${orderId} AND tenant_id=${me.tenant_id} LIMIT 1`;order=rows[0];tenantId=me.tenant_id;userId=me.user_id;}
    if(!order)return send(res,404,{error:'Order not found or chat link expired.'});tenantId=order.tenant_id;
    if(mode==='upload'){
     if(!tokenValue&&(!me||!['owner','admin','editor'].includes(me.role)))return send(res,403,{error:'You cannot upload files from this account.'});
@@ -138,16 +138,16 @@ export default async function handler(req:any,res:any){
     if(!allowed||allowed.mime!==mime)return send(res,415,{error:'File type not allowed. Use PDF, DOC/DOCX, XLS/XLSX, TXT, JPG, PNG or WEBP.'});
     if(!Number.isSafeInteger(size)||size<1||size>10485760)return send(res,413,{error:'Each attachment must be 10 MB or smaller.'});
     const id=crypto.randomUUID(),key=tenantId+'/'+order.id+'/'+id+'-'+safeFileName(name);
-    await sql\`INSERT INTO public.order_message_attachments(tenant_id,order_id,uploader_type,uploaded_by,object_key,file_name,content_type,size_bytes) VALUES(\${tenantId},\${order.id},\${uploader},\${userId},\${key},\${safeFileName(name)},\${mime},\${size})\`;
+    await sql`INSERT INTO public.order_message_attachments(tenant_id,order_id,uploader_type,uploaded_by,object_key,file_name,content_type,size_bytes) VALUES(${tenantId},${order.id},${uploader},${userId},${key},${safeFileName(name)},${mime},${size})`;
     return send(res,200,{ok:true,attachmentId:id,uploadUrl:storageUrl(key,'PUT',mime),expiresIn:300});
    }
    if(mode==='complete'){
-    const id=String(b.attachmentId||'');const rows=await sql\`UPDATE public.order_message_attachments SET upload_status='ready' WHERE id=\${id} AND tenant_id=\${tenantId} AND order_id=\${order.id} AND uploader_type=\${uploader} AND upload_status='pending' RETURNING id,file_name,size_bytes,content_type,created_at\`;
+    const id=String(b.attachmentId||'');const rows=await sql`UPDATE public.order_message_attachments SET upload_status='ready' WHERE id=${id} AND tenant_id=${tenantId} AND order_id=${order.id} AND uploader_type=${uploader} AND upload_status='pending' RETURNING id,file_name,size_bytes,content_type,created_at`;
     if(!rows.length)return send(res,404,{error:'Attachment upload could not be confirmed.'});
     return send(res,200,{ok:true,attachment:rows[0]});
    }
    if(mode==='download'){
-    const id=String(b.attachmentId||'');const rows=await sql\`SELECT id,object_key,file_name,content_type FROM public.order_message_attachments WHERE id=\${id} AND tenant_id=\${tenantId} AND order_id=\${order.id} AND upload_status='ready' LIMIT 1\`;
+    const id=String(b.attachmentId||'');const rows=await sql`SELECT id,object_key,file_name,content_type FROM public.order_message_attachments WHERE id=${id} AND tenant_id=${tenantId} AND order_id=${order.id} AND upload_status='ready' LIMIT 1`;
     if(!rows.length)return send(res,404,{error:'Attachment not found.'});
     return send(res,200,{url:storageUrl(rows[0].object_key,'GET'),fileName:rows[0].file_name,contentType:rows[0].content_type,expiresIn:300});
    }
