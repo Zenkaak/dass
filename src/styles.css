@@ -675,3 +675,14 @@
  .seller-order-approved p,.seller-order-approved label,.seller-order-approved input,.seller-order-approved select,.seller-order-approved button{font-size:12px}
  .seller-order-approved small{font-size:10px}
 }
+
+
+/* Keep order navigation and print controls compact on one row on mobile */
+.seller-order-route-top{display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:8px;width:100%;margin:0 0 8px;min-height:0}
+.seller-order-route-top .seller-secondary-btn{flex:0 0 auto;width:auto;min-height:32px;padding:5px 9px;font-size:11px;line-height:1.15}
+.seller-order-route-top .seller-order-print{margin-left:0;display:inline-flex;flex:0 0 auto;align-items:center;justify-content:center;gap:5px;white-space:nowrap}
+@media(max-width:700px){
+ .seller-order-route-top{flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:7px!important;margin:0 0 8px!important}
+ .seller-order-route-top .seller-secondary-btn{width:auto!important;min-height:30px;padding:5px 8px;font-size:10px}
+ .seller-order-route-top .seller-order-print{margin-left:0!important}
+}
