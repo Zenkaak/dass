@@ -66,12 +66,12 @@ export default async function handler(req:any,res:any){
   if(req.method==='POST'&&action==='daraja-callback'){
    const cb=req.body?.Body?.stkCallback||{},checkout=String(cb.CheckoutRequestID||''),resultCode=Number(cb.ResultCode);
    if(!checkout)return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
-   const rows=await sql`SELECT p.id,p.tenant_id,p.order_id,p.phone,p.amount_minor,p.status,pc.shortcode,pc.party_b,pc.account_type,pc.environment,pc.encrypted_credentials,pc.payout_method,pc.account_reference,pc.till_party_b,pc.paybill_party_b,pc.default_payout_method,pp.shortcode AS central_shortcode,pp.party_b AS central_party_b,pp.account_type AS central_type,pp.environment AS central_environment,pp.encrypted_credentials AS central_credentials FROM public.payments p LEFT JOIN public.payment_configs pc ON pc.tenant_id=p.tenant_id LEFT JOIN public.platform_payment_config pp ON pp.id=1 WHERE p.provider_checkout_id=${checkout} LIMIT 1`;
+   const rows=await sql`SELECT p.id,p.tenant_id,p.order_id,p.phone,p.amount_minor,p.status,p.provider_result,pc.shortcode,pc.party_b,pc.account_type,pc.environment,pc.encrypted_credentials,pc.payout_method,pc.account_reference,pc.till_party_b,pc.paybill_party_b,pc.default_payout_method,pp.shortcode AS central_shortcode,pp.party_b AS central_party_b,pp.account_type AS central_type,pp.environment AS central_environment,pp.encrypted_credentials AS central_credentials FROM public.payments p LEFT JOIN public.payment_configs pc ON pc.tenant_id=p.tenant_id LEFT JOIN public.platform_payment_config pp ON pp.id=1 WHERE p.provider_checkout_id=${checkout} LIMIT 1`;
    if(!rows.length)return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
    const p=rows[0];if(p.status==='succeeded')return send(res,200,{ResultCode:0,ResultDesc:'Already processed'});
    const key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');let c:any=null;
    try{
-    const method=(p.default_payout_method||p.payout_method||'till')==='paybill'?'paybill':'till';
+    const method=((p.provider_result?.paymentMethod)||(p.default_payout_method||p.payout_method)||'till')==='paybill'?'paybill':'till';
     if(p.encrypted_credentials?.ciphertext){const bundle=decryptBundle(p.encrypted_credentials,key,'seller'),sec=bundle.credentialsByType?.[method]||{...bundle,shortcode:p.shortcode,environment:p.environment};c={...sec,partyB:method==='paybill'?(p.paybill_party_b||p.party_b):(p.till_party_b||p.party_b),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
     else if(p.central_credentials?.data){const sec=decryptBundle(p.central_credentials,key,'platform');c={...sec,shortcode:p.central_shortcode,environment:p.central_environment,partyB:method==='paybill'?(p.paybill_party_b||p.party_b||p.central_party_b):(p.till_party_b||p.party_b||p.central_party_b),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
     if(!c)throw Error('No payment credentials available');
@@ -273,6 +273,39 @@ export default async function handler(req:any,res:any){
    const r=await sql`DELETE FROM public.products WHERE id=${id} AND tenant_id=${me.tenant_id} RETURNING id`;
    if(r.length)await audit(sql,me.tenant_id,me.user_id,'product.deleted','product',id);
    return r.length?send(res,200,{ok:true}):send(res,404,{error:'Product not found.'});
+  }
+  if(req.method==='POST'&&action==='order-prompt'){
+   if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission to request customer payments.'});
+   const orderId=String(req.body?.orderId||''),phone=normalizePhone(req.body?.phone);
+   if(!orderId||!phone)return send(res,400,{error:'Enter a valid customer phone number.'});
+   const found=await sql`SELECT id,order_number,total_minor,status FROM public.orders WHERE id=${orderId} AND tenant_id=${me.tenant_id} LIMIT 1`;
+   if(!found.length)return send(res,404,{error:'Order not found.'});
+   const order=found[0];
+   if(['cancelled','refunded'].includes(String(order.status)))return send(res,409,{error:'A payment prompt cannot be sent for a cancelled or refunded order.'});
+   const prior=await sql`SELECT status FROM public.payments WHERE tenant_id=${me.tenant_id} AND order_id=${order.id} ORDER BY created_at DESC LIMIT 1`;
+   if(prior[0]?.status==='succeeded')return send(res,409,{error:'This order is already paid. No new prompt was sent.'});
+   const configs=await sql`SELECT pc.*,pp.shortcode AS central_shortcode,pp.party_b AS central_party_b,pp.environment AS central_environment,pp.encrypted_credentials AS central_credentials FROM public.tenants t LEFT JOIN public.payment_configs pc ON pc.tenant_id=t.id LEFT JOIN public.platform_payment_config pp ON pp.id=1 WHERE t.id=${me.tenant_id} LIMIT 1`;
+   const cfg=configs[0]||{},key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');let payment:any=null;
+   try{
+    const method=(cfg.default_payout_method||cfg.payout_method||'till')==='paybill'?'paybill':'till';
+    if(cfg.encrypted_credentials?.ciphertext){const bundle=decryptBundle(cfg.encrypted_credentials,key,'seller'),sec=bundle.credentialsByType?.[method]||{...bundle,shortcode:cfg.shortcode,environment:cfg.environment};payment={...sec,partyB:method==='paybill'?(cfg.paybill_party_b||cfg.party_b):(cfg.till_party_b||cfg.party_b),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
+    else if(cfg.central_credentials?.data){const sec=decryptBundle(cfg.central_credentials,key,'platform');payment={...sec,shortcode:cfg.central_shortcode,partyB:method==='paybill'?(cfg.paybill_party_b||cfg.party_b||cfg.central_party_b):(cfg.till_party_b||cfg.party_b||cfg.central_party_b),environment:cfg.central_environment,accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
+   }catch(e:any){console.error('Order payment prompt credentials failed',e?.message||e);return send(res,503,{error:'Payment credentials could not be loaded securely.'});}
+   if(!payment?.consumerKey||!payment?.consumerSecret||!payment?.passkey||!payment?.shortcode||!payment?.partyB)return send(res,503,{error:'Complete the matching Daraja credentials and payout destination before requesting payment.'});
+   if(payment.environment!=='production')return send(res,503,{error:'The selected Daraja credentials are in sandbox. Live payment prompts are disabled.'});
+   const amount=Number(order.total_minor);if(!Number.isSafeInteger(amount)||amount<1)return send(res,400,{error:'This order has an invalid total.'});
+   const idempotency=crypto.randomUUID();
+   const p=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result) VALUES(${me.tenant_id},${order.id},'mpesa_daraja',${phone},${amount},'KES','initiated',${idempotency},${JSON.stringify({paymentMethod:cfg.default_payout_method||cfg.payout_method||'till',source:'merchant_order_prompt'})}::jsonb) RETURNING id`;
+   try{
+    const callbackBase=env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dass-gamma.vercel.app')),callbackUrl=callbackBase.replace(/\/$/,'')+'/api/store?action=daraja-callback';
+    const stk=await startStk(payment,order,phone,amount/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):order.order_number.slice(-12),callbackUrl);
+    await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({paymentMethod:cfg.default_payout_method||cfg.payout_method||'till',source:'merchant_order_prompt',merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
+    await audit(sql,me.tenant_id,me.user_id,'order.payment_prompt.sent','order',order.id,{paymentMethod:cfg.default_payout_method||cfg.payout_method||'till',amountMinor:amount});
+    return send(res,200,{ok:true,checkoutRequestId:stk.checkoutId,message:'M-PESA prompt sent for KES '+(amount/100).toLocaleString('en-KE')+'. Ask the customer to enter their M-PESA PIN.'});
+   }catch(e:any){
+    await sql`UPDATE public.payments SET status='failed',provider_result=${JSON.stringify({paymentMethod:cfg.default_payout_method||cfg.payout_method||'till',source:'merchant_order_prompt',error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
+    console.error('Order STK prompt failed',e?.message||e);return send(res,502,{error:e?.message||'Could not send the M-PESA prompt.'});
+   }
   }
   if(req.method==='POST'&&action==='order-status'){
    if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission.'});
