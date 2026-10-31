@@ -126,7 +126,7 @@ export default async function handler(req:any,res:any){
    }
    const messages=await sql`SELECT id,sender_type,message,created_at FROM public.order_messages WHERE tenant_id=${order.tenant_id} AND order_id=${order.id} ORDER BY created_at ASC LIMIT 100`;
    const payment=await sql`SELECT status,provider_receipt,updated_at FROM public.payments WHERE tenant_id=${order.tenant_id} AND order_id=${order.id} ORDER BY created_at DESC LIMIT 1`;
-   return send(res,200,{orderNumber:order.order_number,order:{orderNumber:order.order_number,customerName:order.customer_name,status:order.status,deliveryStatus:order.delivery_status||'pending_delivery',deliveryUpdatedAt:order.delivery_updated_at,total:Number(order.total_minor)/100,paymentStatus:payment[0]?.status||'unpaid',receipt:payment[0]?.provider_receipt||null},messages});
+   const attachments=await sql`SELECT id,uploader_type,file_name,content_type,size_bytes,created_at FROM public.order_message_attachments WHERE tenant_id=${order.tenant_id} AND order_id=${order.id} AND upload_status='ready' ORDER BY created_at ASC LIMIT 100`;return send(res,200,{orderNumber:order.order_number,order:{orderNumber:order.order_number,customerName:order.customer_name,status:order.status,deliveryStatus:order.delivery_status||'pending_delivery',deliveryUpdatedAt:order.delivery_updated_at,total:Number(order.total_minor)/100,paymentStatus:payment[0]?.status||'unpaid',receipt:payment[0]?.provider_receipt||null},messages,attachments});
   }
   if(req.method==='POST'&&action==='chat-attachment'){
    const b=req.body||{},mode=String(b.mode||''),tokenValue=String(b.token||'').trim();let order:any=null,tenantId='',uploader='merchant',userId:string|null=null;
@@ -391,7 +391,7 @@ export default async function handler(req:any,res:any){
     await audit(sql,me.tenant_id,me.user_id,'order.message.sent','order',orderId,{sender:'merchant'});
    }
    const messages=await sql`SELECT id,sender_type,message,created_at FROM public.order_messages WHERE tenant_id=${me.tenant_id} AND order_id=${orderId} ORDER BY created_at ASC LIMIT 100`;
-   return send(res,200,{orderNumber:found[0].order_number,messages});
+   const attachments=await sql`SELECT id,uploader_type,file_name,content_type,size_bytes,created_at FROM public.order_message_attachments WHERE tenant_id=${me.tenant_id} AND order_id=${orderId} AND upload_status='ready' ORDER BY created_at ASC LIMIT 100`;return send(res,200,{orderNumber:found[0].order_number,messages,attachments});
   }
   if(req.method==='POST'&&action==='order-status'){
    if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission.'});
