@@ -299,7 +299,7 @@ export default async function handler(req:any,res:any){
    const order=found[0];
    if(['cancelled','refunded'].includes(String(order.status)))return send(res,409,{error:'A payment prompt cannot be sent for a cancelled or refunded order.'});
    const prior=await sql`SELECT status FROM public.payments WHERE tenant_id=${me.tenant_id} AND order_id=${order.id} ORDER BY created_at DESC LIMIT 1`;
-   if(prior[0]?.status==='succeeded')return send(res,409,{error:'This order is already paid. No new prompt was sent.'});
+   if(prior[0]?.status==='succeeded')return send(res,409,{error:'This order is already paid. No new prompt was sent.'});if(['initiated','pending'].includes(String(prior[0]?.status||'')))return send(res,409,{error:'A payment request is already awaiting a result for this order. Wait for it to complete or fail before sending another prompt.'});
    const configs=await sql`SELECT pc.*,pp.shortcode AS central_shortcode,pp.party_b AS central_party_b,pp.environment AS central_environment,pp.encrypted_credentials AS central_credentials FROM public.tenants t LEFT JOIN public.payment_configs pc ON pc.tenant_id=t.id LEFT JOIN public.platform_payment_config pp ON pp.id=1 WHERE t.id=${me.tenant_id} LIMIT 1`;
    const cfg=configs[0]||{},key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');let payment:any=null;
    try{
