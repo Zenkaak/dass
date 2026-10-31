@@ -122,13 +122,16 @@ export default async function handler(req:any,res:any){
    const configs=await sql`SELECT pc.*,pp.shortcode AS central_shortcode,pp.party_b AS central_party_b,pp.account_type AS central_type,pp.environment AS central_environment,pp.encrypted_credentials AS central_credentials FROM public.tenants t LEFT JOIN public.payment_configs pc ON pc.tenant_id=t.id LEFT JOIN public.platform_payment_config pp ON pp.id=1 WHERE t.id=${tenantId} LIMIT 1`;
    const cfg=configs[0]||{},key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');let payment:any=null;
    try{
-    const method=(cfg.default_payout_method||cfg.payout_method||'till')==='paybill'?'paybill':'till';
+    const method=requestedMethod==='paybill'?'paybill':requestedMethod==='till'?'till':((cfg.default_payout_method||cfg.payout_method||'till')==='paybill'?'paybill':'till');
+    if(method==='till'&&!((cfg.till_party_b)||(cfg.payout_method==='till'&&cfg.party_b)))return send(res,409,{error:'A Till / Buy Goods destination is not configured for this seller.'});
+    if(method==='paybill'&&!((cfg.paybill_party_b)||(cfg.payout_method==='paybill'&&cfg.party_b)))return send(res,409,{error:'A PayBill destination is not configured for this seller.'});
+    if(method==='paybill'&&!cfg.account_reference)return send(res,409,{error:'A PayBill account/reference is required before requesting payment.'});
     if(cfg.encrypted_credentials?.ciphertext){
      const bundle=decryptBundle(cfg.encrypted_credentials,key,'seller'),sec=bundle.credentialsByType?.[method]||{...bundle,shortcode:cfg.shortcode,environment:cfg.environment};
-     payment={...sec,partyB:method==='paybill'?(cfg.paybill_party_b||cfg.party_b):(cfg.till_party_b||cfg.party_b),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};
+     payment={...sec,partyB:method==='paybill'?(cfg.paybill_party_b||((cfg.payout_method||cfg.default_payout_method)==='paybill'?cfg.party_b:'')):(cfg.till_party_b||((cfg.payout_method||cfg.default_payout_method)==='till'?cfg.party_b:'')),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};
     }else if(cfg.central_credentials?.data){
      const sec=decryptBundle(cfg.central_credentials,key,'platform');
-     payment={...sec,shortcode:cfg.central_shortcode,partyB:method==='paybill'?(cfg.paybill_party_b||cfg.party_b||cfg.central_party_b):(cfg.till_party_b||cfg.party_b||cfg.central_party_b),environment:cfg.central_environment,accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};
+     payment={...sec,shortcode:cfg.central_shortcode,partyB:method==='paybill'?(cfg.paybill_party_b||cfg.central_party_b):(cfg.till_party_b||cfg.central_party_b),environment:cfg.central_environment,accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};
     }
    }catch(e:any){console.error('Daraja credential load failed',e?.message||e);return send(res,503,{error:'Payment credentials could not be loaded securely. Contact the shop owner.'});}
    if(!payment?.consumerKey||!payment?.consumerSecret||!payment?.passkey||!payment?.shortcode||!payment?.partyB)return send(res,503,{error:'This shop has not completed M-PESA payment setup yet.'});
@@ -294,7 +297,7 @@ export default async function handler(req:any,res:any){
   }
   if(req.method==='POST'&&action==='order-prompt'){
    if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission to request customer payments.'});
-   const orderId=String(req.body?.orderId||''),phone=normalizePhone(req.body?.phone);
+   const orderId=String(req.body?.orderId||''),phone=normalizePhone(req.body?.phone),requestedMethod=String(req.body?.paymentMethod||'').toLowerCase();
    if(!orderId||!phone)return send(res,400,{error:'Enter a valid customer phone number.'});
    const found=await sql`SELECT id,order_number,total_minor,status FROM public.orders WHERE id=${orderId} AND tenant_id=${me.tenant_id} LIMIT 1`;
    if(!found.length)return send(res,404,{error:'Order not found.'});
@@ -313,15 +316,15 @@ export default async function handler(req:any,res:any){
    if(payment.environment!=='production')return send(res,503,{error:'The selected Daraja credentials are in sandbox. Live payment prompts are disabled.'});
    const amount=Number(order.total_minor);if(!Number.isSafeInteger(amount)||amount<1)return send(res,400,{error:'This order has an invalid total.'});
    const idempotency=crypto.randomUUID();
-   const p=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result) VALUES(${me.tenant_id},${order.id},'mpesa_daraja',${phone},${amount},'KES','initiated',${idempotency},${JSON.stringify({paymentMethod:cfg.default_payout_method||cfg.payout_method||'till',source:'merchant_order_prompt'})}::jsonb) RETURNING id`;
+   const p=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result) VALUES(${me.tenant_id},${order.id},'mpesa_daraja',${phone},${amount},'KES','initiated',${idempotency},${JSON.stringify({paymentMethod:method,source:'merchant_order_prompt'})}::jsonb) RETURNING id`;
    try{
     const callbackBase=env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dass-gamma.vercel.app')),callbackUrl=callbackBase.replace(/\/$/,'')+'/api/store?action=daraja-callback';
     const stk=await startStk(payment,order,phone,amount/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):order.order_number.slice(-12),callbackUrl);
-    await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({paymentMethod:cfg.default_payout_method||cfg.payout_method||'till',source:'merchant_order_prompt',merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
-    await audit(sql,me.tenant_id,me.user_id,'order.payment_prompt.sent','order',order.id,{paymentMethod:cfg.default_payout_method||cfg.payout_method||'till',amountMinor:amount});
+    await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({paymentMethod:method,source:'merchant_order_prompt',merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
+    await audit(sql,me.tenant_id,me.user_id,'order.payment_prompt.sent','order',order.id,{paymentMethod:method,amountMinor:amount});
     return send(res,200,{ok:true,checkoutRequestId:stk.checkoutId,message:'M-PESA prompt sent for KES '+(amount/100).toLocaleString('en-KE')+'. Ask the customer to enter their M-PESA PIN.'});
    }catch(e:any){
-    await sql`UPDATE public.payments SET status='failed',provider_result=${JSON.stringify({paymentMethod:cfg.default_payout_method||cfg.payout_method||'till',source:'merchant_order_prompt',error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
+    await sql`UPDATE public.payments SET status='failed',provider_result=${JSON.stringify({paymentMethod:method,source:'merchant_order_prompt',error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
     console.error('Order STK prompt failed',e?.message||e);return send(res,502,{error:e?.message||'Could not send the M-PESA prompt.'});
    }
   }
