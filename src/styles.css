@@ -895,3 +895,6 @@
  .store-merchant-footer{padding:17px 14px;gap:10px;flex-wrap:wrap}
  .store-merchant-copyright{order:3;width:100%;text-align:left}
 }
+
+/* Merchant storefront WhatsApp contact */
+.store-whatsapp-float{position:fixed;right:18px;bottom:22px;width:56px;height:56px;border-radius:50%;background:#20b968;color:#fff;display:flex;align-items:center;justify-content:center;z-index:70;box-shadow:0 8px 24px #0005;transition:transform .18s ease,box-shadow .18s ease}.store-whatsapp-float:hover{transform:translateY(-3px);box-shadow:0 12px 28px #0006}
