@@ -583,3 +583,57 @@
  .seller-order-method-picker strong{font-size:11px}
  .seller-order-method-picker small{font-size:8px}
 }
+
+
+/* Dedicated order conversation page and order-message entry point */
+.seller-order-messages-link{width:100%;display:flex;align-items:center;gap:14px;padding:17px 18px;margin:16px 0 20px;border:1px solid var(--order-line,rgba(143,177,224,.22));border-radius:16px;background:var(--order-surface, #0b1b2d);color:var(--order-text,#eaf2ff);text-align:left;cursor:pointer;transition:border-color .18s,transform .18s,background .18s}
+.seller-order-messages-link:hover{border-color:var(--order-blue,#62adff);transform:translateY(-1px)}
+.seller-order-messages-icon{width:46px;height:46px;flex:0 0 46px;display:grid;place-items:center;border-radius:14px;background:rgba(58,145,255,.13);color:var(--order-blue,#62adff)}
+.seller-order-messages-copy{flex:1;min-width:0;display:grid;gap:5px}
+.seller-order-messages-copy strong{font-size:15px;font-weight:800;color:var(--order-text,#eaf2ff)}
+.seller-order-messages-copy small{font-size:12px;color:var(--order-muted,#9bb0cc)}
+.seller-order-message-count{min-width:27px;height:27px;padding:0 7px;display:grid;place-items:center;border-radius:99px;background:rgba(36,213,139,.15);color:var(--order-green,#24d58b);font-size:12px;font-weight:900}
+.seller-order-messages-link>svg:last-child{color:var(--order-muted,#9bb0cc)}
+.seller-order-messages-page{width:100%;max-width:1080px;margin:0 auto;color:var(--order-text,#eaf2ff)}
+.seller-order-messages-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 18px}
+.seller-order-messages-top>span{font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--order-muted,#9bb0cc)}
+.seller-order-messages-panel{min-height:min(720px,calc(100dvh - 230px));display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--order-line,rgba(143,177,224,.2));border-radius:20px;background:var(--order-surface,#0b1b2d);box-shadow:0 14px 38px rgba(0,0,0,.13)}
+.seller-order-messages-panel>header{display:flex;align-items:center;gap:14px;padding:20px 22px;border-bottom:1px solid var(--order-line,rgba(143,177,224,.2));background:var(--order-surface-raised,#10243b)}
+.seller-order-messages-panel>header>div{flex:1;min-width:0}
+.seller-order-messages-panel>header>div>span{font-size:9px;font-weight:900;letter-spacing:.13em;color:var(--order-muted,#9bb0cc)}
+.seller-order-messages-panel>header h2{margin:5px 0 3px;font-size:19px;color:var(--order-text,#eaf2ff)}
+.seller-order-messages-panel>header p{margin:0;font-size:12px;color:var(--order-muted,#9bb0cc)}
+.seller-order-messages-panel>header>b{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--order-green,#24d58b)}
+.seller-order-messages-panel>header>b i{width:7px;height:7px;border-radius:50%;background:var(--order-green,#24d58b)}
+.seller-order-messages-feed{flex:1;min-height:300px;max-height:calc(100dvh - 440px);overflow:auto;display:flex;flex-direction:column;align-items:stretch;gap:12px;padding:22px;background:var(--order-panel,#0b1a2c)}
+.seller-order-messages-feed .seller-chat-message{max-width:min(78%,620px);padding:13px 15px;border:1px solid var(--order-line,rgba(143,177,224,.2));border-radius:15px}
+.seller-order-messages-feed .seller-chat-message.mine{align-self:flex-end}
+.seller-order-messages-feed .seller-chat-message.theirs{align-self:flex-start}
+.seller-order-messages-feed .seller-chat-message p{margin:7px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.seller-order-messages-feed .seller-chat-message small{font-size:10px;color:var(--order-muted,#9bb0cc)}
+.seller-order-messages-empty{margin:auto;display:grid;justify-items:center;gap:9px;text-align:center;color:var(--order-muted,#9bb0cc);padding:35px 15px}
+.seller-order-messages-empty strong{color:var(--order-text,#eaf2ff);font-size:15px}
+.seller-order-messages-empty p{margin:0;font-size:12px}
+.seller-order-messages-compose{display:flex;gap:10px;padding:15px;border-top:1px solid var(--order-line,rgba(143,177,224,.2));background:var(--order-surface,#0b1b2d)}
+.seller-order-messages-compose input{flex:1;min-width:0;min-height:48px;padding:0 15px;border:1px solid var(--order-line,rgba(143,177,224,.2));border-radius:12px;background:var(--order-surface-raised,#10243b);color:var(--order-text,#eaf2ff);outline:none}
+.seller-order-messages-compose input:focus{border-color:var(--order-blue,#62adff)}
+.seller-order-messages-compose button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:105px;padding:0 17px;border:0;border-radius:12px;background:linear-gradient(90deg,#0878e8,#1595ff);color:white;font-weight:800;cursor:pointer}
+.seller-order-messages-compose button:disabled{opacity:.48;cursor:not-allowed}
+.seller-app[data-theme="light"] .seller-order-messages-panel,.seller-app[data-theme="light"] .seller-order-messages-link{--order-surface:#fff;--order-surface-raised:#f4f8ff;--order-panel:#f5f9ff;--order-text:#142b4e;--order-muted:#6b809b;--order-line:#dce7f5;--order-blue:#0874e8;--order-green:#078b49}
+.seller-app[data-theme="light"] .seller-order-messages-compose input{color-scheme:light}
+@media(max-width:700px){
+ .seller-order-messages-link{gap:10px;padding:14px 12px;margin:12px 0 16px}
+ .seller-order-messages-icon{width:42px;height:42px;flex-basis:42px}
+ .seller-order-messages-copy strong{font-size:14px}
+ .seller-order-messages-copy small{font-size:10px}
+ .seller-order-messages-page{min-height:calc(100dvh - 170px)}
+ .seller-order-messages-panel{min-height:calc(100dvh - 245px);border-radius:15px}
+ .seller-order-messages-panel>header{padding:15px 13px;gap:10px}
+ .seller-order-messages-panel>header h2{font-size:16px}
+ .seller-order-messages-feed{max-height:none;min-height:280px;padding:14px}
+ .seller-order-messages-feed .seller-chat-message{max-width:88%}
+ .seller-order-messages-compose{padding:10px;gap:7px}
+ .seller-order-messages-compose input{min-height:46px;padding:0 11px;font-size:13px}
+ .seller-order-messages-compose button{min-width:82px;padding:0 11px;font-size:12px}
+ .seller-order-messages-top>span{font-size:8px}
+}
