@@ -328,6 +328,9 @@ function PlatformAdmin(){
 }
 export default function App() {
   const path = window.location.pathname.replace(/^\/+|\/+$/g, '');
+  const hostname = window.location.hostname.toLowerCase();
+  const tenantSubdomain = hostname.endsWith('.dasmarket.co.ke') && !['www','app'].includes(hostname.split('.')[0]) ? hostname.split('.')[0] : '';
+  if (!path && tenantSubdomain) return <MerchantStore slug={tenantSubdomain} />;
   if (!path) return <LandingPage />;
   if (path === 'signup') return <AuthPage initial="signup" />;
   if (path === 'login') return <AuthPage initial="login" />;
