@@ -146,7 +146,7 @@ export default async function handler(req:any,res:any){
    }catch(e:any){
     await sql`UPDATE public.payments SET status='failed',provider_result=${JSON.stringify({error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
     console.error('Daraja STK initiation failed',e?.message||e);
-    return send(res,502,{error:e?.message||'Could not start M-PESA payment. No payment was confirmed.'});
+    return send(res,502,{error:e?.message||'Could not start M-PESA payment. No payment was confirmed.',orderNumber:o[0].order_number,chatToken:customerChatToken});
    }
   }
   if(!me)return send(res,401,{error:'Sign in to manage your shop.'});
