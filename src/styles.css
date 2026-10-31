@@ -637,3 +637,41 @@
  .seller-order-messages-compose button{min-width:82px;padding:0 11px;font-size:12px}
  .seller-order-messages-top>span{font-size:8px}
 }
+
+
+/* Compact order detail header and tighter professional type scale */
+.seller-order-route-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px;min-height:40px}
+.seller-order-route-top .seller-secondary-btn{min-height:36px;padding:7px 12px;font-size:12px;line-height:1.2}
+.seller-order-route-top .seller-order-print{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.seller-order-approved{gap:10px;padding:14px;border-radius:18px}
+.seller-order-hero{gap:10px}
+.seller-order-hero-icon{width:68px;height:68px;font-size:34px}
+.seller-order-hero-main h2{font-size:clamp(16px,2vw,21px);margin:4px 0 5px}
+.seller-order-hero-main p{font-size:11px}
+.seller-order-payment-pill{padding:8px 11px;font-size:11px}
+.seller-order-amount strong{font-size:24px}
+.seller-order-amount span{font-size:11px}
+.seller-order-approved h3,.seller-order-approved h4{font-size:14px}
+.seller-order-approved p,.seller-order-approved label,.seller-order-approved input,.seller-order-approved select,.seller-order-approved button{font-size:13px}
+.seller-order-approved small{font-size:10px}
+.seller-order-approved .seller-order-customer strong,.seller-order-approved .seller-order-payment strong{font-size:13px}
+.seller-order-approved .seller-order-table-head,.seller-order-approved .seller-order-table-row{font-size:11px}
+.seller-order-approved .seller-order-messages-copy strong{font-size:13px}
+.seller-order-approved .seller-order-messages-copy small{font-size:10px}
+@media(max-width:700px){
+ .seller-order-route-top{justify-content:flex-start;gap:8px;margin-bottom:10px}
+ .seller-order-route-top .seller-secondary-btn{min-height:34px;padding:6px 10px;font-size:11px}
+ .seller-order-route-top .seller-order-print{margin-left:auto}
+ .seller-order-approved{padding:11px;gap:9px;border-radius:15px}
+ .seller-order-hero{grid-template-columns:52px minmax(0,1fr);gap:9px}
+ .seller-order-hero-icon{width:48px;height:48px;font-size:25px}
+ .seller-order-hero-main h2{font-size:16px}
+ .seller-order-hero-main p{font-size:10px}
+ .seller-order-payment-pill{grid-column:1/-1;justify-self:start;padding:6px 9px;font-size:10px}
+ .seller-order-amount{grid-column:1/-1;text-align:left;padding:8px 10px}
+ .seller-order-amount strong{font-size:21px}
+ .seller-order-amount span{font-size:10px}
+ .seller-order-approved h3,.seller-order-approved h4{font-size:13px}
+ .seller-order-approved p,.seller-order-approved label,.seller-order-approved input,.seller-order-approved select,.seller-order-approved button{font-size:12px}
+ .seller-order-approved small{font-size:10px}
+}
