@@ -66,7 +66,17 @@ async function verifyStk(c:any,checkoutId:string){
  const d:any=await r.json();if(!r.ok)throw Error('Safaricom payment verification query failed.');
  return d;
 }
-function productOut(p:any,includeMetadata=false){const images=Array.isArray(p.images)?p.images.map((v:string)=>String(v).startsWith('neon-object:')?storageUrl(String(v).slice(12),'GET'):v):[];return {id:p.id,name:p.name,description:p.description,images,imageUrl:images[0]||'',category:String(p.metadata?.category|| (p.product_type==='data_bundle'?'Data bundles':p.product_type==='digital'?'Digital products':'Shop products')),spotlight:Boolean(p.metadata?.spotlight),testProduct:Boolean(p.metadata?.test_product),type:p.product_type,price:Number(p.price_minor)/100,currency:p.currency,stockQuantity:p.stock_quantity,active:p.is_active,sku:p.sku||'',...(includeMetadata?{metadata:p.metadata||{}}:{})};}
+function productOut(p:any,includeMetadata=false){
+ const raw=Array.isArray(p.images)?p.images:[];
+ const images=raw.map((item:any)=>{
+  const value=typeof item==='string'?item:String(item?.url||item?.src||item?.publicUrl||item?.public_url||item?.key||item?.path||'');
+  if(!value)return '';
+  if(value.startsWith('neon-object:'))return storageUrl(value.slice(12),'GET');
+  if(value.startsWith('s3://'))return storageUrl(value.slice(5).replace(/^documents\//,''),'GET');
+  return value;
+ }).filter(Boolean);
+ return {id:p.id,name:p.name,description:p.description,images,imageUrl:images[0]||'',category:String(p.metadata?.category||(p.product_type==='data_bundle'?'Data bundles':p.product_type==='digital'?'Digital products':'Shop products')),spotlight:Boolean(p.metadata?.spotlight),testProduct:Boolean(p.metadata?.test_product),type:p.product_type,price:Number(p.price_minor)/100,currency:p.currency,stockQuantity:p.stock_quantity,active:p.is_active,sku:p.sku||'',...(includeMetadata?{metadata:p.metadata||{}}:{})};
+}
 export default async function handler(req:any,res:any){
  res.setHeader('Cache-Control','no-store');
  if(!['GET','POST','DELETE'].includes(req.method)){res.setHeader('Allow','GET, POST, DELETE');return send(res,405,{error:'Method not allowed'});}
