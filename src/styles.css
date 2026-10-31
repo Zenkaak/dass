@@ -268,3 +268,48 @@
  .seller-chat-compose button,.store-chat-compose button{width:100%}
  .store-chat-panel{padding:15px;margin-bottom:28px}
 }
+
+/* Dedicated, addressable seller order workspace */
+.seller-order-route{width:100%;max-width:1180px;margin:0 auto;padding:4px 0 28px;color:#263b4e}
+.seller-order-route-top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 22px}
+.seller-order-route-top>div{display:flex;align-items:center;gap:9px;min-width:0;color:#8494a3;font-size:10px;letter-spacing:.08em;font-weight:700}
+.seller-order-route-top>div strong{color:#38536a;overflow-wrap:anywhere}
+.seller-order-route-top .seller-secondary-btn{background:#fff;color:#425b6e;border:1px solid #dce5ed;min-height:40px;padding:9px 15px}
+.seller-order-route-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin:0 0 18px}
+.seller-order-route-heading h2{font-size:27px;line-height:1.2;letter-spacing:-.035em;color:#20384d;margin:5px 0 7px}
+.seller-order-route-heading p{margin:0;color:#7c8f9f;font-size:12px;line-height:1.6}
+.seller-order-route-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.seller-order-route-actions .seller-secondary-btn{background:#fff;color:#425b6e;border:1px solid #dce5ed}
+.seller-order-route .seller-order-document{margin-top:0;gap:14px}
+.seller-order-route .seller-order-document-head{box-shadow:0 5px 20px rgba(32,56,77,.035)}
+.seller-order-route .seller-order-info-grid section,.seller-order-route .seller-order-payment,.seller-order-route .seller-order-items,.seller-order-route .seller-order-status-editor,.seller-order-route .seller-order-prompt,.seller-order-route .seller-order-chat{box-shadow:0 5px 20px rgba(32,56,77,.025)}
+.seller-order-route .seller-order-prompt,.seller-order-route .seller-order-chat{background:#fff;border:1px solid #e0e7ed;border-radius:14px;padding:18px}
+.seller-order-route .seller-order-chat .seller-chat-messages{max-height:420px;overflow:auto}
+.seller-order-route-footer{display:flex;justify-content:space-between;gap:12px;padding:18px 3px 0;margin-top:16px;border-top:1px solid #e2e9ef;color:#8a9aa7;font-size:10px}
+.seller-order-not-found{background:#fff;border:1px solid #dce5ed;border-radius:16px;padding:32px;max-width:680px;box-shadow:0 12px 32px rgba(32,56,77,.05)}
+.seller-order-not-found>span{font-size:10px;font-weight:800;letter-spacing:.12em;color:#8a9aa7}
+.seller-order-not-found h2{font-size:24px;color:#263e52;margin:10px 0}
+.seller-order-not-found p{font-size:13px;line-height:1.7;color:#74899a;margin:0 0 20px}
+@media(max-width:700px){
+ .seller-order-route{padding:0 0 24px}
+ .seller-order-route-top{align-items:flex-start;flex-direction:column;gap:12px;margin-bottom:18px}
+ .seller-order-route-top>div{font-size:9px;flex-wrap:wrap}
+ .seller-order-route-heading{align-items:flex-start;flex-direction:column;gap:12px}
+ .seller-order-route-heading h2{font-size:24px}
+ .seller-order-route-actions{width:100%;justify-content:space-between}
+ .seller-order-route .seller-order-document{gap:11px}
+ .seller-order-route .seller-order-document-head{padding:16px;gap:8px}
+ .seller-order-route .seller-order-info-grid{grid-template-columns:1fr}
+ .seller-order-route .seller-order-payment{grid-template-columns:1fr}
+ .seller-order-route .seller-order-prompt,.seller-order-route .seller-order-chat{padding:15px}
+ .seller-order-route .seller-order-table{overflow-x:auto}
+ .seller-order-route .seller-order-table-head,.seller-order-route .seller-order-table-row{min-width:520px}
+ .seller-order-route .seller-order-status-editor{align-items:flex-start;flex-direction:column}
+ .seller-order-route-footer{flex-direction:column}
+}
+@media print{
+ body:has(.seller-order-route) *{visibility:hidden!important}
+ body:has(.seller-order-route) .seller-order-route,body:has(.seller-order-route) .seller-order-route *{visibility:visible!important}
+ body:has(.seller-order-route) .seller-order-route{position:absolute;left:0;top:0;width:100%;max-width:none;padding:0}
+ body:has(.seller-order-route) .seller-order-route-top button,body:has(.seller-order-route) .seller-order-route-actions,body:has(.seller-order-route) .seller-order-prompt,body:has(.seller-order-route) .seller-order-chat,body:has(.seller-order-route) .seller-order-status-editor{display:none!important}
+}
