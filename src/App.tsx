@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { unzipSync } from 'fflate';
 import { AuthPage } from './AuthPage';
-import { Activity, ArrowRight, ArrowUpRight, Bell, Check, ChevronRight, CircleAlert, Download, HelpCircle, Layers3, LayoutDashboard, LogOut, Menu, X, MapPin, ScanLine, ThumbsUp, Flag, MessageCircle, Package, Plus, RefreshCw, Search, Send, Settings, ShieldCheck, ShoppingBag, Store, Wallet, WalletCards } from 'lucide-react';
+import { Activity, ArrowRight, ArrowUpRight, Bell, ChevronRight, CircleAlert, Download, HelpCircle, LayoutDashboard, LogOut, Menu, X, MapPin, ScanLine, ThumbsUp, Flag, MessageCircle, Package, Plus, RefreshCw, Search, Send, Settings, ShieldCheck, ShoppingBag, Store, Wallet, WalletCards } from 'lucide-react';
 
 const storeAccentColors = [
   {name:'Marketplace orange',value:'#e47a13'},
@@ -15,12 +15,7 @@ const storeAccentColors = [
   {name:'Luxury gold',value:'#9a7628'},
 ];
 
-const features = [
-  { icon: Store, title: 'Your own online shop', text: 'Start with a ready-to-customise storefront at your own unique DAS link.' },
-  { icon: ShoppingBag, title: 'Two kinds of products', text: 'Sell data bundles and digital offers alongside everyday physical products.' },
-  { icon: WalletCards, title: 'Your own M-PESA', text: 'Configure your business payment connection securely when setup is available.' },
-  { icon: ShieldCheck, title: 'Separate seller workspace', text: 'Each merchant gets their own catalogue, orders, settings and customer experience.' },
-];
+
 
 async function readApiResponse(response: Response) {
  const raw=await response.text(); let data:any={};
