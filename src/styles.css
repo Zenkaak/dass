@@ -1449,3 +1449,51 @@
  .market-main{gap:12px}
  .market-home{width:100%;margin:0;gap:12px}
 }
+
+
+/* DASNET platform navigation and information sections inside merchant storefronts */
+.market-sidebar-link{display:flex;align-items:center;gap:8px;padding:9px 8px;border-radius:8px;color:#465767;font-size:11px;text-decoration:none}
+.market-sidebar-link:hover{background:#fff4e7;color:#9b560b}
+.market-sidebar-link svg{color:#7890a2;flex:0 0 auto}
+.store-info-section{width:min(100% - 48px,1180px);margin:54px auto 0;padding:0 0 8px}
+.store-info-heading{text-align:center;margin:0 auto 22px}
+.store-info-heading>span{font-size:10px;letter-spacing:.16em;font-weight:800;color:#17608a}
+.store-info-heading h2{margin:9px 0 7px;color:#15364d;font-size:clamp(23px,3vw,32px);letter-spacing:-.04em}
+.store-info-heading p{margin:0;color:#73818c;font-size:13px}
+.store-info-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.store-info-cards article,.store-trust-grid article{padding:21px;border:1px solid #e6ebef;border-radius:12px;background:#fff}
+.store-info-cards b,.store-trust-grid b{font-size:13px;color:#213e53}
+.store-info-cards p,.store-trust-grid p{margin:7px 0 0;color:#71808b;font-size:12px;line-height:1.6}
+.store-trust-section{margin-top:44px}
+.store-trust-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.store-faq-section{max-width:960px;margin-top:48px;margin-bottom:52px}
+.store-faq-section details{border-bottom:1px solid #e8edf0}
+.store-faq-section details:first-of-type{border-top:1px solid #e8edf0}
+.store-faq-section summary{display:flex;justify-content:space-between;gap:15px;padding:16px 5px;cursor:pointer;list-style:none;color:#253f52;font-size:13px;font-weight:650}
+.store-faq-section summary::-webkit-details-marker{display:none}
+.store-faq-section summary span{color:#72818d}
+.store-faq-section details p{margin:0;padding:0 5px 16px;color:#6f7e89;font-size:12px;line-height:1.65}
+.storefront-platform-footer{padding:38px max(24px,calc((100% - 1180px)/2)) 17px;background:#0b2d45;color:#d8e5ed}
+.storefront-footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:38px}
+.storefront-footer-grid>div{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.storefront-footer-grid>div>b{margin-bottom:3px;color:#fff;font-size:12px}
+.storefront-footer-grid a{color:#bfd0db;text-decoration:none;font-size:11px}
+.storefront-footer-grid a:hover{color:#fff}
+.storefront-footer-logo strong{font-size:20px;letter-spacing:.03em;color:#fff}
+.storefront-footer-about p{max-width:310px;margin:2px 0 5px;color:#b8cbd7;font-size:12px;line-height:1.65}
+.storefront-footer-about .storefront-install-app{padding:9px 13px;border:1px solid #ffffff55;border-radius:7px;color:#fff;font-weight:700}
+.storefront-footer-bottom{display:flex;justify-content:space-between;gap:15px;margin-top:28px;padding-top:15px;border-top:1px solid #ffffff24;color:#a9bdca;font-size:10px}
+@media(max-width:760px){
+ .storefront-platform-footer{padding:29px 16px 15px}
+ .storefront-footer-grid{grid-template-columns:1fr 1fr;gap:24px 16px}
+ .storefront-footer-about{grid-column:1/-1}
+ .store-info-section{width:calc(100% - 28px);margin-top:38px}
+ .store-info-cards{grid-template-columns:1fr;gap:9px}
+ .store-info-cards article,.store-trust-grid article{padding:15px}
+ .store-trust-grid{grid-template-columns:1fr 1fr;gap:9px}
+ .store-info-heading{margin-bottom:17px}
+ .store-info-heading p{font-size:11px}
+ .store-faq-section{margin-bottom:38px}
+ .storefront-footer-bottom{font-size:9px;line-height:1.5}
+}
+@media(max-width:420px){.store-trust-grid{grid-template-columns:1fr}}
