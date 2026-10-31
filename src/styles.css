@@ -313,3 +313,55 @@
  body:has(.seller-order-route) .seller-order-route{position:absolute;left:0;top:0;width:100%;max-width:none;padding:0}
  body:has(.seller-order-route) .seller-order-route-top button,body:has(.seller-order-route) .seller-order-route-actions,body:has(.seller-order-route) .seller-order-prompt,body:has(.seller-order-route) .seller-order-chat,body:has(.seller-order-route) .seller-order-status-editor{display:none!important}
 }
+
+/* Approved mobile order-detail layout and buyer-visible delivery tracking */
+.seller-order-route .seller-order-document{background:#fff;border:1px solid #dce6f4;border-radius:18px;padding:18px;box-shadow:0 10px 34px rgba(16,48,90,.07)}
+.seller-order-route .seller-order-document-head{border:0;background:transparent;padding:8px 2px 16px}
+.seller-order-route .seller-order-info-grid{background:#f4f8ff;border:1px solid #dce7fa;border-radius:15px;padding:15px;gap:12px}
+.seller-order-route .seller-order-payment{background:#f8fbff;border:1px solid #dce7fa;border-radius:15px;padding:15px}
+.seller-order-route .seller-order-items{border:1px solid #d7e4f7;border-radius:15px;overflow:hidden}
+.seller-order-route .seller-order-items .seller-order-section-title{background:#102d52;color:#fff;padding:14px 16px;margin:0}
+.seller-order-route .seller-order-items .seller-order-table{padding:8px 12px}
+.seller-order-route .seller-order-prompt{background:#effcf4;border:1px solid #8be5b4}
+.seller-order-route .seller-order-prompt .button.primary{background:#05a34f}
+.seller-order-route .seller-order-chat{border:1px solid #d7e4f7;padding:0;overflow:hidden}
+.seller-order-route .seller-order-chat>.seller-order-section-title{background:#102d52;color:#fff;padding:14px 16px;margin:0}
+.seller-order-route .seller-chat-messages{padding:14px}
+.seller-delivery-card{background:#f2f7ff;border:1px solid #d5e5ff;border-radius:15px;padding:16px;display:grid;gap:15px}
+.seller-delivery-card>label{display:grid;gap:7px;font-size:12px;font-weight:700;color:#334e68}
+.seller-delivery-card select{width:100%;min-height:44px;border:1px solid #cbdcf2;border-radius:10px;padding:0 12px;background:white;color:#183653}
+.seller-delivery-progress,.buyer-delivery-steps{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.seller-delivery-progress>span,.buyer-delivery-steps>div{display:flex;flex-direction:column;align-items:center;gap:6px;color:#8798ac;font-size:22px;min-width:0;text-align:center}
+.seller-delivery-progress>span b,.buyer-delivery-steps b{font-size:11px;font-weight:700;white-space:normal}
+.seller-delivery-progress>span.active,.buyer-delivery-steps>div.active{color:#0874e8}
+.seller-delivery-progress>i,.buyer-delivery-steps>i{height:3px;background:#d9e2ef;flex:1;border-radius:5px}
+.seller-delivery-progress>i.active,.buyer-delivery-steps>i.active{background:#0874e8}
+.buyer-order-tracking{max-width:1180px;margin:18px auto;background:#fff;border:1px solid #dbe6f6;border-radius:18px;padding:18px;box-shadow:0 10px 30px rgba(16,48,90,.06)}
+.buyer-tracking-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.buyer-tracking-heading h2{margin:5px 0;color:#173451;font-size:21px}
+.buyer-tracking-heading p{margin:0;color:#71859b;font-size:12px}
+.buyer-payment-pill{border-radius:999px;padding:8px 12px;background:#fff3d9;color:#96630b;font-size:11px;font-weight:800}
+.buyer-payment-pill.is-paid{background:#e1f8eb;color:#087b3d}.buyer-payment-pill.is-cancelled,.buyer-payment-pill.is-failed{background:#fff0f0;color:#b42332}
+.buyer-delivery-steps{margin:22px 0 10px}.buyer-delivery-steps>div{font-size:16px}.buyer-delivery-steps>div>span{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;border:1px solid #cad8e9;background:#fff;font-weight:800}.buyer-delivery-steps>div.active>span{background:#0874e8;border-color:#0874e8;color:#fff}
+.buyer-tracking-note{font-size:12px;color:#71859b;margin:8px 0 0}
+@media(max-width:700px){
+ .seller-order-route{padding:0 0 24px}
+ .seller-order-route .seller-order-document{padding:12px;border-radius:16px}
+ .seller-order-route .seller-order-document-head{display:grid;grid-template-columns:1fr;gap:8px;padding:8px 4px 14px}
+ .seller-order-route .seller-order-document-head h3{font-size:18px;overflow-wrap:anywhere}
+ .seller-order-route .seller-order-info-grid{display:grid;grid-template-columns:1fr 1fr;padding:12px}
+ .seller-order-route .seller-order-payment{display:grid;grid-template-columns:1fr 1fr;padding:12px}
+ .seller-order-route .seller-order-items .seller-order-table-head,.seller-order-route .seller-order-items .seller-order-table-row{min-width:470px}
+ .seller-order-route .seller-order-prompt{padding:14px}
+ .seller-order-route .seller-order-prompt-footer{align-items:stretch;flex-direction:column}
+ .seller-order-route .seller-order-prompt-footer .button{width:100%;min-height:48px}
+ .seller-order-route .seller-order-chat .seller-chat-compose{padding:10px;display:flex;gap:7px}
+ .seller-order-route .seller-order-chat .seller-chat-compose input{min-width:0;flex:1}
+ .seller-delivery-card{padding:13px}
+ .seller-delivery-progress>span b,.buyer-delivery-steps b{font-size:10px}
+ .buyer-order-tracking{margin:14px 0;padding:14px;border-radius:15px}
+ .buyer-tracking-heading{align-items:flex-start;flex-direction:column}
+ .buyer-delivery-steps{gap:5px}
+ .buyer-delivery-steps>div{flex:1}
+ .buyer-delivery-steps>i{min-width:12px}
+}
