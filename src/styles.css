@@ -898,3 +898,31 @@
 
 /* Merchant storefront WhatsApp contact */
 .store-whatsapp-float{position:fixed;right:18px;bottom:22px;width:56px;height:56px;border-radius:50%;background:#20b968;color:#fff;display:flex;align-items:center;justify-content:center;z-index:70;box-shadow:0 8px 24px #0005;transition:transform .18s ease,box-shadow .18s ease}.store-whatsapp-float:hover{transform:translateY(-3px);box-shadow:0 12px 28px #0006}
+
+
+/* Seller-selectable storefront theme presets */
+.store-page[data-store-theme]{--store-accent:#f28a1c;--store-accent-soft:#fff1e2;--store-accent-ink:#fff}
+.store-page[data-store-theme] .store-market-brand-mark,.store-page[data-store-theme] .store-market-cart{background:var(--store-accent)!important}
+.store-page[data-store-theme] .store-market-cart b{color:var(--store-accent)!important}
+.store-page[data-store-theme] .store-market-search:focus-within{border-color:var(--store-accent)!important}
+.store-page[data-store-theme] .store-category-nav button.active{background:var(--store-accent-soft)!important;color:var(--store-accent)!important}
+.store-page[data-store-theme] .store-category-nav button.active>svg{color:var(--store-accent)!important}
+.store-page[data-store-theme] .store-sidebar-shop-icon,.store-page[data-store-theme] .store-sidebar-promo{background:var(--store-accent-soft)!important;color:var(--store-accent)!important}
+.store-page[data-store-theme] .product-buy button{background:var(--store-accent)!important;border-color:var(--store-accent)!important;color:var(--store-accent-ink)!important}
+.store-page[data-store-theme] .store-merchant-brand-name,.store-page[data-store-theme] .store-powered-by strong{color:var(--store-accent)!important}
+.store-page[data-store-theme="minimalist"],.store-page[data-store-theme="electronics"],.store-page[data-store-theme="education"]{--store-accent:#2563eb;--store-accent-soft:#eff6ff}
+.store-page[data-store-theme="fashion"],.store-page[data-store-theme="beauty"],.store-page[data-store-theme="kids"]{--store-accent:#db2777;--store-accent-soft:#fff1f7}
+.store-page[data-store-theme="home"],.store-page[data-store-theme="grocery"],.store-page[data-store-theme="fresh-food"]{--store-accent:#16803d;--store-accent-soft:#effaf1}
+.store-page[data-store-theme="sports"]{--store-accent:#ea580c;--store-accent-soft:#fff7ed}
+.store-page[data-store-theme="luxury"]{--store-accent:#9a7628;--store-accent-soft:#f8f3e6}
+.store-page[data-store-theme="automotive"]{--store-accent:#c62828;--store-accent-soft:#fff1f1}
+.store-page[data-store-theme="gadgets"]{--store-accent:#7c3aed;--store-accent-soft:#f5f0ff}
+.store-page[data-store-theme="pets"]{--store-accent:#0f766e;--store-accent-soft:#ecfdf9}
+.seller-theme-picker{grid-column:1/-1;display:grid;gap:12px;padding:17px;border:1px solid #dce5ef;border-radius:14px;background:#fff}
+.seller-theme-picker-heading{display:grid;gap:5px}.seller-theme-picker-heading strong{font-size:14px;color:#172b45}.seller-theme-picker-heading small{font-size:11px;color:#718096;line-height:1.5}
+.seller-theme-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.seller-theme-option{display:flex;align-items:center;gap:10px;min-width:0;padding:11px;border:1px solid #e1e7ef;border-radius:11px;background:#fff;text-align:left;cursor:pointer;color:#26364b;transition:border-color .15s,background .15s}
+.seller-theme-option:hover{border-color:#8aa9dc;background:#f8fbff}.seller-theme-option.selected{border:2px solid #2563eb;background:#f2f7ff;padding:10px}
+.seller-theme-swatch{width:28px;height:28px;flex:0 0 28px;border-radius:9px;background:#f28a1c}.seller-theme-swatch.theme-minimalist,.seller-theme-swatch.theme-electronics,.seller-theme-swatch.theme-education{background:#2563eb}.seller-theme-swatch.theme-fashion,.seller-theme-swatch.theme-beauty,.seller-theme-swatch.theme-kids{background:#db2777}.seller-theme-swatch.theme-home,.seller-theme-swatch.theme-grocery,.seller-theme-swatch.theme-fresh-food{background:#16803d}.seller-theme-swatch.theme-sports{background:#ea580c}.seller-theme-swatch.theme-luxury{background:#9a7628}.seller-theme-swatch.theme-automotive{background:#c62828}.seller-theme-swatch.theme-gadgets{background:#7c3aed}.seller-theme-swatch.theme-pets{background:#0f766e}
+.seller-theme-option-copy{display:grid;gap:3px;flex:1;min-width:0}.seller-theme-option-copy strong{font-size:11px}.seller-theme-option-copy small{font-size:10px;color:#718096;line-height:1.35}.seller-theme-check{font-size:9px;font-weight:800;color:#2563eb;white-space:nowrap}
+@media(max-width:700px){.seller-theme-options{grid-template-columns:1fr}}
