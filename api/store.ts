@@ -238,7 +238,7 @@ export default async function handler(req:any,res:any){
    return send(res,200,{shop:{name:me.shop_name,slug:me.slug,description:me.shop_description||'',logoUrl:site[0]?.logo_url||''},products:ps.map(productOut)});
   }
   if(req.method==='GET'&&action==='orders'){
-   const os=await sql`SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.total_minor,o.currency,o.status,o.created_at,COALESCE(json_agg(json_build_object('name',i.product_name,'quantity',i.quantity,'lineTotal',i.line_total_minor)) FILTER (WHERE i.id IS NOT NULL),'[]'::json) AS items FROM public.orders o LEFT JOIN public.order_items i ON i.tenant_id=o.tenant_id AND i.order_id=o.id WHERE o.tenant_id=${me.tenant_id} GROUP BY o.id ORDER BY o.created_at DESC LIMIT 100`;
+   const os=await sql`SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.total_minor,o.currency,o.status,o.created_at,pay.status AS payment_status,pay.provider_receipt,COALESCE(json_agg(json_build_object('name',i.product_name,'quantity',i.quantity,'lineTotal',i.line_total_minor)) FILTER (WHERE i.id IS NOT NULL),'[]'::json) AS items FROM public.orders o LEFT JOIN public.order_items i ON i.tenant_id=o.tenant_id AND i.order_id=o.id LEFT JOIN LATERAL (SELECT p.status,p.provider_receipt FROM public.payments p WHERE p.tenant_id=o.tenant_id AND p.order_id=o.id ORDER BY p.created_at DESC LIMIT 1) pay ON true WHERE o.tenant_id=${me.tenant_id} GROUP BY o.id,pay.status,pay.provider_receipt ORDER BY o.created_at DESC LIMIT 100`;
    return send(res,200,{orders:os.map((o:any)=>({...o,total:Number(o.total_minor)/100,items:o.items}))});
   }
   if(req.method==='POST'&&action==='product'){
@@ -275,7 +275,7 @@ export default async function handler(req:any,res:any){
   if(req.method==='POST'&&action==='order-status'){
    if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission.'});
    const id=String(req.body?.id||''),status=String(req.body?.status||'');
-   if(!['confirmed','processing','fulfilled','cancelled'].includes(status))return send(res,400,{error:'Invalid order status.'});
+   if(!['pending','confirmed','processing','fulfilled','cancelled'].includes(status))return send(res,400,{error:'Invalid order status.'});
    const r=await sql`UPDATE public.orders SET status=${status},updated_at=now() WHERE id=${id} AND tenant_id=${me.tenant_id} RETURNING id`;
    if(r.length)await audit(sql,me.tenant_id,me.user_id,'order.status.updated','order',id,{status});
    return r.length?send(res,200,{ok:true}):send(res,404,{error:'Order not found.'});
