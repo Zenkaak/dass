@@ -169,8 +169,10 @@
 @media(max-width:700px){.seller-account-grid{grid-template-columns:1fr}.seller-account-hero{align-items:flex-start}.seller-account-identity h3{font-size:18px}}
 .seller-detail-overlay:has(.seller-product-detail),.seller-detail-overlay:has(.seller-order-document){align-items:flex-start;overflow:auto;padding:18px;background:rgba(2,8,18,.88)}
 .seller-detail-overlay:has(.seller-product-detail) .seller-detail-card,.seller-detail-overlay:has(.seller-order-document) .seller-detail-card{width:min(900px,100%);max-height:none;overflow:visible;background:#f2f5f8;color:#263b4e;border:1px solid #dce5ed;padding:18px;border-radius:18px}
-.seller-detail-overlay:has(.seller-product-detail) .seller-detail-card>h2,.seller-detail-overlay:has(.seller-order-document) .seller-detail-card>h2{display:none}
-.seller-detail-overlay:has(.seller-product-detail) .seller-detail-card>.seller-secondary-btn,.seller-detail-overlay:has(.seller-order-document) .seller-detail-card>.seller-secondary-btn{display:none}
+.seller-detail-overlay:has(.seller-product-detail) .seller-detail-card>h2,.seller-detail-overlay:has(.seller-order-document) .seller-detail-card>h2{display:block;margin:4px 0 5px;color:#263e52;font-size:25px;font-weight:750}
+.seller-detail-overlay:has(.seller-product-detail) .seller-detail-card>.seller-secondary-btn,.seller-detail-overlay:has(.seller-order-document) .seller-detail-card>.seller-secondary-btn{display:flex;margin:0 0 12px auto;background:#fff;color:#425b6e;border:1px solid #dce5ed;min-height:38px;padding:8px 14px}
+.seller-detail-subtitle{margin:0 0 16px;color:#8294a3;font-size:12px;line-height:1.5}
+
 .seller-order-document{display:grid;gap:16px;margin-top:8px}
 .seller-order-document-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;background:#fff;border:1px solid #e0e7ed;border-radius:14px;padding:22px}
 .seller-order-kicker{font-size:10px;letter-spacing:1.5px;color:#8294a3;font-weight:700}.seller-order-document-head h3{font-size:22px;color:#263e52;margin:7px 0}.seller-order-document-head p{font-size:12px;color:#8294a3;margin:0}
