@@ -91,6 +91,21 @@ export default async function handler(req:any,res:any){
    return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
   }
   const me=await seller(sql,req);
+  if((req.method==='GET'||req.method==='POST')&&action==='customer-chat'){
+   const b=req.body||{},tokenValue=String(req.method==='GET'?req.query?.token:b.token||'').trim();
+   if(!/^[a-f0-9]{64}$/.test(tokenValue))return send(res,401,{error:'This chat link is invalid or expired.'});
+   const rows=await sql`SELECT id,tenant_id,order_number FROM public.orders WHERE customer_chat_token_hash=${hash(tokenValue)} LIMIT 1`;
+   if(!rows.length)return send(res,401,{error:'This chat link is invalid or expired.'});
+   const order=rows[0];
+   if(req.method==='POST'){
+    const message=String(b.message||'').trim().slice(0,2000);if(message.length<1)return send(res,400,{error:'Write a message before sending.'});
+    const rate=await sql`SELECT count(*)::int AS n FROM public.order_messages WHERE tenant_id=${order.tenant_id} AND order_id=${order.id} AND sender_type='customer' AND created_at>now()-interval '1 minute'`;
+    if(Number(rate[0]?.n||0)>=8)return send(res,429,{error:'Please wait before sending another message.'});
+    await sql`INSERT INTO public.order_messages(tenant_id,order_id,sender_type,message) VALUES(${order.tenant_id},${order.id},'customer',${message})`;
+   }
+   const messages=await sql`SELECT id,sender_type,message,created_at FROM public.order_messages WHERE tenant_id=${order.tenant_id} AND order_id=${order.id} ORDER BY created_at ASC LIMIT 100`;
+   return send(res,200,{orderNumber:order.order_number,messages});
+  }
   if(!me && action!=='order')return send(res,401,{error:'Please sign in to access your seller workspace.'});
   if(req.method==='POST'&&action==='order'){
    const b=req.body||{},slug=String(b.slug||'').toLowerCase(),name=String(b.customerName||'').trim().slice(0,120),phone=normalizePhone(b.customerPhone),items=Array.isArray(b.items)?b.items:[],idempotency=String(b.idempotencyKey||'').slice(0,100);
@@ -118,6 +133,7 @@ export default async function handler(req:any,res:any){
    if(payment.environment!=='production')return send(res,503,{error:'This shop is configured for Daraja sandbox. Live checkout is disabled.'});
    const orderNo='DAS-'+Date.now().toString(36).toUpperCase()+'-'+crypto.randomBytes(2).toString('hex').toUpperCase();
    const o=await sql`INSERT INTO public.orders(tenant_id,order_number,customer_name,customer_phone,subtotal_minor,total_minor,status) VALUES(${tenantId},${orderNo},${name},${phone},${total},${total},'pending') RETURNING id,order_number`;
+   const customerChatToken=crypto.randomBytes(32).toString('hex');await sql`UPDATE public.orders SET customer_chat_token_hash=${hash(customerChatToken)} WHERE id=${o[0].id} AND tenant_id=${tenantId}`;
    for(const l of lines){await sql`INSERT INTO public.order_items(tenant_id,order_id,product_id,product_name,quantity,unit_price_minor,line_total_minor) VALUES(${tenantId},${o[0].id},${l.p.id},${l.p.name},${l.qty},${Number(l.p.price_minor)},${l.line})`;}
    const idem=idempotency||crypto.randomUUID();
    const p=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result) VALUES(${tenantId},${o[0].id},'mpesa_daraja',${phone},${total},'KES','initiated',${idem},'{}'::jsonb) RETURNING id`;
@@ -126,7 +142,7 @@ export default async function handler(req:any,res:any){
     const callbackUrl=callbackBase.replace(/\/$/,'')+'/api/store?action=daraja-callback';
     const stk=await startStk(payment,o[0],phone,total/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):orderNo.slice(-12),callbackUrl);
     await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
-    return send(res,201,{ok:true,orderNumber:o[0].order_number,paymentStatus:'pending',checkoutRequestId:stk.checkoutId,message:'M-PESA prompt sent. Enter your PIN on your phone to complete payment.'});
+    return send(res,201,{ok:true,orderNumber:o[0].order_number,paymentStatus:'pending',checkoutRequestId:stk.checkoutId,chatToken:customerChatToken,message:'M-PESA prompt sent. Enter your PIN on your phone to complete payment.'});
    }catch(e:any){
     await sql`UPDATE public.payments SET status='failed',provider_result=${JSON.stringify({error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
     console.error('Daraja STK initiation failed',e?.message||e);
@@ -306,6 +322,23 @@ export default async function handler(req:any,res:any){
     await sql`UPDATE public.payments SET status='failed',provider_result=${JSON.stringify({paymentMethod:cfg.default_payout_method||cfg.payout_method||'till',source:'merchant_order_prompt',error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
     console.error('Order STK prompt failed',e?.message||e);return send(res,502,{error:e?.message||'Could not send the M-PESA prompt.'});
    }
+  }
+  if((req.method==='GET'||req.method==='POST')&&action==='order-chat'){
+   if(!['owner','admin','editor','viewer'].includes(me.role))return send(res,403,{error:'You do not have permission to access order conversations.'});
+   const b=req.body||{},orderId=String(req.method==='GET'?req.query?.orderId:b.orderId||'');
+   if(!orderId)return send(res,400,{error:'Order reference is required.'});
+   const found=await sql`SELECT id,order_number FROM public.orders WHERE id=${orderId} AND tenant_id=${me.tenant_id} LIMIT 1`;
+   if(!found.length)return send(res,404,{error:'Order not found.'});
+   if(req.method==='POST'){
+    if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You cannot send messages from this account.'});
+    const message=String(b.message||'').trim().slice(0,2000);if(message.length<1)return send(res,400,{error:'Write a message before sending.'});
+    const rate=await sql`SELECT count(*)::int AS n FROM public.order_messages WHERE tenant_id=${me.tenant_id} AND order_id=${orderId} AND sender_type='merchant' AND created_at>now()-interval '1 minute'`;
+    if(Number(rate[0]?.n||0)>=12)return send(res,429,{error:'Please wait before sending another message.'});
+    await sql`INSERT INTO public.order_messages(tenant_id,order_id,sender_type,sender_user_id,message) VALUES(${me.tenant_id},${orderId},'merchant',${me.user_id},${message})`;
+    await audit(sql,me.tenant_id,me.user_id,'order.message.sent','order',orderId,{sender:'merchant'});
+   }
+   const messages=await sql`SELECT id,sender_type,message,created_at FROM public.order_messages WHERE tenant_id=${me.tenant_id} AND order_id=${orderId} ORDER BY created_at ASC LIMIT 100`;
+   return send(res,200,{orderNumber:found[0].order_number,messages});
   }
   if(req.method==='POST'&&action==='order-status'){
    if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission.'});
