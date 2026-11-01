@@ -2243,3 +2243,43 @@
 .kasuku-safety-note svg{flex:0 0 auto;margin-top:2px}.kasuku-safety-note p{margin:0;font-size:12px;line-height:1.7}
 @media(max-width:680px){.kasuku-marketing{margin:20px auto 30px;padding:0 14px}.kasuku-marketing-stage{min-height:260px;border-radius:13px}.kasuku-marketing-card{grid-template-columns:52px minmax(0,1fr) 22px;gap:12px;padding:22px 16px}.kasuku-marketing-symbol{width:48px;height:48px;border-radius:14px;font-size:24px}.kasuku-marketing-card h2{font-size:21px}.kasuku-marketing-card p{font-size:12px}.kasuku-marketing-number{font-size:10px}.kasuku-marketing-head small{font-size:9px}.kasuku-safety-note{margin:18px 14px 0;padding:14px}}
 @media(prefers-reduced-motion:reduce){.kasuku-marketing-card,.kasuku-marketing-dots button{transition:none!important}}
+
+
+/* Buyer authentication: enforce readable contrast across every step and state. */
+.store-page .buyer-auth-page,.buyer-auth-page{
+  position:relative!important;isolation:isolate!important;display:grid!important;place-items:center!important;
+  min-height:100vh!important;padding:clamp(16px,4vw,36px)!important;
+  background:#102033!important;color:#172b3c!important;overflow-y:auto!important;
+}
+.buyer-auth-backdrop{
+  position:fixed!important;inset:0!important;z-index:-1!important;
+  background:linear-gradient(135deg,rgba(7,20,35,.90),rgba(13,48,66,.76)),url('/images/dasnet-auth-bg.jpg') center/cover no-repeat!important;
+}
+.buyer-auth-card{
+  width:min(100%,520px)!important;padding:clamp(22px,5vw,34px)!important;
+  border:1px solid #dce4eb!important;border-radius:22px!important;
+  background:#fff!important;color:#172b3c!important;
+  box-shadow:0 26px 80px rgba(0,0,0,.34)!important;
+}
+.buyer-auth-card *{opacity:1}
+.buyer-auth-card h1,.buyer-auth-card h2,.buyer-auth-card strong{color:#142b3d!important}
+.buyer-auth-card>p{color:#536779!important}
+.buyer-auth-back{color:#344b5e!important}
+.buyer-auth-eyebrow{color:#a64f05!important}
+.buyer-auth-form label,.buyer-auth-form label span{color:#263e52!important}
+.buyer-auth-form input{
+  color:#142b3d!important;background:#fff!important;border:1.5px solid #aebdca!important;
+  -webkit-text-fill-color:#142b3d!important;caret-color:#142b3d!important;
+}
+.buyer-auth-form input::placeholder{color:#687d8e!important;opacity:1!important}
+.buyer-auth-form input:focus-visible{outline:3px solid rgba(228,122,19,.22)!important;border-color:#c66a12!important}
+.buyer-auth-submit{background:#b95e0b!important;color:#fff!important}
+.buyer-auth-secondary{background:#f3f6f8!important;color:#263e52!important;border-color:#c7d2dc!important}
+.buyer-auth-links button,.buyer-auth-resend{color:#984900!important}
+.buyer-auth-error{background:#fff0ef!important;color:#a51f18!important;border:1px solid #f4c4c0!important}
+.buyer-auth-notice{background:#e9f8ef!important;color:#12643c!important;border:1px solid #b9e6ca!important}
+.buyer-auth-secure{color:#536779!important}
+.buyer-auth-progress small{color:#425a6d!important}
+.buyer-auth-resend{min-height:40px!important;margin:0!important;padding:7px 0!important}
+.buyer-auth-actions button:focus-visible,.buyer-auth-links button:focus-visible,.buyer-auth-back:focus-visible,.buyer-auth-resend:focus-visible{outline:3px solid rgba(185,94,11,.28)!important;outline-offset:3px!important}
+@media(max-width:520px){.buyer-auth-card{border-radius:17px!important}.buyer-auth-page{align-items:start!important;padding-top:20px!important;padding-bottom:28px!important}}
