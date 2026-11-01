@@ -50,6 +50,8 @@ type BuyerOrder = {
   chatToken: string;
   paymentStatus: string;
   receipt?: string | null;
+  orderStatus?: string | null;
+  deliveryStatus?: string | null;
 };
 
 type StorefrontFlowProps = {
@@ -538,18 +540,22 @@ export function StorefrontFlow({
   }
 
   function renderOrders() {
-    const tabOrders = orderTab === 'ongoing' ? orders.filter((order) => order.orderNumber !== '') : [];
+    const stateOf = (order: BuyerOrder) => ({ order: String(order.orderStatus || '').toLowerCase(), delivery: String(order.deliveryStatus || '').toLowerCase(), payment: String(order.paymentStatus || '').toLowerCase() });
+    const isCancelled = (order: BuyerOrder) => { const s=stateOf(order); return ['cancelled','returned','refunded'].includes(s.order)||['cancelled','returned'].includes(s.delivery)||s.payment==='cancelled'; };
+    const isDelivered = (order: BuyerOrder) => { const s=stateOf(order); return s.delivery==='delivered'||['fulfilled','delivered'].includes(s.order); };
+    const tabOrders = orders.filter(order => order.orderNumber && (orderTab==='ongoing' ? !isCancelled(order)&&!isDelivered(order) : orderTab==='delivered' ? isDelivered(order) : isCancelled(order)));
+    const suggestions = products.filter(product => product.stockQuantity !== 0).slice(0,12);
     return (
       <section className="customer-flow">
         <FlowHeading title="My orders" onBack={() => onNavigate('account')} backLabel="My account" />
-        <div className="customer-order-tabs"><button type="button" className={orderTab === 'ongoing' ? 'is-active' : ''} onClick={() => setOrderTab('ongoing')}>Ongoing ({orders.length})</button><button type="button" className={orderTab === 'delivered' ? 'is-active' : ''} onClick={() => setOrderTab('delivered')}>Delivered</button><button type="button" className={orderTab === 'cancelled' ? 'is-active' : ''} onClick={() => setOrderTab('cancelled')}>Cancelled / returned</button></div>
+        <div className="customer-order-tabs"><button type="button" className={orderTab === 'ongoing' ? 'is-active' : ''} onClick={() => setOrderTab('ongoing')}>ONGOING ({orders.filter(o=>!isCancelled(o)&&!isDelivered(o)).length})</button><button type="button" className={orderTab === 'delivered' ? 'is-active' : ''} onClick={() => setOrderTab('delivered')}>DELIVERED ({orders.filter(isDelivered).length})</button><button type="button" className={orderTab === 'cancelled' ? 'is-active' : ''} onClick={() => setOrderTab('cancelled')}>CANCELLED / RETURNED ({orders.filter(isCancelled).length})</button></div>
         {tabOrders.length ? <div className="customer-order-list">{tabOrders.map((order) => (
           <article className="customer-order-card" key={order.orderNumber}>
-            <div className="customer-order-card-heading"><div><small>ORDER {order.orderNumber}</small><strong>{new Date(order.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })}</strong></div><span className="customer-order-status">Order placed</span></div>
+            <div className="customer-order-card-heading"><div><small>ORDER {order.orderNumber}</small><strong>{new Date(order.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })}</strong></div><span className="customer-order-status">{stateOf(order).delivery==='delivered'?'Delivered':stateOf(order).delivery==='in_transit'?'In transit':stateOf(order).order==='processing'?'Processing':stateOf(order).payment==='failed'?'Payment failed':stateOf(order).payment==='succeeded'?'Paid':'Order placed'}</span></div>
             {order.lines.slice(0, 2).map(({ product, quantity }) => <div className="customer-order-product" key={product.id}><ProductThumb product={product} /><span><strong>{product.name}</strong><small>Qty {quantity}</small></span><b>{formatKes(product.price * quantity)}</b></div>)}
             <div className="customer-order-card-footer"><span>Total <strong>{formatKes(order.total)}</strong></span><div><button type="button" className="customer-secondary-button" onClick={() => openOrder(order, 'order-detail')}>Order details</button><button type="button" className="customer-primary-button" onClick={() => openOrder(order, 'order-tracking')}>Track my item</button></div></div>
           </article>
-        ))}</div> : <div className="customer-empty-state"><span><Package size={28} /></span><h2>{orderTab === 'ongoing' ? 'No orders yet' : `No ${orderTab === 'delivered' ? 'delivered' : 'cancelled'} orders`}</h2><p>{orderTab === 'ongoing' ? 'Orders you place from this store will appear here.' : 'This preview has no orders in this category.'}</p><button type="button" className="customer-primary-button" onClick={() => onNavigate('store')}>Start shopping <ArrowRight size={17} /></button></div>}
+        ))}</div> : <div className="customer-empty-state"><span><Package size={28} /></span><h2>{orderTab === 'ongoing' ? 'You have placed no orders yet!' : `No ${orderTab === 'delivered' ? 'delivered' : 'cancelled / returned'} orders`}</h2><p>{orderTab === 'ongoing' ? 'All your orders will be saved here so you can access their status anytime.' : 'Orders in this section will appear here when their status is updated by the shop.'}</p><button type="button" className="customer-primary-button" onClick={() => onNavigate('store')}>Continue shopping <ArrowRight size={17} /></button></div>}
       </section>
     );
   }
