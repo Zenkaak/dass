@@ -42,6 +42,10 @@ type BuyerOrder = {
   deliveryMethod: DeliveryMethod;
   deliveryAddress: string;
   pickupStation: string;
+  deliveryCounty: string;
+  deliverySubCounty: string;
+  deliveryEstate: string;
+  deliveryDirections: string;
   subtotal: number;
   deliveryFee: number;
   total: number;
@@ -180,12 +184,16 @@ export function StorefrontFlow({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mpesa');
   const [submitting, setSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
-  const [deliveryMethod] = useState<DeliveryMethod>('pickup');
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('home');
+  const [deliveryCounty, setDeliveryCounty] = useState('');
+  const [deliverySubCounty, setDeliverySubCounty] = useState('');
+  const [deliveryEstate, setDeliveryEstate] = useState('');
+  const [deliveryDirections, setDeliveryDirections] = useState('');
   const [customerName, setCustomerName] = useState(initialCustomerName);
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
-  const [deliveryAddress] = useState('');
-  const [pickupStation] = useState('');
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [pickupStation, setPickupStation] = useState('');
   const [voucherCode, setVoucherCode] = useState('');
   const [voucherMessage, setVoucherMessage] = useState('');
   const [activeOrderNumber, setActiveOrderNumber] = useState('');
@@ -241,6 +249,14 @@ export function StorefrontFlow({
       setCheckoutError('This payment method is coming soon. Choose M-PESA to continue.');
       return;
     }
+    if (deliveryMethod === 'home' && (!deliveryCounty || !deliverySubCounty || !deliveryEstate.trim() || !deliveryAddress.trim())) {
+      setCheckoutError('Complete your county, sub-county, estate/area and physical delivery address.');
+      return;
+    }
+    if (deliveryMethod === 'pickup' && !pickupStation.trim()) {
+      setCheckoutError('Enter your preferred pickup location so the seller can confirm collection arrangements.');
+      return;
+    }
     setSubmitting(true);
     setCheckoutError('');
     try {
@@ -252,6 +268,13 @@ export function StorefrontFlow({
           customerName: customerName.trim(),
           customerPhone: customerPhone.trim(),
           customerEmail: customerEmail.trim(),
+          deliveryMethod,
+          deliveryCounty,
+          deliverySubCounty,
+          deliveryEstate: deliveryEstate.trim(),
+          deliveryAddress: deliveryAddress.trim(),
+          deliveryDirections: deliveryDirections.trim(),
+          pickupStation: pickupStation.trim(),
           paymentMethod: 'till',
           items: lines.map(({ product, quantity }) => ({ id: product.id, quantity })),
           idempotencyKey: `buyer-${slug}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
@@ -272,6 +295,10 @@ export function StorefrontFlow({
         deliveryMethod,
         deliveryAddress: deliveryAddress.trim(),
         pickupStation: pickupStation.trim(),
+        deliveryCounty,
+        deliverySubCounty,
+        deliveryEstate: deliveryEstate.trim(),
+        deliveryDirections: deliveryDirections.trim(),
         subtotal,
         deliveryFee: 0,
         total: subtotal,
@@ -440,9 +467,16 @@ export function StorefrontFlow({
             <div className="customer-panel">
               <div className="customer-panel-heading"><h2>Delivery details</h2><button type="button" className="customer-text-button" onClick={() => document.getElementById('customer-delivery-options')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>Change</button></div>
               <div className="customer-delivery-options" id="customer-delivery-options">
-                <div className="customer-delivery-option"><span><strong>Pick-up station</strong><small>Coming soon · Fulfilment is coordinated with the seller after payment.</small></span></div>
-                <div className="customer-delivery-option"><span><strong>Home delivery</strong><small>Coming soon · No delivery fee or delivery date is charged or promised at checkout.</small></span></div>
+                <label className={`customer-delivery-option${deliveryMethod === 'home' ? ' is-selected' : ''}`}><input type="radio" name="deliveryMethod" checked={deliveryMethod === 'home'} onChange={() => setDeliveryMethod('home')} /><span><strong>Home / business delivery</strong><small>Provide the location where the seller should deliver.</small></span></label>
+                <label className={`customer-delivery-option${deliveryMethod === 'pickup' ? ' is-selected' : ''}`}><input type="radio" name="deliveryMethod" checked={deliveryMethod === 'pickup'} onChange={() => setDeliveryMethod('pickup')} /><span><strong>Collect / meet-up</strong><small>Enter your preferred collection area; the seller will confirm the exact point.</small></span></label>
               </div>
+              {deliveryMethod === 'home' ? <div className="customer-contact-fields customer-delivery-fields">
+                <label className="customer-form-label">County<select required value={deliveryCounty} onChange={(event) => { setDeliveryCounty(event.target.value); setDeliverySubCounty(''); }}><option value="">Select county</option>{['Baringo','Bomet','Bungoma','Busia','Elgeyo-Marakwet','Embu','Garissa','Homa Bay','Isiolo','Kajiado','Kakamega','Kericho','Kiambu','Kilifi','Kirinyaga','Kisii','Kisumu','Kitui','Kwale','Laikipia','Lamu','Machakos','Makueni','Mandera','Marsabit','Meru','Migori','Mombasa','Murang’a','Nairobi','Nakuru','Nandi','Narok','Nyamira','Nyandarua','Nyeri','Samburu','Siaya','Taita-Taveta','Tana River','Tharaka-Nithi','Trans Nzoia','Turkana','Uasin Gishu','Vihiga','Wajir','West Pokot'].map((county) => <option key={county} value={county}>{county}</option>)}</select></label>
+                <label className="customer-form-label">Sub-county<input required value={deliverySubCounty} onChange={(event) => setDeliverySubCounty(event.target.value)} placeholder="e.g. Westlands" /></label>
+                <label className="customer-form-label">Estate / area<input required value={deliveryEstate} onChange={(event) => setDeliveryEstate(event.target.value)} placeholder="e.g. Kilimani, near Yaya Centre" /></label>
+                <label className="customer-form-label">Physical address<input required value={deliveryAddress} onChange={(event) => setDeliveryAddress(event.target.value)} placeholder="Building, street, plot or house number" /></label>
+                <label className="customer-form-label">Directions / landmark (optional)<textarea value={deliveryDirections} onChange={(event) => setDeliveryDirections(event.target.value)} placeholder="Nearby landmark, gate details or directions" /></label>
+              </div> : <div className="customer-contact-fields"><label className="customer-form-label">Preferred pickup area / station<input required value={pickupStation} onChange={(event) => setPickupStation(event.target.value)} placeholder="Town, mall or preferred meeting area" /></label></div>}
               <div className="customer-contact-fields">
                 <label className="customer-form-label">Full name<input required value={customerName} onChange={(event) => setCustomerName(event.target.value)} autoComplete="name" placeholder="Your name" /></label>
                 <label className="customer-form-label">Phone number<input required type="tel" value={customerPhone} onChange={(event) => setCustomerPhone(event.target.value)} autoComplete="tel" placeholder="07… or +254…" /></label>
@@ -465,7 +499,7 @@ export function StorefrontFlow({
         {checkoutError && <p className="customer-preview-alert" role="alert">{checkoutError}</p>}
         <div className="customer-flow-actions">
           <button type="button" className="customer-secondary-button" onClick={() => onNavigate('cart')}>Modify cart</button>
-          <button type="button" className="customer-primary-button" disabled={!lines.length || !customerName.trim() || !customerPhone.trim() || paymentMethod !== 'mpesa' || submitting} onClick={placeOrder}>{submitting ? 'Starting M-PESA…' : 'Confirm & pay with M-PESA'} <ArrowRight size={17} /></button>
+          <button type="button" className="customer-primary-button" disabled={!lines.length || !customerName.trim() || !customerPhone.trim() || paymentMethod !== 'mpesa' || submitting || (deliveryMethod === 'home' && (!deliveryCounty || !deliverySubCounty.trim() || !deliveryEstate.trim() || !deliveryAddress.trim())) || (deliveryMethod === 'pickup' && !pickupStation.trim())} onClick={placeOrder}>{submitting ? 'Starting M-PESA…' : 'Confirm & pay with M-PESA'} <ArrowRight size={17} /></button>
         </div>
       </section>
     );
@@ -533,7 +567,7 @@ export function StorefrontFlow({
             </div>
             <div className="customer-panel">
               <div className="customer-panel-heading"><h2>Delivery details</h2></div>
-              <p className="customer-order-address"><MapPin size={18} />Collection or delivery will be arranged with the seller through your order conversation.</p>
+              <p className="customer-order-address"><MapPin size={18} />{activeOrder.deliveryMethod === 'pickup' ? `Preferred collection: ${activeOrder.pickupStation || 'To be confirmed with seller'}` : [activeOrder.deliveryCounty, activeOrder.deliverySubCounty, activeOrder.deliveryEstate, activeOrder.deliveryAddress].filter(Boolean).join(', ') || 'Delivery destination not recorded'}{activeOrder.deliveryDirections ? ` · Directions: ${activeOrder.deliveryDirections}` : ''}</p>
               <p className="customer-order-address"><UserRound size={18} />{activeOrder.customerName} · {activeOrder.customerPhone}</p>
             </div>
           </div>
@@ -557,8 +591,8 @@ export function StorefrontFlow({
         <div className="customer-tracking-summary"><div><small>ORDER NUMBER</small><strong>{activeOrder.orderNumber}</strong></div><span className="customer-order-status">Order placed</span></div>
         <div className="customer-panel customer-timeline-panel">
           <div className="customer-tracking-timeline">
-            <article className="is-complete"><span><Check size={15} /></span><div><strong>Order placed</strong><small>{new Date(activeOrder.createdAt).toLocaleString('en-KE')}</small><p>Your order details were saved in this browser preview.</p></div></article>
-            <article className="is-current"><span>2</span><div><strong>Pending confirmation</strong><small>Waiting for store connection</small><p>Order status updates will be connected to your backend later.</p></div></article>
+            <article className="is-complete"><span><Check size={15} /></span><div><strong>Order placed</strong><small>{new Date(activeOrder.createdAt).toLocaleString('en-KE')}</small><p>Your order was received by the shop and saved to its order records.</p></div></article>
+            <article className="is-current"><span>2</span><div><strong>Pending confirmation</strong><small>Waiting for store connection</small><p>Payment and fulfilment updates will appear here when the seller updates your order.</p></div></article>
             <article><span>3</span><div><strong>Waiting to be shipped</strong><small>Not started</small></div></article>
             <article><span>4</span><div><strong>Delivered</strong><small>Not started</small></div></article>
           </div>
