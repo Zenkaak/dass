@@ -14,6 +14,7 @@ import {
   WalletCards,
 } from 'lucide-react';
 
+// Buyer account navigation exposes only routes backed by implemented storefront features.
 export type StoreProduct = {
   id: string;
   name: string;
