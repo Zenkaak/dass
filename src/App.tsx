@@ -118,10 +118,6 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
   <aside className={"market-sidebar market-global-drawer"+(mobileSidebarOpen?" is-mobile-open":"")} aria-label="Shop navigation">
     <div className="market-sidebar-shop"><a href={buyerPath('store')} onClick={e=>{e.preventDefault();navigateBuyerPage('store')}}><Store size={18}/><span><b>{shop?.name||'Shop categories'}</b><small>Browse this shop</small></span></a><button type="button" className="market-sidebar-close" aria-label="Close navigation" onClick={()=>setMobileSidebarOpen(false)}><X size={16}/></button></div>
     <div className="market-sidebar-title">SHOP</div>
-    <button type="button" className="market-sidebar-link" onClick={()=>navigateBuyerPage('store')}><Home size={16}/><span>Shop home</span></button>
-    <button type="button" className="market-sidebar-link" onClick={()=>navigateBuyerPage('cart')}><ShoppingCart size={16}/><span>Shopping cart</span><small>{cartItems.reduce((n,[,q])=>n+q,0)}</small></button>
-    <button type="button" className="market-sidebar-link" onClick={()=>navigateBuyerPage('account')}><UserRound size={16}/><span>My account</span></button>
-    <button type="button" className="market-sidebar-link" onClick={()=>navigateBuyerPage('orders')}><ShoppingBag size={16}/><span>My orders</span></button>
     <div className="market-sidebar-title">SHOP BY CATEGORY</div>
     <button type="button" className="market-sidebar-category-button" onClick={()=>selectStoreCategory('All products')}><span className="market-sidebar-category-icon" aria-hidden="true">▦</span><span>All categories</span></button>
     {storefrontCategories.map(category=><div className="market-sidebar-category" key={category.name}>
