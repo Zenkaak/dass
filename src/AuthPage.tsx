@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ArrowRight, ArrowLeft, ShieldCheck, Store } from 'lucide-react';
-function Brand(){return <a className="brand" href="/" aria-label="DASNET home"><span className="brand-mark">D</span><span>DAS<span className="brand-dot">.</span>co.ke</span></a>}
+function Brand(){return <a className="brand" href="/" aria-label="DASNET home"><span className="brand-mark">D</span><span>DASNET</span></a>}
 type Mode = 'signup'|'login'|'reset';
 export function AuthPage({initial='signup'}:{initial?:Mode}) {
  const [mode,setMode]=useState<Mode>(initial); const [step,setStep]=useState(1); const [phone,setPhone]=useState(''); const [code,setCode]=useState(''); const [name,setName]=useState(''); const [shop,setShop]=useState(''); const [slug,setSlug]=useState(''); const [password,setPassword]=useState(''); const [sent,setSent]=useState(false); const [busy,setBusy]=useState(false); const [error,setError]=useState(''); const [message,setMessage]=useState('');
