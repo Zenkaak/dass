@@ -72,15 +72,20 @@ jobs:
           body=$(printf '%s' "$response" | sed '$d')
           if [ "$status" = "200" ] || [ "$status" = "201" ]; then
             echo "Wildcard merchant domain attached to the DASNET project."
-          elif printf '%s' "$body" | grep -Eqi 'already exists|already assigned|domain is already'; then
+          elif printf '%s' "$body" | grep -Eqi 'already exists|already assigned|domain is already|already in use'; then
             echo "Wildcard merchant domain is already attached."
           else
             echo "::warning::Could not attach wildcard merchant domain (HTTP $status): $body. Continuing with application deployment."
           fi
 
+      - name: Link Vercel project configuration
+        run: |
+          mkdir -p .vercel
+          printf '{"projectId":"prj_vZuYn5UoOgZbJ9NGLvyiTAFHfWPe","orgId":"team_FUjJJLDSAITzmg32U4dQzNwD"}' > .vercel/project.json
+
       - name: Deploy to Vercel production
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: team_FUjJJLDSAITzmg32U4dQzNwDD
+          VERCEL_ORG_ID: team_FUjJJLDSAITzmg32U4dQzNwD
           VERCEL_PROJECT_ID: prj_vZuYn5UoOgZbJ9NGLvyiTAFHfWPe
         run: npx vercel deploy --prod --yes --scope=cheruiyott233-4429s-projects --token="$VERCEL_TOKEN"
