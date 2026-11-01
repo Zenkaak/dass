@@ -1,5 +1,7 @@
 name: Verify DASNET buyer storefront
 on:
+  push:
+    branches: [feature/buyer-storefront-checkout-ui]
   pull_request:
     branches: [main]
     paths:
