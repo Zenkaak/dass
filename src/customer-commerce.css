@@ -1828,3 +1828,156 @@
     max-width: 155px !important;
   }
 }
+
+
+/* Buyer navigation: keep the marketplace controls above every buyer route and overlay. */
+.store-page .store-market-header {
+  position: sticky !important;
+  inset-block-start: 0 !important;
+  z-index: 2147483000 !important;
+  isolation: isolate !important;
+  pointer-events: auto !important;
+}
+.store-page .store-market-header-inner,
+.store-page .store-market-actions,
+.store-page .buyer-notification-wrap,
+.store-page .market-account-menu-wrap {
+  position: relative;
+  pointer-events: auto;
+}
+.store-page .customer-workspace-nav {
+  position: relative !important;
+  z-index: 0 !important;
+  pointer-events: auto;
+}
+.store-page .buyer-notification-menu,
+.store-page .market-account-dropdown {
+  z-index: 2147483001 !important;
+}
+.store-market-home-button {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e2e8ee;
+  border-radius: 11px;
+  background: #fff;
+  color: #304b5d;
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, color .18s ease, transform .18s ease;
+}
+.store-market-home-button:hover {
+  border-color: var(--store-accent, #e47a13);
+  background: color-mix(in srgb, var(--store-accent, #e47a13) 8%, white);
+  color: var(--store-accent, #e47a13);
+  transform: translateY(-1px);
+}
+.store-market-home-button:focus-visible,
+.store-market-header button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--store-accent, #e47a13) 32%, transparent);
+  outline-offset: 2px;
+}
+@media (max-width: 700px) {
+  .store-market-home-button {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+    border-radius: 10px;
+  }
+}
+
+/* Seller feature cards: polished depth, soft birthday-blush glow and restrained motion. */
+.seller-feature-grid article {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 190px;
+  align-content: start;
+  gap: 12px;
+  padding: 21px;
+  border: 1px solid rgba(126, 165, 219, .24);
+  border-radius: 15px;
+  background:
+    radial-gradient(ellipse at 92% 4%, rgba(255, 153, 190, .18), transparent 42%),
+    radial-gradient(ellipse at 4% 100%, rgba(80, 154, 255, .12), transparent 48%),
+    linear-gradient(145deg, #12243b 0%, #0b192b 72%);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .16), inset 0 1px 0 rgba(255,255,255,.045);
+  transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+}
+.seller-feature-grid article::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 150px;
+  height: 150px;
+  top: -78px;
+  right: -48px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 161, 194, .26), rgba(255, 161, 194, 0) 70%);
+  filter: blur(5px);
+  animation: sellerFeatureBlush 5.5s ease-in-out infinite alternate;
+}
+.seller-feature-grid article::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(115deg, transparent 25%, rgba(255,255,255,.035) 48%, transparent 68%);
+  transform: translateX(-110%);
+  transition: transform .65s ease;
+  pointer-events: none;
+}
+.seller-feature-grid article:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 171, 202, .42);
+  box-shadow: 0 18px 38px rgba(0,0,0,.23), 0 0 28px rgba(255,143,184,.07);
+}
+.seller-feature-grid article:hover::after { transform: translateX(110%); }
+.seller-feature-grid article > svg {
+  width: 42px;
+  height: 42px;
+  padding: 10px;
+  border: 1px solid rgba(154, 190, 239, .2);
+  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(61,130,220,.24), rgba(255,155,192,.12));
+  color: #a9d0ff;
+  box-sizing: content-box;
+}
+.seller-feature-grid article > strong {
+  color: #f2f7ff;
+  font: 700 14px Manrope, sans-serif;
+  letter-spacing: -.15px;
+}
+.seller-feature-grid article > span {
+  color: #a9bbd3;
+  font-size: 11px;
+  line-height: 1.7;
+}
+.seller-feature-grid article > em {
+  margin-top: auto;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 190, 139, .16);
+  border-radius: 999px;
+  background: rgba(255, 181, 125, .1);
+  color: #ffd19d;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: .025em;
+}
+.seller-feature-grid article > em.seller-configured-label {
+  border-color: rgba(74, 222, 158, .18);
+  background: rgba(40, 190, 126, .12);
+  color: #7ce6b6;
+}
+@keyframes sellerFeatureBlush {
+  from { opacity: .55; transform: translate3d(0, 0, 0) scale(.9); }
+  to { opacity: 1; transform: translate3d(-9px, 7px, 0) scale(1.12); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .seller-feature-grid article,
+  .seller-feature-grid article::before,
+  .seller-feature-grid article::after,
+  .store-market-home-button { animation: none !important; transition: none !important; }
+}
