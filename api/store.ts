@@ -51,6 +51,34 @@ function storageUrl(key:string,method:'PUT'|'GET',mime='application/octet-stream
  return endpoint.replace(/\/$/,'')+path+'?'+canonicalQuery+'&X-Amz-Signature='+signature;
 }
 function safeFileName(s:string){return s.replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,120)||'attachment'}
+function validFileSignature(bytes:Buffer,mime:string){
+ if(mime==='application/pdf')return bytes.subarray(0,5).toString('ascii')==='%PDF-';
+ if(mime==='image/jpeg')return bytes.length>3&&bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff;
+ if(mime==='image/png')return bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]));
+ if(mime==='image/webp')return bytes.length>=12&&bytes.subarray(0,4).toString()==='RIFF'&&bytes.subarray(8,12).toString()==='WEBP';
+ if(mime==='application/msword'||mime==='application/vnd.ms-excel')return bytes.length>=8&&bytes.subarray(0,8).equals(Buffer.from([0xd0,0xcf,0x11,0xe0,0xa1,0xb1,0x1a,0xe1]));
+ if(mime==='application/vnd.openxmlformats-officedocument.wordprocessingml.document'||mime==='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')return bytes.length>=4&&bytes[0]===0x50&&bytes[1]===0x4b;
+ if(mime==='text/plain')return !bytes.includes(0);
+ return false;
+}
+async function scanAttachment(objectKey:string,fileName:string,mime:string,expectedSize:number){
+ const scanner=storageEnv('DASNET_FILE_SCAN_URL'),scannerToken=storageEnv('DASNET_FILE_SCAN_TOKEN');
+ if(!scanner)throw Error('FILE_SCANNER_NOT_CONFIGURED');
+ const downloaded=await fetch(storageUrl(objectKey,'GET'));
+ if(!downloaded.ok)throw Error('ATTACHMENT_OBJECT_UNAVAILABLE');
+ const bytes=Buffer.from(await downloaded.arrayBuffer());
+ if(bytes.length!==expectedSize||bytes.length<1||bytes.length>10485760)throw Error('ATTACHMENT_SIZE_MISMATCH');
+ if(!validFileSignature(bytes,mime))throw Error('ATTACHMENT_CONTENT_MISMATCH');
+ const headers:any={'Content-Type':'application/octet-stream','X-File-Name':safeFileName(fileName),'X-File-Content-Type':mime};
+ if(scannerToken)headers.Authorization='Bearer '+scannerToken;
+ const response=await fetch(scanner,{method:'POST',headers,body:bytes});
+ if(!response.ok)throw Error('FILE_SCANNER_UNAVAILABLE');
+ const result:any=await response.json().catch(()=>null);
+ if(result?.infected===true||result?.status==='infected')return 'infected';
+ if(result?.clean===true||result?.status==='clean')return 'clean';
+ throw Error('FILE_SCANNER_UNVERIFIED');
+}
+
 function timestamp(){const d=new Date();return d.getUTCFullYear()+String(d.getUTCMonth()+1).padStart(2,'0')+String(d.getUTCDate()).padStart(2,'0')+String(d.getUTCHours()).padStart(2,'0')+String(d.getUTCMinutes()).padStart(2,'0')+String(d.getUTCSeconds()).padStart(2,'0')}
 async function startStk(c:any,order:any,phone:string,amount:number,reference:string,callbackUrl:string){
  const {host,accessToken}=await darajaToken(c),stamp=timestamp(),shortcode=String(c.shortcode),type=c.accountType;
@@ -107,7 +135,7 @@ export default async function handler(req:any,res:any){
    try{
     const method=((p.provider_result?.paymentMethod)||(p.default_payout_method||p.payout_method)||'till')==='paybill'?'paybill':'till';
     if(p.encrypted_credentials?.ciphertext){const bundle=decryptBundle(p.encrypted_credentials,key,'seller'),sec=bundle.credentialsByType?.[method]||{...bundle,shortcode:p.shortcode,environment:p.environment};c={...sec,partyB:method==='paybill'?(p.paybill_party_b||p.party_b):(p.till_party_b||p.party_b),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
-    else if(p.central_credentials?.ciphertext){const sec=decryptBundle(p.central_credentials,key,'platform');c={...sec,shortcode:p.central_shortcode,environment:p.central_environment,partyB:method==='paybill'?(p.paybill_party_b||p.party_b||p.central_party_b):(p.till_party_b||p.party_b||p.central_party_b),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
+    else if((p.central_credentials?.data||p.central_credentials?.ciphertext)){const sec=decryptBundle(p.central_credentials,key,'platform');c={...sec,shortcode:p.central_shortcode,environment:p.central_environment,partyB:method==='paybill'?(p.paybill_party_b||p.party_b||p.central_party_b):(p.till_party_b||p.party_b||p.central_party_b),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
     if(!c)throw Error('No payment credentials available');
     const checked=await verifyStk(c,checkout);
     if(Number(checked.ResultCode)!==0||!checked.ResultCode&&checked.ResultCode!==0)throw Error('Provider has not confirmed successful payment.');
@@ -124,7 +152,7 @@ export default async function handler(req:any,res:any){
   if((req.method==='GET'||req.method==='POST')&&action==='customer-chat'){
    const b=req.body||{},tokenValue=String(req.method==='GET'?req.query?.token:b.token||'').trim();
    if(!/^[a-f0-9]{64}$/.test(tokenValue))return send(res,401,{error:'This chat link is invalid or expired.'});
-   const rows=await sql`SELECT id,tenant_id,order_number,customer_name,status,delivery_status,delivery_updated_at,created_at,total_minor FROM public.orders WHERE customer_chat_token_hash=${hash(tokenValue)} LIMIT 1`;
+   const rows=await sql`SELECT id,tenant_id,order_number,customer_name,status,delivery_status,delivery_updated_at,created_at,total_minor,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station FROM public.orders WHERE customer_chat_token_hash=${hash(tokenValue)} LIMIT 1`;
    if(!rows.length)return send(res,401,{error:'This chat link is invalid or expired.'});
    const order=rows[0];
    if(req.method==='POST'){
@@ -135,7 +163,7 @@ export default async function handler(req:any,res:any){
    }
    const messages=await sql`SELECT id,sender_type,message,created_at FROM public.order_messages WHERE tenant_id=${order.tenant_id} AND order_id=${order.id} ORDER BY created_at ASC LIMIT 100`;
    const payment=await sql`SELECT status,provider_receipt,updated_at FROM public.payments WHERE tenant_id=${order.tenant_id} AND order_id=${order.id} ORDER BY created_at DESC LIMIT 1`;
-   const attachments=await sql`SELECT id,uploader_type,file_name,content_type,size_bytes,created_at FROM public.order_message_attachments WHERE tenant_id=${order.tenant_id} AND order_id=${order.id} AND upload_status='ready' ORDER BY created_at ASC LIMIT 100`;return send(res,200,{orderNumber:order.order_number,order:{orderNumber:order.order_number,customerName:order.customer_name,status:order.status,deliveryStatus:order.delivery_status||'pending_delivery',deliveryUpdatedAt:order.delivery_updated_at,total:Number(order.total_minor)/100,paymentStatus:payment[0]?.status||'unpaid',receipt:payment[0]?.provider_receipt||null},messages,attachments});
+   const attachments=await sql`SELECT id,uploader_type,file_name,content_type,size_bytes,created_at FROM public.order_message_attachments WHERE tenant_id=${order.tenant_id} AND order_id=${order.id} AND upload_status='ready' ORDER BY created_at ASC LIMIT 100`;return send(res,200,{orderNumber:order.order_number,order:{orderNumber:order.order_number,customerName:order.customer_name,status:order.status,deliveryStatus:order.delivery_status||'pending_delivery',deliveryUpdatedAt:order.delivery_updated_at,total:Number(order.total_minor)/100,paymentStatus:payment[0]?.status||'unpaid',receipt:payment[0]?.provider_receipt||null,deliveryMethod:order.delivery_method||'home',deliveryCounty:order.delivery_county||'',deliverySubCounty:order.delivery_sub_county||'',deliveryEstate:order.delivery_estate||'',deliveryAddress:order.delivery_address||'',deliveryDirections:order.delivery_directions||'',pickupStation:order.pickup_station||''},messages,attachments});
   }
   if(req.method==='POST'&&action==='chat-attachment'){
    const b=req.body||{},mode=String(b.mode||''),tokenValue=String(b.token||'').trim();let order:any=null,tenantId='',uploader='merchant',userId:string|null=null;
@@ -152,11 +180,28 @@ export default async function handler(req:any,res:any){
     return send(res,200,{ok:true,attachmentId:id,uploadUrl:storageUrl(key,'PUT',mime),expiresIn:300});
    }
    if(mode==='complete'){
-    const id=String(b.attachmentId||'');const rows=await sql`UPDATE public.order_message_attachments SET upload_status='ready' WHERE id=${id} AND tenant_id=${tenantId} AND order_id=${order.id} AND uploader_type=${uploader} AND upload_status='pending' RETURNING id,file_name,size_bytes,content_type,created_at`;
-    if(!rows.length)return send(res,404,{error:'Attachment upload could not be confirmed.'});
-    return send(res,200,{ok:true,attachment:rows[0]});
-   }
-   if(mode==='download'){
+     const id=String(b.attachmentId||'');
+     const pending=await sql`SELECT id,object_key,file_name,size_bytes,content_type FROM public.order_message_attachments WHERE id=${id} AND tenant_id=${tenantId} AND order_id=${order.id} AND uploader_type=${uploader} AND upload_status='pending' AND scan_status='unscanned' LIMIT 1`;
+     if(!pending.length)return send(res,404,{error:'Attachment upload could not be confirmed.'});
+     try{
+      const result=await scanAttachment(pending[0].object_key,pending[0].file_name,pending[0].content_type,Number(pending[0].size_bytes));
+      if(result==='infected'){
+       await sql`UPDATE public.order_message_attachments SET scan_status='infected',upload_status='pending' WHERE id=${id} AND tenant_id=${tenantId}`;
+       return send(res,415,{error:'This file failed the security scan and was rejected.'});
+      }
+      const rows=await sql`UPDATE public.order_message_attachments SET scan_status='clean',upload_status='ready' WHERE id=${id} AND tenant_id=${tenantId} AND order_id=${order.id} AND uploader_type=${uploader} AND upload_status='pending' RETURNING id,file_name,size_bytes,content_type,created_at`;
+      if(!rows.length)return send(res,409,{error:'Attachment state changed. Please retry.'});
+      return send(res,200,{ok:true,attachment:rows[0]});
+     }catch(err:any){
+      await sql`UPDATE public.order_message_attachments SET scan_status='failed',upload_status='pending' WHERE id=${id} AND tenant_id=${tenantId} AND upload_status='pending'`;
+      const message=String(err?.message||'');
+      console.error('DASNET attachment security check failed',message);
+      if(message==='FILE_SCANNER_NOT_CONFIGURED')return send(res,503,{error:'Secure file scanning is not configured yet. Attachments are disabled until the scanner is connected.'});
+      if(message==='ATTACHMENT_CONTENT_MISMATCH'||message==='ATTACHMENT_SIZE_MISMATCH')return send(res,415,{error:'The uploaded file does not match its declared type or size.'});
+      return send(res,503,{error:'The file could not be security-scanned. It has been quarantined; please try again later.'});
+     }
+    }
+    if(mode==='download'){
     const id=String(b.attachmentId||'');const rows=await sql`SELECT id,object_key,file_name,content_type FROM public.order_message_attachments WHERE id=${id} AND tenant_id=${tenantId} AND order_id=${order.id} AND upload_status='ready' LIMIT 1`;
     if(!rows.length)return send(res,404,{error:'Attachment not found.'});
     return send(res,200,{url:storageUrl(rows[0].object_key,'GET'),fileName:rows[0].file_name,contentType:rows[0].content_type,expiresIn:300});
@@ -165,10 +210,13 @@ export default async function handler(req:any,res:any){
   }
   if(!me && action!=='order')return send(res,401,{error:'Please sign in to access your seller workspace.'});
   if(req.method==='POST'&&action==='order'){
-   const b=req.body||{},slug=String(b.slug||'').toLowerCase(),name=String(b.customerName||'').trim().slice(0,120),phone=normalizePhone(b.customerPhone),items=Array.isArray(b.items)?b.items:[],idempotency=String(b.idempotencyKey||'').slice(0,100),requestedMethod=String(b.paymentMethod||'').toLowerCase();
+   const b=req.body||{},slug=String(b.slug||'').toLowerCase(),name=String(b.customerName||'').trim().slice(0,120),phone=normalizePhone(b.customerPhone),items=Array.isArray(b.items)?b.items:[],idempotency=String(b.idempotencyKey||'').slice(0,100),requestedMethod=String(b.paymentMethod||'').toLowerCase(),deliveryMethod=String(b.deliveryMethod||'home'),deliveryCounty=String(b.deliveryCounty||'').trim().slice(0,80),deliverySubCounty=String(b.deliverySubCounty||'').trim().slice(0,100),deliveryEstate=String(b.deliveryEstate||'').trim().slice(0,160),deliveryAddress=String(b.deliveryAddress||'').trim().slice(0,300),deliveryDirections=String(b.deliveryDirections||'').trim().slice(0,500),pickupStation=String(b.pickupStation||'').trim().slice(0,200);
    const shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
    if(!shops.length)return send(res,404,{error:'Shop not found.'});
    if(!name||!phone||!items.length||items.length>30)return send(res,400,{error:'Enter your name, valid phone number and at least one item.'});
+   if(!['home','pickup'].includes(deliveryMethod))return send(res,400,{error:'Choose a valid delivery method.'});
+   if(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty||!deliveryEstate||!deliveryAddress))return send(res,400,{error:'Complete county, sub-county, estate/area and physical delivery address.'});
+   if(deliveryMethod==='pickup'&&!pickupStation)return send(res,400,{error:'Enter your preferred pickup area or station.'});
    const tenantId=shops[0].id,ids=items.map((x:any)=>String(x.id||'')).filter(Boolean);
    const ps=await sql`SELECT id,name,price_minor,stock_quantity FROM public.products WHERE tenant_id=${tenantId} AND is_active=true AND id=ANY(${ids}::uuid[])`;
    if(ps.length!==new Set(ids).size)return send(res,400,{error:'One or more products are no longer available.'});
@@ -184,7 +232,7 @@ export default async function handler(req:any,res:any){
     if(cfg.encrypted_credentials?.ciphertext){
      const bundle=decryptBundle(cfg.encrypted_credentials,key,'seller'),sec=bundle.credentialsByType?.[method]||{...bundle,shortcode:cfg.shortcode,environment:cfg.environment};
      payment={...sec,partyB:method==='paybill'?(cfg.paybill_party_b||((cfg.payout_method||cfg.default_payout_method)==='paybill'?cfg.party_b:'')):(cfg.till_party_b||((cfg.payout_method||cfg.default_payout_method)==='till'?cfg.party_b:'')),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};
-    }else if(cfg.central_credentials?.ciphertext){
+    }else if((cfg.central_credentials?.data||cfg.central_credentials?.ciphertext)){
      const sec=decryptBundle(cfg.central_credentials,key,'platform');
      payment={...sec,shortcode:cfg.central_shortcode,partyB:method==='paybill'?(cfg.paybill_party_b||cfg.central_party_b):(cfg.till_party_b||cfg.central_party_b),environment:cfg.central_environment,accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};
     }
@@ -192,7 +240,7 @@ export default async function handler(req:any,res:any){
    if(!payment?.consumerKey||!payment?.consumerSecret||!payment?.passkey||!payment?.shortcode||!payment?.partyB)return send(res,503,{error:'This shop has not completed M-PESA payment setup yet.'});
    if(payment.environment!=='production')return send(res,503,{error:'This shop is configured for Daraja sandbox. Live checkout is disabled.'});
    const orderNo='DAS-'+Date.now().toString(36).toUpperCase()+'-'+crypto.randomBytes(2).toString('hex').toUpperCase();
-   const o=await sql`INSERT INTO public.orders(tenant_id,order_number,customer_name,customer_phone,subtotal_minor,total_minor,status) VALUES(${tenantId},${orderNo},${name},${phone},${total},${total},'pending') RETURNING id,order_number`;
+   const o=await sql`INSERT INTO public.orders(tenant_id,order_number,customer_name,customer_phone,customer_email,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,subtotal_minor,total_minor,status) VALUES(${tenantId},${orderNo},${name},${phone},${String(b.customerEmail||'').trim().slice(0,254)||null},${deliveryMethod},${deliveryCounty||null},${deliverySubCounty||null},${deliveryEstate||null},${deliveryAddress||null},${deliveryDirections||null},${pickupStation||null},${total},${total},'pending') RETURNING id,order_number`;
    const customerChatToken=crypto.randomBytes(32).toString('hex');await sql`UPDATE public.orders SET customer_chat_token_hash=${hash(customerChatToken)} WHERE id=${o[0].id} AND tenant_id=${tenantId}`;
    for(const l of lines){await sql`INSERT INTO public.order_items(tenant_id,order_id,product_id,product_name,quantity,unit_price_minor,line_total_minor) VALUES(${tenantId},${o[0].id},${l.p.id},${l.p.name},${l.qty},${Number(l.p.price_minor)},${l.line})`;}
    const idem=idempotency||crypto.randomUUID();
@@ -384,7 +432,7 @@ export default async function handler(req:any,res:any){
    if(method==='paybill'&&!cfg.account_reference)return send(res,409,{error:'A PayBill account/reference is required before requesting payment.'});
    try{
     if(cfg.encrypted_credentials?.ciphertext){const bundle=decryptBundle(cfg.encrypted_credentials,key,'seller'),sec=bundle.credentialsByType?.[method]||{...bundle,shortcode:cfg.shortcode,environment:cfg.environment};payment={...sec,partyB:method==='paybill'?(cfg.paybill_party_b||((cfg.payout_method||cfg.default_payout_method)==='paybill'?cfg.party_b:'')):(cfg.till_party_b||((cfg.payout_method||cfg.default_payout_method)==='till'?cfg.party_b:'')),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
-    else if(cfg.central_credentials?.ciphertext){const sec=decryptBundle(cfg.central_credentials,key,'platform');payment={...sec,shortcode:cfg.central_shortcode,partyB:method==='paybill'?(cfg.paybill_party_b||cfg.central_party_b):(cfg.till_party_b||cfg.central_party_b),environment:cfg.central_environment,accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
+    else if((cfg.central_credentials?.data||cfg.central_credentials?.ciphertext)){const sec=decryptBundle(cfg.central_credentials,key,'platform');payment={...sec,shortcode:cfg.central_shortcode,partyB:method==='paybill'?(cfg.paybill_party_b||cfg.central_party_b):(cfg.till_party_b||cfg.central_party_b),environment:cfg.central_environment,accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
    }catch(e:any){console.error('Order payment prompt credentials failed',e?.message||e);return send(res,503,{error:'Payment credentials could not be loaded securely.'});}
    if(!payment?.consumerKey||!payment?.consumerSecret||!payment?.passkey||!payment?.shortcode||!payment?.partyB)return send(res,503,{error:'Complete the matching Daraja credentials and payout destination before requesting payment.'});
    if(payment.environment!=='production')return send(res,503,{error:'The selected Daraja credentials are in sandbox. Live payment prompts are disabled.'});
