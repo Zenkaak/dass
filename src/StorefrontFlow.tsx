@@ -46,6 +46,9 @@ type BuyerOrder = {
   deliveryFee: number;
   total: number;
   lines: CartLine[];
+  chatToken: string;
+  paymentStatus: string;
+  receipt?: string | null;
 };
 
 type StorefrontFlowProps = {
@@ -172,7 +175,9 @@ export function StorefrontFlow({
     [lines],
   );
   const [orders, setOrders] = useState<BuyerOrder[]>(() => storedOrders(orderStorageKey));
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mpesa');
+  const [submitting, setSubmitting] = useState(false);
+  const [checkoutError, setCheckoutError] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('pickup');
   const [customerName, setCustomerName] = useState(initialCustomerName);
   const [customerPhone, setCustomerPhone] = useState('');
@@ -193,9 +198,24 @@ export function StorefrontFlow({
     }
   }, [orderStorageKey, orders]);
 
-  const deliveryFee = deliveryMethod === 'pickup' ? 180 : 350;
-  const total = subtotal + deliveryFee;
+  const deliveryFee = 0;
+  const total = subtotal;
   const activeOrder = orders.find((order) => order.orderNumber === activeOrderNumber) || orders[0];
+  useEffect(() => {
+    const refresh = async () => {
+      const refreshed = await Promise.all(orders.map(async (order) => {
+        if (!order.chatToken) return order;
+        try {
+          const response = await fetch('/api/store?action=customer-chat&token=' + encodeURIComponent(order.chatToken));
+          const data = await response.json();
+          if (!response.ok) return order;
+          return { ...order, paymentStatus: data.order?.paymentStatus || order.paymentStatus, receipt: data.order?.receipt || order.receipt, orderStatus: data.order?.status, deliveryStatus: data.order?.deliveryStatus };
+        } catch { return order; }
+      }));
+      setOrders((current) => JSON.stringify(current) === JSON.stringify(refreshed) ? current : refreshed);
+    };
+    if (orders.length) refresh();
+  }, [orders.map((order) => order.chatToken).join('|')]);
   const recentlyViewedProducts = recentlyViewedIds
     .map((id) => products.find((product) => product.id === id))
     .filter((product): product is StoreProduct => Boolean(product));
@@ -213,38 +233,61 @@ export function StorefrontFlow({
       : 'Enter a voucher code first.');
   }
 
-  function placePreviewOrder() {
-    if (!lines.length) {
-      onNavigate('cart');
+  async function placeOrder() {
+    if (!lines.length || submitting) return;
+    if (paymentMethod !== 'mpesa') {
+      setCheckoutError('This payment method is coming soon. Choose M-PESA to continue.');
       return;
     }
-    const createdAt = new Date().toISOString();
-    const orderNumber = `DAS-${createdAt.replace(/\D/g, '').slice(2, 12)}`;
-    const order: BuyerOrder = {
-      orderNumber,
-      createdAt,
-      customerName: customerName.trim(),
-      customerPhone: customerPhone.trim(),
-      customerEmail: customerEmail.trim(),
-      paymentMethod,
-      deliveryMethod,
-      deliveryAddress: deliveryAddress.trim(),
-      pickupStation: pickupStation.trim(),
-      subtotal,
-      deliveryFee,
-      total,
-      lines: lines.map((line) => ({ ...line })),
-    };
-    const updatedOrders = [order, ...orders];
-    setOrders(updatedOrders);
-    setActiveOrderNumber(orderNumber);
+    setSubmitting(true);
+    setCheckoutError('');
     try {
-      localStorage.setItem(orderStorageKey, JSON.stringify(updatedOrders));
-    } catch {
-      // Order confirmation remains visible for this session.
+      const response = await fetch('/api/store?action=order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug,
+          customerName: customerName.trim(),
+          customerPhone: customerPhone.trim(),
+          customerEmail: customerEmail.trim(),
+          paymentMethod: 'till',
+          items: lines.map(({ product, quantity }) => ({ id: product.id, quantity })),
+          idempotencyKey: `buyer-${slug}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.orderNumber || !data.chatToken) {
+        throw new Error(data.error || 'We could not create your order or start M-PESA. Please review your details and try again.');
+      }
+      const createdAt = new Date().toISOString();
+      const order: BuyerOrder = {
+        orderNumber: data.orderNumber,
+        createdAt,
+        customerName: customerName.trim(),
+        customerPhone: customerPhone.trim(),
+        customerEmail: customerEmail.trim(),
+        paymentMethod: 'mpesa',
+        deliveryMethod,
+        deliveryAddress: deliveryAddress.trim(),
+        pickupStation: pickupStation.trim(),
+        subtotal,
+        deliveryFee: 0,
+        total: subtotal,
+        lines: lines.map((line) => ({ ...line })),
+        chatToken: data.chatToken,
+        paymentStatus: data.paymentStatus || 'pending',
+      };
+      const updatedOrders = [order, ...orders.filter((entry) => entry.orderNumber !== order.orderNumber)];
+      setOrders(updatedOrders);
+      setActiveOrderNumber(order.orderNumber);
+      try { localStorage.setItem(orderStorageKey, JSON.stringify(updatedOrders)); } catch { /* Backend order remains valid. */ }
+      onCartChange({});
+      onNavigate('checkout/complete');
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : 'Checkout failed. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
-    onCartChange({});
-    onNavigate('checkout/complete');
   }
 
   function openOrder(order: BuyerOrder, next: string) {
@@ -261,7 +304,7 @@ export function StorefrontFlow({
           <div className="customer-summary-row"><span>Delivery fees</span><strong>{formatKes(deliveryFee)}</strong></div>
           <div className="customer-summary-row customer-summary-total"><span>Total</span><strong>{formatKes(total)}</strong></div>
         </>}
-        <p className="customer-preview-note"><ShieldCheck size={15} /> UI preview only. Checkout and payment are not connected.</p>
+        <p className="customer-preview-note"><ShieldCheck size={15} /> Prices and stock are rechecked by the shop server before an M-PESA request is created.</p>
         {view === 'cart' && (
           <button type="button" className="customer-primary-button" disabled={!lines.length} onClick={() => onNavigate('checkout/payment')}>
             Checkout ({formatKes(subtotal)}) <ArrowRight size={17} />
@@ -334,14 +377,14 @@ export function StorefrontFlow({
   }
 
   function renderCheckoutPayment() {
-    const choices: { id: PaymentMethod; title: string; description: string; mark: string }[] = [
-      { id: 'card', title: 'Pay now with bank card', description: 'Visa and Mastercard', mark: 'VISA · Mastercard' },
-      { id: 'airtel', title: 'Pay now with Airtel Money', description: 'Use your Airtel Money account', mark: 'Airtel' },
-      { id: 'mpesa', title: 'Pay now with M-Pesa', description: 'Use your M-Pesa account', mark: 'M-PESA' },
-      { id: 'delivery', title: 'Pay on delivery', description: 'Mobile money or bank card when your order arrives', mark: 'Pay later' },
+    const choices: { id: PaymentMethod; title: string; description: string; mark: string; available: boolean }[] = [
+      { id: 'card', title: 'Pay with bank card', description: 'Visa and Mastercard · Coming soon', mark: 'Coming soon', available: false },
+      { id: 'airtel', title: 'Pay with Airtel Money', description: 'Airtel Money · Coming soon', mark: 'Coming soon', available: false },
+      { id: 'mpesa', title: 'Pay with M-PESA', description: 'Secure STK Push to your phone', mark: 'M-PESA', available: true },
+      { id: 'delivery', title: 'Pay on delivery', description: 'Coming soon', mark: 'Coming soon', available: false },
     ];
     const paymentOption = (choice: typeof choices[number]) => (
-      <button type="button" key={choice.id} className={`customer-payment-option${paymentMethod === choice.id ? ' is-selected' : ''}`} onClick={() => setPaymentMethod(choice.id)} aria-pressed={paymentMethod === choice.id}>
+      <button type="button" key={choice.id} className={`customer-payment-option${paymentMethod === choice.id ? ' is-selected' : ''}`} onClick={() => choice.available && setPaymentMethod(choice.id)} aria-pressed={paymentMethod === choice.id} disabled={!choice.available}>
         <span className="customer-radio" aria-hidden="true">{paymentMethod === choice.id && <i />}</span>
         <span className="customer-payment-copy"><strong>{choice.title}</strong><small>{choice.description}</small></span>
         <b className="customer-payment-mark">{choice.mark}</b>
@@ -364,7 +407,7 @@ export function StorefrontFlow({
               <div className="customer-payment-list">
                 <h3 className="customer-payment-group-title">Pre-pay now</h3>
                 {choices.slice(0, 3).map(paymentOption)}
-                {paymentMethod === 'card' && <div className="customer-card-preview"><strong>Store credit balance: KES 0</strong><span>Card payment setup will be connected later.</span></div>}
+                <div className="customer-card-preview"><strong>M-PESA checkout</strong><span>After you confirm, an STK prompt will be sent to your phone. Your order remains pending until Safaricom confirms payment.</span></div>
                 <h3 className="customer-payment-group-title customer-payment-delivery-title">Pay on delivery</h3>
                 {paymentOption(choices[3])}
               </div>
@@ -374,7 +417,7 @@ export function StorefrontFlow({
         </div>
         <div className="customer-flow-actions">
           <button type="button" className="customer-secondary-button" onClick={() => onNavigate('cart')}>Modify cart</button>
-          <button type="button" className="customer-primary-button" disabled={!lines.length} onClick={() => onNavigate('checkout/review')}>Continue <ArrowRight size={17} /></button>
+          <button type="button" className="customer-primary-button" disabled={!lines.length || paymentMethod !== 'mpesa'} onClick={() => onNavigate('checkout/review')}>Continue <ArrowRight size={17} /></button>
         </div>
       </section>
     );
@@ -389,25 +432,14 @@ export function StorefrontFlow({
           <div className="customer-review-stack">
             <div className="customer-panel">
               <div className="customer-panel-heading"><h2>Payment method</h2><button type="button" className="customer-text-button" onClick={() => onNavigate('checkout/payment')}>Change</button></div>
-              <div className="customer-review-summary"><WalletCards size={19} /><strong>{paymentLabels[paymentMethod]}</strong><span>{paymentMethod === 'delivery' ? 'Payment due when your order arrives' : 'Payment will be configured later'}</span></div>
+              <div className="customer-review-summary"><WalletCards size={19} /><strong>{paymentLabels[paymentMethod]}</strong><span>STK prompt sent after you confirm. Payment is pending until verified.</span></div>
             </div>
             <div className="customer-panel">
               <div className="customer-panel-heading"><h2>Delivery details</h2><button type="button" className="customer-text-button" onClick={() => document.getElementById('customer-delivery-options')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>Change</button></div>
               <div className="customer-delivery-options" id="customer-delivery-options">
-                <button type="button" className={`customer-delivery-option${deliveryMethod === 'pickup' ? ' is-selected' : ''}`} onClick={() => setDeliveryMethod('pickup')} aria-pressed={deliveryMethod === 'pickup'}>
-                  <span className="customer-radio" aria-hidden="true">{deliveryMethod === 'pickup' && <i />}</span>
-                  <span><strong>Pick-up station</strong><small>From {formatKes(180)} · estimated delivery in 2–4 days</small></span>
-                </button>
-                <button type="button" className={`customer-delivery-option${deliveryMethod === 'home' ? ' is-selected' : ''}`} onClick={() => setDeliveryMethod('home')} aria-pressed={deliveryMethod === 'home'}>
-                  <span className="customer-radio" aria-hidden="true">{deliveryMethod === 'home' && <i />}</span>
-                  <span><strong>Home delivery</strong><small>From {formatKes(350)} · estimated delivery in 2–4 days</small></span>
-                </button>
+                <div className="customer-delivery-option"><span><strong>Pick-up station</strong><small>Coming soon · Fulfilment is coordinated with the seller after payment.</small></span></div>
+                <div className="customer-delivery-option"><span><strong>Home delivery</strong><small>Coming soon · No delivery fee or delivery date is charged or promised at checkout.</small></span></div>
               </div>
-              {deliveryMethod === 'pickup' ? (
-                <label className="customer-form-label">Pickup point<input value={pickupStation} onChange={(event) => setPickupStation(event.target.value)} /></label>
-              ) : (
-                <label className="customer-form-label">Delivery address<textarea value={deliveryAddress} onChange={(event) => setDeliveryAddress(event.target.value)} placeholder="Street, building, area and town" rows={2} /></label>
-              )}
               <div className="customer-contact-fields">
                 <label className="customer-form-label">Full name<input required value={customerName} onChange={(event) => setCustomerName(event.target.value)} autoComplete="name" placeholder="Your name" /></label>
                 <label className="customer-form-label">Phone number<input required type="tel" value={customerPhone} onChange={(event) => setCustomerPhone(event.target.value)} autoComplete="tel" placeholder="07… or +254…" /></label>
@@ -427,9 +459,10 @@ export function StorefrontFlow({
           </div>
           {renderSummary()}
         </div>
+        {checkoutError && <p className="customer-preview-alert" role="alert">{checkoutError}</p>}
         <div className="customer-flow-actions">
           <button type="button" className="customer-secondary-button" onClick={() => onNavigate('cart')}>Modify cart</button>
-          <button type="button" className="customer-primary-button" disabled={!lines.length || !customerName.trim() || !customerPhone.trim() || (deliveryMethod === 'home' && !deliveryAddress.trim())} onClick={placePreviewOrder}>Confirm order <ArrowRight size={17} /></button>
+          <button type="button" className="customer-primary-button" disabled={!lines.length || !customerName.trim() || !customerPhone.trim() || paymentMethod !== 'mpesa' || submitting} onClick={placeOrder}>{submitting ? 'Starting M-PESA…' : 'Confirm & pay with M-PESA'} <ArrowRight size={17} /></button>
         </div>
       </section>
     );
@@ -442,14 +475,14 @@ export function StorefrontFlow({
     return (
       <section className="customer-flow customer-success-page">
         <div className="customer-success-banner"><span className="customer-success-check"><Check size={39} /></span><div><h1>Thank you for your order</h1><p>Order number <strong>{activeOrder.orderNumber}</strong></p></div></div>
-        <div className="customer-preview-alert"><ShieldCheck size={17} /><span>This is a front-end preview. No payment was taken and this order is stored only in this browser.</span></div>
+        <div className="customer-preview-alert"><ShieldCheck size={17} /><span>{activeOrder.paymentStatus === 'succeeded' ? `Payment confirmed${activeOrder.receipt ? ` · M-PESA receipt ${activeOrder.receipt}` : ''}.` : activeOrder.paymentStatus === 'failed' || activeOrder.paymentStatus === 'cancelled' ? 'M-PESA payment was not completed. This order is not paid.' : 'Your order has been created. Payment is pending Safaricom confirmation; do not retry unless the payment prompt has failed or expired.'}</span></div>
         <div className="customer-panel customer-success-delivery">
           <MapPin size={22} />
           <div><strong>{activeOrder.deliveryMethod === 'pickup' ? 'Pick-up station' : 'Home delivery'}</strong><p>{activeOrder.deliveryMethod === 'pickup' ? activeOrder.pickupStation : activeOrder.deliveryAddress}</p><small>Estimated delivery in 2–4 days</small></div>
         </div>
         <div className="customer-panel customer-success-payment">
           <WalletCards size={22} />
-          <div><strong>{paymentLabels[activeOrder.paymentMethod]}</strong><p>{activeOrder.paymentMethod === 'delivery' ? 'Pay when your order arrives.' : 'Payment setup will be connected later.'}</p></div>
+          <div><strong>{paymentLabels[activeOrder.paymentMethod]}</strong><p>{activeOrder.paymentStatus === 'succeeded' ? 'Payment successful.' : activeOrder.paymentStatus === 'failed' ? 'Payment failed.' : activeOrder.paymentStatus === 'cancelled' ? 'Payment cancelled.' : 'Awaiting M-PESA confirmation.'}</p></div>
         </div>
         <div className="customer-flow-actions customer-success-actions">
           <button type="button" className="customer-secondary-button" onClick={() => openOrder(activeOrder, 'orders')}>My orders</button>
@@ -526,7 +559,7 @@ export function StorefrontFlow({
             <article><span>3</span><div><strong>Waiting to be shipped</strong><small>Not started</small></div></article>
             <article><span>4</span><div><strong>Delivered</strong><small>Not started</small></div></article>
           </div>
-          <p className="customer-preview-note"><ShieldCheck size={15} /> This tracking timeline is a UI preview, not a live shipment status.</p>
+          <p className="customer-preview-note"><ShieldCheck size={15} /> Payment and delivery status are retrieved from the order conversation service. Delivery updates appear when the seller records them.</p>
         </div>
       </section>
     );
