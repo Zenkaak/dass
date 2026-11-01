@@ -2054,33 +2054,33 @@
 }
 
 
-/* Final buyer-route navigation layer: must sit above the sticky marketplace header. */
+/* Keep the marketplace header as the single top-level sticky navigation layer.
+   The buyer workspace bar must remain in normal flow: a higher-z-index sticky child
+   was painting over the marketplace header on Account and Cart routes on touch devices. */
+.store-page .store-market-header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 2147483647 !important;
+  isolation: isolate !important;
+  pointer-events: auto !important;
+}
 .store-page .customer-workspace-shell {
   position: relative !important;
   overflow: visible !important;
 }
 .store-page .customer-workspace-nav {
-  position: sticky !important;
-  top: 76px !important;
-  z-index: 2147483002 !important;
-  isolation: isolate !important;
+  position: relative !important;
+  inset: auto !important;
+  z-index: auto !important;
+  isolation: auto !important;
   transform: none !important;
   pointer-events: auto !important;
 }
 .store-page .customer-workspace-nav a,
 .store-page .customer-workspace-nav button,
 .store-page .customer-workspace-nav > div {
-  position: relative !important;
-  z-index: 1 !important;
   pointer-events: auto !important;
 }
 .store-page .customer-workspace-nav button {
   touch-action: manipulation;
-}
-@media (max-width: 760px) {
-  .store-page .customer-workspace-nav {
-    top: 106px !important;
-    z-index: 2147483002 !important;
-    min-height: 56px;
-  }
 }
