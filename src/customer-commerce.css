@@ -1981,3 +1981,21 @@
   .seller-feature-grid article::after,
   .store-market-home-button { animation: none !important; transition: none !important; }
 }
+
+@media (max-width: 760px) {
+  .store-market-header-inner .store-market-home-button {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    width: 36px;
+    height: 38px;
+    flex-basis: 36px;
+  }
+  .store-market-header-inner .store-market-search {
+    grid-column: 2 / 4 !important;
+    grid-row: 2 !important;
+  }
+  .store-market-header-inner .store-market-search-button {
+    grid-column: 4 !important;
+    grid-row: 2 !important;
+  }
+}
