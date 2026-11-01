@@ -23,7 +23,7 @@ export const storefrontCategories: StorefrontCategory[] = [
   {
     name: 'Gaming',
     icon: '🎮',
-    subcategories: ['All Gaming', 'Video Game Consoles', 'Video Games', 'Controllers & Accessories', 'Gaming PCs & Setups'],
+    subcategories: ['All Games', 'Video Game Consoles', 'Video Games', 'Controllers & Accessories', 'Gaming PCs & Setups'],
   },
   {
     name: 'Home Appliances',
