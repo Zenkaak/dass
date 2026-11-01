@@ -1746,3 +1746,15 @@
 .market-hero-gallery-track{animation:none!important;transition:transform .65s cubic-bezier(.22,.75,.25,1);will-change:transform}
 .market-hero-gallery-window:hover .market-hero-gallery-track{animation:none!important}
 @media(prefers-reduced-motion:reduce){.market-hero-gallery-track{transition:none!important}}
+
+
+/* Keep seller navigation above detail content on desktop and mobile. */
+.seller-app{isolation:isolate}
+.seller-rail{position:sticky!important;top:0;z-index:300!important;align-self:start}
+.seller-topbar{z-index:301!important}
+.seller-mobile-bottom{z-index:302!important}
+@media(max-width:850px){.seller-rail{position:relative!important;z-index:300!important}.seller-mobile-bottom{z-index:302!important}}
+/* The merchant category rail remains available while a product detail route is open. */
+.market-product-detail-layout .market-sidebar{display:flex;flex-direction:column}
+.market-product-detail-main-shell{min-width:0;padding:18px}
+@media(max-width:760px){.market-product-detail-layout .market-sidebar{position:fixed!important;top:104px!important;left:0!important;bottom:0!important;width:min(86vw,340px)!important;height:calc(100dvh - 104px)!important;z-index:520!important;transform:translateX(-110%);pointer-events:none}.market-product-detail-layout .market-sidebar.is-mobile-open{transform:translateX(0);pointer-events:auto}.market-product-detail-layout .market-sidebar{display:flex!important}.market-product-detail-main-shell{padding:12px}}
