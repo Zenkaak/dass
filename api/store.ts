@@ -394,7 +394,7 @@ export default async function handler(req:any,res:any){
    const images=Array.isArray(b.images)?b.images.filter((x:any)=>typeof x==='string'&&x.length<=1600000).slice(0,5):[];
    if(images.some((x:string)=>!/^https:\/\//.test(x)&&!/^data:image\/(png|jpeg|webp);base64,/.test(x)))return send(res,400,{error:'Product images must be HTTPS URLs or PNG, JPEG or WebP image files.'});
    const id=String(b.id||'');
-   if(metadata.spotlight){const featured=await sql`SELECT count(*)::int AS total FROM public.products WHERE tenant_id=${me.tenant_id} AND metadata->>'spotlight'='true' AND id<>${id||'00000000-0000-0000-0000-000000000000}'`;if(Number(featured[0]?.total||0)>=5)return send(res,400,{error:'You can feature up to five products in your storefront hero. Remove another featured product first.'});}
+   if(metadata.spotlight){const featured=await sql`SELECT count(*)::int AS total FROM public.products WHERE tenant_id=${me.tenant_id} AND metadata->>'spotlight'='true' AND id<>${id||'00000000-0000-0000-0000-000000000000'}`;if(Number(featured[0]?.total||0)>=5)return send(res,400,{error:'You can feature up to five products in your storefront hero. Remove another featured product first.'});}
    if(id){
     const updated=await sql`UPDATE public.products SET name=${name},slug=${slugify(name)+'-'+id.slice(0,8)},description=${description},product_type=${type},price_minor=${Math.round(price*100)},stock_quantity=${stock},sku=${sku},images=${JSON.stringify(images)}::jsonb,metadata=${JSON.stringify(metadata)}::jsonb,updated_at=now() WHERE id=${id} AND tenant_id=${me.tenant_id} RETURNING id`;
     if(!updated.length)return send(res,404,{error:'Product not found.'});
