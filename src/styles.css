@@ -2293,3 +2293,25 @@ html,body,#root{
 @media(min-width:761px){
  .market-store-layout{width:min(100% - 40px,1320px)!important}
 }
+
+/* Shop-scoped buyer authentication */
+.buyer-auth-page{min-height:100vh;display:grid;place-items:center;padding:28px 16px;background:#f5f6f8}
+.buyer-auth-card{width:min(100%,480px);background:#fff;border:1px solid #e6e8ec;border-radius:18px;padding:30px;box-shadow:0 18px 55px rgba(16,24,40,.08)}
+.buyer-auth-back{display:inline-flex;align-items:center;gap:8px;border:0;background:transparent;color:#475467;font-weight:600;padding:4px 0 20px;cursor:pointer}
+.buyer-auth-mark{width:52px;height:52px;border-radius:15px;background:#fff4e8;color:#c96a12;display:grid;place-items:center;margin-bottom:16px}
+.buyer-auth-eyebrow{display:block;color:#b65d0b;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.buyer-auth-card h1{font-size:27px;line-height:1.2;margin:8px 0}
+.buyer-auth-card>p{color:#667085;line-height:1.55;margin:0 0 22px}
+.buyer-auth-form{display:grid;gap:13px}
+.buyer-auth-form label{display:grid;gap:6px;color:#344054;font-size:13px;font-weight:650}
+.buyer-auth-form label span{font-weight:400;color:#667085}
+.buyer-auth-form input{width:100%;min-height:45px;border:1px solid #d0d5dd;border-radius:9px;padding:10px 12px;font:inherit;color:#101828;background:#fff}
+.buyer-auth-form input:focus{outline:2px solid rgba(228,122,19,.2);border-color:#e47a13}
+.buyer-auth-submit{min-height:48px;border:0;border-radius:10px;background:#e47a13;color:white;font-weight:750;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;margin-top:5px}
+.buyer-auth-submit:disabled{opacity:.65;cursor:wait}
+.buyer-auth-error,.buyer-auth-notice{border-radius:8px;padding:10px 12px;font-size:13px}
+.buyer-auth-error{background:#fff1f0;color:#b42318}.buyer-auth-notice{background:#ecfdf3;color:#027a48}
+.buyer-auth-links{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:18px}
+.buyer-auth-links button{border:0;background:transparent;color:#b65d0b;font-weight:650;cursor:pointer;padding:4px 0}
+.buyer-auth-secure{display:flex;align-items:center;gap:8px;color:#667085;font-size:12px;border-top:1px solid #eaecf0;margin-top:22px;padding-top:16px}
+@media(max-width:480px){.buyer-auth-card{padding:23px 19px;border-radius:14px}.buyer-auth-card h1{font-size:24px}}
