@@ -1999,3 +1999,56 @@
     grid-row: 2 !important;
   }
 }
+
+
+/* Keep buyer workspace navigation available while account/cart subpages scroll. */
+.store-page .customer-workspace-nav {
+  position: sticky !important;
+  top: 76px !important;
+  z-index: 550 !important;
+  isolation: isolate;
+  pointer-events: auto !important;
+  background: rgba(255,255,255,.98) !important;
+  box-shadow: 0 7px 20px rgba(15, 35, 52, .09);
+}
+.store-page .customer-workspace-nav > *,
+.store-page .customer-workspace-nav button,
+.store-page .customer-workspace-nav a {
+  pointer-events: auto !important;
+}
+@media (max-width: 760px) {
+  .store-page .customer-workspace-nav {
+    top: 106px !important;
+    padding: 9px 12px !important;
+    gap: 8px !important;
+  }
+  .store-page .customer-workspace-nav > div {
+    gap: 5px !important;
+  }
+  .store-page .customer-workspace-nav button {
+    min-height: 38px;
+    padding: 8px 11px;
+    white-space: nowrap;
+  }
+}
+
+/* Store identity remains legible and confidently weighted in the marketplace header. */
+.store-page .store-merchant-brand-name {
+  display: inline-block;
+  max-width: min(28vw, 260px);
+  overflow: hidden;
+  color: #172b3b;
+  font-size: 15px;
+  font-weight: 900 !important;
+  letter-spacing: -.35px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  .store-page .store-merchant-brand-name {
+    max-width: 34vw;
+    font-size: 13px;
+    font-weight: 900 !important;
+  }
+}
