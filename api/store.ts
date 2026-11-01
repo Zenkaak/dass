@@ -253,7 +253,26 @@ export default async function handler(req:any,res:any){
    }
    return send(res,400,{error:'Invalid attachment operation.'});
   }
-  if(!me && action!=='order')return send(res,401,{error:'Please sign in to access your seller workspace.'});
+  if(req.method==='GET'&&action==='product-reviews'){
+    const slug=String(req.query?.slug||'').toLowerCase(),productId=String(req.query?.productId||'');if(!slug||!productId)return send(res,400,{error:'Shop and product are required.'});
+    const shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;if(!shops.length)return send(res,404,{error:'Shop not found.'});
+    const product=await sql`SELECT id FROM public.products WHERE id=${productId} AND tenant_id=${shops[0].id} AND is_active=true LIMIT 1`;if(!product.length)return send(res,404,{error:'Product not found.'});
+    const rows=await sql`SELECT id,rating,review_body,customer_name,created_at FROM public.product_reviews WHERE tenant_id=${shops[0].id} AND product_id=${productId} AND status='published' ORDER BY created_at DESC LIMIT 100`;
+    const summary=await sql`SELECT COALESCE(AVG(rating),0)::numeric(3,2) AS average,COUNT(*)::int AS count FROM public.product_reviews WHERE tenant_id=${shops[0].id} AND product_id=${productId} AND status='published'`;
+    return send(res,200,{reviews:rows.map((r:any)=>({id:r.id,rating:r.rating,body:r.review_body,customerName:r.customer_name,createdAt:r.created_at})),summary:{average:Number(summary[0]?.average||0),count:Number(summary[0]?.count||0)}});
+   }
+   if(req.method==='POST'&&action==='product-reviews'){
+    const b=req.body||{},slug=String(b.slug||'').toLowerCase(),productId=String(b.productId||''),chatToken=String(b.chatToken||''),rating=Math.max(1,Math.min(5,Math.floor(Number(b.rating)||0))),body=String(b.body||'').trim().slice(0,1200);
+    if(!slug||!productId||!chatToken||rating<1||body.length<8)return send(res,400,{error:'A valid order, rating and review of at least 8 characters are required.'});
+    const shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;if(!shops.length)return send(res,404,{error:'Shop not found.'});
+    const verified=await sql`SELECT o.id,o.customer_name FROM public.orders o JOIN public.order_items oi ON oi.order_id=o.id AND oi.tenant_id=o.tenant_id JOIN public.payments p ON p.order_id=o.id AND p.tenant_id=o.tenant_id WHERE o.tenant_id=${shops[0].id} AND o.customer_chat_token_hash=${hash(chatToken)} AND oi.product_id=${productId} AND p.status='succeeded' LIMIT 1`;
+    if(!verified.length)return send(res,403,{error:'A completed, paid purchase of this product is required before reviewing it.'});
+    await sql`INSERT INTO public.product_reviews(tenant_id,product_id,order_id,customer_name,rating,review_body,status) VALUES(${shops[0].id},${productId},${verified[0].id},${String(verified[0].customer_name||'Verified buyer').slice(0,100)},${rating},${body},'published') ON CONFLICT(order_id,product_id) DO UPDATE SET rating=EXCLUDED.rating,review_body=EXCLUDED.review_body,updated_at=now()`;
+    const rows=await sql`SELECT id,rating,review_body,customer_name,created_at FROM public.product_reviews WHERE tenant_id=${shops[0].id} AND product_id=${productId} AND status='published' ORDER BY created_at DESC LIMIT 100`;
+    const summary=await sql`SELECT COALESCE(AVG(rating),0)::numeric(3,2) AS average,COUNT(*)::int AS count FROM public.product_reviews WHERE tenant_id=${shops[0].id} AND product_id=${productId} AND status='published'`;
+    return send(res,200,{reviews:rows.map((r:any)=>({id:r.id,rating:r.rating,body:r.review_body,customerName:r.customer_name,createdAt:r.created_at})),summary:{average:Number(summary[0]?.average||0),count:Number(summary[0]?.count||0)}});
+   }
+   if(!me && action!=='order')return send(res,401,{error:'Please sign in to access your seller workspace.'});
   if(req.method==='POST'&&action==='order'){
    const b=req.body||{},slug=String(b.slug||'').toLowerCase(),name=String(b.customerName||'').trim().slice(0,120),phone=normalizePhone(b.customerPhone),items=Array.isArray(b.items)?b.items:[],idempotency=String(b.idempotencyKey||'').slice(0,100),requestedMethod=String(b.paymentMethod||'').toLowerCase(),deliveryMethod=String(b.deliveryMethod||'home'),deliveryCounty=String(b.deliveryCounty||'').trim().slice(0,80),deliverySubCounty=String(b.deliverySubCounty||'').trim().slice(0,100),deliveryEstate=String(b.deliveryEstate||'').trim().slice(0,160),deliveryAddress=String(b.deliveryAddress||'').trim().slice(0,300),deliveryDirections=String(b.deliveryDirections||'').trim().slice(0,500),pickupStation=String(b.pickupStation||'').trim().slice(0,200);
    const shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
