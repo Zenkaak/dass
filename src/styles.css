@@ -2220,3 +2220,38 @@
  .market-detail-mobile-bar{display:flex!important;z-index:120!important}
 }
 @media(min-width:761px){.market-detail-mobile-bar{display:none!important}}
+
+
+/* Featured catalogue must be a single horizontal swipe rail on every screen size.
+   An older homepage grid rule set grid-template-columns, which caused mobile products
+   to wrap into page rows instead of remaining in a horizontally scrollable track. */
+#market-spotlight #market-products-row,
+.market-product-section .market-products-row{
+  display:grid!important;
+  grid-auto-flow:column!important;
+  grid-template-columns:none!important;
+  grid-auto-rows:minmax(0,auto)!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  touch-action:pan-x!important;
+  overscroll-behavior-x:contain!important;
+  overscroll-behavior-y:auto!important;
+  scroll-snap-type:x mandatory!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+#market-spotlight #market-products-row>.market-product-card,
+.market-product-section .market-products-row>.market-product-card{
+  min-width:0!important;
+  scroll-snap-align:start!important;
+}
+@media(max-width:760px){
+  #market-spotlight #market-products-row{
+    grid-auto-columns:calc((100% - 16px)/3)!important;
+    gap:8px!important;
+    padding:4px 2px 14px!important;
+  }
+  #market-spotlight .market-section-heading>div>button:not(:first-child){display:grid!important}
+}
