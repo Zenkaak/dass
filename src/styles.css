@@ -2279,8 +2279,13 @@ html,body,#root{
 .market-store-layout{
   width:min(100% - 24px,1320px)!important;
 }
-#market-spotlight{
-  overflow:hidden!important;
+/* The catalogue is a normal document section, never a clipped nested scroll box. */
+#market-spotlight,
+.store-page #market-spotlight {
+  height:auto!important;
+  max-height:none!important;
+  overflow:visible!important;
+  touch-action:pan-y pinch-zoom!important;
 }
 #market-spotlight #market-products-row{
   width:100%!important;
