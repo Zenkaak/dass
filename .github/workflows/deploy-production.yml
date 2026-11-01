@@ -19,10 +19,10 @@ jobs:
     environment: production
     steps:
       - name: Checkout production source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -36,20 +36,24 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: npx vercel whoami --token="$VERCEL_TOKEN"
 
-      - name: Disable Vercel Preview deployments
+      - name: Verify Vercel Preview deployments are disabled
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_PROJECT_ID: prj_vZuYn5UoOgZbJ9NGLvyiTAFHfWPe
           VERCEL_ORG_ID: team_FUjJJLDSAITzmg32U4dQzNw
         run: |
-          response=$(curl -sS -w '\\n%{http_code}' -X PATCH "https://api.vercel.com/v9/projects/$VERCEL_PROJECT_ID?teamId=$VERCEL_ORG_ID" -H "Authorization: Bearer $VERCEL_TOKEN" -H "Content-Type: application/json" --data '{"previewDeploymentsDisabled":true}')
+          response=$(curl -sS -w '\n%{http_code}' "https://api.vercel.com/v9/projects/$VERCEL_PROJECT_ID?teamId=$VERCEL_ORG_ID" -H "Authorization: Bearer $VERCEL_TOKEN")
           status=$(printf '%s' "$response" | tail -n1)
           body=$(printf '%s' "$response" | sed '$d')
           if [ "$status" != "200" ]; then
-            echo "::error::Could not disable Vercel Preview deployments (HTTP $status): $body"
+            echo "::error::Could not verify Vercel Preview deployment setting (HTTP $status): $body"
             exit 1
           fi
-          echo "Vercel Preview deployments are disabled for this project."
+          if ! printf '%s' "$body" | jq -e '.previewDeploymentsDisabled == true' >/dev/null; then
+            echo "::error::Vercel Preview deployments are not confirmed disabled. Refusing production deployment."
+            exit 1
+          fi
+          echo "Vercel Preview deployments are confirmed disabled."
 
       - name: Run application checks
         run: |
@@ -60,10 +64,10 @@ jobs:
         continue-on-error: true
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: team_FUjJJLDSAITzmg32U4dQzNwD
+          VERCEL_ORG_ID: team_FUjJJLDSAITzmg32U4dQzNw
           VERCEL_PROJECT_ID: prj_vZuYn5UoOgZbJ9NGLvyiTAFHfWPe
         run: |
-          response=$(curl -sS -w '\\n%{http_code}' -X POST "https://api.vercel.com/v10/projects/$VERCEL_PROJECT_ID/domains?teamId=$VERCEL_ORG_ID" -H "Authorization: Bearer $VERCEL_TOKEN" -H "Content-Type: application/json" --data '{"name":"*.dasmarket.co.ke"}')
+          response=$(curl -sS -w '\n%{http_code}' -X POST "https://api.vercel.com/v10/projects/$VERCEL_PROJECT_ID/domains?teamId=$VERCEL_ORG_ID" -H "Authorization: Bearer $VERCEL_TOKEN" -H "Content-Type: application/json" --data '{"name":"*.dasmarket.co.ke"}')
           status=$(printf '%s' "$response" | tail -n1)
           body=$(printf '%s' "$response" | sed '$d')
           if [ "$status" = "200" ] || [ "$status" = "201" ]; then
@@ -79,4 +83,4 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: team_FUjJJLDSAITzmg32U4dQzNwD
           VERCEL_PROJECT_ID: prj_vZuYn5UoOgZbJ9NGLvyiTAFHfWPe
-        run: npx vercel deploy --prod --yes --scope=cheruiyott233-4429s-projects --token="$VERCEL_TOKEN"
+        run: npx vercel deploy --prod --yes --scope=cheruiyot233-4429s-projects --token="$VERCEL_TOKEN"
