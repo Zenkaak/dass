@@ -2255,3 +2255,41 @@
   }
   #market-spotlight .market-section-heading>div>button:not(:first-child){display:grid!important}
 }
+
+
+/* Keep horizontal overflow isolated to the product/category rails.
+   Prevent a long product track from expanding the document's layout viewport. */
+html,body,#root{
+  width:100%;
+  max-width:100%;
+  min-width:0!important;
+  overflow-x:clip!important;
+}
+.market-store-layout,
+.market-store-layout>.market-main,
+.market-main,
+.market-home,
+.market-product-section,
+#market-spotlight{
+  box-sizing:border-box!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+}
+.market-store-layout{
+  width:min(100% - 24px,1320px)!important;
+}
+#market-spotlight{
+  overflow:hidden!important;
+}
+#market-spotlight #market-products-row{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  contain:inline-size!important;
+}
+@media(min-width:761px){
+ .market-store-layout{width:min(100% - 40px,1320px)!important}
+}
