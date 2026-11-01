@@ -153,6 +153,46 @@ export default async function handler(req:any,res:any){
    return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
   }
   const me=await seller(sql,req);
+  if(req.method==='POST'&&action==='products-test-seed'){
+   if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission to generate test products.'});
+   const categories=[
+    {name:'Phones & Tablets',items:['Mobile Phones','Tablets & Pads','Smart Watches & Trackers','Phone Accessories'],image:'smartphone,mobile-phone,tablet'},
+    {name:'Computers & Laptops',items:['Laptops','Desktop Computers','Monitors','Printers & Scanners','Computer Accessories','Networking & Wi-Fi'],image:'laptop,computer,desktop'},
+    {name:'TV, Audio & Cameras',items:['TVs','Speakers & Home Audio','Headphones & Earbuds','Cameras & Drones','CCTV & Security','Solar, Inverters & Power'],image:'television,camera,headphones,speaker'},
+    {name:'Gaming',items:['Video Game Consoles','Video Games','Controllers & Accessories','Gaming PCs & Setups'],image:'gaming,game-controller,console'},
+    {name:'Home Appliances',items:['Fridges & Freezers','Washing Machines','Cookers, Ovens & Microwaves','Small Kitchen Appliances','ACs & Fans','Irons & Vacuums'],image:'refrigerator,kitchen-appliance'},
+    {name:'Furniture & Home',items:['Sofas & Living Room','Beds & Mattresses','Tables, Chairs & Dining','Office Furniture','Wardrobes & Storage','Décor & Lighting','Kitchenware & Dining','Garden & Outdoor'],image:'furniture,sofa,interior'},
+    {name:'Fashion',items:["Men's Clothing","Women's Clothing",'Shoes & Sneakers','Bags','Watches','Jewellery & Accessories','Traditional & Wedding Wear'],image:'fashion,clothing,shoes,handbag'},
+    {name:'Health & Beauty',items:['Skin Care','Hair & Wigs','Makeup','Perfumes & Fragrances','Grooming & Personal Care','Vitamins & Supplements'],image:'skincare,cosmetics,beauty'},
+    {name:'Babies & Kids',items:['Toys & Games',"Kids' Clothing & Shoes",'Prams, Car Seats & Gear','Baby Care & Feeding','School Supplies'],image:'baby,toys,children'},
+    {name:'Sports, Music & Books',items:['Gym & Fitness','Bicycles','Sports Equipment','Musical Instruments','Books & Stationery','Camping & Travel'],image:'sports,bicycle,guitar,books'},
+    {name:'Vehicles',items:['Cars','Motorcycles & Bodas','Trucks, Buses & Heavy Equipment','Spare Parts & Accessories'],image:'car,motorcycle,vehicle'},
+    {name:'Property',items:['Houses for Rent','Houses for Sale','Land & Plots','Shops, Offices & Commercial','Short Stay & Airbnb'],image:'house,apartment,real-estate'},
+    {name:'Agriculture & Food',items:['Livestock & Poultry','Farm Machinery & Tools','Seeds, Feeds & Fertilisers','Food & Produce'],image:'farm,agriculture,vegetables'},
+    {name:'Animals & Pets',items:['Dogs & Puppies','Cats & Kittens','Pet Food & Supplies','Birds, Fish & Other Pets'],image:'dog,cat,pet'},
+    {name:'Tools & Business Equipment',items:['Power & Hand Tools','Building Materials','Electrical & Plumbing','Salon & Spa Equipment','Restaurant & Catering','Shop, Office & Printing','Medical Equipment'],image:'power-tools,workshop,equipment'},
+    {name:'Services',items:['Repair & Technicians','Cleaning & Fumigation','Events, Catering & Photography','Moving & Transport','IT, Design & Business','Lessons & Tutoring'],image:'technician,cleaning,photography,service'}
+   ];
+   const current=await sql`SELECT metadata->>'category' AS category,count(*)::int AS total FROM public.products WHERE tenant_id=${me.tenant_id} AND metadata->>'test_product'='true' GROUP BY metadata->>'category'`;
+   const counts=new Map(current.map((r:any)=>[String(r.category),Number(r.total)]));
+   const rows:any[]=[];
+   for(let ci=0;ci<categories.length;ci++){
+    const category=categories[ci],existing=counts.get(category.name)||0,needed=Math.max(0,50-existing);
+    for(let j=0;j<needed;j++){
+     const n=existing+j,item=category.items[n%category.items.length],number=String(n+1).padStart(2,'0');
+     const name=(item+' · DASNET Demo '+number).slice(0,120),sku='DAS-TEST-'+String(ci+1).padStart(2,'0')+'-'+number;
+     const image='https://loremflickr.com/640/480/'+category.image+'?lock='+(ci*1000+n+1);
+     rows.push({name,slug:slugify(name)+'-'+crypto.randomBytes(4).toString('hex'),description:'Test catalogue item for '+category.name+'. This sample listing is provided for storefront, search, cart and checkout testing. It is not a real offer.',price_minor:Math.round((250+(ci*173)+(n*97))*100),stock_quantity:5+(n%46),sku,images:[image],metadata:{category:category.name,test_product:true,spotlight:false,tags:'DASNET test catalogue'}});
+    }
+   }
+   if(rows.length){
+    await sql`INSERT INTO public.products(tenant_id,name,slug,description,product_type,price_minor,stock_quantity,is_active,sku,images,metadata) SELECT ${me.tenant_id},p.name,p.slug,p.description,'physical',p.price_minor,p.stock_quantity,true,p.sku,p.images,p.metadata FROM jsonb_to_recordset(${JSON.stringify(rows)}::jsonb) AS p(name text,slug text,description text,price_minor bigint,stock_quantity integer,sku text,images jsonb,metadata jsonb)`;
+    await audit(sql,me.tenant_id,me.user_id,'products.test_catalogue_seeded','product',null,{created:rows.length,categories:categories.length});
+   }
+   const totals=await sql`SELECT metadata->>'category' AS category,count(*)::int AS total FROM public.products WHERE tenant_id=${me.tenant_id} AND metadata->>'test_product'='true' GROUP BY metadata->>'category' ORDER BY metadata->>'category'`;
+   return send(res,200,{ok:true,created:rows.length,total:totals.reduce((n:number,r:any)=>n+Number(r.total||0),0),categories:totals,message:rows.length?rows.length+' test products added.':'The test catalogue is already complete.'});
+  }
+
   if((req.method==='GET'||req.method==='POST')&&action==='customer-chat'){
    const b=req.body||{},tokenValue=String(req.method==='GET'?req.query?.token:b.token||'').trim();
    if(!/^[a-f0-9]{64}$/.test(tokenValue))return send(res,401,{error:'This chat link is invalid or expired.'});
