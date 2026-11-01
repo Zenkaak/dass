@@ -124,7 +124,7 @@ export default async function handler(req:any,res:any){
   if((req.method==='GET'||req.method==='POST')&&action==='customer-chat'){
    const b=req.body||{},tokenValue=String(req.method==='GET'?req.query?.token:b.token||'').trim();
    if(!/^[a-f0-9]{64}$/.test(tokenValue))return send(res,401,{error:'This chat link is invalid or expired.'});
-   const rows=await sql`SELECT id,tenant_id,order_number,customer_name,status,delivery_status,delivery_updated_at,created_at,total_minor FROM public.orders WHERE customer_chat_token_hash=${hash(tokenValue)} LIMIT 1`;
+   const rows=await sql`SELECT id,tenant_id,order_number,customer_name,status,delivery_status,delivery_updated_at,created_at,total_minor,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station FROM public.orders WHERE customer_chat_token_hash=${hash(tokenValue)} LIMIT 1`;
    if(!rows.length)return send(res,401,{error:'This chat link is invalid or expired.'});
    const order=rows[0];
    if(req.method==='POST'){
