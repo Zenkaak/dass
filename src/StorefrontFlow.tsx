@@ -61,6 +61,7 @@ type StorefrontFlowProps = {
   view: string;
   onNavigate: (next: string) => void;
   customerName?: string;
+  onOrderCreated?: (token: string, orderNumber: string) => void;
 };
 
 const paymentLabels: Record<PaymentMethod, string> = {
@@ -162,6 +163,7 @@ export function StorefrontFlow({
   view,
   onNavigate,
   customerName: initialCustomerName = '',
+  onOrderCreated,
 }: StorefrontFlowProps) {
   const orderStorageKey = `dasnet-storefront-orders-${slug}`;
   const lines = useMemo(() => Object.entries(cart)
@@ -280,6 +282,7 @@ export function StorefrontFlow({
       const updatedOrders = [order, ...orders.filter((entry) => entry.orderNumber !== order.orderNumber)];
       setOrders(updatedOrders);
       setActiveOrderNumber(order.orderNumber);
+      onOrderCreated?.(data.chatToken, data.orderNumber);
       try { localStorage.setItem(orderStorageKey, JSON.stringify(updatedOrders)); } catch { /* Backend order remains valid. */ }
       onCartChange({});
       onNavigate('checkout/complete');
@@ -478,7 +481,7 @@ export function StorefrontFlow({
         <div className="customer-preview-alert"><ShieldCheck size={17} /><span>{activeOrder.paymentStatus === 'succeeded' ? `Payment confirmed${activeOrder.receipt ? ` · M-PESA receipt ${activeOrder.receipt}` : ''}.` : activeOrder.paymentStatus === 'failed' || activeOrder.paymentStatus === 'cancelled' ? 'M-PESA payment was not completed. This order is not paid.' : 'Your order has been created. Payment is pending Safaricom confirmation; do not retry unless the payment prompt has failed or expired.'}</span></div>
         <div className="customer-panel customer-success-delivery">
           <MapPin size={22} />
-          <div><strong>{activeOrder.deliveryMethod === 'pickup' ? 'Pick-up station' : 'Home delivery'}</strong><p>{activeOrder.deliveryMethod === 'pickup' ? activeOrder.pickupStation : activeOrder.deliveryAddress}</p><small>Estimated delivery in 2–4 days</small></div>
+          <div><strong>Delivery coordination</strong><p>Contact the seller through your private order conversation to agree on collection or delivery.</p><small>Pickup and home delivery options are coming soon.</small></div>
         </div>
         <div className="customer-panel customer-success-payment">
           <WalletCards size={22} />
@@ -530,7 +533,7 @@ export function StorefrontFlow({
             </div>
             <div className="customer-panel">
               <div className="customer-panel-heading"><h2>Delivery details</h2></div>
-              <p className="customer-order-address"><MapPin size={18} />{activeOrder.deliveryMethod === 'pickup' ? activeOrder.pickupStation : activeOrder.deliveryAddress}</p>
+              <p className="customer-order-address"><MapPin size={18} />Collection or delivery will be arranged with the seller through your order conversation.</p>
               <p className="customer-order-address"><UserRound size={18} />{activeOrder.customerName} · {activeOrder.customerPhone}</p>
             </div>
           </div>
