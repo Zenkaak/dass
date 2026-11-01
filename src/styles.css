@@ -1843,3 +1843,42 @@
 @media(max-width:520px){
   #market-spotlight #market-products-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 }
+
+
+/* Mobile seller workspace: keep the drawer out of document flow so the dashboard opens at the top. */
+@media(max-width:850px){
+  .seller-app{display:block!important;position:relative;min-height:100dvh;overflow-x:clip}
+  .seller-rail{position:fixed!important;top:0!important;left:0!important;bottom:0!important;width:min(290px,84vw)!important;height:100dvh!important;min-height:0!important;margin:0!important;transform:translateX(-105%)!important;transition:transform .24s ease!important;z-index:300!important;overflow-y:auto!important;box-shadow:18px 0 55px #0008}
+  .seller-app.mobile-menu-open .seller-rail{transform:translateX(0)!important}
+  .seller-mobile-scrim{position:fixed!important;inset:0!important;z-index:299!important}
+  .seller-workarea{display:block!important;width:100%;min-width:0;min-height:100dvh;margin:0!important;padding:0!important}
+  .seller-topbar{position:sticky!important;top:0!important;z-index:301!important;height:62px!important}
+  .seller-content{display:block!important;width:100%;max-width:none!important;min-height:0!important;margin:0!important;padding:12px 12px calc(94px + env(safe-area-inset-bottom))!important}
+  .seller-content>.seller-loading{min-height:180px}
+  .seller-welcome-strip{margin:0 0 12px!important}
+  .seller-mobile-bottom{position:fixed!important;display:flex!important;left:0!important;right:0!important;bottom:0!important;height:calc(64px + env(safe-area-inset-bottom))!important;padding:0 0 env(safe-area-inset-bottom)!important;z-index:302!important;pointer-events:auto!important;isolation:isolate}
+  .seller-mobile-bottom button{min-width:0;min-height:54px;touch-action:manipulation;pointer-events:auto!important}
+  .seller-detail-overlay{z-index:250!important}
+}
+@media(max-width:560px){
+  .seller-topbar{padding:0 11px!important}
+  .seller-topbar-title{min-width:0}
+  .seller-topbar-title>div{min-width:0}
+  .seller-topbar h1{font-size:14px!important}
+  .seller-top-actions{gap:7px!important}
+  .seller-content{padding-left:10px!important;padding-right:10px!important}
+}
+
+/* Featured carousel: one complete product card per frame; the cards, not images inside a card, advance. */
+.market-hero-gallery-window{width:100%;min-width:0;overflow:hidden}
+.market-hero-gallery-track{display:flex!important;gap:0!important;width:100%;max-width:100%;animation:none!important;transition:transform .55s ease!important}
+.market-hero-product{width:100%!important;min-width:100%!important;max-width:100%!important;flex:0 0 100%!important}
+.market-hero-product-open{width:100%!important;display:grid!important;grid-template-columns:minmax(0,1fr);gap:8px!important;padding:9px!important}
+.market-hero-product-image{width:100%;height:clamp(112px,17vw,176px)!important}
+.market-hero-product-image img{width:100%;height:100%;object-fit:contain!important}
+.market-hero-product-add{width:calc(100% - 18px)!important;margin:0 9px 9px!important}
+@media(max-width:760px){
+  .market-hero-gallery{grid-template-columns:minmax(0,1fr)!important}
+  .market-hero-gallery-window{width:100%!important}
+  .market-hero-product-image{height:150px!important}
+}
