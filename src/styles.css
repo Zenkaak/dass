@@ -2058,3 +2058,12 @@
  .market-product-section#market-spotlight .market-product-info>strong{font-size:14px}
  .market-product-section#market-spotlight .market-product-add{min-height:34px;font-size:10px}
 }
+
+
+/* The category drawer is now fixed-position and rendered outside the storefront grid.
+   Keep the single remaining main content column full-width on desktop and mobile. */
+.market-store-layout{grid-template-columns:minmax(0,1fr)!important;width:min(100% - 40px,1320px);margin:16px auto 60px}
+.market-store-layout>.market-main{grid-column:1/-1;width:100%;min-width:0}
+@media(max-width:760px){
+ .market-store-layout{width:calc(100% - 24px);margin:12px auto 40px;grid-template-columns:minmax(0,1fr)!important}
+}
