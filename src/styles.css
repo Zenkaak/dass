@@ -2018,3 +2018,43 @@
  .market-global-drawer{top:104px!important;height:calc(100dvh - 104px)!important}
  .market-global-drawer-scrim{inset:104px 0 0!important}
 }
+
+
+/* Tenant-branded storefront ribbon and marketplace-style featured cards */
+.store-shop-promo-banner{min-height:76px;display:flex;align-items:center;justify-content:center;gap:14px;padding:12px 20px;background:linear-gradient(110deg,#111827 0%,#202b36 55%,#111827 100%);color:#fff;text-align:center;position:relative;overflow:hidden}
+.store-shop-promo-banner:before,.store-shop-promo-banner:after{content:"";position:absolute;top:-55px;width:180px;height:180px;border-radius:50%;background:var(--store-accent);opacity:.22;filter:blur(42px);pointer-events:none}
+.store-shop-promo-banner:before{left:4%}.store-shop-promo-banner:after{right:4%}
+.store-shop-promo-banner>*{position:relative;z-index:1}
+.store-shop-promo-banner strong{max-width:min(70%,760px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:800 clamp(18px,2.8vw,30px)/1.1 Manrope,sans-serif;letter-spacing:-.035em;text-transform:uppercase}
+.store-shop-promo-mark{color:var(--store-accent);font-size:28px;line-height:1}
+.store-shop-promo-banner>span:last-child{padding-left:13px;border-left:1px solid #ffffff55;color:#e5e7eb;font-size:10px;font-weight:800;letter-spacing:1.5px;white-space:nowrap}
+.market-product-section#market-spotlight{margin-top:18px;padding:17px;border:1px solid #e7eaee;border-radius:15px;background:#fff;box-shadow:0 5px 22px rgba(20,35,50,.045)}
+.market-product-section#market-spotlight .market-section-heading{margin-bottom:14px}
+.market-product-section#market-spotlight .market-section-heading h2{font-size:20px}
+.market-product-section#market-spotlight .market-section-heading h2 em{background:var(--store-accent);color:#fff}
+.market-product-section#market-spotlight .market-products-row{grid-auto-columns:196px;gap:12px;padding:2px 1px 10px}
+.market-product-section#market-spotlight .market-product-card{display:flex;flex-direction:column;border:1px solid #e8ebef;border-radius:13px;box-shadow:0 3px 12px rgba(22,38,54,.06);transition:transform .18s ease,box-shadow .18s ease}
+.market-product-section#market-spotlight .market-product-card:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(22,38,54,.12)}
+.market-product-section#market-spotlight .market-product-open{display:flex;flex:1;flex-direction:column;padding:0;border:0;background:#fff;text-align:left;cursor:pointer}
+.market-product-section#market-spotlight .market-product-art{height:174px;background:#fff;padding:10px}
+.market-product-section#market-spotlight .market-product-art img{object-fit:contain}
+.market-product-section#market-spotlight .market-product-art>small{left:9px;top:9px;border-radius:20px;background:var(--store-accent);color:#fff;font-size:9px}
+.market-product-section#market-spotlight .market-product-info{gap:7px;padding:11px 11px 8px}
+.market-product-section#market-spotlight .market-product-info h3{min-height:34px;font-size:12px;line-height:1.35}
+.market-product-section#market-spotlight .market-product-info>strong{font-size:16px;font-weight:850;color:#172b3a}
+.market-product-section#market-spotlight .market-product-info>small{font-size:10px;color:#788693}
+.market-product-section#market-spotlight .market-product-add{width:calc(100% - 18px);min-height:36px;margin:0 9px 10px;padding:8px 10px;border:0;border-radius:7px;background:var(--store-accent);color:#fff;font-size:11px;font-weight:800;cursor:pointer}
+.market-product-section#market-spotlight .market-product-add:disabled{background:#9aa4ad;cursor:not-allowed}
+@media(max-width:760px){
+ .store-shop-promo-banner{min-height:64px;gap:8px;padding:10px 12px}
+ .store-shop-promo-banner strong{max-width:75%;font-size:clamp(15px,4.3vw,21px)}
+ .store-shop-promo-mark{font-size:21px}
+ .store-shop-promo-banner>span:last-child{display:none}
+ .market-product-section#market-spotlight{margin:12px -2px 0;padding:12px 10px;border-radius:12px}
+ .market-product-section#market-spotlight .market-section-heading h2{font-size:17px}
+ .market-product-section#market-spotlight .market-products-row{grid-auto-columns:174px;gap:9px}
+ .market-product-section#market-spotlight .market-product-art{height:150px}
+ .market-product-section#market-spotlight .market-product-info{padding:9px}
+ .market-product-section#market-spotlight .market-product-info>strong{font-size:14px}
+ .market-product-section#market-spotlight .market-product-add{min-height:34px;font-size:10px}
+}
