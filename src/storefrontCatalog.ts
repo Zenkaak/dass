@@ -63,7 +63,7 @@ export const storefrontCategories: StorefrontCategory[] = [
   {
     name: 'Property',
     icon: '🏠',
-    subcategories: ['All Property', 'Houses & Apartments for Rent', 'Houses for Sale', 'Land & Plots', 'Shops, Offices & Commercial', 'Short Stay & Airbnb'],
+    subcategories: ['All Property', 'Houses for Rent', 'Houses for Sale', 'Land & Plots', 'Shops, Offices & Commercial', 'Short Stay & Airbnb'],
   },
   {
     name: 'Agriculture & Food',
