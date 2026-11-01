@@ -1761,3 +1761,63 @@
 
 .market-mobile-category-toggle{display:none}
 @media(max-width:760px){.market-mobile-category-toggle{display:inline-flex;align-items:center;gap:7px;justify-self:start;border:1px solid #dce5ed;background:#fff;color:#344454;border-radius:8px;padding:9px 12px;font-size:12px;font-weight:700;cursor:pointer}.market-product-detail-layout .market-sidebar.is-mobile-open{transform:translateX(0)!important;pointer-events:auto!important}}
+
+
+/* DASNET storefront refinements: compact hero, two-row category rail and reliable mobile navigation. */
+.store-page{isolation:isolate}
+.store-market-header{position:sticky;top:0;z-index:40}
+.market-hero-gallery{min-height:154px!important;padding:15px 18px!important;gap:14px!important;grid-template-columns:minmax(150px,.72fr) minmax(0,1.28fr)!important}
+.market-hero-gallery .market-hero-copy h1{font-size:clamp(19px,2.2vw,27px);margin:7px 0 6px}
+.market-hero-gallery .market-hero-copy p{font-size:11px;line-height:1.45}
+.market-hero-gallery .market-eyebrow{font-size:9px;letter-spacing:.1em}
+.market-hero-product{width:116px;flex:0 0 116px;border-radius:9px}
+.market-hero-product-open{gap:4px;padding:6px}
+.market-hero-product-image{height:66px}
+.market-hero-product-open>strong{font-size:10px}
+.market-hero-product-open>b{font-size:11px}
+.market-hero-product-add{width:calc(100% - 12px);margin:0 6px 6px;padding:6px;font-size:9px}
+.market-hero-gallery-track{gap:8px}
+.market-category-grid{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,minmax(0,auto));grid-auto-columns:126px;grid-template-columns:none;gap:7px;overflow-x:auto;overscroll-behavior-x:contain;padding:2px 2px 9px;scroll-snap-type:x proximity}
+.market-category-tile{min-height:61px;display:grid;grid-template-columns:34px minmax(0,1fr);grid-template-rows:auto auto;column-gap:8px;row-gap:2px;align-items:center;padding:6px 7px;text-align:left;scroll-snap-align:start}
+.market-category-tile img,.market-category-placeholder{width:34px;height:34px;grid-row:1/3}
+.market-category-tile strong{min-height:0;font-size:10px;line-height:1.2;text-align:left;overflow-wrap:anywhere}
+.market-category-tile small{font-size:9px}
+.market-categories{min-width:0}
+.market-sidebar-scrim{z-index:510!important}
+.store-page .market-sidebar.is-mobile-open{z-index:520!important;pointer-events:auto}
+.customer-flow{position:relative;z-index:1;padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+.customer-mobile-checkout-bar{z-index:70!important}
+.store-chat-panel{position:relative;z-index:1}
+@media(max-width:760px){
+ .market-hero-gallery{min-height:148px!important;padding:12px!important;grid-template-columns:minmax(105px,.8fr) minmax(0,1.2fr)!important;gap:8px!important}
+ .market-hero-gallery .market-hero-copy h1{font-size:19px;line-height:1.12}
+ .market-hero-gallery .market-hero-copy p{font-size:10px}
+ .market-hero-product{width:102px;flex-basis:102px}
+ .market-hero-product-image{height:58px}
+ .market-category-grid{grid-auto-columns:116px}
+ .market-category-tile{min-height:57px}
+ .store-market-header{z-index:40}
+ .market-sidebar{z-index:520!important}
+ .market-sidebar-scrim{z-index:510!important}
+}
+@media(max-width:560px){
+ .market-hero-gallery{grid-template-columns:1fr!important;min-height:0!important;padding:13px!important}
+ .market-hero-gallery .market-hero-copy h1{font-size:18px}
+ .market-hero-gallery-window{width:100%}
+ .market-hero-product{width:104px;flex-basis:104px}
+ .market-category-grid{grid-auto-columns:112px}
+}
+/* Seller dashboard: keep the first data panel in the initial viewport and avoid blank scroll space. */
+.seller-app{min-height:100dvh;align-items:start}
+.seller-workarea{display:flex;flex-direction:column;min-width:0;min-height:100dvh}
+.seller-content{width:100%;flex:1;min-height:calc(100dvh - 70px);padding-top:12px}
+.seller-welcome-strip{margin-top:0}
+.seller-stat-grid{margin-top:10px}
+@media(max-width:850px){
+ .seller-app{display:block;min-height:100dvh}
+ .seller-workarea{min-height:calc(100dvh - 64px)}
+ .seller-content{min-height:calc(100dvh - 64px);padding:10px 12px 28px}
+ .seller-topbar{position:sticky;top:0;z-index:301}
+ .seller-welcome-strip{margin:0 0 12px;padding:13px}
+ .seller-stat-grid{margin:10px 0;gap:8px}
+}
