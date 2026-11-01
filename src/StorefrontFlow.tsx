@@ -88,6 +88,11 @@ const accountGroups = [
     { label: 'Notification settings', icon: ShieldCheck, view: 'notification-settings' },
     { label: 'Account management', icon: UserRound, view: 'account-management' },
     { label: 'Help & support', icon: ShieldCheck, view: 'assistant' },
+    { label: 'Followed shops', icon: ShoppingBag, view: 'followed-shops' },
+    { label: 'Newsletter', icon: WalletCards, view: 'newsletter' },
+    { label: 'Notification settings', icon: ShieldCheck, view: 'notification-settings' },
+    { label: 'Public profile', icon: UserRound, view: 'public-profile' },
+    { label: 'Close account', icon: UserRound, view: 'close-account' },
   ]},
 ];
 
