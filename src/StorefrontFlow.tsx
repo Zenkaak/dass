@@ -231,7 +231,7 @@ export function StorefrontFlow({
 
   function applyVoucher() {
     setVoucherMessage(voucherCode.trim()
-      ? 'Voucher saved for checkout preview. Discount rules are not connected yet.'
+      ? 'Voucher redemption is coming soon. No discount has been applied.'
       : 'Enter a voucher code first.');
   }
 
@@ -572,7 +572,7 @@ export function StorefrontFlow({
     return (
       <section className="customer-flow customer-account-page">
         <div className="customer-account-welcome"><span><UserRound size={27} /></span><div><small>MY DASNET ACCOUNT</small><h1>{customerName.trim() ? `Welcome back, ${customerName.trim()}` : 'Welcome back'}</h1><p>Manage your orders, saved items and account settings.</p></div></div>
-        <div className="customer-credit-card"><WalletCards size={20} /><span><strong>Store credit balance</strong><small>Account balance will appear here when connected.</small></span><b>KES 0</b></div>
+        <div className="customer-credit-card"><WalletCards size={20} /><span><strong>Store credit</strong><small>Coming soon · No store-credit balance is available for this shop.</small></span><b>KES 0</b></div>
         <div className="customer-account-groups">
           {accountGroups.map((group) => <section className="customer-panel" key={group.title}>
             <h2 className="customer-account-group-title">{group.title}</h2>
