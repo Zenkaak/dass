@@ -567,7 +567,7 @@ export function StorefrontFlow({
             </div>
             <div className="customer-panel">
               <div className="customer-panel-heading"><h2>Delivery details</h2></div>
-              <p className="customer-order-address"><MapPin size={18} />Collection or delivery will be arranged with the seller through your order conversation.</p>
+              <p className="customer-order-address"><MapPin size={18} />{activeOrder.deliveryMethod === 'pickup' ? `Preferred collection: ${activeOrder.pickupStation || 'To be confirmed with seller'}` : [activeOrder.deliveryCounty, activeOrder.deliverySubCounty, activeOrder.deliveryEstate, activeOrder.deliveryAddress].filter(Boolean).join(', ') || 'Delivery destination not recorded'}{activeOrder.deliveryDirections ? ` · Directions: ${activeOrder.deliveryDirections}` : ''}</p>
               <p className="customer-order-address"><UserRound size={18} />{activeOrder.customerName} · {activeOrder.customerPhone}</p>
             </div>
           </div>
@@ -591,8 +591,8 @@ export function StorefrontFlow({
         <div className="customer-tracking-summary"><div><small>ORDER NUMBER</small><strong>{activeOrder.orderNumber}</strong></div><span className="customer-order-status">Order placed</span></div>
         <div className="customer-panel customer-timeline-panel">
           <div className="customer-tracking-timeline">
-            <article className="is-complete"><span><Check size={15} /></span><div><strong>Order placed</strong><small>{new Date(activeOrder.createdAt).toLocaleString('en-KE')}</small><p>Your order details were saved in this browser preview.</p></div></article>
-            <article className="is-current"><span>2</span><div><strong>Pending confirmation</strong><small>Waiting for store connection</small><p>Order status updates will be connected to your backend later.</p></div></article>
+            <article className="is-complete"><span><Check size={15} /></span><div><strong>Order placed</strong><small>{new Date(activeOrder.createdAt).toLocaleString('en-KE')}</small><p>Your order was received by the shop and saved to its order records.</p></div></article>
+            <article className="is-current"><span>2</span><div><strong>Pending confirmation</strong><small>Waiting for store connection</small><p>Payment and fulfilment updates will appear here when the seller updates your order.</p></div></article>
             <article><span>3</span><div><strong>Waiting to be shipped</strong><small>Not started</small></div></article>
             <article><span>4</span><div><strong>Delivered</strong><small>Not started</small></div></article>
           </div>
