@@ -189,7 +189,7 @@ export default async function handler(req:any,res:any){
     await sql`INSERT INTO public.products(tenant_id,name,slug,description,product_type,price_minor,stock_quantity,is_active,sku,images,metadata) SELECT ${me.tenant_id},p.name,p.slug,p.description,'physical',p.price_minor,p.stock_quantity,true,p.sku,p.images,p.metadata FROM jsonb_to_recordset(${JSON.stringify(rows)}::jsonb) AS p(name text,slug text,description text,price_minor bigint,stock_quantity integer,sku text,images jsonb,metadata jsonb)`;
     await audit(sql,me.tenant_id,me.user_id,'products.test_catalogue_seeded','product',null,{created:rows.length,categories:categories.length});
    }
-   const totals=await sql`SELECT metadata->>'category' AS category,count(*)::int AS total FROM public.products WHERE tenant_id=${me.tenant_id} AND metadata->>'test_product'='true' GROUP BY metadata->>'category' ORDER BY metadata->>'category'`;
+   const totals=await sql`SELECT metadata->>'test_parent_category' AS category,count(*)::int AS total FROM public.products WHERE tenant_id=${me.tenant_id} AND metadata->>'test_product'='true' GROUP BY metadata->>'test_parent_category' ORDER BY metadata->>'test_parent_category'`;
    return send(res,200,{ok:true,created:rows.length,total:totals.reduce((n:number,r:any)=>n+Number(r.total||0),0),categories:totals,message:rows.length?rows.length+' test products added.':'The test catalogue is already complete.'});
   }
 
