@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -63,6 +63,8 @@ type StorefrontFlowProps = {
   onNavigate: (next: string) => void;
   customerName?: string;
   onOrderCreated?: (token: string, orderNumber: string) => void;
+  chatPanel?: ReactNode;
+  onOpenChat?: (token: string, orderNumber: string) => void;
 };
 
 const paymentLabels: Record<PaymentMethod, string> = {
@@ -165,6 +167,8 @@ export function StorefrontFlow({
   onNavigate,
   customerName: initialCustomerName = '',
   onOrderCreated,
+  chatPanel,
+  onOpenChat,
 }: StorefrontFlowProps) {
   const orderStorageKey = `dasnet-storefront-orders-${slug}`;
   const lines = useMemo(() => Object.entries(cart)
@@ -319,6 +323,7 @@ export function StorefrontFlow({
 
   function openOrder(order: BuyerOrder, next: string) {
     setActiveOrderNumber(order.orderNumber);
+    if (order.chatToken) onOpenChat?.(order.chatToken, order.orderNumber);
     onNavigate(next);
   }
 
@@ -567,6 +572,7 @@ export function StorefrontFlow({
               <p className="customer-order-address"><MapPin size={18} />{activeOrder.deliveryMethod === 'pickup' ? `Preferred collection: ${activeOrder.pickupStation || 'To be confirmed with seller'}` : [activeOrder.deliveryCounty, activeOrder.deliverySubCounty, activeOrder.deliveryEstate, activeOrder.deliveryAddress].filter(Boolean).join(', ') || 'Delivery destination not recorded'}{activeOrder.deliveryDirections ? ` · Directions: ${activeOrder.deliveryDirections}` : ''}</p>
               <p className="customer-order-address"><UserRound size={18} />{activeOrder.customerName} · {activeOrder.customerPhone}</p>
             </div>
+            {chatPanel}
           </div>
           <aside className="customer-summary-card">
             <h2>Payment summary</h2>
@@ -595,6 +601,7 @@ export function StorefrontFlow({
           </div>
           <p className="customer-preview-note"><ShieldCheck size={15} /> Payment and delivery status are retrieved from the order conversation service. Delivery updates appear when the seller records them.</p>
         </div>
+        {chatPanel}
       </section>
     );
   }
@@ -614,6 +621,21 @@ export function StorefrontFlow({
   }
 
   function renderAccountSection() {
+    if (view === 'inbox') return (
+      <section className="customer-flow">
+        <FlowHeading title="Inbox & messages" onBack={() => onNavigate('account')} backLabel="My account" />
+        <div className="customer-panel customer-inbox-list">
+          <div className="customer-panel-heading"><h2>Order conversations</h2><span>{orders.filter((order) => Boolean(order.chatToken)).length} chats</span></div>
+          {orders.filter((order) => Boolean(order.chatToken)).length ? orders.filter((order) => Boolean(order.chatToken)).map((order) => (
+            <article className="customer-order-card" key={order.orderNumber}>
+              <div className="customer-order-card-heading"><div><small>ORDER {order.orderNumber}</small><strong>{new Date(order.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}</strong></div><span className="customer-order-status">Seller chat</span></div>
+              <div className="customer-order-card-footer"><span>{order.lines[0]?.product.name || 'Order'}{order.lines.length > 1 ? ` + ${order.lines.length - 1} more` : ''}</span><div><button type="button" className="customer-primary-button" onClick={() => onOpenChat?.(order.chatToken, order.orderNumber)}>Open conversation</button></div></div>
+            </article>
+          )) : <div className="customer-empty-state"><span><ShoppingBag size={28}/></span><h2>No messages yet</h2><p>Conversations with sellers appear here after you place an order.</p><button type="button" className="customer-primary-button" onClick={() => onNavigate('orders')}>View my orders</button></div>}
+        </div>
+        {chatPanel}
+      </section>
+    );
     const content = accountSectionCopy[view];
     if (!content) return null;
     return (
