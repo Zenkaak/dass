@@ -175,13 +175,14 @@ export default async function handler(req:any,res:any){
    ];
    const current=await sql`SELECT metadata->>'test_parent_category' AS category,count(*)::int AS total FROM public.products WHERE tenant_id=${me.tenant_id} AND metadata->>'test_product'='true' GROUP BY metadata->>'test_parent_category'`;
    const counts=new Map<string,number>(current.map((r:any)=>[String(r.category),Number(r.total)] as [string,number]));
+   await sql`UPDATE public.products SET images=jsonb_build_array('https://loremflickr.com/640/480/' || regexp_replace(lower(coalesce(metadata->>'category',name)), '[^a-z0-9]+', ',', 'g') || '?lock=' || substr(md5(id::text),1,12)) WHERE tenant_id=${me.tenant_id} AND metadata->>'test_product'='true'`;
    const rows:any[]=[];
    for(let ci=0;ci<categories.length;ci++){
     const category=categories[ci],existing=counts.get(category.name)||0,needed=Math.max(0,50-existing);
     for(let j=0;j<needed;j++){
      const n=existing+j,item=category.items[n%category.items.length],number=String(n+1).padStart(2,'0');
      const name=(item+' · DASNET Demo '+number).slice(0,120),sku='DAS-TEST-'+String(ci+1).padStart(2,'0')+'-'+number+'-'+crypto.randomBytes(3).toString('hex').toUpperCase();
-     const image='https://loremflickr.com/640/480/'+category.image+'?lock='+(ci*1000+n+1);
+     const image='https://loremflickr.com/640/480/'+encodeURIComponent(item.toLowerCase().replace(/[^a-z0-9]+/g,','))+','+category.image+'?lock='+(ci*1000+n+1);
      rows.push({name,slug:slugify(name)+'-'+crypto.randomBytes(4).toString('hex'),description:'Test catalogue item for '+category.name+'. This sample listing is provided for storefront, search, cart and checkout testing. It is not a real offer.',price_minor:Math.round((250+(ci*173)+(n*97))*100),stock_quantity:5+(n%46),sku,images:[image],metadata:{category:item,test_parent_category:category.name,test_product:true,spotlight:false,tags:'DASNET test catalogue'}});
     }
    }
