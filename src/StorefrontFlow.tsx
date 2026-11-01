@@ -651,19 +651,8 @@ export function StorefrontFlow({
     );
   }
 
-  if (view === 'cart') return renderCart();
-  if (view === 'checkout/payment') return lines.length ? renderCheckoutPayment() : renderCart();
-  if (view === 'checkout/review') return lines.length ? renderReview() : renderCart();
-  if (view === 'checkout/complete') return renderSuccess();
-  if (view === 'orders') return renderOrders();
-  if (view === 'order-detail') return renderOrderDetail();
-  if (view === 'order-tracking') return renderTracking();
-  if (view === 'account' || view === 'profile') return renderAccount();
   if (view === 'store') return null;
-  return renderAccountSection() || (
-    <section className="customer-flow">
-      <FlowHeading title="Shopping assistant" onBack={() => onNavigate('store')} />
-      <div className="customer-panel customer-account-detail"><Search size={24} /><p>{accountSectionCopy.assistant.description}</p><button type="button" className="customer-secondary-button" onClick={() => onNavigate('store')}>Back to the store</button></div>
-    </section>
-  );
+  const pageContent = view === 'cart' ? renderCart() : view === 'checkout/payment' ? (lines.length ? renderCheckoutPayment() : renderCart()) : view === 'checkout/review' ? (lines.length ? renderReview() : renderCart()) : view === 'checkout/complete' ? renderSuccess() : view === 'orders' ? renderOrders() : view === 'order-detail' ? renderOrderDetail() : view === 'order-tracking' ? renderTracking() : (view === 'account' || view === 'profile') ? renderAccount() : renderAccountSection() || (<section className="customer-flow"><FlowHeading title="Shopping assistant" onBack={() => onNavigate('store')} /><div className="customer-panel customer-account-detail"><Search size={24} /><p>{accountSectionCopy.assistant.description}</p><button type="button" className="customer-secondary-button" onClick={() => onNavigate('store')}>Back to the store</button></div></section>);
+  const itemCount=lines.reduce((sum,line)=>sum+line.quantity,0);
+  return <div className="customer-workspace-shell"><nav className="customer-workspace-nav" aria-label="Shop navigation"><a href={'/'+slug} onClick={e=>{e.preventDefault();onNavigate('store')}} className="customer-workspace-brand"><span>D</span><strong>{shopName}</strong></a><div><button type="button" onClick={()=>onNavigate('store')}>Shop</button><button type="button" onClick={()=>onNavigate('account')}><UserRound size={16}/> Account</button><button type="button" onClick={()=>onNavigate('cart')}><ShoppingBag size={16}/> Cart <b>{itemCount}</b></button></div></nav>{pageContent}</div>;
 }
