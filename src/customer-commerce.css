@@ -2086,101 +2086,75 @@
 }
 
 
-/* Fast native storefront scrolling and a mixed three-column catalogue.
-   The main product feed is vertical; horizontal touch handling is reserved for
-   genuinely horizontal rails so a swipe on product cards scrolls the page immediately. */
-.store-page,
+/* Marketplace catalogue: five columns on wide screens, with compact responsive
+   columns on tablets and phones. The page remains the only vertical scroll surface. */
+.store-page {
+  min-height: 100dvh;
+  height: auto !important;
+  overflow: visible !important;
+  touch-action: pan-y pinch-zoom !important;
+}
 .store-page .market-store-layout,
-.store-page .market-main {
-  touch-action: pan-y !important;
-  overscroll-behavior-y: auto !important;
-  scroll-behavior: auto !important;
+.store-page .market-main,
+.store-page .market-mixed-catalogue,
+.store-page #market-spotlight {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  overscroll-behavior: auto !important;
+  touch-action: pan-y pinch-zoom !important;
 }
 .store-page .market-products-grid {
   display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
   grid-auto-flow: row !important;
   grid-auto-columns: auto !important;
+  align-items: stretch;
   gap: 12px !important;
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
+  height: auto !important;
   overflow: visible !important;
-  touch-action: pan-y !important;
+  touch-action: pan-y pinch-zoom !important;
   overscroll-behavior: auto !important;
   scroll-snap-type: none !important;
 }
 .store-page .market-products-grid > .market-product-card {
   min-width: 0 !important;
-  content-visibility: auto;
-  contain-intrinsic-size: auto 330px;
+  max-width: none !important;
+  content-visibility: visible !important;
 }
 .store-page .market-products-grid .market-product-open,
 .store-page .market-products-grid .market-product-add,
 .store-page .store-market-header button {
   touch-action: manipulation !important;
 }
-.store-page .market-mixed-catalogue {
-  overflow: visible !important;
-  margin-top: 14px !important;
-}
-.store-page .market-mixed-catalogue-heading {
-  align-items: center !important;
-}
-.store-page .market-mixed-catalogue-heading > div {
-  display: grid;
-  gap: 4px;
-}
+.store-page .market-mixed-catalogue { margin-top: 14px !important; }
+.store-page .market-mixed-catalogue-heading { align-items: center !important; }
+.store-page .market-mixed-catalogue-heading > div { display: grid; gap: 4px; }
 .store-page .market-mixed-catalogue-heading p {
-  margin: 0;
-  color: #71808b;
-  font-size: 12px;
-  line-height: 1.4;
+  margin: 0; color: #71808b; font-size: 12px; line-height: 1.4;
 }
 .store-page .market-catalogue-count {
-  flex: 0 0 auto;
-  color: #687783;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
+  flex: 0 0 auto; color: #687783; font-size: 11px; font-weight: 700; white-space: nowrap;
+}
+@media (max-width: 1050px) {
+  .store-page .market-products-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 10px !important; }
 }
 @media (max-width: 760px) {
-  .store-page .market-products-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 8px !important;
-  }
-  .store-page .market-products-grid .market-product-art {
-    height: clamp(88px, 26vw, 126px) !important;
-  }
-  .store-page .market-products-grid .market-product-info {
-    padding: 7px !important;
-    gap: 5px !important;
-  }
-  .store-page .market-products-grid .market-product-info h3 {
-    min-height: 2.7em !important;
-    font-size: 11px !important;
-  }
-  .store-page .market-products-grid .market-product-info > strong {
-    font-size: 12px !important;
-  }
-  .store-page .market-products-grid .market-product-info > small {
-    font-size: 9px !important;
-  }
+  .store-page .market-products-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 8px !important; }
+  .store-page .market-products-grid .market-product-art { height: clamp(88px, 26vw, 126px) !important; }
+  .store-page .market-products-grid .market-product-info { padding: 7px !important; gap: 5px !important; }
+  .store-page .market-products-grid .market-product-info h3 { min-height: 2.7em !important; font-size: 11px !important; }
+  .store-page .market-products-grid .market-product-info > strong { font-size: 12px !important; }
+  .store-page .market-products-grid .market-product-info > small { font-size: 9px !important; }
   .store-page .market-products-grid .market-product-add {
-    width: calc(100% - 12px) !important;
-    min-height: 32px !important;
-    margin: 0 6px 7px !important;
-    padding: 6px 3px !important;
-    font-size: 10px !important;
+    width: calc(100% - 12px) !important; min-height: 32px !important;
+    margin: 0 6px 7px !important; padding: 6px 3px !important; font-size: 10px !important;
   }
-  .store-page .market-mixed-catalogue-heading p {
-    max-width: 230px;
-    font-size: 10px;
-  }
+  .store-page .market-mixed-catalogue-heading p { max-width: 230px; font-size: 10px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .store-page * {
-    scroll-behavior: auto !important;
-    transition-duration: .01ms !important;
-  }
+  .store-page * { scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
