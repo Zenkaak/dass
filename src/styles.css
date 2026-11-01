@@ -1882,3 +1882,123 @@
   .market-hero-gallery-window{width:100%!important}
   .market-hero-product-image{height:150px!important}
 }
+
+
+/* Featured collection: premium product tiles instead of flat white cards. */
+.store-page .market-hero-gallery {
+  background:
+    radial-gradient(ellipse at 10% 0%, rgba(56, 125, 172, .22), transparent 48%),
+    radial-gradient(ellipse at 100% 100%, rgba(230, 139, 59, .16), transparent 42%),
+    linear-gradient(125deg, #10283b 0%, #173d55 56%, #10283b 100%) !important;
+  border: 1px solid rgba(157, 190, 215, .22);
+  border-radius: 16px !important;
+  box-shadow: 0 16px 36px rgba(12, 35, 52, .16);
+}
+.store-page .market-hero-gallery .market-hero-copy h1 {
+  color: #f5f9fc !important;
+  letter-spacing: -.6px;
+}
+.store-page .market-hero-gallery .market-hero-copy p {
+  color: #c4d5e1 !important;
+}
+.store-page .market-hero-gallery .market-eyebrow {
+  color: #ffd39f !important;
+  letter-spacing: .12em;
+  font-weight: 800;
+}
+.store-page .market-hero-product {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0 0 10px;
+  border: 1px solid rgba(174, 202, 220, .22) !important;
+  border-radius: 13px !important;
+  background: linear-gradient(160deg, #203d52 0%, #142d41 100%) !important;
+  box-shadow: 0 10px 24px rgba(3, 17, 29, .28) !important;
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.store-page .market-hero-product:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 194, 132, .55) !important;
+  box-shadow: 0 15px 30px rgba(3, 17, 29, .35), 0 0 20px rgba(255, 184, 119, .08) !important;
+}
+.store-page .market-hero-product-open {
+  flex: 1 1 auto;
+  padding: 9px 9px 7px !important;
+  gap: 8px !important;
+  background: transparent !important;
+  color: #f4f8fb !important;
+}
+.store-page .market-hero-product-image {
+  background: linear-gradient(145deg, #eaf0f4, #dce6ec) !important;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 9px !important;
+}
+.store-page .market-hero-product-open > strong {
+  color: #f5f8fb !important;
+  font-size: 12px !important;
+  font-weight: 750 !important;
+}
+.store-page .market-hero-product-open > b {
+  color: #ffd19a !important;
+  font-size: 13px !important;
+  font-weight: 850 !important;
+}
+.store-page .market-hero-product-add {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: calc(100% - 18px) !important;
+  min-height: 35px;
+  margin: 2px 9px 0 !important;
+  padding: 8px 10px !important;
+  border: 1px solid rgba(255, 222, 184, .5) !important;
+  border-radius: 9px !important;
+  background: linear-gradient(135deg, #f5a34d, #df741c) !important;
+  color: #172b3b !important;
+  box-shadow: 0 4px 12px rgba(226, 119, 28, .24), inset 0 1px 0 rgba(255,255,255,.35);
+  font-size: 11px !important;
+  font-weight: 850 !important;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: transform .18s ease, filter .18s ease, box-shadow .18s ease;
+}
+.store-page .market-hero-product-add:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+  box-shadow: 0 7px 16px rgba(226, 119, 28, .32), inset 0 1px 0 rgba(255,255,255,.4);
+}
+.store-page .market-hero-product-add:focus-visible {
+  outline: 3px solid rgba(255, 211, 159, .55);
+  outline-offset: 2px;
+}
+.store-page .market-hero-product-add:disabled {
+  border-color: rgba(190, 203, 213, .24) !important;
+  background: #536879 !important;
+  color: #d5e0e7 !important;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+@media (max-width: 760px) {
+  .store-page .market-hero-product {
+    border-radius: 10px !important;
+    padding-bottom: 7px;
+  }
+  .store-page .market-hero-product-open {
+    padding: 6px 6px 5px !important;
+    gap: 5px !important;
+  }
+  .store-page .market-hero-product-open > strong { font-size: 10px !important; }
+  .store-page .market-hero-product-open > b { font-size: 11px !important; }
+  .store-page .market-hero-product-add {
+    width: calc(100% - 12px) !important;
+    min-height: 31px;
+    margin: 2px 6px 0 !important;
+    padding: 6px 5px !important;
+    font-size: 9px !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .store-page .market-hero-product,
+  .store-page .market-hero-product-add { transition: none !important; }
+}
