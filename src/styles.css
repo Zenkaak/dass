@@ -1602,3 +1602,46 @@
  .store-market-account{width:30px;height:34px}
  .store-market-cart{width:34px;height:34px}
 }
+
+
+/* DASNET buyer storefront updates */
+.buyer-notification-wrap{position:relative;display:flex;align-items:center}
+.buyer-notification-button{position:relative;border:0;background:transparent;cursor:pointer}
+.buyer-notification-count{position:absolute;top:-4px;right:-5px;min-width:17px;height:17px;padding:0 4px;display:grid;place-items:center;border:2px solid #fff;border-radius:20px;background:#d92d20;color:#fff;font-size:9px;font-weight:800}
+.buyer-notification-menu{position:absolute;z-index:80;top:calc(100% + 13px);right:-54px;width:min(360px,calc(100vw - 28px));padding:9px;border:1px solid #e5eaf0;border-radius:13px;background:#fff;box-shadow:0 18px 50px rgba(18,38,55,.18)}
+.buyer-notification-menu-head{display:flex;align-items:center;justify-content:space-between;padding:8px 9px 11px;border-bottom:1px solid #edf0f2;color:#20394d;font-size:13px}
+.buyer-notification-menu-head button{border:0;background:transparent;color:#687b89;font-size:11px;cursor:pointer}
+.buyer-notification-item{width:100%;display:grid;grid-template-columns:30px minmax(0,1fr) 16px;align-items:center;gap:9px;padding:11px 8px;border:0;border-bottom:1px solid #f0f2f4;background:#fff;text-align:left;cursor:pointer}
+.buyer-notification-item:hover{background:#f7fafc}
+.buyer-notification-item>span:first-child{width:29px;height:29px;display:grid;place-items:center;border-radius:9px;background:#fff2e4;color:#b8660d}
+.buyer-notification-item>span:nth-child(2){min-width:0;display:grid;gap:3px}
+.buyer-notification-item strong{color:#263e50;font-size:11px}
+.buyer-notification-item small{color:#7b8993;font-size:10px}
+.buyer-notification-item>svg{color:#9aa5ad}
+.buyer-notification-empty{padding:16px 10px;color:#778590;font-size:11px;line-height:1.5}
+.buyer-notification-all{width:100%;padding:10px;border:0;border-radius:8px;background:#f4f7f9;color:#26465d;font-size:11px;font-weight:750;cursor:pointer}
+.store-trust-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.store-trust-grid article{display:grid;align-content:start;gap:8px}
+.store-trust-grid article>svg{color:var(--store-accent,#e47a13)}
+.store-trust-grid article>strong{color:#213e53;font-size:13px}
+.product-detail-page{width:min(100%,1080px);border:1px solid #e9edf0}
+.product-detail-layout{gap:34px;padding:clamp(18px,3vw,34px)}
+.product-detail-gallery{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.product-detail-gallery img{height:130px;max-height:unset;object-fit:cover;cursor:zoom-in}
+.product-detail-gallery img:first-child{grid-column:1/-1;height:clamp(260px,42vw,480px);object-fit:contain}
+.product-detail-copy{position:sticky;top:70px;align-self:start}
+.product-detail-copy h1{font-size:clamp(25px,3.2vw,38px)}
+.product-detail-price{font-size:30px;color:var(--store-accent,#e47a13)}
+.product-detail-stock{display:inline-flex;align-items:center;padding:7px 10px;border-radius:20px;background:#eff8f1;color:#287341;font-weight:700}
+.product-detail-description{margin:20px 0;padding:18px 0;border-top:1px solid #e9edf0;border-bottom:1px solid #e9edf0}
+.product-detail-add{min-height:50px;font-weight:800;box-shadow:0 8px 20px color-mix(in srgb,var(--store-accent,#e47a13) 20%,transparent)}
+.product-detail-safety{display:flex;align-items:center;gap:8px;padding:12px;border-radius:9px;background:#f6f9fa;color:#617583;font-size:11px}
+@media(max-width:700px){
+ .buyer-notification-menu{right:-95px}
+ .store-trust-grid{grid-template-columns:1fr}
+ .product-detail-layout{grid-template-columns:1fr;gap:18px;padding:16px}
+ .product-detail-copy{position:static}
+ .product-detail-gallery{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .product-detail-gallery img{height:88px}
+ .product-detail-gallery img:first-child{height:270px}
+}
