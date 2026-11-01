@@ -1758,3 +1758,6 @@
 .market-product-detail-layout .market-sidebar{display:flex;flex-direction:column}
 .market-product-detail-main-shell{min-width:0;padding:18px}
 @media(max-width:760px){.market-product-detail-layout .market-sidebar{position:fixed!important;top:104px!important;left:0!important;bottom:0!important;width:min(86vw,340px)!important;height:calc(100dvh - 104px)!important;z-index:520!important;transform:translateX(-110%);pointer-events:none}.market-product-detail-layout .market-sidebar.is-mobile-open{transform:translateX(0);pointer-events:auto}.market-product-detail-layout .market-sidebar{display:flex!important}.market-product-detail-main-shell{padding:12px}}
+
+.market-mobile-category-toggle{display:none}
+@media(max-width:760px){.market-mobile-category-toggle{display:inline-flex;align-items:center;gap:7px;justify-self:start;border:1px solid #dce5ed;background:#fff;color:#344454;border-radius:8px;padding:9px 12px;font-size:12px;font-weight:700;cursor:pointer}.market-product-detail-layout .market-sidebar.is-mobile-open{transform:translateX(0)!important;pointer-events:auto!important}}
