@@ -1774,3 +1774,57 @@
 @media(max-width:760px){.customer-workspace-nav{padding:9px 10px}.customer-workspace-brand strong{max-width:95px;font-size:12px}.customer-workspace-nav>div{gap:5px}.customer-workspace-nav button{padding:8px 10px;font-size:12px}.market-products-row{grid-template-columns:repeat(2,minmax(0,1fr))!important}.market-product-detail-main{grid-template-columns:minmax(0,1fr);padding:12px}.market-detail-main-image{min-height:220px;max-height:320px}.market-detail-summary{gap:9px}.market-detail-reviews-heading{align-items:flex-start}.market-detail-reviews-heading>div:last-child{justify-items:start}}
 
 @media(max-width:760px){.market-products-row{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}.market-product-card{border-radius:9px}.market-product-info h3{font-size:11px;line-height:1.25}.market-product-info strong{font-size:12px}.market-product-info small{font-size:10px}.market-product-add{font-size:10px;padding:7px 4px}.market-product-art{height:112px!important}.market-product-art img{object-fit:contain!important}}
+
+
+/* Keep the storefront header reachable above buyer sub-navigation. */
+.store-page .store-market-header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 600 !important;
+}
+.store-page .customer-workspace-nav {
+  position: relative !important;
+  top: auto !important;
+  z-index: 1 !important;
+}
+
+/* Discover is an independent horizontal product rail, not a page-width grid. */
+.store-page .market-deals {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+.store-page .market-deals .market-products-row {
+  display: flex !important;
+  flex-flow: row nowrap !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  grid-template-columns: none !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+  padding: 2px 2px 12px !important;
+}
+.store-page .market-deals .market-product-card {
+  flex: 0 0 190px !important;
+  width: 190px !important;
+  min-width: 190px !important;
+  max-width: 190px !important;
+  scroll-snap-align: start;
+}
+@media (max-width: 760px) {
+  .store-page .market-deals .market-products-row {
+    gap: 8px !important;
+  }
+  .store-page .market-deals .market-product-card {
+    flex-basis: 155px !important;
+    width: 155px !important;
+    min-width: 155px !important;
+    max-width: 155px !important;
+  }
+}
