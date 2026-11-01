@@ -14,7 +14,7 @@ import {
   WalletCards,
 } from 'lucide-react';
 
-// Buyer account navigation exposes only routes backed by implemented storefront features.
+// Buyer account navigation keeps the marketplace account destinations available as real URLs.
 export type StoreProduct = {
   id: string;
   name: string;
@@ -73,13 +73,22 @@ const paymentLabels: Record<PaymentMethod, string> = {
 };
 
 const accountGroups = [
-  {
-    title: 'MY ACCOUNT',
-    links: [
-      { label: 'Orders', icon: Package, view: 'orders' },
-      { label: 'Recently viewed', icon: Search, view: 'recently-viewed' },
-    ],
-  },
+  { title: 'SHOPPING', links: [
+    { label: 'Orders', icon: Package, view: 'orders' },
+    { label: 'Inbox & messages', icon: ShoppingBag, view: 'inbox' },
+    { label: 'Saved items', icon: Search, view: 'wishlist' },
+    { label: 'Recently viewed', icon: Search, view: 'recently-viewed' },
+    { label: 'Vouchers', icon: WalletCards, view: 'vouchers' },
+    { label: 'Reviews', icon: ShieldCheck, view: 'reviews' },
+  ]},
+  { title: 'ACCOUNT & SUPPORT', links: [
+    { label: 'My profile', icon: UserRound, view: 'profile' },
+    { label: 'Address book', icon: MapPin, view: 'address-book' },
+    { label: 'Notifications', icon: Package, view: 'notifications' },
+    { label: 'Notification settings', icon: ShieldCheck, view: 'notification-settings' },
+    { label: 'Account management', icon: UserRound, view: 'account-management' },
+    { label: 'Help & support', icon: ShieldCheck, view: 'assistant' },
+  ]},
 ];
 
 const accountSectionCopy: Record<string, { title: string; description: string }> = {
