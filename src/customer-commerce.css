@@ -2216,3 +2216,30 @@
 .market-sidebar-close{display:none}
 @media(max-width:760px){.account-auth-redesign .account-card{margin:22px auto;padding:24px 20px}.buyer-auth-page{padding:18px 12px}.buyer-auth-card{padding:22px 18px}.market-sidebar{box-shadow:12px 0 36px rgba(15,32,47,.18)}.market-sidebar-close{display:grid!important;place-items:center;width:32px;height:32px;border:0;border-radius:7px;background:#f2f5f7;color:#45596a}}
 @media(prefers-reduced-motion:reduce){.auth-stepper span,.buyer-auth-progress span{transition:none!important}}
+
+
+/* Marketing highlight carousel, detailed trust guide and FAQ readability. */
+.kasuku-marketing{max-width:1180px;margin:26px auto 42px;padding:0 24px}
+.kasuku-marketing-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;color:#8a5a2d;font-size:10px;font-weight:850;letter-spacing:.13em}
+.kasuku-marketing-head small{color:#7d8992;font-size:10px;font-weight:600;letter-spacing:0}
+.kasuku-marketing-stage{position:relative;min-height:218px;overflow:hidden;border-radius:18px;background:#142c3c}
+.kasuku-marketing-card{position:absolute;inset:0;display:grid;grid-template-columns:100px minmax(0,1fr) 40px;align-items:center;gap:22px;padding:30px 34px;color:#fff;opacity:0;transform:translateX(24px);pointer-events:none;transition:opacity .55s ease,transform .55s ease}
+.kasuku-marketing-card.active{position:relative;opacity:1;transform:translateX(0);pointer-events:auto}
+.kasuku-marketing-card.safety{background:linear-gradient(115deg,#153b38,#1d6256 65%,#2c7566)}
+.kasuku-marketing-card.seller{background:linear-gradient(115deg,#172f49,#25577b 65%,#34799a)}
+.kasuku-marketing-card.discover{background:linear-gradient(115deg,#392d52,#63457a 65%,#865a89)}
+.kasuku-marketing-symbol{display:grid;place-items:center;width:76px;height:76px;border:1px solid #ffffff55;border-radius:22px;background:#ffffff18;font-size:36px;font-weight:800}
+.kasuku-marketing-card>div:nth-child(2)>small{font-size:10px;font-weight:850;letter-spacing:.15em;color:#ffffffc9}
+.kasuku-marketing-card h2{max-width:620px;margin:8px 0;font-size:clamp(20px,3vw,30px);line-height:1.15;color:#fff}
+.kasuku-marketing-card p{max-width:650px;margin:0 0 15px;color:#ffffffd9;font-size:13px;line-height:1.55}
+.kasuku-marketing-card a{display:inline-flex;align-items:center;gap:8px;color:#fff;font-size:12px;font-weight:800;text-decoration:none}
+.kasuku-marketing-number{align-self:start;color:#ffffff80;font-size:12px;font-weight:800}
+.kasuku-marketing-dots{display:flex;justify-content:center;gap:7px;margin-top:13px}
+.kasuku-marketing-dots button{width:8px;height:8px;padding:0;border:0;border-radius:10px;background:#cbd3d8;cursor:pointer;transition:width .2s ease,background .2s ease}
+.kasuku-marketing-dots button.active{width:25px;background:#d77b24}
+.kasuku-safety .kasuku-section-title>p{max-width:720px;margin:10px auto 0;color:#64727e;font-size:14px;line-height:1.7}
+.kasuku-safety-grid article p,.kasuku-faq details p{line-height:1.75}
+.kasuku-safety-note{display:flex;align-items:flex-start;gap:12px;max-width:980px;margin:26px auto 0;padding:17px 19px;border:1px solid #dce8e4;border-radius:12px;background:#f3f8f6;color:#31564d}
+.kasuku-safety-note svg{flex:0 0 auto;margin-top:2px}.kasuku-safety-note p{margin:0;font-size:12px;line-height:1.7}
+@media(max-width:680px){.kasuku-marketing{margin:20px auto 30px;padding:0 14px}.kasuku-marketing-stage{min-height:260px;border-radius:13px}.kasuku-marketing-card{grid-template-columns:52px minmax(0,1fr) 22px;gap:12px;padding:22px 16px}.kasuku-marketing-symbol{width:48px;height:48px;border-radius:14px;font-size:24px}.kasuku-marketing-card h2{font-size:21px}.kasuku-marketing-card p{font-size:12px}.kasuku-marketing-number{font-size:10px}.kasuku-marketing-head small{font-size:9px}.kasuku-safety-note{margin:18px 14px 0;padding:14px}}
+@media(prefers-reduced-motion:reduce){.kasuku-marketing-card,.kasuku-marketing-dots button{transition:none!important}}
