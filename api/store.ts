@@ -465,7 +465,7 @@ export default async function handler(req:any,res:any){
     await audit(sql,me.tenant_id,me.user_id,'order.message.sent','order',orderId,{sender:'merchant'});
    }
    const messages=await sql`SELECT id,sender_type,message,created_at FROM public.order_messages WHERE tenant_id=${me.tenant_id} AND order_id=${orderId} ORDER BY created_at ASC LIMIT 100`;
-   const attachments=await sql`SELECT id,uploader_type,file_name,content_type,size_bytes,created_at FROM public.order_message_attachments WHERE tenant_id=${me.tenant_id} AND order_id=${orderId} AND upload_status='ready' ORDER BY created_at ASC LIMIT 100`;return send(res,200,{orderNumber:found[0].order_number,messages,attachments});
+   const attachments=await sql`SELECT id,uploader_type,file_name,content_type,size_bytes,created_at FROM public.order_message_attachments WHERE tenant_id=${me.tenant_id} AND order_id=${orderId} AND upload_status='ready' AND scan_status='clean' ORDER BY created_at ASC LIMIT 100`;return send(res,200,{orderNumber:found[0].order_number,messages,attachments});
   }
   if(req.method==='POST'&&action==='order-status'){
    if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission.'});
