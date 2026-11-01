@@ -64,6 +64,10 @@ type StorefrontFlowProps = {
   view: string;
   onNavigate: (next: string) => void;
   customerName?: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  customerAddress?: string;
+  onSignOut?: () => void;
   onOrderCreated?: (token: string, orderNumber: string) => void;
   chatPanel?: ReactNode;
   onOpenChat?: (token: string, orderNumber: string) => void;
@@ -168,6 +172,10 @@ export function StorefrontFlow({
   view,
   onNavigate,
   customerName: initialCustomerName = '',
+  customerPhone: initialCustomerPhone = '',
+  customerEmail: initialCustomerEmail = '',
+  customerAddress: initialCustomerAddress = '',
+  onSignOut,
   onOrderCreated,
   chatPanel,
   onOpenChat,
@@ -193,15 +201,17 @@ export function StorefrontFlow({
   const [deliveryEstate, setDeliveryEstate] = useState('');
   const [deliveryDirections, setDeliveryDirections] = useState('');
   const [customerName, setCustomerName] = useState(initialCustomerName);
-  const [customerPhone, setCustomerPhone] = useState('');
-  const [customerEmail, setCustomerEmail] = useState('');
-  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [customerPhone, setCustomerPhone] = useState(initialCustomerPhone);
+  const [customerEmail, setCustomerEmail] = useState(initialCustomerEmail);
+  const [deliveryAddress, setDeliveryAddress] = useState(initialCustomerAddress);
   const [pickupStation, setPickupStation] = useState('');
   const [voucherCode, setVoucherCode] = useState('');
   const [voucherMessage, setVoucherMessage] = useState('');
   const [activeOrderNumber, setActiveOrderNumber] = useState('');
   const [newsletterEnabled, setNewsletterEnabled] = useState(false);
   const [orderTab, setOrderTab] = useState<'ongoing' | 'delivered' | 'cancelled'>('ongoing');
+
+  useEffect(() => { setCustomerName(initialCustomerName); setCustomerPhone(initialCustomerPhone); setCustomerEmail(initialCustomerEmail); if(initialCustomerAddress&&!deliveryAddress)setDeliveryAddress(initialCustomerAddress); }, [initialCustomerName,initialCustomerPhone,initialCustomerEmail,initialCustomerAddress]);
 
   useEffect(() => {
     try {
@@ -616,7 +626,7 @@ export function StorefrontFlow({
   function renderAccount() {
     return (
       <section className="customer-flow customer-account-page">
-        <div className="customer-account-welcome"><span><UserRound size={27} /></span><div><small>MY ACCOUNT</small><h1>{customerName.trim() ? `Welcome back, ${customerName.trim()}` : 'Welcome back'}</h1><p>Manage your orders, saved items and account settings.</p></div></div>
+        <div className="customer-account-welcome"><span><UserRound size={27} /></span><div><small>MY ACCOUNT</small><h1>{customerName.trim() ? `Welcome back, ${customerName.trim()}` : 'Welcome back'}</h1><p>Manage your orders, saved items and account settings.</p><small>{initialCustomerPhone}{initialCustomerEmail?' · '+initialCustomerEmail:''}</small></div><button type="button" className="customer-secondary-button" onClick={onSignOut}>Sign out</button></div>
         <div className="customer-account-groups">
           {accountGroups.map((group) => <section className="customer-panel" key={group.title}>
             <h2 className="customer-account-group-title">{group.title}</h2>
