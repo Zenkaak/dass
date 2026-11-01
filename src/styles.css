@@ -1736,3 +1736,13 @@
  .market-detail-related img{height:110px}
 }
 @media(prefers-reduced-motion:reduce){.market-hero-gallery-track{animation:none}}
+
+
+/* Keep seller navigation interactive above order/product detail sheets. */
+.seller-rail{z-index:100!important}
+.seller-topbar{z-index:101!important}
+.seller-mobile-bottom{z-index:102!important}
+/* Featured products advance one card every seven seconds; no continuous marquee. */
+.market-hero-gallery-track{animation:none!important;transition:transform .65s cubic-bezier(.22,.75,.25,1);will-change:transform}
+.market-hero-gallery-window:hover .market-hero-gallery-track{animation:none!important}
+@media(prefers-reduced-motion:reduce){.market-hero-gallery-track{transition:none!important}}
