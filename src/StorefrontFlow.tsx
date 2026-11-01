@@ -653,6 +653,8 @@ export function StorefrontFlow({
 
   if (view === 'store') return null;
   const pageContent = view === 'cart' ? renderCart() : view === 'checkout/payment' ? (lines.length ? renderCheckoutPayment() : renderCart()) : view === 'checkout/review' ? (lines.length ? renderReview() : renderCart()) : view === 'checkout/complete' ? renderSuccess() : view === 'orders' ? renderOrders() : view === 'order-detail' ? renderOrderDetail() : view === 'order-tracking' ? renderTracking() : (view === 'account' || view === 'profile') ? renderAccount() : renderAccountSection() || (<section className="customer-flow"><FlowHeading title="Shopping assistant" onBack={() => onNavigate('store')} /><div className="customer-panel customer-account-detail"><Search size={24} /><p>{accountSectionCopy.assistant.description}</p><button type="button" className="customer-secondary-button" onClick={() => onNavigate('store')}>Back to the store</button></div></section>);
-  const itemCount=lines.reduce((sum,line)=>sum+line.quantity,0);
-  // The storefront-level marketplace header is the single buyer navigation surface for every route.\n  // Do not mount a second sticky nav here: nested sticky bars overlapped the account/cart content\n  // and intercepted taps on mobile.\n  return <div className="customer-workspace-shell">{pageContent}</div>;
+  // The storefront-level marketplace header is the single buyer navigation surface for every route.
+  // Do not mount a second sticky nav here: nested sticky bars overlapped the account/cart content
+  // and intercepted taps on mobile.
+  return <div className="customer-workspace-shell">{pageContent}</div>;
 }
