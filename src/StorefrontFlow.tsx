@@ -180,12 +180,12 @@ export function StorefrontFlow({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mpesa');
   const [submitting, setSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
-  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('pickup');
+  const [deliveryMethod] = useState<DeliveryMethod>('pickup');
   const [customerName, setCustomerName] = useState(initialCustomerName);
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
-  const [deliveryAddress, setDeliveryAddress] = useState('');
-  const [pickupStation, setPickupStation] = useState('DASNET collection point · Nairobi CBD');
+  const [deliveryAddress] = useState('');
+  const [pickupStation] = useState('');
   const [voucherCode, setVoucherCode] = useState('');
   const [voucherMessage, setVoucherMessage] = useState('');
   const [activeOrderNumber, setActiveOrderNumber] = useState('');
