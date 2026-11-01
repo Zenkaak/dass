@@ -2,18 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
-  Bell,
   Check,
   ChevronRight,
-  Heart,
   MapPin,
   Package,
   Plus,
   Search,
-  Settings,
   ShieldCheck,
   ShoppingBag,
-  Store,
   UserRound,
   WalletCards,
 } from 'lucide-react';
