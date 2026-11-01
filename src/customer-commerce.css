@@ -2158,3 +2158,61 @@
 @media (prefers-reduced-motion: reduce) {
   .store-page * { scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
+
+
+/* Authentication refresh: readable contrast, visible inputs and four-step progress. */
+.account-auth-redesign{position:relative;isolation:isolate;min-height:100vh;overflow:hidden;background:#101d2a!important;padding-bottom:48px}
+.account-auth-redesign .auth-backdrop{position:absolute;inset:0;z-index:-1;background:linear-gradient(115deg,rgba(7,19,32,.94),rgba(11,36,52,.78)),url('/images/dasnet-auth-bg.jpg') center/cover no-repeat}
+.account-auth-redesign .nav{position:relative;z-index:1}
+.account-auth-redesign .account-card{position:relative;z-index:1;width:min(100% - 32px,520px);margin:38px auto;padding:30px;background:#fff;color:#182b3b;border:1px solid rgba(255,255,255,.5);border-radius:20px;box-shadow:0 24px 80px rgba(0,0,0,.3)}
+.account-auth-redesign .account-card h1{color:#14283a;line-height:1.2}
+.account-auth-redesign .account-card>p{color:#596b79;line-height:1.6}
+.account-auth-redesign .auth-form label{color:#263b4c;font-weight:700}
+.account-auth-redesign .auth-form input{display:block;width:100%;min-height:48px;margin-top:6px;padding:11px 13px;border:1.5px solid #b8c5cf;border-radius:10px;background:#fff;color:#13283a;font-size:15px;opacity:1}
+.account-auth-redesign .auth-form input::placeholder{color:#778794}
+.account-auth-redesign .auth-form input:focus{outline:3px solid rgba(228,122,19,.18);border-color:#d97816}
+.auth-stepper,.buyer-auth-progress{display:grid;gap:8px;margin:20px 0}
+.auth-stepper>div,.buyer-auth-progress>div{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.auth-stepper span,.buyer-auth-progress span{height:5px;border-radius:8px;background:#e4e9ed}
+.auth-stepper span.active,.buyer-auth-progress span.done{background:#e47a13}
+.auth-stepper small,.buyer-auth-progress small{color:#627382;font-size:12px;font-weight:700}
+.auth-form-actions,.buyer-auth-actions{display:flex;gap:10px;align-items:center;margin-top:8px}
+.auth-form-actions .auth-submit,.buyer-auth-actions .buyer-auth-submit{flex:1;margin-top:0}
+.auth-back-step,.buyer-auth-secondary{min-height:46px;padding:0 17px;border:1px solid #d3dce3;border-radius:10px;background:#fff;color:#34495a;font-weight:700}
+.auth-resend,.buyer-auth-resend{justify-self:start;display:inline-flex;align-items:center;min-height:35px;margin-top:-5px;padding:4px 0;border:0;background:transparent;color:#b65d0b;font-size:13px;font-weight:800;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.auth-resend:disabled,.buyer-auth-resend:disabled{opacity:.55;cursor:wait}
+.auth-domain-preview{display:block;margin-top:8px;color:#536879;font-weight:700}
+.buyer-auth-page{position:relative;isolation:isolate;min-height:100vh;background:#101d2a!important;overflow:hidden}
+.buyer-auth-backdrop{position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,rgba(9,22,35,.88),rgba(10,35,52,.72)),url('/images/dasnet-auth-bg.jpg') center/cover no-repeat}
+.buyer-auth-card{position:relative;width:min(100%,500px);max-height:none;overflow:visible;background:#fff;color:#1d3040;border:1px solid rgba(255,255,255,.6);box-shadow:0 24px 80px rgba(0,0,0,.32)}
+.buyer-auth-card h1{color:#172b3c}
+.buyer-auth-card>p{color:#5e6f7d}
+.buyer-auth-form label{color:#263b4c;font-weight:700}
+.buyer-auth-form input{min-height:48px;border:1.5px solid #b8c5cf;background:#fff;color:#142a3b;font-size:15px;opacity:1}
+.buyer-auth-form input::placeholder{color:#778794}
+.buyer-auth-form input:focus{outline:3px solid rgba(228,122,19,.18);border-color:#e47a13}
+.buyer-auth-resend{margin-top:-8px}
+.buyer-auth-actions .buyer-auth-submit{flex:1}
+.buyer-auth-secondary{min-height:48px}
+.buyer-auth-links button{color:#a95308}
+.buyer-auth-secure{color:#596c7b}
+.market-sidebar{background:#fff!important;border-right:1px solid #e6ebef!important;box-shadow:5px 0 22px rgba(20,39,55,.045)}
+.market-sidebar-shop{padding:16px 14px!important;border-bottom:1px solid #edf0f3!important}
+.market-sidebar-shop>a{display:flex!important;align-items:center;gap:10px;color:#1c3447!important;text-decoration:none}
+.market-sidebar-shop>a span{display:grid;gap:3px;min-width:0}
+.market-sidebar-shop>a b{font-size:13px;font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.market-sidebar-shop>a small{font-size:10px;color:#7b8994}
+.market-sidebar-title{padding:16px 14px 7px!important;color:#8996a0!important;font-size:9px!important;font-weight:850!important;letter-spacing:.13em}
+.market-sidebar-category-button{display:flex!important;align-items:center;gap:10px;width:calc(100% - 16px)!important;min-height:42px!important;margin:2px 8px!important;padding:8px 10px!important;border:0!important;border-radius:8px!important;background:transparent!important;color:#425667!important;text-align:left!important;font-size:12px!important;font-weight:650!important;cursor:pointer}
+.market-sidebar-category-button:hover,.market-sidebar-category-button.active{background:#fff4e9!important;color:#a95108!important}
+.market-sidebar-category-icon{display:grid;place-items:center;width:24px;height:24px;flex:0 0 24px;border-radius:7px;background:#f1f4f6;color:#657887;font-size:13px}
+.market-sidebar-category-button.active .market-sidebar-category-icon{background:#ffe5cb;color:#a95108}
+.market-sidebar-category-button>span:nth-child(2){flex:1;min-width:0}
+.market-sidebar-category-chevron{margin-left:auto;transition:transform .18s ease}
+.market-sidebar-category-button[aria-expanded=true] .market-sidebar-category-chevron{transform:rotate(90deg)}
+.market-sidebar-subcategories{display:grid;gap:2px;margin:2px 8px 8px 42px;padding-left:10px;border-left:1px solid #e8edf0}
+.market-sidebar-subcategories button{min-height:32px;padding:6px 8px;border:0;border-radius:6px;background:transparent;color:#657582;text-align:left;font-size:11px;cursor:pointer}
+.market-sidebar-subcategories button:hover,.market-sidebar-subcategories button.active{background:#f5f7f8;color:#a95108;font-weight:750}
+.market-sidebar-close{display:none}
+@media(max-width:760px){.account-auth-redesign .account-card{margin:22px auto;padding:24px 20px}.buyer-auth-page{padding:18px 12px}.buyer-auth-card{padding:22px 18px}.market-sidebar{box-shadow:12px 0 36px rgba(15,32,47,.18)}.market-sidebar-close{display:grid!important;place-items:center;width:32px;height:32px;border:0;border-radius:7px;background:#f2f5f7;color:#45596a}}
+@media(prefers-reduced-motion:reduce){.auth-stepper span,.buyer-auth-progress span{transition:none!important}}
