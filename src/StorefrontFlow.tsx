@@ -77,24 +77,10 @@ const paymentLabels: Record<PaymentMethod, string> = {
 
 const accountGroups = [
   {
-    title: 'MY DASNET ACCOUNT',
+    title: 'MY ACCOUNT',
     links: [
       { label: 'Orders', icon: Package, view: 'orders' },
-      { label: 'Inbox', icon: Bell, view: 'inbox' },
-      { label: 'Pending reviews', icon: Check, view: 'reviews' },
-      { label: 'Vouchers', icon: WalletCards, view: 'vouchers' },
-      { label: 'Wishlist', icon: Heart, view: 'wishlist' },
-      { label: 'Followed shops', icon: Store, view: 'followed-shops' },
       { label: 'Recently viewed', icon: Search, view: 'recently-viewed' },
-    ],
-  },
-  {
-    title: 'ACCOUNT SETTINGS',
-    links: [
-      { label: 'Account management', icon: UserRound, view: 'account-management' },
-      { label: 'Address book', icon: MapPin, view: 'address-book' },
-      { label: 'Newsletter', icon: Bell, view: 'newsletter' },
-      { label: 'Close account', icon: Settings, view: 'close-account' },
     ],
   },
 ];
@@ -605,8 +591,7 @@ export function StorefrontFlow({
   function renderAccount() {
     return (
       <section className="customer-flow customer-account-page">
-        <div className="customer-account-welcome"><span><UserRound size={27} /></span><div><small>MY DASNET ACCOUNT</small><h1>{customerName.trim() ? `Welcome back, ${customerName.trim()}` : 'Welcome back'}</h1><p>Manage your orders, saved items and account settings.</p></div></div>
-        <div className="customer-credit-card"><WalletCards size={20} /><span><strong>Store credit</strong><small>Coming soon · No store-credit balance is available for this shop.</small></span><b>KES 0</b></div>
+        <div className="customer-account-welcome"><span><UserRound size={27} /></span><div><small>MY ACCOUNT</small><h1>{customerName.trim() ? `Welcome back, ${customerName.trim()}` : 'Welcome back'}</h1><p>Manage your orders, saved items and account settings.</p></div></div>
         <div className="customer-account-groups">
           {accountGroups.map((group) => <section className="customer-panel" key={group.title}>
             <h2 className="customer-account-group-title">{group.title}</h2>
