@@ -410,9 +410,9 @@ export function StorefrontFlow({
 
   function renderCheckoutPayment() {
     const choices: { id: PaymentMethod; title: string; description: string; mark: string; available: boolean }[] = [
+      { id: 'mpesa', title: 'Pay with M-PESA', description: 'Primary payment · Secure STK Push to your phone', mark: 'M-PESA', available: true },
       { id: 'card', title: 'Pay with bank card', description: 'Visa and Mastercard · Coming soon', mark: 'Coming soon', available: false },
       { id: 'airtel', title: 'Pay with Airtel Money', description: 'Airtel Money · Coming soon', mark: 'Coming soon', available: false },
-      { id: 'mpesa', title: 'Pay with M-PESA', description: 'Secure STK Push to your phone', mark: 'M-PESA', available: true },
       { id: 'delivery', title: 'Pay on delivery', description: 'Coming soon', mark: 'Coming soon', available: false },
     ];
     const paymentOption = (choice: typeof choices[number]) => (
