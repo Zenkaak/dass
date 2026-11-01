@@ -2002,3 +2002,19 @@
   .store-page .market-hero-product,
   .store-page .market-hero-product-add { transition: none !important; }
 }
+
+
+/* One persistent buyer navigation drawer, available on shop, account and cart routes. */
+.market-global-drawer{position:fixed!important;left:0!important;top:68px!important;bottom:0!important;width:min(340px,86vw)!important;height:auto!important;max-height:none!important;margin:0!important;padding:14px!important;overflow-y:auto!important;overflow-x:hidden!important;flex-direction:column!important;align-items:stretch!important;gap:5px!important;border:1px solid #e4eaf0!important;border-left:0!important;border-radius:0 16px 16px 0!important;background:#fff!important;box-shadow:18px 0 45px rgba(14,35,52,.18)!important;z-index:520!important;transform:translateX(-110%);transition:transform .24s ease;pointer-events:none}
+.market-global-drawer.is-mobile-open{display:flex!important;transform:translateX(0)!important;pointer-events:auto!important}
+.market-global-drawer .market-sidebar-shop{display:flex!important}
+.market-global-drawer .market-sidebar-title{display:block!important}
+.market-global-drawer>button,.market-global-drawer .market-sidebar-link{display:flex!important;flex:0 0 auto;width:100%;padding:11px 10px!important;font-size:12px!important;background:transparent!important}
+.market-global-drawer .market-sidebar-category{width:100%}
+.market-global-drawer .market-sidebar-category-button{width:100%;justify-content:flex-start}
+.market-global-drawer .market-sidebar-subcategories{padding-left:27px}
+.market-global-drawer-scrim{display:block!important;position:fixed!important;inset:68px 0 0!important;border:0!important;background:rgba(12,27,39,.42)!important;z-index:510!important}
+@media(max-width:760px){
+ .market-global-drawer{top:104px!important;height:calc(100dvh - 104px)!important}
+ .market-global-drawer-scrim{inset:104px 0 0!important}
+}
