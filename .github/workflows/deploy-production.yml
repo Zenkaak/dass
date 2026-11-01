@@ -36,6 +36,11 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: npx vercel whoami --token="$VERCEL_TOKEN"
 
+      - name: Run application checks
+        run: |
+          npm run typecheck
+          npm run build
+
       - name: Verify Vercel Preview deployments are disabled
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
@@ -54,11 +59,6 @@ jobs:
             exit 1
           fi
           echo "Vercel Preview deployments are confirmed disabled."
-
-      - name: Run application checks
-        run: |
-          npm run typecheck
-          npm run build
 
       - name: Attach wildcard merchant domain
         continue-on-error: true
