@@ -2541,3 +2541,66 @@
 @media (prefers-reduced-motion: reduce) {
   .store-product-marketing-progress span { transition:none; }
 }
+
+
+/* Product marketing uses the same five-column card system as the storefront catalogue. */
+.store-page .store-product-marketing-grid {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+.store-page .store-product-marketing-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #e5e9ed;
+  border-radius: 12px;
+  background: #fff;
+}
+.store-page .store-product-marketing-card .market-product-open {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  text-align: left;
+  background: #fff;
+}
+.store-page .store-product-marketing-card .market-product-art {
+  height: 155px !important;
+}
+.store-page .store-product-marketing-card .market-product-info {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+}
+.store-page .store-product-marketing-card .market-product-add {
+  width: calc(100% - 24px);
+  margin: auto 12px 12px;
+}
+@media (max-width: 760px) {
+  .store-page .store-product-marketing-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+  .store-page .store-product-marketing-card .market-product-art {
+    height: 105px !important;
+  }
+  .store-page .store-product-marketing-card .market-product-info {
+    padding: 7px;
+    gap: 4px;
+  }
+  .store-page .store-product-marketing-card .market-product-info h3 {
+    font-size: 10px;
+  }
+  .store-page .store-product-marketing-card .market-product-info > strong {
+    font-size: 11px;
+  }
+  .store-page .store-product-marketing-card .market-product-add {
+    width: calc(100% - 14px);
+    margin: auto 7px 7px;
+    padding: 7px 3px;
+    font-size: 9px;
+  }
+}
