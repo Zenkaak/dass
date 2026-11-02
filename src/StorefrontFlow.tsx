@@ -18,7 +18,6 @@ import {
   TicketPercent,
   Phone,
   Mail,
-  Upload,
 } from 'lucide-react';
 
 // Buyer account navigation keeps the marketplace account destinations available as real URLs.
