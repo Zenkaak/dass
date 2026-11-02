@@ -58,34 +58,29 @@ export default async function handler(req:any,res:any){
    const [summary,tenants,cfg]=await Promise.all([
     sql`SELECT (SELECT count(*)::int FROM public.tenants) AS sellers,(SELECT count(*)::int FROM public.products) AS products,(SELECT count(*)::int FROM public.orders) AS orders,(SELECT count(*)::int FROM public.orders WHERE status='pending') AS pending_orders`,
     sql`SELECT t.id,t.name,t.slug,t.status,t.created_at,u.display_name AS owner_name,u.phone AS owner_phone,(SELECT count(*)::int FROM public.products p WHERE p.tenant_id=t.id) AS products,(SELECT count(*)::int FROM public.orders o WHERE o.tenant_id=t.id) AS orders FROM public.tenants t LEFT JOIN public.users u ON u.id=t.created_by ORDER BY t.created_at DESC LIMIT 200`,
-    sql`SELECT shortcode,environment,account_type,encrypted_credentials FROM public.platform_payment_config WHERE id=1 LIMIT 1`
+    sql`SELECT method,shortcode,environment,encrypted_credentials FROM public.platform_payment_methods ORDER BY method`
    ]);
-   const secrets=cfg[0]?.encrypted_credentials||{};
-   return send(res,200,{summary:summary[0],tenants,daraja:{configured:!!(secrets.data&&cfg[0]?.shortcode&&cfg[0]?.account_type),shortcode:cfg[0]?.shortcode||'',environment:cfg[0]?.environment||'sandbox',accountType:cfg[0]?.account_type||'CustomerPayBillOnline'}});
+   const methods:any={till:{configured:false,shortcode:'',environment:'production'},paybill:{configured:false,shortcode:'',environment:'production'}};
+   for(const row of cfg){const secret=row.encrypted_credentials||{};methods[row.method]={configured:!!(secret.data&&row.shortcode),shortcode:row.shortcode||'',environment:row.environment||'production'};}
+   return send(res,200,{summary:summary[0],tenants,daraja:{methods}});
   }
   if(req.body?.action==='save_daraja'){
-   const key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');
-   if(!key)return send(res,503,{error:'Credential encryption is not configured. Add DASNET_CREDENTIALS_ENCRYPTION_KEY (32-byte base64 or 64-character hex) to the server runtime; Daraja credentials themselves are entered here.'});
+   const method=String(req.body?.method||'')==='paybill'?'paybill':'till',key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');
+   if(!key)return send(res,503,{error:'Credential encryption is not configured. Add DASNET_CREDENTIALS_ENCRYPTION_KEY to the server runtime.'});
    const keyBytes=/^[0-9a-f]{64}$/i.test(key)?Buffer.from(key,'hex'):Buffer.from(key,'base64');
    if(keyBytes.length!==32)return send(res,503,{error:'DASNET_CREDENTIALS_ENCRYPTION_KEY must decode to exactly 32 bytes.'});
-   const existing=await sql`SELECT encrypted_credentials,shortcode,party_b FROM public.platform_payment_config WHERE id=1 LIMIT 1`;
-   let old:any={};
-   const stored=existing[0]?.encrypted_credentials;
-   if(stored?.data&&stored?.iv&&stored?.tag){
-    try{const decipher=crypto.createDecipheriv('aes-256-gcm',keyBytes,Buffer.from(stored.iv,'base64'));decipher.setAuthTag(Buffer.from(stored.tag,'base64'));old=JSON.parse(Buffer.concat([decipher.update(Buffer.from(stored.data,'base64')),decipher.final()]).toString('utf8'));}catch{return send(res,500,{error:'Stored Daraja credentials could not be decrypted. Check the encryption key.'});}
-   }
-   const next:any={...old};
-   for(const field of ['consumerKey','consumerSecret','passkey']){const value=String(req.body?.[field]||'').trim();if(value)next[field]=value;}
-   const shortcode=String(req.body?.shortcode||'').trim()||null,partyB=String(req.body?.partyB||'').trim()||null;
-   const accountType=String(req.body?.accountType||'CustomerPayBillOnline'),environment=String(req.body?.environment||'sandbox');
-   if(!['CustomerPayBillOnline','CustomerBuyGoodsOnline'].includes(accountType)||!['sandbox','production'].includes(environment))return send(res,400,{error:'Invalid Daraja account type or environment.'});
-   if(!next.consumerKey||!next.consumerSecret||!next.passkey||!(shortcode||existing[0]?.shortcode)||!(partyB||existing[0]?.party_b))return send(res,400,{error:'Complete all credential fields, shortcode and Party B before saving for the first time.'});
-   const iv=crypto.randomBytes(12),cipher=crypto.createCipheriv('aes-256-gcm',keyBytes,iv);
-   const encrypted=Buffer.concat([cipher.update(JSON.stringify(next),'utf8'),cipher.final()]);
+   const existing=await sql`SELECT encrypted_credentials,shortcode FROM public.platform_payment_methods WHERE method=${method} LIMIT 1`;
+   let old:any={};const stored=existing[0]?.encrypted_credentials;
+   if(stored?.data&&stored?.iv&&stored?.tag){try{const decipher=crypto.createDecipheriv('aes-256-gcm',keyBytes,Buffer.from(stored.iv,'base64'));decipher.setAuthTag(Buffer.from(stored.tag,'base64'));old=JSON.parse(Buffer.concat([decipher.update(Buffer.from(stored.data,'base64')),decipher.final()]).toString('utf8'));}catch{return send(res,500,{error:'Stored '+method+' credentials could not be decrypted. Check the encryption key.'});}}
+   const next:any={...old};for(const field of ['consumerKey','consumerSecret','passkey']){const value=String(req.body?.[field]||'').trim();if(value)next[field]=value;}
+   const shortcode=String(req.body?.shortcode||'').trim()||existing[0]?.shortcode||null,environment=String(req.body?.environment||'production');
+   if(!['sandbox','production'].includes(environment))return send(res,400,{error:'Invalid Daraja environment.'});
+   if(!next.consumerKey||!next.consumerSecret||!next.passkey||!shortcode)return send(res,400,{error:'Complete the '+method+' shortcode, consumer key, consumer secret and passkey before saving.'});
+   const iv=crypto.randomBytes(12),cipher=crypto.createCipheriv('aes-256-gcm',keyBytes,iv),encrypted=Buffer.concat([cipher.update(JSON.stringify(next),'utf8'),cipher.final()]);
    const blob={v:1,iv:iv.toString('base64'),tag:cipher.getAuthTag().toString('base64'),data:encrypted.toString('base64')};
-   await sql`INSERT INTO public.platform_payment_config(id,shortcode,party_b,account_type,environment,encrypted_credentials,updated_at) VALUES(1,${shortcode||existing[0]?.shortcode},${partyB||existing[0]?.party_b},${accountType},${environment},${JSON.stringify(blob)}::jsonb,now()) ON CONFLICT(id) DO UPDATE SET shortcode=EXCLUDED.shortcode,party_b=EXCLUDED.party_b,account_type=EXCLUDED.account_type,environment=EXCLUDED.environment,encrypted_credentials=EXCLUDED.encrypted_credentials,updated_at=now()`;
-   await sql`INSERT INTO public.audit_logs(actor_user_id,action,resource_type,resource_id,metadata) VALUES(${users[0].id},'platform.daraja.credentials.updated','payment_config','central',${JSON.stringify({shortcode:shortcode||existing[0]?.shortcode,environment,accountType})}::jsonb)`;
-   return send(res,200,{ok:true});
+   await sql`INSERT INTO public.platform_payment_methods(method,shortcode,environment,encrypted_credentials,updated_at) VALUES(${method},${shortcode},${environment},${JSON.stringify(blob)}::jsonb,now()) ON CONFLICT(method) DO UPDATE SET shortcode=EXCLUDED.shortcode,environment=EXCLUDED.environment,encrypted_credentials=EXCLUDED.encrypted_credentials,updated_at=now()`;
+   await sql`INSERT INTO public.audit_logs(actor_user_id,action,resource_type,resource_id,metadata) VALUES(${users[0].id},${'platform.daraja.'+method+'.updated'},'payment_config',${'central-'+method},${JSON.stringify({shortcode,environment,credentialsEncrypted:true})}::jsonb)`;
+   return send(res,200,{ok:true,method,shortcode,environment});
   }
   const id=String(req.body?.tenantId||''),status=String(req.body?.status||'');
   if(!/^[0-9a-f-]{36}$/i.test(id)||!['active','suspended'].includes(status))return send(res,400,{error:'Invalid seller or status.'});
