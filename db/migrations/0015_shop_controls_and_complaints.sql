@@ -43,8 +43,7 @@ CREATE TABLE IF NOT EXISTS public.shop_complaints (
   status text NOT NULL DEFAULT 'open' CHECK (status IN ('open','under_review','resolved','rejected')),
   admin_notes text,
   created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  FOREIGN KEY (tenant_id,order_id) REFERENCES public.orders(tenant_id,id) ON DELETE SET NULL
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS shop_complaints_created_idx ON public.shop_complaints(created_at DESC);
 CREATE INDEX IF NOT EXISTS shop_complaints_tenant_idx ON public.shop_complaints(tenant_id,created_at DESC);
