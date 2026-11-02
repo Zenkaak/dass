@@ -3139,3 +3139,20 @@ html,body,#root{
 @media(prefers-reduced-motion:reduce) {
   .store-page .market-related-controls button { transition:none !important; }
 }
+
+
+/* Buyer wishlist actions */
+.store-page .market-detail-save {
+  display:flex; width:100%; min-height:43px; align-items:center; justify-content:center;
+  margin-top:9px; border:1px solid #d9e4e9; border-radius:11px;
+  background:#fff; color:#31576a; font-size:12px; font-weight:800;
+  cursor:pointer; transition:background .16s ease,border-color .16s ease,color .16s ease;
+}
+.store-page .market-detail-save[aria-pressed="true"] {
+  border-color:#efc8cf; background:#fff5f6; color:#a33d50;
+}
+.store-page .market-detail-save:hover { border-color:#a9c4d0; background:#f5fafc; }
+.customer-wishlist-actions { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; margin-top:9px; }
+.customer-wishlist-actions .customer-secondary-button { min-height:34px; padding:7px 10px; font-size:11px; }
+.customer-wishlist-actions .customer-text-button { padding:7px 8px; font-size:11px; }
+@media(prefers-reduced-motion:reduce) { .store-page .market-detail-save { transition:none !important; } }
