@@ -3156,3 +3156,19 @@ html,body,#root{
 .customer-wishlist-actions .customer-secondary-button { min-height:34px; padding:7px 10px; font-size:11px; }
 .customer-wishlist-actions .customer-text-button { padding:7px 8px; font-size:11px; }
 @media(prefers-reduced-motion:reduce) { .store-page .market-detail-save { transition:none !important; } }
+
+/* Shared DASNET marketplace FAQ content on merchant storefronts. */
+.store-page .store-faq-view-all{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:43px;margin-top:18px;padding:0 17px;border:0;border-radius:10px;background:var(--store-accent,#e47a13);color:#fff;font-size:12px;font-weight:850;cursor:pointer;box-shadow:0 5px 14px rgba(24,54,74,.12)}
+.store-page .store-faq-view-all:hover{filter:brightness(.96);transform:translateY(-1px)}
+.store-page.store-faq-route .market-sidebar,.store-page.store-faq-route .market-sidebar-scrim{display:none!important}
+.store-page.store-faq-route .customer-workspace-shell{width:min(100%,1120px);margin:0 auto;padding:24px 20px 70px}
+.store-page .storefront-all-faqs{max-width:940px;margin:0 auto}
+.store-page .storefront-all-faqs-intro{margin:0 0 20px;color:#6e818d;font-size:13px;line-height:1.7}
+.store-page .storefront-all-faqs-list{display:grid;gap:10px}
+.store-page .storefront-all-faqs-list details{overflow:hidden;border:1px solid #e0e8ed;border-radius:12px;background:#fff;box-shadow:0 3px 12px rgba(20,50,68,.035)}
+.store-page .storefront-all-faqs-list summary{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:17px 18px;color:#203e51;font-size:13px;font-weight:800;line-height:1.5;cursor:pointer;list-style:none}
+.store-page .storefront-all-faqs-list summary::-webkit-details-marker{display:none}
+.store-page .storefront-all-faqs-list summary span{flex:0 0 auto;color:#176487;font-size:19px;font-weight:500}
+.store-page .storefront-all-faqs-list details[open] summary{border-bottom:1px solid #edf1f3;background:#f8fbfc}
+.store-page .storefront-all-faqs-list details p{margin:0;padding:15px 18px 18px;color:#5b707d;font-size:12px;line-height:1.8}
+@media(max-width:640px){.store-page.store-faq-route .customer-workspace-shell{padding:17px 12px 90px}.store-page .storefront-all-faqs-list summary{padding:15px;font-size:12px}.store-page .storefront-all-faqs-list details p{padding:13px 15px 16px}}
