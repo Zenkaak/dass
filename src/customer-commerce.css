@@ -2416,3 +2416,45 @@
  .buyer-auth-redesign .buyer-auth-form>label{grid-column:1}
 }
 @media(prefers-reduced-motion:reduce){.buyer-auth-redesign .buyer-auth-backdrop{transform:none}}
+
+
+/* Buyer auth typography: compact sizing matched to the forgot-password link. */
+.buyer-auth-redesign .buyer-auth-card,
+.buyer-auth-redesign .buyer-auth-card *{
+  font-family:inherit!important;
+}
+.buyer-auth-redesign .buyer-auth-card h1{
+  font-size:22px!important;line-height:1.22!important;letter-spacing:-.015em!important;
+}
+.buyer-auth-redesign .buyer-auth-card .buyer-auth-intro{
+  font-size:11px!important;line-height:1.55!important;
+}
+.buyer-auth-redesign .buyer-auth-heading{gap:10px!important}
+.buyer-auth-redesign .buyer-auth-mark{width:36px;height:36px;flex-basis:36px;border-radius:10px}
+.buyer-auth-redesign .buyer-auth-eyebrow,
+.buyer-auth-redesign .buyer-auth-form label,
+.buyer-auth-redesign .buyer-auth-form label span,
+.buyer-auth-redesign .buyer-auth-links button,
+.buyer-auth-redesign .buyer-auth-links>span,
+.buyer-auth-redesign .buyer-auth-resend,
+.buyer-auth-redesign .buyer-auth-back,
+.buyer-auth-redesign .buyer-auth-progress>small,
+.buyer-auth-redesign .buyer-auth-secure b,
+.buyer-auth-redesign .buyer-auth-secure small{
+  font-size:11px!important;
+}
+.buyer-auth-redesign .buyer-auth-form input{
+  min-height:46px!important;font-size:12px!important;padding:10px 12px!important;
+}
+.buyer-auth-redesign .buyer-auth-actions .buyer-auth-submit,
+.buyer-auth-redesign .buyer-auth-secondary{
+  min-height:46px!important;font-size:11px!important;
+}
+.buyer-auth-redesign .buyer-auth-secure{font-size:11px!important}
+.buyer-auth-redesign .buyer-auth-card.buyer-auth-modal{
+  min-height:0!important;padding:34px clamp(26px,4vw,46px)!important;
+}
+@media(max-width:640px){
+ .buyer-auth-redesign .buyer-auth-card h1{font-size:21px!important}
+ .buyer-auth-redesign .buyer-auth-card.buyer-auth-modal{padding:25px 20px!important}
+}
