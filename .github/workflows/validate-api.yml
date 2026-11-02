@@ -1,0 +1,25 @@
+name: Validate seller API modules
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  api-compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package.json
+      - name: Install dependencies
+        run: npm install
+      - name: Parse every Vercel API function
+        run: npx --yes esbuild api/*.ts --outdir=/tmp/dasnet-api-compile-check --platform=node --format=esm --target=node22
