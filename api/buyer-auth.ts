@@ -101,6 +101,7 @@ export default async function handler(req:any,res:any){
   }
   if(req.method==='POST'&&action==='login'){
    const phone=phoneOf(body.phone),password=String(body.password||'');if(!phone||!password)return send(res,400,{error:'Enter your mobile number and password.'});
+   const blocked=await sql`SELECT id FROM public.store_customers WHERE tenant_id=${tenantId} AND phone=${phone} AND is_banned=true LIMIT 1`;if(blocked.length)return send(res,403,{error:'Buyer access to this shop has been restricted. Contact the shop or DASNET support.'});
    const users=await sql`SELECT id,display_name,password_hash,password_salt,phone_verified_at FROM public.users WHERE phone=${phone} LIMIT 1`,user=users[0];
    if(!user||!user.password_hash||!user.password_salt||!equal(passwordHash(password,user.password_salt),user.password_hash))return send(res,401,{error:'Invalid phone number or password.'});
    if(!user.phone_verified_at)return send(res,403,{error:'Verify your phone before signing in.'});
@@ -164,7 +165,7 @@ export default async function handler(req:any,res:any){
   if(req.method==='GET'&&action==='session'){
    const current=globalToken(req);
    if(current){
-    const rows=await sql`SELECT c.id,c.full_name,c.email,c.phone,c.alternative_phone,c.address FROM public.auth_sessions s JOIN public.store_customers c ON c.user_id=s.user_id AND c.tenant_id=${tenantId} JOIN public.users u ON u.id=s.user_id WHERE s.token_hash=${hash(current)} AND s.expires_at>now() LIMIT 1`;
+    const rows=await sql`SELECT c.id,c.full_name,c.email,c.phone,c.alternative_phone,c.address FROM public.auth_sessions s JOIN public.store_customers c ON c.user_id=s.user_id AND c.tenant_id=${tenantId} JOIN public.users u ON u.id=s.user_id WHERE s.token_hash=${hash(current)} AND s.expires_at>now() AND c.is_banned=false LIMIT 1`;
     if(!rows.length)return send(res,401,{error:'No buyer profile exists for this shop. Sign in to create one.'});
     return send(res,200,{customer:customer(rows[0])});
    }
