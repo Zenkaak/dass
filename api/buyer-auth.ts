@@ -180,9 +180,9 @@ export default async function handler(req:any,res:any){
    return send(res,401,{error:'Sign in required'});
   }
   if(req.method==='POST'&&action==='logout'){
-   const current=globalToken(req),legacy=legacyToken(req);
-   if(current)await sql`DELETE FROM public.auth_sessions WHERE token_hash=${hash(current)}`;
-   if(legacy)await sql`DELETE FROM public.store_customer_sessions WHERE tenant_id=${tenantId} AND token_hash=${hash(legacy)}`;
+   const current=globalToken(req),legacy=legacyToken(req);let userId='';
+   if(current){const rows=await sql`SELECT user_id FROM public.auth_sessions WHERE token_hash=${hash(current)} LIMIT 1`;userId=rows[0]?.user_id||'';if(userId)await sql`DELETE FROM public.store_customer_sessions WHERE customer_id IN (SELECT id FROM public.store_customers WHERE user_id=${userId})`;await sql`DELETE FROM public.auth_sessions WHERE token_hash=${hash(current)}`;}
+   if(legacy){const rows=await sql`SELECT c.user_id FROM public.store_customer_sessions s JOIN public.store_customers c ON c.id=s.customer_id WHERE s.tenant_id=${tenantId} AND s.token_hash=${hash(legacy)} LIMIT 1`;if(!userId)userId=rows[0]?.user_id||'';if(userId)await sql`DELETE FROM public.store_customer_sessions WHERE customer_id IN (SELECT id FROM public.store_customers WHERE user_id=${userId})`;else await sql`DELETE FROM public.store_customer_sessions WHERE tenant_id=${tenantId} AND token_hash=${hash(legacy)}`;}
    res.setHeader('Set-Cookie',[`das_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`,`das_buyer_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`]);
    return send(res,200,{ok:true});
   }
