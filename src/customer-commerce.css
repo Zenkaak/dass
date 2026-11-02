@@ -2659,3 +2659,73 @@
   .store-page .store-product-marketing-card,
   .store-product-marketing-dots button { transition: none !important; }
 }
+
+
+/* Tighten the storefront masthead-to-catalogue spacing without removing featured products. */
+.store-page .market-store-layout {
+  margin-top: 8px !important;
+}
+.store-page .store-product-marketing {
+  margin-bottom: 10px;
+  padding: 14px;
+  border-radius: 13px;
+}
+.store-page .store-product-marketing-heading {
+  margin-bottom: 10px;
+}
+.store-page .store-product-marketing-heading h2 {
+  margin-top: 3px;
+  font-size: clamp(17px, 1.8vw, 21px);
+}
+.store-page .store-product-marketing-heading p {
+  font-size: 11px;
+}
+.store-page .store-product-marketing-stage {
+  min-height: 250px;
+}
+.store-page .store-product-marketing-card {
+  width: min(100%, 220px);
+}
+.store-page .store-product-marketing-card .market-product-art {
+  height: 128px !important;
+}
+.store-page .store-product-marketing-dots {
+  margin-top: 7px;
+}
+.store-page .store-product-marketing-progress {
+  margin-top: 8px;
+}
+@media (max-width: 760px) {
+  .store-page .market-store-layout {
+    width: calc(100% - 20px);
+    margin-top: 5px !important;
+  }
+  .store-page .store-product-marketing {
+    margin-bottom: 7px;
+    padding: 10px;
+  }
+  .store-page .store-product-marketing-heading {
+    margin-bottom: 7px;
+  }
+  .store-page .store-product-marketing-heading h2 {
+    font-size: 16px;
+  }
+  .store-page .store-product-marketing-heading p {
+    font-size: 10px;
+  }
+  .store-page .store-product-marketing-stage {
+    min-height: 215px;
+  }
+  .store-page .store-product-marketing-card {
+    width: min(100%, 195px);
+  }
+  .store-page .store-product-marketing-card .market-product-art {
+    height: 112px !important;
+  }
+  .store-page .store-product-marketing-dots {
+    margin-top: 6px;
+  }
+  .store-page .store-product-marketing-progress {
+    margin-top: 6px;
+  }
+}
