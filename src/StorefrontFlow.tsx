@@ -68,6 +68,7 @@ type StorefrontFlowProps = {
   customerPhone?: string;
   customerEmail?: string;
   customerAddress?: string;
+  customerAlternativePhone?: string;
   onSignOut?: () => void;
   onOrderCreated?: (token: string, orderNumber: string) => void;
   chatPanel?: ReactNode;
@@ -177,6 +178,7 @@ export function StorefrontFlow({
   customerPhone: initialCustomerPhone = '',
   customerEmail: initialCustomerEmail = '',
   customerAddress: initialCustomerAddress = '',
+  customerAlternativePhone: initialCustomerAlternativePhone = '',
   onSignOut,
   onOrderCreated,
   chatPanel,
@@ -216,7 +218,7 @@ export function StorefrontFlow({
   const [newsletterEnabled, setNewsletterEnabled] = useState(false);
   const [orderTab, setOrderTab] = useState<'ongoing' | 'delivered' | 'cancelled'>('ongoing');
 
-  useEffect(() => { setCustomerName(initialCustomerName); setCustomerPhone(initialCustomerPhone); setCustomerEmail(initialCustomerEmail); setProfileName(initialCustomerName); setProfileEmail(initialCustomerEmail); setProfileAddress(initialCustomerAddress); if(initialCustomerAddress&&!deliveryAddress)setDeliveryAddress(initialCustomerAddress); }, [initialCustomerName,initialCustomerPhone,initialCustomerEmail,initialCustomerAddress]);
+  useEffect(() => { setCustomerName(initialCustomerName); setCustomerPhone(initialCustomerPhone); setCustomerEmail(initialCustomerEmail); setProfileName(initialCustomerName); setProfileEmail(initialCustomerEmail); setProfileAddress(initialCustomerAddress); setProfilePhoneAlt(initialCustomerAlternativePhone); if(initialCustomerAddress&&!deliveryAddress)setDeliveryAddress(initialCustomerAddress); }, [initialCustomerName,initialCustomerPhone,initialCustomerEmail,initialCustomerAddress,initialCustomerAlternativePhone]);
   useEffect(()=>{let live=true;const load=async()=>{setOrdersLoading(true);try{const r=await fetch('/api/store?action=customer-orders&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'});const d=await r.json().catch(()=>({}));if(!r.ok){if(r.status!==401)throw Error(d.error||'Could not load your orders');return;}const next:BuyerOrder[]=(Array.isArray(d.orders)?d.orders:[]).map((o:any)=>({orderId:o.id,orderNumber:o.orderNumber,createdAt:o.createdAt,customerName:o.customerName,customerPhone:o.customerPhone,customerEmail:o.customerEmail||'',paymentMethod:'mpesa',deliveryMethod:o.deliveryMethod==='pickup'?'pickup':'home',deliveryAddress:o.deliveryAddress||'',pickupStation:o.pickupStation||'',deliveryCounty:o.deliveryCounty||'',deliverySubCounty:o.deliverySubCounty||'',deliveryEstate:o.deliveryEstate||'',deliveryDirections:o.deliveryDirections||'',subtotal:Number(o.subtotal)||0,deliveryFee:0,total:Number(o.total)||0,lines:(o.items||[]).map((i:any)=>({product:{id:String(i.id||('item-'+i.name)),name:i.name,price:Number(i.price)||0,category:'Product'},quantity:Number(i.quantity)||1})),chatToken:'',paymentStatus:o.paymentStatus||'unpaid',receipt:o.receipt||null,orderStatus:o.orderStatus||null,deliveryStatus:o.deliveryStatus||null}));if(live){setOrders(next);setOrdersError('');}}catch(e:any){if(live)setOrdersError(e.message||'Could not load your orders.')}finally{if(live)setOrdersLoading(false)}};if(initialCustomerPhone)load();else setOrders([]);return()=>{live=false}},[slug,initialCustomerPhone]);
 
   useEffect(() => {
