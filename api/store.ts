@@ -129,13 +129,13 @@ export default async function handler(req:any,res:any){
   if(req.method==='GET'&&action==='storefront'){
    const slug=String(req.query?.slug||'').toLowerCase();
    // Fetch shop metadata and its active catalogue in one database round-trip.
-   const rows=await sql`SELECT t.id AS tenant_id,t.name AS shop_name,t.slug,s.description,s.logo_url,s.whatsapp_number,s.contact_phone,s.contact_email,s.terms_and_conditions,s.privacy_policy,s.return_policy,s.delivery_policy,s.storefront_theme,
+   const rows=await sql`SELECT t.id AS tenant_id,t.name AS shop_name,t.slug,s.description,s.logo_url,s.whatsapp_number,s.contact_phone,s.contact_email,s.terms_and_conditions,s.privacy_policy,s.return_policy,s.delivery_policy,s.storefront_faqs,s.storefront_theme,
     COALESCE((SELECT jsonb_agg(jsonb_build_object('id',p.id,'name',p.name,'description',p.description,'product_type',p.product_type,'price_minor',p.price_minor,'currency',p.currency,'stock_quantity',p.stock_quantity,'is_active',p.is_active,'images',p.images,'metadata',p.metadata,'sku',p.sku) ORDER BY p.created_at DESC) FROM public.products p WHERE p.tenant_id=t.id AND p.is_active=true),'[]'::jsonb) AS products
     FROM public.tenants t LEFT JOIN public.sites s ON s.tenant_id=t.id WHERE t.slug=${slug} AND t.status IN ('trial','active') LIMIT 1`;
    if(!rows.length)return send(res,404,{error:'Shop not found'});
    const row=rows[0];
    res.setHeader('Cache-Control','public, s-maxage=10, stale-while-revalidate=30');
-   return send(res,200,{shop:{name:row.shop_name,slug:row.slug,description:row.description||'',logoUrl:row.logo_url||'',whatsappNumber:row.whatsapp_number||'',contactPhone:row.contact_phone||row.whatsapp_number||'',contactEmail:row.contact_email||'',termsAndConditions:row.terms_and_conditions||'',privacyPolicy:row.privacy_policy||'',returnPolicy:row.return_policy||'',deliveryPolicy:row.delivery_policy||'',theme:/^#[0-9a-f]{6}$/i.test(String(row.storefront_theme||''))?row.storefront_theme:'#e47a13'},products:(row.products||[]).map((p:any)=>productOut(p,true))});
+   return send(res,200,{shop:{name:row.shop_name,slug:row.slug,description:row.description||'',logoUrl:row.logo_url||'',whatsappNumber:row.whatsapp_number||'',contactPhone:row.contact_phone||row.whatsapp_number||'',contactEmail:row.contact_email||'',termsAndConditions:row.terms_and_conditions||'',privacyPolicy:row.privacy_policy||'',returnPolicy:row.return_policy||'',deliveryPolicy:row.delivery_policy||'',faqs:Array.isArray(row.storefront_faqs)?row.storefront_faqs:[],theme:/^#[0-9a-f]{6}$/i.test(String(row.storefront_theme||''))?row.storefront_theme:'#e47a13'},products:(row.products||[]).map((p:any)=>productOut(p,true))});
   }
   if(req.method==='POST'&&action==='coupon-validate'){
    const b=req.body||{},slug=String(b.slug||'').toLowerCase().trim(),code=String(b.code||'').trim().toUpperCase(),subtotal=Number(b.subtotal||0),shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
@@ -423,17 +423,17 @@ export default async function handler(req:any,res:any){
   if(!me)return send(res,401,{error:'Sign in to manage your shop.'});
 
   if(req.method==='GET'&&action==='store-settings'){
-   const rows=await sql`SELECT contact_phone,contact_email,terms_and_conditions,privacy_policy,return_policy,delivery_policy FROM public.sites WHERE tenant_id=${me.tenant_id} LIMIT 1`,r=rows[0]||{};
-   return send(res,200,{settings:{contactPhone:r.contact_phone||'',contactEmail:r.contact_email||'',termsAndConditions:r.terms_and_conditions||'',privacyPolicy:r.privacy_policy||'',returnPolicy:r.return_policy||'',deliveryPolicy:r.delivery_policy||''}});
+   const rows=await sql`SELECT contact_phone,contact_email,terms_and_conditions,privacy_policy,return_policy,delivery_policy,storefront_faqs FROM public.sites WHERE tenant_id=${me.tenant_id} LIMIT 1`,r=rows[0]||{};
+   return send(res,200,{settings:{contactPhone:r.contact_phone||'',contactEmail:r.contact_email||'',termsAndConditions:r.terms_and_conditions||'',privacyPolicy:r.privacy_policy||'',returnPolicy:r.return_policy||'',deliveryPolicy:r.delivery_policy||'',faqs:Array.isArray(r.storefront_faqs)?r.storefront_faqs:[]}});
   }
   if(req.method==='POST'&&action==='store-settings'){
    if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner or admin can update buyer-facing shop policies.'});
    const b=req.body||{},phoneRaw=String(b.contactPhone||'').trim(),contactPhone=phoneRaw?normalizePhone(phoneRaw):'',email=String(b.contactEmail||'').trim().toLowerCase().slice(0,254);
-   const terms=String(b.termsAndConditions||'').trim().slice(0,20000),privacy=String(b.privacyPolicy||'').trim().slice(0,20000),returns=String(b.returnPolicy||'').trim().slice(0,12000),delivery=String(b.deliveryPolicy||'').trim().slice(0,12000);
+   const terms=String(b.termsAndConditions||'').trim().slice(0,20000),privacy=String(b.privacyPolicy||'').trim().slice(0,20000),returns=String(b.returnPolicy||'').trim().slice(0,12000),delivery=String(b.deliveryPolicy||'').trim().slice(0,12000),faqs=Array.isArray(b.faqs)?b.faqs.slice(0,30).map((x:any)=>({question:String(x?.question||'').trim().slice(0,240),answer:String(x?.answer||'').trim().slice(0,2000)})).filter((x:any)=>x.question.length>=3&&x.answer.length>=3):[];
    if(phoneRaw&&!contactPhone)return send(res,400,{error:'Enter a valid Kenyan customer support phone number.'});
    if(email&&!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))return send(res,400,{error:'Enter a valid support email address.'});
-   await sql`UPDATE public.sites SET contact_phone=${contactPhone||null},contact_email=${email||null},terms_and_conditions=${terms},privacy_policy=${privacy},return_policy=${returns},delivery_policy=${delivery},updated_at=now() WHERE tenant_id=${me.tenant_id}`;
-   await audit(sql,me.tenant_id,me.user_id,'shop.buyer_policies.updated','shop',me.tenant_id,{termsPublished:!!terms,privacyPublished:!!privacy,returnsPublished:!!returns,deliveryPublished:!!delivery});
+   await sql`UPDATE public.sites SET contact_phone=${contactPhone||null},contact_email=${email||null},terms_and_conditions=${terms},privacy_policy=${privacy},return_policy=${returns},delivery_policy=${delivery},storefront_faqs=${JSON.stringify(faqs)}::jsonb,updated_at=now() WHERE tenant_id=${me.tenant_id}`;
+   await audit(sql,me.tenant_id,me.user_id,'shop.buyer_policies.updated','shop',me.tenant_id,{termsPublished:!!terms,privacyPublished:!!privacy,returnsPublished:!!returns,deliveryPublished:!!delivery,faqCount:faqs.length});
    return send(res,200,{ok:true});
   }
   if(req.method==='GET'&&action==='coupons'){
