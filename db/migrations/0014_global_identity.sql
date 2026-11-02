@@ -5,6 +5,11 @@
 ALTER TABLE public.store_customers
   ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES public.users(id) ON DELETE SET NULL;
 
+-- New profiles no longer store password material; legacy columns remain nullable
+-- during the rollback window and existing hashes are retained for reconciliation.
+ALTER TABLE public.store_customers ALTER COLUMN password_hash DROP NOT NULL;
+ALTER TABLE public.store_customers ALTER COLUMN password_salt DROP NOT NULL;
+
 -- Create global identities only for legacy buyer phones that have one unambiguous,
 -- verified password source. Existing global seller identities are never overwritten.
 WITH safe_legacy AS (
