@@ -195,7 +195,7 @@ export function StorefrontFlow({
   onOpenChat,
   onProfileUpdated,
 }: StorefrontFlowProps) {
-  const orderStorageKey = `dasnet-storefront-orders-${slug}-${String(initialCustomerPhone||'').replace(/\\D/g,'') || 'signed-out'}`;
+  const orderStorageKey = `dasnet-storefront-orders-${slug}-${String(initialCustomerPhone||'').replace(/\D/g,'') || 'signed-out'}`;
   const lines = useMemo(() => Object.entries(cart)
     .map(([id, quantity]) => {
       const product = products.find((entry) => entry.id === id);
