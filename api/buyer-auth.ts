@@ -27,7 +27,8 @@ if(req.method==='POST'&&action==='change-password'){
 if(req.method==='POST'&&action==='update-profile'){
  const sessionToken=token(req);if(!sessionToken)return send(res,401,{error:'Sign in to update your profile.'});
  const sessions=await sql`SELECT customer_id FROM public.store_customer_sessions WHERE tenant_id=${tenantId} AND token_hash=${hash(sessionToken)} AND expires_at>now() LIMIT 1`;if(!sessions.length)return send(res,401,{error:'Your session has expired. Sign in again.'});
- const name=String(b.name||'').trim().slice(0,120),email=String(b.email||'').trim().toLowerCase().slice(0,254),alternativePhone=phoneOf(b.alternativePhone)||null,address=String(b.address||'').trim().slice(0,300);
+ const name=String(b.name||'').trim().slice(0,120),email=String(b.email||'').trim().toLowerCase().slice(0,254),alternativeRaw=String(b.alternativePhone||'').trim(),alternativePhone=phoneOf(alternativeRaw)||null,address=String(b.address||'').trim().slice(0,300);
+ if(alternativeRaw&&!alternativePhone)return send(res,400,{error:'Enter a valid Kenyan alternative phone number.'});
  if(name.length<2)return send(res,400,{error:'Enter your full name.'});
  if(email&&!/^\S+@\S+\.\S+$/.test(email))return send(res,400,{error:'Enter a valid email address.'});
  const rows=await sql`UPDATE public.store_customers SET full_name=${name},email=${email||null},alternative_phone=${alternativePhone},address=${address||null},updated_at=now() WHERE tenant_id=${tenantId} AND id=${sessions[0].customer_id} RETURNING id,full_name,email,phone,alternative_phone,address`;
