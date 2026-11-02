@@ -81,28 +81,6 @@ async function validateAttachmentObject(objectKey:string,mime:string,expectedSiz
  if(bytes.length!==expectedSize||bytes.length<1||bytes.length>10485760)throw Error('ATTACHMENT_SIZE_MISMATCH');
  if(!validFileSignature(bytes,mime))throw Error('ATTACHMENT_CONTENT_MISMATCH');
 }
-async function scanAttachment(objectKey:string,fileName:string,mime:string,expectedSize:number){
- const scanner=storageEnv('DASNET_FILE_SCAN_URL'),scannerToken=storageEnv('DASNET_FILE_SCAN_TOKEN');
- if(!scanner)throw Error('FILE_SCANNER_NOT_CONFIGURED');
- let scannerEndpoint:URL;try{scannerEndpoint=new URL(scanner)}catch{throw Error('FILE_SCANNER_UNAVAILABLE')}
- if(scannerEndpoint.protocol!=='https:')throw Error('FILE_SCANNER_UNAVAILABLE');
- const downloaded=await fetch(storageUrl(objectKey,'GET'));
- if(!downloaded.ok)throw Error('ATTACHMENT_OBJECT_UNAVAILABLE');
- const declaredLength=Number(downloaded.headers.get('content-length')||0);
- if(declaredLength>10485760||(declaredLength>0&&declaredLength!==expectedSize))throw Error('ATTACHMENT_SIZE_MISMATCH');
- const bytes=Buffer.from(await downloaded.arrayBuffer());
- if(bytes.length!==expectedSize||bytes.length<1||bytes.length>10485760)throw Error('ATTACHMENT_SIZE_MISMATCH');
- if(!validFileSignature(bytes,mime))throw Error('ATTACHMENT_CONTENT_MISMATCH');
- const headers:any={'Content-Type':'application/octet-stream','X-File-Name':safeFileName(fileName),'X-File-Content-Type':mime};
- if(scannerToken)headers.Authorization='Bearer '+scannerToken;
- const response=await fetch(scannerEndpoint.toString(),{method:'POST',headers,body:bytes});
- if(!response.ok)throw Error('FILE_SCANNER_UNAVAILABLE');
- const result:any=await response.json().catch(()=>null);
- if(result?.infected===true||result?.status==='infected')return 'infected';
- if(result?.clean===true||result?.status==='clean')return 'clean';
- throw Error('FILE_SCANNER_UNVERIFIED');
-}
-
 function timestamp(){const d=new Date();return d.getUTCFullYear()+String(d.getUTCMonth()+1).padStart(2,'0')+String(d.getUTCDate()).padStart(2,'0')+String(d.getUTCHours()).padStart(2,'0')+String(d.getUTCMinutes()).padStart(2,'0')+String(d.getUTCSeconds()).padStart(2,'0')}
 async function startStk(c:any,order:any,phone:string,amount:number,reference:string,callbackUrl:string){
  const {host,accessToken}=await darajaToken(c),stamp=timestamp(),shortcode=String(c.shortcode),type=c.accountType;
