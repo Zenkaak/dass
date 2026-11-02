@@ -46,7 +46,7 @@ jobs:
           # The frontend TypeScript project intentionally includes only src/.
           # Parse API handlers separately so malformed serverless modules fail CI
           # before Vercel receives a deployment.
-          npx --no-install esbuild api/*.ts --outdir=/tmp/dasnet-api-compile-check --platform=node --format=esm --target=node22
+          npx --yes esbuild api/*.ts --outdir=/tmp/dasnet-api-compile-check --platform=node --format=esm --target=node22
 
       - name: Verify Vercel Preview deployments are disabled
         env:
