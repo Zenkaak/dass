@@ -6,6 +6,7 @@ ALTER TABLE public.sites
   ADD COLUMN IF NOT EXISTS privacy_policy text NOT NULL DEFAULT '',
   ADD COLUMN IF NOT EXISTS return_policy text NOT NULL DEFAULT '',
   ADD COLUMN IF NOT EXISTS delivery_policy text NOT NULL DEFAULT '';
+ALTER TABLE public.sites ADD COLUMN IF NOT EXISTS storefront_faqs jsonb NOT NULL DEFAULT '[]'::jsonb;
 
 ALTER TABLE public.orders
   ADD COLUMN IF NOT EXISTS coupon_code text,
