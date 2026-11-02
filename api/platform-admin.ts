@@ -90,7 +90,7 @@ export default async function handler(req:any,res:any){
    }
    if(action==='edit_seller'){
     const tenant=await sql`SELECT created_by FROM public.tenants WHERE id=${id} LIMIT 1`;if(!tenant.length||!tenant[0].created_by)return send(res,404,{error:'Seller account not found.'});
-    const displayName=String(v.owner_name||'').trim().slice(0,120),email=String(v.owner_email||'').trim().toLowerCase().slice(0,254)||null,phoneValue=phone(String(v.owner_phone||''));
+    const displayName=String(v.owner_name||'').trim().slice(0,120),email=String(v.owner_email||'').trim().toLowerCase().slice(0,254)||null,phoneRaw=phone(String(v.owner_phone||'')),phoneValue=phoneRaw.startsWith('254')?'+254'+phoneRaw.slice(3):phoneRaw;
     if(!displayName||!phoneValue)return send(res,400,{error:'Seller name and valid phone number are required.'});
     updated=await sql`UPDATE public.users SET display_name=${displayName},email=${email},phone=${phoneValue},updated_at=now() WHERE id=${tenant[0].created_by} RETURNING id,display_name,phone,email`;
     if(!updated.length)return send(res,404,{error:'Seller account not found.'});
@@ -102,7 +102,7 @@ export default async function handler(req:any,res:any){
     if(!updated.length)return send(res,404,{error:'Product not found.'});
    }
    if(action==='edit_order'){
-    const allowed=['pending','processing','confirmed','paid','completed','cancelled','failed','refunded'],delivery=['pending_delivery','processing','ready_for_dispatch','dispatched','in_transit','delivered','cancelled','returned'];
+    const allowed=['pending','confirmed','processing','fulfilled','cancelled','refunded'],delivery=['pending_delivery','in_transit','delivered'];
     const status=String(v.status||''),deliveryStatus=String(v.delivery_status||'');
     if(!allowed.includes(status)||!delivery.includes(deliveryStatus))return send(res,400,{error:'Select a valid order and delivery status.'});
     updated=await sql`UPDATE public.orders SET status=${status},delivery_status=${deliveryStatus},delivery_updated_at=now(),updated_at=now() WHERE id=${id} RETURNING id,order_number,status,delivery_status`;
