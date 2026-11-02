@@ -15,6 +15,16 @@ export default async function handler(req:any,res:any){
   const token=sessionToken(req);if(!token)return send(res,401,{error:'Sign in required.'});
   const sql=db(),users=await sql`SELECT u.id,u.phone,u.display_name FROM public.users u JOIN public.auth_sessions s ON s.user_id=u.id WHERE s.token_hash=${hash(token)} AND s.expires_at>now() LIMIT 1`;
   if(!users.length||!allow.includes(phone(users[0].phone||'')))return send(res,403,{error:'Platform administrator access required.'});
+  if(req.method==='GET'&&String(req.query?.action||'')==='complaints'){
+   const rows=await sql`SELECT c.id,c.buyer_name,c.buyer_phone,c.issue_type,c.details,c.payment_made,c.payment_amount_minor,c.payment_reference,c.status,c.admin_notes,c.created_at,c.updated_at,t.name AS shop_name,t.slug,o.order_number,COALESCE((SELECT json_agg(json_build_object('id',a.id,'fileName',a.file_name,'contentType',a.content_type,'sizeBytes',a.size_bytes)) FROM public.shop_complaint_attachments a WHERE a.complaint_id=c.id AND a.upload_status='ready'),'[]'::json) AS attachments FROM public.shop_complaints c JOIN public.tenants t ON t.id=c.tenant_id LEFT JOIN public.orders o ON o.id=c.order_id AND o.tenant_id=c.tenant_id ORDER BY c.created_at DESC LIMIT 500`;
+   return send(res,200,{complaints:rows.map((r:any)=>({...r,paymentAmount:r.payment_amount_minor==null?null:Number(r.payment_amount_minor)/100}))});
+  }
+  if(req.method==='POST'&&req.body?.action==='complaint_status'){
+   const id=String(req.body?.id||''),status=String(req.body?.status||''),notes=String(req.body?.adminNotes||'').trim().slice(0,3000);
+   if(!['open','under_review','resolved','rejected'].includes(status))return send(res,400,{error:'Invalid complaint status.'});
+   const rows=await sql`UPDATE public.shop_complaints SET status=${status},admin_notes=${notes||null},updated_at=now() WHERE id=${id} RETURNING id,status,admin_notes,updated_at`;
+   return rows.length?send(res,200,{ok:true,complaint:rows[0]}):send(res,404,{error:'Complaint not found.'});
+  }
   if(req.method==='GET'){
    const [summary,tenants,cfg]=await Promise.all([
     sql`SELECT (SELECT count(*)::int FROM public.tenants) AS sellers,(SELECT count(*)::int FROM public.products) AS products,(SELECT count(*)::int FROM public.orders) AS orders,(SELECT count(*)::int FROM public.orders WHERE status='pending') AS pending_orders`,

@@ -13,6 +13,11 @@ import {
   ShoppingBag,
   UserRound,
   WalletCards,
+  Flag,
+  FileText,
+  TicketPercent,
+  Phone,
+  Mail,
 } from 'lucide-react';
 
 // Buyer account navigation keeps the marketplace account destinations available as real URLs.
@@ -53,6 +58,8 @@ type BuyerOrder = {
   paymentStatus: string;
   receipt?: string | null;
   orderStatus?: string | null;
+  discount?: number;
+  couponCode?: string | null;
   deliveryStatus?: string | null;
   deliveryUpdatedAt?: string | null;
 };
@@ -60,6 +67,13 @@ type BuyerOrder = {
 type StorefrontFlowProps = {
   slug: string;
   shopName: string;
+  shopWhatsappNumber?: string;
+  shopContactEmail?: string;
+  shopTermsAndConditions?: string;
+  shopPrivacyPolicy?: string;
+  shopReturnPolicy?: string;
+  shopDeliveryPolicy?: string;
+  shopFaqs?: Array<{question:string;answer:string}>;
   products: StoreProduct[];
   recentlyViewed?: string[];
   cart: Record<string, number>;
@@ -105,6 +119,11 @@ const accountGroups = [
     { label: 'Notification settings', icon: ShieldCheck, view: 'notification-settings' },
     { label: 'Account management', icon: UserRound, view: 'account-management' },
     { label: 'Help & support', icon: ShieldCheck, view: 'assistant' },
+    { label: 'Report shop / order', icon: Flag, view: 'report-shop' },
+    { label: 'Shop terms & conditions', icon: FileText, view: 'shop-terms' },
+    { label: 'Shop privacy policy', icon: ShieldCheck, view: 'shop-privacy' },
+    { label: 'Returns & refunds', icon: FileText, view: 'shop-returns' },
+    { label: 'Delivery policy', icon: Package, view: 'shop-delivery' },
     { label: 'Followed shops', icon: ShoppingBag, view: 'followed-shops' },
     { label: 'Newsletter', icon: WalletCards, view: 'newsletter' },
     { label: 'Notification settings', icon: ShieldCheck, view: 'notification-settings' },
@@ -174,6 +193,13 @@ function FlowHeading({
 export function StorefrontFlow({
   slug,
   shopName,
+  shopWhatsappNumber = '',
+  shopContactEmail = '',
+  shopTermsAndConditions = '',
+  shopPrivacyPolicy = '',
+  shopReturnPolicy = '',
+  shopDeliveryPolicy = '',
+  shopFaqs = [],
   products,
   recentlyViewed: recentlyViewedIds = [],
   cart,
@@ -227,10 +253,14 @@ export function StorefrontFlow({
   const [pickupStation, setPickupStation] = useState('');
   const [voucherCode, setVoucherCode] = useState('');
   const [voucherMessage, setVoucherMessage] = useState('');
+  const [appliedCoupon,setAppliedCoupon]=useState<any>(null),[shopCoupons,setShopCoupons]=useState<any[]>([]);
+  const [reportShop,setReportShop]=useState(shopName),[reportOrderId,setReportOrderId]=useState(''),[reportIssue,setReportIssue]=useState('payment'),[reportPaymentMade,setReportPaymentMade]=useState(false),[reportPaymentAmount,setReportPaymentAmount]=useState(''),[reportPaymentReference,setReportPaymentReference]=useState(''),[reportDetails,setReportDetails]=useState(''),[reportFiles,setReportFiles]=useState<File[]>([]),[reportBusy,setReportBusy]=useState(false),[reportMessage,setReportMessage]=useState('');
   const [activeOrderNumber, setActiveOrderNumber] = useState('');
   const [newsletterEnabled, setNewsletterEnabled] = useState(false);
   const [orderTab, setOrderTab] = useState<'ongoing' | 'delivered' | 'cancelled'>('ongoing');
 
+  useEffect(()=>{setAppliedCoupon(null);if(voucherCode)setVoucherMessage('Your cart changed. Reapply the coupon.');},[subtotal]);
+  useEffect(()=>{let live=true;fetch('/api/store?action=coupons-public&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'}).then(r=>r.json()).then(d=>{if(live)setShopCoupons(Array.isArray(d.coupons)?d.coupons:[])}).catch(()=>{});return()=>{live=false}},[slug]);
   useEffect(() => { setCustomerName(initialCustomerName); setCustomerPhone(initialCustomerPhone); setCustomerEmail(initialCustomerEmail); setProfileName(initialCustomerName); setProfileEmail(initialCustomerEmail); setProfileAddress(initialCustomerAddress); setProfilePhoneAlt(initialCustomerAlternativePhone); if(initialCustomerAddress&&!deliveryAddress)setDeliveryAddress(initialCustomerAddress); }, [initialCustomerName,initialCustomerPhone,initialCustomerEmail,initialCustomerAddress,initialCustomerAlternativePhone]);
   useEffect(()=>{let live=true;setOrders(initialCustomerPhone?storedOrders(orderStorageKey):[]);const load=async()=>{if(!initialCustomerPhone){setOrders([]);setOrdersLoading(false);return;}setOrdersLoading(true);try{const r=await fetch('/api/store?action=customer-orders&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'});const d=await r.json().catch(()=>({}));if(!r.ok){if(r.status===401){if(live){setOrders([]);try{localStorage.removeItem(orderStorageKey)}catch{}}return;}throw Error(d.error||'Could not load your orders');}const next:BuyerOrder[]=(Array.isArray(d.orders)?d.orders:[]).map((o:any)=>({orderId:o.id,orderNumber:o.orderNumber,createdAt:o.createdAt,customerName:o.customerName,customerPhone:o.customerPhone,customerEmail:o.customerEmail||'',paymentMethod:'mpesa',deliveryMethod:o.deliveryMethod==='pickup'?'pickup':'home',deliveryAddress:o.deliveryAddress||'',pickupStation:o.pickupStation||'',deliveryCounty:o.deliveryCounty||'',deliverySubCounty:o.deliverySubCounty||'',deliveryEstate:o.deliveryEstate||'',deliveryDirections:o.deliveryDirections||'',subtotal:Number(o.subtotal)||0,deliveryFee:0,total:Number(o.total)||0,lines:(o.items||[]).map((i:any)=>({product:{id:String(i.id||('item-'+i.name)),name:i.name,price:Number(i.price)||0,category:i.category||'Product',images:i.image?[i.image]:[]},quantity:Number(i.quantity)||1})),chatToken:'',paymentStatus:o.paymentStatus||'unpaid',receipt:o.receipt||null,orderStatus:o.orderStatus||null,deliveryStatus:o.deliveryStatus||null,deliveryUpdatedAt:o.deliveryUpdatedAt||null}));if(live){setOrders(next);setOrdersError('');}}catch(e:any){if(live)setOrdersError(e.message||'Could not load your orders.')}finally{if(live)setOrdersLoading(false)}};if(initialCustomerPhone)load();else setOrders([]);return()=>{live=false}},[slug,initialCustomerPhone,orderStorageKey]);
 
@@ -243,7 +273,7 @@ export function StorefrontFlow({
   }, [orderStorageKey, orders]);
 
   const deliveryFee = 0;
-  const total = subtotal;
+  const total = Math.max(0, subtotal - Number(appliedCoupon?.discount||0));
   const activeOrder = orders.find((order) => order.orderNumber === activeOrderNumber) || orders[0];
   useEffect(()=>{if(activeOrder?.orderId&&['order-detail','order-tracking'].includes(view))onOpenChat?.('',activeOrder.orderNumber,activeOrder.orderId)},[view,activeOrder?.orderId]);
   useEffect(() => {
@@ -272,10 +302,9 @@ export function StorefrontFlow({
     onCartChange(next);
   }
 
-  function applyVoucher() {
-    setVoucherMessage(voucherCode.trim()
-      ? 'Voucher redemption is coming soon. No discount has been applied.'
-      : 'Enter a voucher code first.');
+  async function applyVoucher() {
+    if(!voucherCode.trim()){setAppliedCoupon(null);setVoucherMessage('Enter a coupon code first.');return;}
+    try{const r=await fetch('/api/store?action=coupon-validate',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({slug,code:voucherCode.trim(),subtotal})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Coupon could not be applied.');setAppliedCoupon({code:d.code,discount:Number(d.discount)||0,description:d.description});setVoucherMessage(d.description+' applied. You save '+formatKes(d.discount)+'.');}catch(e:any){setAppliedCoupon(null);setVoucherMessage(e.message||'Coupon could not be applied.');}
   }
 
   async function placeOrder() {
@@ -300,6 +329,7 @@ export function StorefrontFlow({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           slug,
+          couponCode: appliedCoupon?.code || '',
           customerName: customerName.trim(),
           customerPhone: customerPhone.trim(),
           customerEmail: customerEmail.trim(),
@@ -335,12 +365,14 @@ export function StorefrontFlow({
         deliverySubCounty,
         deliveryEstate: deliveryEstate.trim(),
         deliveryDirections: deliveryDirections.trim(),
-        subtotal,
+        subtotal: Number(data.subtotal??subtotal),
         deliveryFee: 0,
-        total: subtotal,
+        total: Number(data.total??total),
         lines: lines.map((line) => ({ ...line })),
         chatToken: data.chatToken,
         paymentStatus: data.paymentStatus || 'pending',
+        discount: Number(data.discount||0),
+        couponCode: data.couponCode||null,
       };
       const updatedOrders = [order, ...orders.filter((entry) => entry.orderNumber !== order.orderNumber)];
       setOrders(updatedOrders);
@@ -369,6 +401,7 @@ export function StorefrontFlow({
         {view === 'cart' ? <div className="customer-summary-row customer-summary-total"><span>Subtotal</span><strong>{formatKes(subtotal)}</strong></div> : <>
           <div className="customer-summary-row"><span>Items total</span><strong>{formatKes(subtotal)}</strong></div>
           <div className="customer-summary-row"><span>Delivery fees</span><strong>{formatKes(deliveryFee)}</strong></div>
+          {appliedCoupon&&<div className="customer-summary-row"><span>Coupon ({appliedCoupon.code})</span><strong>−{formatKes(appliedCoupon.discount)}</strong></div>}
           <div className="customer-summary-row customer-summary-total"><span>Total</span><strong>{formatKes(total)}</strong></div>
         </>}
         <p className="customer-preview-note"><ShieldCheck size={15} /> Prices and stock are rechecked by the shop server before an M-PESA request is created.</p>
@@ -494,7 +527,7 @@ export function StorefrontFlow({
     return (
       <section className="customer-flow">
         <FlowHeading title="Place your order" onBack={() => onNavigate('checkout/payment')} backLabel="Payment method" />
-        <p className="customer-terms-copy">By continuing, you agree to the store’s <button type="button">Terms &amp; Conditions</button>.</p>
+        <p className="customer-terms-copy">By continuing, you agree to the store’s <button type="button" onClick={()=>onNavigate('shop-terms')}>Terms &amp; Conditions</button>.</p>
         <div className="customer-checkout-grid">
           <div className="customer-review-stack">
             <div className="customer-panel">
@@ -664,7 +697,13 @@ export function StorefrontFlow({
     );
   }
 
+  async function submitShopReport(e:any){e.preventDefault();if(reportBusy)return;setReportBusy(true);setReportMessage('');try{const attachmentIds:string[]=[];for(const file of reportFiles){const sign=await fetch('/api/store?action=complaint-attachment',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({slug,mode:'upload',fileName:file.name,contentType:file.type,size:file.size})});const sd=await sign.json().catch(()=>({}));if(!sign.ok)throw Error(sd.error||'Could not prepare '+file.name);const put=await fetch(sd.uploadUrl,{method:'PUT',headers:{'Content-Type':file.type},body:file});if(!put.ok)throw Error('Upload failed for '+file.name);const done=await fetch('/api/store?action=complaint-attachment',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({slug,mode:'complete',attachmentId:sd.attachmentId})});const dd=await done.json().catch(()=>({}));if(!done.ok)throw Error(dd.error||'Security scan failed for '+file.name);attachmentIds.push(sd.attachmentId);}const r=await fetch('/api/store?action=complaint',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({slug,shopName:reportShop,orderId:reportOrderId||null,issueType:reportIssue,paymentMade:reportPaymentMade,paymentAmount:reportPaymentAmount,paymentReference:reportPaymentReference,details:reportDetails,attachmentIds})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Report could not be submitted.');setReportMessage('Report submitted to DASNET. Reference: '+d.report.id);setReportDetails('');setReportFiles([]);setReportPaymentAmount('');setReportPaymentReference('');}catch(e:any){setReportMessage(e.message||'Report could not be submitted.');}finally{setReportBusy(false);}}
   function renderAccountSection() {
+    if(view==='vouchers')return <section className="customer-flow"><FlowHeading title="Shop vouchers & offers" onBack={()=>onNavigate('account')} backLabel="My account"/><div className="customer-panel customer-account-detail"><p>Current discounts published by {shopName}. Enter a code at checkout to apply an eligible offer.</p>{shopCoupons.length?shopCoupons.map(c=><article className="customer-order-card" key={c.code}><div className="customer-order-card-heading"><div><small>COUPON CODE</small><strong>{c.code}</strong></div><span className="customer-order-status">{c.discount_type==='percentage'?c.discount_value+'% OFF':'KES '+Number(c.discount_value).toLocaleString('en-KE')+' OFF'}</span></div><p>Minimum spend: {formatKes(Number(c.minimum_order_minor||0)/100)}{c.expires_at?' · Expires '+new Date(c.expires_at).toLocaleDateString('en-KE'):''}</p><button type="button" className="customer-primary-button" onClick={()=>{setVoucherCode(c.code);setVoucherMessage('Code selected. Apply it at checkout.');onNavigate('cart')}}>Use this coupon</button></article>):<div className="customer-empty-state"><span><TicketPercent size={26}/></span><h2>No active offers</h2><p>{shopName} has not published any active coupons yet.</p></div>}</div></section>;
+    if(view==='assistant')return <section className="customer-flow"><FlowHeading title="Shopping assistance" onBack={()=>onNavigate('account')} backLabel="My account"/><div className="customer-panel customer-account-detail"><h2>Contact {shopName}</h2><p>Questions about products, orders, delivery or payment? Contact the seller directly using the details below.</p>{(shopWhatsappNumber||shopContactEmail)?<div className="customer-contact-fields">{shopWhatsappNumber&&<a className="customer-account-link" href={'https://wa.me/'+shopWhatsappNumber.replace(/\D/g,'')} target="_blank" rel="noopener noreferrer"><Phone size={18}/><span>WhatsApp / Call seller · {shopWhatsappNumber}</span><ChevronRight size={16}/></a>}{shopContactEmail&&<a className="customer-account-link" href={'mailto:'+shopContactEmail}><Mail size={18}/><span>Email seller · {shopContactEmail}</span><ChevronRight size={16}/></a>}</div>:<p className="customer-preview-note">The seller has not added public contact details yet. You can still use the order conversation or report an issue to DASNET.</p>}<button type="button" className="customer-primary-button" onClick={()=>onNavigate('report-shop')}>Report shop / order</button></div></section>;
+    if(view==='report-shop')return <section className="customer-flow"><FlowHeading title="Report a shop or order" onBack={()=>onNavigate('account')} backLabel="My account"/><form className="customer-panel customer-account-detail" onSubmit={submitShopReport}><p>Your report goes directly to DASNET for review. Provide accurate details and attach relevant evidence. Do not upload passwords, PINs or one-time codes.</p><label className="customer-form-label">Shop name<select required value={reportShop} onChange={e=>setReportShop(e.target.value)}><option value={shopName}>{shopName}</option></select></label><label className="customer-form-label">Order affected<select value={reportOrderId} onChange={e=>setReportOrderId(e.target.value)}><option value="">No specific order / shop-wide report</option>{orders.map(o=><option key={o.orderId||o.orderNumber} value={o.orderId||''}>{o.orderNumber} · {formatKes(o.total)}</option>)}</select></label><label className="customer-form-label">Type of issue<select required value={reportIssue} onChange={e=>setReportIssue(e.target.value)}><option value="payment">Payment / M-PESA</option><option value="delivery">Delivery not received / delayed</option><option value="product_quality">Product quality / not as described</option><option value="wrong_item">Wrong or missing item</option><option value="seller_communication">Seller communication</option><option value="refund_return">Refund / return dispute</option><option value="shop_listing">Misleading shop or listing</option><option value="other">Other</option></select></label><label className="customer-newsletter-toggle"><input type="checkbox" checked={reportPaymentMade} onChange={e=>setReportPaymentMade(e.target.checked)}/><span>I made a payment related to this issue</span></label>{reportPaymentMade&&<div className="customer-contact-fields"><label className="customer-form-label">Amount paid (KES)<input type="number" min="1" step="0.01" required value={reportPaymentAmount} onChange={e=>setReportPaymentAmount(e.target.value)}/></label><label className="customer-form-label">M-PESA receipt / payment reference<input maxLength={100} value={reportPaymentReference} onChange={e=>setReportPaymentReference(e.target.value)} placeholder="e.g. QAB12XYZ"/></label></div>}<label className="customer-form-label">Describe what happened<textarea required minLength={10} maxLength={5000} rows={6} value={reportDetails} onChange={e=>setReportDetails(e.target.value)} placeholder="Include dates, what was agreed, what happened and what resolution you are seeking."/></label><label className="customer-form-label">Attachments (optional)<input type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.webp" onChange={e=>{const fs=Array.from(e.target.files||[]);if(fs.length>8||fs.some(f=>f.size>10485760)){setReportMessage('Attach up to 8 files, each 10 MB or smaller.');return;}setReportFiles(fs);setReportMessage('');}}/><small>PDF, Office documents, TXT, JPG, PNG or WEBP. Files are not malware-scanned at this time. Only upload trusted documents or images; do not upload executable files, passwords, PINs or one-time codes.</small></label>{reportFiles.length>0&&<p className="customer-preview-note">{reportFiles.map(f=>f.name).join(' · ')}</p>}{reportMessage&&<p className="customer-preview-note" role="status">{reportMessage}</p>}<div className="customer-flow-actions"><button className="customer-primary-button" disabled={reportBusy}>{reportBusy?'Submitting securely…':'Submit report to DASNET'}</button></div></form></section>;
+    const policyViews:any={'shop-terms':{title:'Terms & Conditions',body:shopTermsAndConditions},'shop-privacy':{title:'Privacy Policy',body:shopPrivacyPolicy},'shop-returns':{title:'Returns, refunds & exchanges',body:shopReturnPolicy},'shop-delivery':{title:'Delivery & collection policy',body:shopDeliveryPolicy}};
+    if(policyViews[view])return <section className="customer-flow"><FlowHeading title={policyViews[view].title} onBack={()=>onNavigate('account')} backLabel="My account"/><article className="customer-panel customer-account-detail"><div className="customer-policy-publisher"><strong>{shopName}</strong><small>Published by this shop</small></div>{policyViews[view].body?<div style={{whiteSpace:'pre-wrap',lineHeight:1.75}}>{policyViews[view].body}</div>:<p className="customer-preview-note">This shop has not published this policy yet. Contact the seller if you need clarification before placing an order.</p>}</article></section>;
     if(view==='wishlist'){
       const savedProducts=products.filter(product=>wishlistIds.includes(product.id));
       return <section className="customer-flow"><FlowHeading title="Saved items" onBack={()=>onNavigate('account')} backLabel="My account"/><div className="customer-panel customer-account-detail"><div className="customer-panel-heading"><h2>Your wishlist</h2><span>{savedProducts.length} saved</span></div><p className="customer-preview-note">Saved items are stored on this device for this shop.</p>{savedProducts.length?<div className="customer-recommendation-row">{savedProducts.map(product=><article className="customer-recommendation-card" key={product.id}><ProductThumb product={product}/><strong>{product.name}</strong><b>{formatKes(product.price)}</b><div className="customer-wishlist-actions"><button type="button" className="customer-secondary-button" onClick={()=>onOpenProduct?.(product)}>View item</button><button type="button" className="customer-text-button" onClick={()=>onToggleWishlist?.(product.id)}>Remove</button></div></article>)}</div>:<div className="customer-empty-state"><span><ShoppingBag size={28}/></span><h2>No saved items yet</h2><p>Open a product and choose “Save to wishlist” to keep it here.</p><button type="button" className="customer-primary-button" onClick={()=>onNavigate('store')}>Browse products</button></div>}</div></section>;
@@ -713,7 +752,7 @@ export function StorefrontFlow({
     <section className="customer-flow storefront-all-faqs">
       <FlowHeading title="Frequently asked questions" onBack={() => onNavigate('store')} backLabel="Back to shop" />
       <p className="storefront-all-faqs-intro">Helpful answers about buying, sellers, payments, delivery and staying safe on DASNET.</p>
-      <div className="storefront-all-faqs-list">{marketplaceFaqs.map(([question,answer])=><details key={question}><summary>{question}<span>＋</span></summary><p>{answer}</p></details>)}</div>
+      <div className="storefront-all-faqs-list">{(shopFaqs.length?shopFaqs:marketplaceFaqs.map(([question,answer])=>({question,answer}))).map((faq:any)=><details key={faq.question}><summary>{faq.question}<span>＋</span></summary><p>{faq.answer}</p></details>)}</div>
     </section>
   );
 
