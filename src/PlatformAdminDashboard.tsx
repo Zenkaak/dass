@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Activity, AlertTriangle, ArrowDownRight, ArrowUpRight, BadgeCheck, Building2, CheckCircle2, ChevronRight, CircleDollarSign, FileText, Flag, LayoutDashboard, LogOut, Menu, RefreshCw, Search, Shield, ShieldAlert, Store, Users, WalletCards, X } from 'lucide-react';
+import { Activity, AlertTriangle, BadgeCheck, CheckCircle2, ChevronRight, CircleDollarSign, FileText, Flag, LayoutDashboard, LogOut, RefreshCw, Search, Shield, ShieldAlert, Store, Users, WalletCards, X } from 'lucide-react';
 
 type Complaint = {id:string;buyer_name?:string;buyer_phone?:string;issue_type:string;details:string;payment_made:boolean;payment_amount?:number|null;payment_reference?:string|null;status:string;admin_notes?:string|null;created_at:string;updated_at:string;shop_name:string;slug:string;order_number?:string|null;attachments:any[]};
 const money=(v:any)=>new Intl.NumberFormat('en-KE',{style:'currency',currency:'KES',maximumFractionDigits:0}).format(Number(v||0));
