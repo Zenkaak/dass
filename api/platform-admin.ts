@@ -118,7 +118,6 @@ export default async function handler(req:any,res:any){
     const banned=v.banned===true||v.banned==='true',reason=String(v.reason||'').trim().slice(0,1000)||null;
     updated=await sql`UPDATE public.store_customers SET is_banned=${banned},ban_reason=${banned?reason:null},updated_at=now() WHERE id=${id} RETURNING id,full_name,phone,is_banned,ban_reason`;
     if(!updated.length)return send(res,404,{error:'Buyer profile not found.'});
-    if(banned)await sql`DELETE FROM public.auth_sessions WHERE user_id=(SELECT user_id FROM public.store_customers WHERE id=${id})`;
    }
    if(action==='update_support'){
     const status=String(v.status||''),priority=String(v.priority||'normal'),response=String(v.response||'').trim().slice(0,10000);
