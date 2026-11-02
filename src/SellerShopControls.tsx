@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FileText, TicketPercent, Save, Plus, Trash2, RefreshCw } from 'lucide-react';
+import { FileText, TicketPercent, Save, Plus, Trash2 } from 'lucide-react';
 
 type Props = { section: 'policies'|'coupons'; onNotice?: (message:string)=>void };
 async function responseData(r:Response){const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Request failed.');return d;}
