@@ -1,3 +1,4 @@
+import { marketplaceFaqs } from './marketplaceFaqs';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   ArrowLeft,
@@ -707,6 +708,14 @@ export function StorefrontFlow({
       </section>
     );
   }
+
+  if (view === 'faqs') return (
+    <section className="customer-flow storefront-all-faqs">
+      <FlowHeading title="Frequently asked questions" onBack={() => onNavigate('store')} backLabel="Back to shop" />
+      <p className="storefront-all-faqs-intro">Helpful answers about buying, sellers, payments, delivery and staying safe on DASNET.</p>
+      <div className="storefront-all-faqs-list">{marketplaceFaqs.map(([question,answer])=><details key={question}><summary>{question}<span>＋</span></summary><p>{answer}</p></details>)}</div>
+    </section>
+  );
 
   if (view === 'store') return null;
   const pageContent = view === 'cart' ? renderCart() : view === 'checkout/payment' ? (lines.length ? renderCheckoutPayment() : renderCart()) : view === 'checkout/review' ? (lines.length ? renderReview() : renderCart()) : view === 'checkout/complete' ? renderSuccess() : view === 'orders' ? renderOrders() : view === 'order-detail' ? renderOrderDetail() : view === 'order-tracking' ? renderTracking() : view === 'account' ? renderAccount() : view === 'profile' ? renderProfile() : renderAccountSection() || (<section className="customer-flow"><FlowHeading title="Shopping assistant" onBack={() => onNavigate('store')} /><div className="customer-panel customer-account-detail"><Search size={24} /><p>{accountSectionCopy.assistant.description}</p><button type="button" className="customer-secondary-button" onClick={() => onNavigate('store')}>Back to the store</button></div></section>);
