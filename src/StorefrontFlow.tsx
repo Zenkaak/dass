@@ -233,6 +233,7 @@ export function StorefrontFlow({
   const deliveryFee = 0;
   const total = subtotal;
   const activeOrder = orders.find((order) => order.orderNumber === activeOrderNumber) || orders[0];
+  useEffect(()=>{if(activeOrder?.orderId&&['order-detail','order-tracking'].includes(view))onOpenChat?.('',activeOrder.orderNumber,activeOrder.orderId)},[view,activeOrder?.orderId]);
   useEffect(() => {
     const refresh = async () => {
       const refreshed = await Promise.all(orders.map(async (order) => {
@@ -623,9 +624,9 @@ export function StorefrontFlow({
         <div className="customer-panel customer-timeline-panel">
           <div className="customer-tracking-timeline">
             <article className="is-complete"><span><Check size={15} /></span><div><strong>Order placed</strong><small>{new Date(activeOrder.createdAt).toLocaleString('en-KE')}</small><p>Your order was received by the shop and saved to its order records.</p></div></article>
-            <article className="is-current"><span>2</span><div><strong>Pending confirmation</strong><small>Waiting for store connection</small><p>Payment and fulfilment updates will appear here when the seller updates your order.</p></div></article>
-            <article><span>3</span><div><strong>Waiting to be shipped</strong><small>Not started</small></div></article>
-            <article><span>4</span><div><strong>Delivered</strong><small>Not started</small></div></article>
+            <article className={activeOrder.paymentStatus==='succeeded'?'is-complete':activeOrder.paymentStatus==='failed'||activeOrder.paymentStatus==='cancelled'?'is-current':'is-current'}><span>{activeOrder.paymentStatus==='succeeded'?<Check size={15}/>: '2'}</span><div><strong>{activeOrder.paymentStatus==='succeeded'?'Payment confirmed':activeOrder.paymentStatus==='failed'?'Payment failed':activeOrder.paymentStatus==='cancelled'?'Payment cancelled':'Payment awaiting confirmation'}</strong><small>{activeOrder.receipt||activeOrder.paymentStatus||'Pending'}</small><p>{activeOrder.paymentStatus==='succeeded'?'Safaricom confirmed this payment.':activeOrder.paymentStatus==='failed'?'The payment was not completed. Contact the seller if you need help.':'The order remains pending until the payment provider confirms the result.'}</p></div></article>
+            <article className={['processing','fulfilled'].includes(String(activeOrder.orderStatus||''))||['in_transit','delivered'].includes(String(activeOrder.deliveryStatus||''))?'is-complete':''}><span>{['processing','fulfilled'].includes(String(activeOrder.orderStatus||''))||['in_transit','delivered'].includes(String(activeOrder.deliveryStatus||''))?<Check size={15}/>: '3'}</span><div><strong>{activeOrder.deliveryStatus==='in_transit'?'In transit':activeOrder.deliveryStatus==='delivered'?'Fulfilment complete':activeOrder.orderStatus==='processing'?'Processing':activeOrder.orderStatus==='fulfilled'?'Fulfilled':'Preparing your order'}</strong><small>{activeOrder.deliveryUpdatedAt?new Date(activeOrder.deliveryUpdatedAt).toLocaleString('en-KE'):'Waiting for seller update'}</small><p>{activeOrder.deliveryStatus==='in_transit'?'The seller has marked your order as on its way.':activeOrder.deliveryStatus==='delivered'?'The seller has marked this order as delivered.':'The seller will update this step as your order is prepared.'}</p></div></article>
+            <article className={activeOrder.deliveryStatus==='delivered'?'is-complete':''}><span>{activeOrder.deliveryStatus==='delivered'?<Check size={15}/>: '4'}</span><div><strong>Delivered</strong><small>{activeOrder.deliveryStatus==='delivered'&&activeOrder.deliveryUpdatedAt?new Date(activeOrder.deliveryUpdatedAt).toLocaleString('en-KE'):'Not yet delivered'}</small></div></article>
           </div>
           <p className="customer-preview-note"><ShieldCheck size={15} /> Payment and delivery status are retrieved from the order conversation service. Delivery updates appear when the seller records them.</p>
         </div>
