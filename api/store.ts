@@ -210,7 +210,7 @@ export default async function handler(req:any,res:any){
    if(!shops.length)return send(res,404,{error:'Shop not found.'});
    const customer=await buyerSession(sql,req,shops[0].id);if(!customer)return send(res,401,{error:'Sign in to view your orders.'});
    const rows=await sql`SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.customer_email,o.subtotal_minor,o.total_minor,o.created_at,o.status,o.delivery_status,o.delivery_updated_at,o.delivery_method,o.delivery_county,o.delivery_sub_county,o.delivery_estate,o.delivery_address,o.delivery_directions,o.pickup_station,
-    COALESCE((SELECT json_agg(json_build_object('id',i.product_id,'name',i.product_name,'quantity',i.quantity,'price',i.unit_price_minor,'lineTotal',i.line_total_minor) ORDER BY i.created_at) FROM public.order_items i WHERE i.tenant_id=o.tenant_id AND i.order_id=o.id),'[]'::json) AS items,
+    COALESCE((SELECT json_agg(json_build_object('id',i.product_id,'name',i.product_name,'quantity',i.quantity,'price',i.unit_price_minor,'lineTotal',i.line_total_minor,'image',(SELECT p.images->>0 FROM public.products p WHERE p.id=i.product_id AND p.tenant_id=i.tenant_id LIMIT 1),'category',(SELECT p.metadata->>'category' FROM public.products p WHERE p.id=i.product_id AND p.tenant_id=i.tenant_id LIMIT 1)) ORDER BY i.created_at) FROM public.order_items i WHERE i.tenant_id=o.tenant_id AND i.order_id=o.id),'[]'::json) AS items,
     pay.status AS payment_status,pay.provider_receipt
     FROM public.orders o
     LEFT JOIN LATERAL (SELECT p.status,p.provider_receipt FROM public.payments p WHERE p.tenant_id=o.tenant_id AND p.order_id=o.id ORDER BY p.created_at DESC LIMIT 1) pay ON true
