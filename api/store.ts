@@ -14,7 +14,7 @@ async function buyerSession(sql:any,req:any,tenantId:string){
  }
  const raw=String(req.headers.cookie||'').split(';').map((x:string)=>x.trim()).find((x:string)=>x.startsWith('das_buyer_session='));let legacy='';try{legacy=raw?decodeURIComponent(raw.slice('das_buyer_session='.length)):''}catch{}
  if(!legacy)return null;
- const rows=await sql`SELECT c.id,c.full_name,c.phone,c.email,c.address FROM public.store_customer_sessions s JOIN public.store_customers c ON c.id=s.customer_id AND c.tenant_id=s.tenant_id WHERE s.tenant_id=${tenantId} AND s.token_hash=${hash(legacy)} AND s.expires_at>now() AND c.user_id IS NOT NULL LIMIT 1`;
+ const rows=await sql`SELECT c.id,c.full_name,c.phone,c.email,c.address FROM public.store_customer_sessions s JOIN public.store_customers c ON c.id=s.customer_id AND c.tenant_id=s.tenant_id WHERE s.tenant_id=${tenantId} AND s.token_hash=${hash(legacy)} AND s.expires_at>now() AND c.user_id IS NOT NULL AND c.is_banned=false LIMIT 1`;
  return rows[0]||null;
 }
 async function seller(sql:any,req:any){
