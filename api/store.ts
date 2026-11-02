@@ -129,13 +129,59 @@ export default async function handler(req:any,res:any){
   if(req.method==='GET'&&action==='storefront'){
    const slug=String(req.query?.slug||'').toLowerCase();
    // Fetch shop metadata and its active catalogue in one database round-trip.
-   const rows=await sql`SELECT t.id AS tenant_id,t.name AS shop_name,t.slug,s.description,s.logo_url,s.whatsapp_number,s.storefront_theme,
+   const rows=await sql`SELECT t.id AS tenant_id,t.name AS shop_name,t.slug,s.description,s.logo_url,s.whatsapp_number,s.contact_phone,s.contact_email,s.terms_and_conditions,s.privacy_policy,s.return_policy,s.delivery_policy,s.storefront_theme,
     COALESCE((SELECT jsonb_agg(jsonb_build_object('id',p.id,'name',p.name,'description',p.description,'product_type',p.product_type,'price_minor',p.price_minor,'currency',p.currency,'stock_quantity',p.stock_quantity,'is_active',p.is_active,'images',p.images,'metadata',p.metadata,'sku',p.sku) ORDER BY p.created_at DESC) FROM public.products p WHERE p.tenant_id=t.id AND p.is_active=true),'[]'::jsonb) AS products
     FROM public.tenants t LEFT JOIN public.sites s ON s.tenant_id=t.id WHERE t.slug=${slug} AND t.status IN ('trial','active') LIMIT 1`;
    if(!rows.length)return send(res,404,{error:'Shop not found'});
    const row=rows[0];
    res.setHeader('Cache-Control','public, s-maxage=10, stale-while-revalidate=30');
-   return send(res,200,{shop:{name:row.shop_name,slug:row.slug,description:row.description||'',logoUrl:row.logo_url||'',whatsappNumber:row.whatsapp_number||'',theme:/^#[0-9a-f]{6}$/i.test(String(row.storefront_theme||''))?row.storefront_theme:'#e47a13'},products:(row.products||[]).map((p:any)=>productOut(p,true))});
+   return send(res,200,{shop:{name:row.shop_name,slug:row.slug,description:row.description||'',logoUrl:row.logo_url||'',whatsappNumber:row.whatsapp_number||'',contactPhone:row.contact_phone||row.whatsapp_number||'',contactEmail:row.contact_email||'',termsAndConditions:row.terms_and_conditions||'',privacyPolicy:row.privacy_policy||'',returnPolicy:row.return_policy||'',deliveryPolicy:row.delivery_policy||'',theme:/^#[0-9a-f]{6}$/i.test(String(row.storefront_theme||''))?row.storefront_theme:'#e47a13'},products:(row.products||[]).map((p:any)=>productOut(p,true))});
+  }
+  if(req.method==='GET'&&action==='coupons-public'){
+   const slug=String(req.query?.slug||'').toLowerCase().trim(),shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
+   if(!shops.length)return send(res,404,{error:'Shop not found.'});
+   const rows=await sql`SELECT code,discount_type,discount_value,minimum_order_minor,max_uses,used_count,expires_at FROM public.store_coupons WHERE tenant_id=${shops[0].id} AND is_active=true AND (starts_at IS NULL OR starts_at<=now()) AND (expires_at IS NULL OR expires_at>now()) AND (max_uses IS NULL OR used_count<max_uses) ORDER BY created_at DESC LIMIT 100`;
+   return send(res,200,{coupons:rows});
+  }
+  if(req.method==='POST'&&action==='complaint-attachment'){
+   const b=req.body||{},slug=String(b.slug||'').toLowerCase().trim(),shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
+   if(!shops.length)return send(res,404,{error:'Shop not found.'});
+   const buyer=await buyerSession(sql,req,shops[0].id);if(!buyer)return send(res,401,{error:'Sign in before attaching evidence to a report.'});
+   const tenantId=shops[0].id,mode=String(b.mode||'');
+   if(mode==='upload'){
+    const name=String(b.fileName||''),mime=String(b.contentType||''),size=Number(b.size||0),ext=(name.split('.').pop()||'').toLowerCase(),allowed=fileTypes[ext];
+    if(!allowed||allowed.mime!==mime)return send(res,415,{error:'File type not allowed. Use PDF, DOC/DOCX, XLS/XLSX, TXT, JPG, PNG or WEBP.'});
+    if(!Number.isSafeInteger(size)||size<1||size>10485760)return send(res,413,{error:'Each attachment must be 10 MB or smaller.'});
+    const id=crypto.randomUUID(),key=tenantId+'/complaints/'+id+'-'+safeFileName(name);
+    await sql`INSERT INTO public.shop_complaint_attachments(id,tenant_id,buyer_phone,object_key,file_name,content_type,size_bytes) VALUES(${id},${tenantId},${buyer.phone},${key},${safeFileName(name)},${mime},${size})`;
+    return send(res,200,{ok:true,attachmentId:id,uploadUrl:storageUrl(key,'PUT',mime),expiresIn:300});
+   }
+   if(mode==='complete'){
+    const id=String(b.attachmentId||''),pending=await sql`SELECT id,object_key,file_name,size_bytes,content_type FROM public.shop_complaint_attachments WHERE id=${id} AND tenant_id=${tenantId} AND buyer_phone=${buyer.phone} AND upload_status='pending' AND scan_status IN ('unscanned','failed') LIMIT 1`;
+    if(!pending.length)return send(res,404,{error:'Attachment upload could not be confirmed.'});
+    try{
+     const scan=await scanAttachment(pending[0].object_key,pending[0].file_name,pending[0].content_type,Number(pending[0].size_bytes));
+     if(scan==='infected'){await sql`UPDATE public.shop_complaint_attachments SET scan_status='infected' WHERE id=${id} AND tenant_id=${tenantId}`;return send(res,415,{error:'This file failed the security scan and was rejected.'});}
+     const ready=await sql`UPDATE public.shop_complaint_attachments SET scan_status='clean',upload_status='ready' WHERE id=${id} AND tenant_id=${tenantId} AND buyer_phone=${buyer.phone} RETURNING id,file_name,content_type,size_bytes`;
+     return send(res,200,{ok:true,attachment:ready[0]});
+    }catch(err:any){await sql`UPDATE public.shop_complaint_attachments SET scan_status='failed' WHERE id=${id} AND tenant_id=${tenantId}`;const msg=String(err?.message||'');if(msg==='FILE_SCANNER_NOT_CONFIGURED')return send(res,503,{error:'Secure file scanning is not configured. Attachments are disabled until scanning is connected.'});return send(res,503,{error:'The file could not be security-scanned and has been quarantined.'});}
+   }
+   return send(res,400,{error:'Invalid attachment operation.'});
+  }
+  if(req.method==='POST'&&action==='complaint'){
+   const b=req.body||{},slug=String(b.slug||'').toLowerCase().trim(),shops=await sql`SELECT id,name FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
+   if(!shops.length)return send(res,404,{error:'Shop not found.'});
+   const tenantId=shops[0].id,buyer=await buyerSession(sql,req,tenantId);if(!buyer)return send(res,401,{error:'Sign in before submitting a report.'});
+   const issue=String(b.issueType||''),details=String(b.details||'').trim().slice(0,5000),orderId=String(b.orderId||'').trim()||null,paymentMade=Boolean(b.paymentMade),paymentAmount=Number(b.paymentAmount||0),paymentReference=String(b.paymentReference||'').trim().slice(0,100),attachmentIds=Array.isArray(b.attachmentIds)?[...new Set(b.attachmentIds.map((x:any)=>String(x)))].slice(0,8):[];
+   if(!['payment','delivery','product_quality','wrong_item','seller_communication','refund_return','shop_listing','other'].includes(issue))return send(res,400,{error:'Choose a valid issue type.'});
+   if(details.length<10)return send(res,400,{error:'Describe the issue in at least 10 characters.'});
+   if(orderId){const owned=await sql`SELECT id FROM public.orders WHERE id=${orderId} AND tenant_id=${tenantId} AND customer_phone=${buyer.phone} LIMIT 1`;if(!owned.length)return send(res,403,{error:'The selected order does not belong to your buyer account.'});}
+   if(paymentMade&&(!Number.isFinite(paymentAmount)||paymentAmount<=0))return send(res,400,{error:'Enter the amount paid.'});
+   const files=attachmentIds.length?await sql`SELECT id FROM public.shop_complaint_attachments WHERE id=ANY(${attachmentIds}::uuid[]) AND tenant_id=${tenantId} AND buyer_phone=${buyer.phone} AND upload_status='ready' AND scan_status='clean' AND complaint_id IS NULL`:[];
+   if(files.length!==attachmentIds.length)return send(res,400,{error:'One or more attachments are not verified. Upload and scan them again.'});
+   const inserted=await sql`INSERT INTO public.shop_complaints(tenant_id,order_id,buyer_phone,buyer_name,issue_type,details,payment_made,payment_amount_minor,payment_reference) VALUES(${tenantId},${orderId},${buyer.phone},${String(buyer.full_name||'Buyer').slice(0,120)},${issue},${details},${paymentMade},${paymentMade?Math.round(paymentAmount*100):null},${paymentReference||null}) RETURNING id,created_at,status`;
+   if(attachmentIds.length)await sql`UPDATE public.shop_complaint_attachments SET complaint_id=${inserted[0].id} WHERE id=ANY(${attachmentIds}::uuid[]) AND tenant_id=${tenantId} AND buyer_phone=${buyer.phone}`;
+   return send(res,201,{ok:true,report:{id:inserted[0].id,shopName:shops[0].name,status:inserted[0].status,createdAt:inserted[0].created_at},message:'Your report has been sent to DASNET for review.'});
   }
   if(req.method==='POST'&&action==='daraja-callback'){
    const cb=req.body?.Body?.stkCallback||{},checkout=String(cb.CheckoutRequestID||''),resultCode=Number(cb.ResultCode);
@@ -163,6 +209,7 @@ export default async function handler(req:any,res:any){
     if(!receipt||Math.round(amount*100)!==Number(p.amount_minor)||phone.replace(/^\+/, '')!==String(p.phone).replace(/^\+/,''))throw Error('Callback details do not match the pending order.');
     await sql`UPDATE public.payments SET status='succeeded',provider_receipt=${receipt},provider_result=${JSON.stringify({callback:cb,query:checked})}::jsonb,verified_at=now(),updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
     await sql`UPDATE public.orders SET status='confirmed',updated_at=now() WHERE id=${p.order_id} AND status='pending'`;
+    await sql`UPDATE public.store_coupons SET used_count=used_count+1,updated_at=now() WHERE tenant_id=${p.tenant_id} AND code=(SELECT coupon_code FROM public.orders WHERE id=${p.order_id} AND tenant_id=${p.tenant_id}) AND coupon_code IS NOT NULL`;
     await sql`UPDATE public.payment_configs SET callback_verified_at=now() WHERE tenant_id=${p.tenant_id}`;
    }catch(err:any){console.error('Daraja callback verification failed',err?.message||err);}
    return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
@@ -325,6 +372,8 @@ export default async function handler(req:any,res:any){
    if(ps.length!==new Set(ids).size)return send(res,400,{error:'One or more products are no longer available.'});
    let total=0;const lines=ps.map((p:any)=>{const qty=Math.max(1,Math.min(99,Math.floor(Number(items.find((x:any)=>x.id===p.id)?.quantity)||1)));if(p.stock_quantity!==null&&p.stock_quantity<qty)throw Error('OUT_OF_STOCK');const line=Number(p.price_minor)*qty;total+=line;return {p,qty,line};});
    if(total<=0)return send(res,400,{error:'Order total must be greater than zero.'});
+   const couponCode=String(b.couponCode||'').trim().toUpperCase();let discountMinor=0;
+   if(couponCode){const coupons=await sql`SELECT id,discount_type,discount_value,minimum_order_minor,max_uses,used_count FROM public.store_coupons WHERE tenant_id=${tenantId} AND code=${couponCode} AND is_active=true AND (starts_at IS NULL OR starts_at<=now()) AND (expires_at IS NULL OR expires_at>now()) LIMIT 1`;if(!coupons.length)return send(res,400,{error:'This coupon is invalid, expired or inactive.'});const cp=coupons[0];if(Number(cp.max_uses||0)>0&&Number(cp.used_count)>=Number(cp.max_uses))return send(res,400,{error:'This coupon has reached its redemption limit.'});if(total<Number(cp.minimum_order_minor||0))return send(res,400,{error:'Your order does not meet this coupon’s minimum spend.'});discountMinor=cp.discount_type==='percentage'?Math.round(total*Number(cp.discount_value)/100):Math.round(Number(cp.discount_value)*100);discountMinor=Math.max(0,Math.min(total,discountMinor));}
    const configs=await sql`SELECT pc.*,pp.shortcode AS central_shortcode,pp.party_b AS central_party_b,pp.account_type AS central_type,pp.environment AS central_environment,pp.encrypted_credentials AS central_credentials FROM public.tenants t LEFT JOIN public.payment_configs pc ON pc.tenant_id=t.id LEFT JOIN public.platform_payment_config pp ON pp.id=1 WHERE t.id=${tenantId} LIMIT 1`;
    const cfg=configs[0]||{},key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');let payment:any=null;
    const method=requestedMethod==='paybill'?'paybill':requestedMethod==='till'?'till':((cfg.default_payout_method||cfg.payout_method||'till')==='paybill'?'paybill':'till');
@@ -343,7 +392,7 @@ export default async function handler(req:any,res:any){
    if(!payment?.consumerKey||!payment?.consumerSecret||!payment?.passkey||!payment?.shortcode||!payment?.partyB)return send(res,503,{error:'This shop has not completed M-PESA payment setup yet.'});
    if(payment.environment!=='production')return send(res,503,{error:'This shop is configured for Daraja sandbox. Live checkout is disabled.'});
    const orderNo='DAS-'+Date.now().toString(36).toUpperCase()+'-'+crypto.randomBytes(2).toString('hex').toUpperCase();
-   const o=await sql`INSERT INTO public.orders(tenant_id,order_number,customer_name,customer_phone,customer_email,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,subtotal_minor,total_minor,status) VALUES(${tenantId},${orderNo},${name},${phone},${customerEmail||null},${deliveryMethod},${deliveryCounty||null},${deliverySubCounty||null},${deliveryEstate||null},${deliveryAddress||null},${deliveryDirections||null},${pickupStation||null},${total},${total},'pending') RETURNING id,order_number`;
+   const o=await sql`INSERT INTO public.orders(tenant_id,order_number,customer_name,customer_phone,customer_email,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,subtotal_minor,total_minor,coupon_code,discount_minor,status) VALUES(${tenantId},${orderNo},${name},${phone},${customerEmail||null},${deliveryMethod},${deliveryCounty||null},${deliverySubCounty||null},${deliveryEstate||null},${deliveryAddress||null},${deliveryDirections||null},${pickupStation||null},${total},${total-discountMinor},${couponCode||null},${discountMinor},'pending') RETURNING id,order_number`;
    const customerChatToken=crypto.randomBytes(32).toString('hex');await sql`UPDATE public.orders SET customer_chat_token_hash=${hash(customerChatToken)} WHERE id=${o[0].id} AND tenant_id=${tenantId}`;
    for(const l of lines){await sql`INSERT INTO public.order_items(tenant_id,order_id,product_id,product_name,quantity,unit_price_minor,line_total_minor) VALUES(${tenantId},${o[0].id},${l.p.id},${l.p.name},${l.qty},${Number(l.p.price_minor)},${l.line})`;}
    const idem=idempotency||crypto.randomUUID();
@@ -361,6 +410,43 @@ export default async function handler(req:any,res:any){
   }
   if(!me)return send(res,401,{error:'Sign in to manage your shop.'});
 
+  if(req.method==='GET'&&action==='store-settings'){
+   const rows=await sql`SELECT contact_phone,contact_email,terms_and_conditions,privacy_policy,return_policy,delivery_policy FROM public.sites WHERE tenant_id=${me.tenant_id} LIMIT 1`,r=rows[0]||{};
+   return send(res,200,{settings:{contactPhone:r.contact_phone||'',contactEmail:r.contact_email||'',termsAndConditions:r.terms_and_conditions||'',privacyPolicy:r.privacy_policy||'',returnPolicy:r.return_policy||'',deliveryPolicy:r.delivery_policy||''}});
+  }
+  if(req.method==='POST'&&action==='store-settings'){
+   if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner or admin can update buyer-facing shop policies.'});
+   const b=req.body||{},phoneRaw=String(b.contactPhone||'').trim(),contactPhone=phoneRaw?normalizePhone(phoneRaw):'',email=String(b.contactEmail||'').trim().toLowerCase().slice(0,254);
+   const terms=String(b.termsAndConditions||'').trim().slice(0,20000),privacy=String(b.privacyPolicy||'').trim().slice(0,20000),returns=String(b.returnPolicy||'').trim().slice(0,12000),delivery=String(b.deliveryPolicy||'').trim().slice(0,12000);
+   if(phoneRaw&&!contactPhone)return send(res,400,{error:'Enter a valid Kenyan customer support phone number.'});
+   if(email&&!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))return send(res,400,{error:'Enter a valid support email address.'});
+   await sql`UPDATE public.sites SET contact_phone=${contactPhone||null},contact_email=${email||null},terms_and_conditions=${terms},privacy_policy=${privacy},return_policy=${returns},delivery_policy=${delivery},updated_at=now() WHERE tenant_id=${me.tenant_id}`;
+   await audit(sql,me.tenant_id,me.user_id,'shop.buyer_policies.updated','shop',me.tenant_id,{termsPublished:!!terms,privacyPublished:!!privacy,returnsPublished:!!returns,deliveryPublished:!!delivery});
+   return send(res,200,{ok:true});
+  }
+  if(req.method==='GET'&&action==='coupons'){
+   const rows=await sql`SELECT id,code,discount_type,discount_value,minimum_order_minor,max_uses,used_count,starts_at,expires_at,is_active,created_at FROM public.store_coupons WHERE tenant_id=${me.tenant_id} ORDER BY created_at DESC LIMIT 200`;
+   return send(res,200,{coupons:rows});
+  }
+  if(req.method==='POST'&&action==='coupon'){
+   if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission to manage coupons.'});
+   const b=req.body||{},id=String(b.id||''),active=typeof b.isActive==='boolean'?b.isActive:null;
+   if(id&&active!==null){const r=await sql`UPDATE public.store_coupons SET is_active=${active},updated_at=now() WHERE id=${id} AND tenant_id=${me.tenant_id} RETURNING id,code,discount_type,discount_value,minimum_order_minor,max_uses,used_count,starts_at,expires_at,is_active,created_at`;return r.length?send(res,200,{coupon:r[0]}):send(res,404,{error:'Coupon not found.'});}
+   const code=String(b.code||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,32),type=b.discountType==='fixed'?'fixed':'percentage',value=Number(b.discountValue),minimum=Number(b.minimumOrder||0),maxUses=b.maxUses===''||b.maxUses==null?null:Number(b.maxUses),expires=b.expiresAt?new Date(String(b.expiresAt)+'T23:59:59.000Z'):null;
+   if(!/^[A-Z0-9][A-Z0-9_-]{2,31}$/.test(code))return send(res,400,{error:'Coupon code must be 3–32 letters or numbers.'});
+   if(!Number.isFinite(value)||value<=0||(type==='percentage'&&value>100)||value>10000000)return send(res,400,{error:'Enter a valid discount value.'});
+   if(!Number.isFinite(minimum)||minimum<0||minimum>100000000)return send(res,400,{error:'Enter a valid minimum order amount.'});
+   if(maxUses!==null&&(!Number.isInteger(maxUses)||maxUses<1||maxUses>10000000))return send(res,400,{error:'Maximum redemptions must be a positive whole number.'});
+   if(expires&&Number.isNaN(expires.getTime()))return send(res,400,{error:'Enter a valid expiry date.'});
+   const rows=await sql`INSERT INTO public.store_coupons(tenant_id,code,discount_type,discount_value,minimum_order_minor,max_uses,expires_at) VALUES(${me.tenant_id},${code},${type},${value},${Math.round(minimum*100)},${maxUses},${expires?expires.toISOString():null}) ON CONFLICT(tenant_id,code) DO UPDATE SET discount_type=EXCLUDED.discount_type,discount_value=EXCLUDED.discount_value,minimum_order_minor=EXCLUDED.minimum_order_minor,max_uses=EXCLUDED.max_uses,expires_at=EXCLUDED.expires_at,is_active=true,updated_at=now() RETURNING id,code,discount_type,discount_value,minimum_order_minor,max_uses,used_count,starts_at,expires_at,is_active,created_at`;
+   await audit(sql,me.tenant_id,me.user_id,'shop.coupon.saved','coupon',rows[0].id,{code,type,value});
+   return send(res,200,{coupon:rows[0]});
+  }
+  if(req.method==='DELETE'&&action==='coupon'){
+   if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission to delete coupons.'});
+   const id=String(req.query?.id||''),r=await sql`DELETE FROM public.store_coupons WHERE id=${id} AND tenant_id=${me.tenant_id} RETURNING id`;
+   return r.length?send(res,200,{ok:true}):send(res,404,{error:'Coupon not found.'});
+  }
   if(req.method==='GET'&&action==='payment-settings'){
    const rows=await sql`SELECT payout_method,party_b,account_reference,shortcode,account_type,environment,encrypted_credentials,till_party_b,paybill_party_b,default_payout_method FROM public.payment_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
    const c=rows[0]||{};
