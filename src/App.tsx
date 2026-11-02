@@ -8,6 +8,7 @@ import { BuyerAuthPage } from './BuyerAuthPage';
 import { storefrontCategories } from './storefrontCatalog';
 import { marketplaceFaqs } from './marketplaceFaqs';
 import { PlatformAdminDashboard } from './PlatformAdminDashboard';
+import './mambu-admin.css';
 
 const sellerCategoryOptions = Array.from(new Set(storefrontCategories.flatMap(category => [category.name, ...category.subcategories.filter(child => !child.startsWith('All '))])));
 const storeAccentColors = [
