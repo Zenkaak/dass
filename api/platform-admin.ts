@@ -15,6 +15,35 @@ export default async function handler(req:any,res:any){
   const token=sessionToken(req);if(!token)return send(res,401,{error:'Sign in required.'});
   const sql=db(),users=await sql`SELECT u.id,u.phone,u.display_name FROM public.users u JOIN public.auth_sessions s ON s.user_id=u.id WHERE s.token_hash=${hash(token)} AND s.expires_at>now() LIMIT 1`;
   if(!users.length||!allow.includes(phone(users[0].phone||'')))return send(res,403,{error:'Platform administrator access required.'});
+  if(req.method==='GET'&&['orders','products','buyers','transactions','shops','support','audit'].includes(String(req.query?.action||''))){
+   const action=String(req.query.action);
+   if(action==='orders'){
+    const rows=await sql`SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.customer_email,o.status,o.delivery_status,o.total_minor,o.currency,o.created_at,t.name AS shop_name,t.slug,COALESCE((SELECT count(*)::int FROM public.order_items i WHERE i.order_id=o.id AND i.tenant_id=o.tenant_id),0) AS item_count FROM public.orders o JOIN public.tenants t ON t.id=o.tenant_id ORDER BY o.created_at DESC LIMIT 500`;
+    return send(res,200,{records:rows});
+   }
+   if(action==='products'){
+    const rows=await sql`SELECT p.id,p.name,p.slug,p.sku,p.product_type,p.price_minor,p.currency,p.stock_quantity,p.is_active,p.created_at,t.name AS shop_name,t.slug AS shop_slug FROM public.products p JOIN public.tenants t ON t.id=p.tenant_id ORDER BY p.created_at DESC LIMIT 500`;
+    return send(res,200,{records:rows});
+   }
+   if(action==='buyers'){
+    const rows=await sql`SELECT sc.id,sc.full_name,sc.phone,sc.email,sc.phone_verified_at,sc.created_at,t.name AS shop_name,t.slug AS shop_slug,COALESCE((SELECT count(*)::int FROM public.orders o WHERE o.tenant_id=sc.tenant_id AND o.customer_phone=sc.phone),0) AS order_count FROM public.store_customers sc JOIN public.tenants t ON t.id=sc.tenant_id ORDER BY sc.created_at DESC LIMIT 500`;
+    return send(res,200,{records:rows});
+   }
+   if(action==='transactions'){
+    const rows=await sql`SELECT p.id,p.provider,p.provider_checkout_id,p.provider_receipt,p.phone,p.amount_minor,p.currency,p.status,p.verified_at,p.created_at,o.order_number,t.name AS shop_name,t.slug AS shop_slug FROM public.payments p JOIN public.tenants t ON t.id=p.tenant_id LEFT JOIN public.orders o ON o.id=p.order_id AND o.tenant_id=p.tenant_id ORDER BY p.created_at DESC LIMIT 500`;
+    return send(res,200,{records:rows});
+   }
+   if(action==='shops'){
+    const rows=await sql`SELECT t.id,t.name,t.slug,t.status,t.created_at,u.display_name AS owner_name,u.phone AS owner_phone,s.title AS storefront_title,s.contact_phone,s.contact_email,COALESCE((SELECT json_agg(json_build_object('hostname',d.hostname,'primary',d.is_primary,'verifiedAt',d.verified_at)) FROM public.domains d WHERE d.tenant_id=t.id),'[]'::json) AS domains,(SELECT count(*)::int FROM public.products p WHERE p.tenant_id=t.id) AS products,(SELECT count(*)::int FROM public.orders o WHERE o.tenant_id=t.id) AS orders FROM public.tenants t LEFT JOIN public.users u ON u.id=t.created_by LEFT JOIN public.sites s ON s.tenant_id=t.id ORDER BY t.created_at DESC LIMIT 300`;
+    return send(res,200,{records:rows});
+   }
+   if(action==='support'){
+    const rows=await sql`SELECT st.id,st.ticket_number,st.subject,st.category,st.priority,st.status,st.message,st.response,st.created_at,st.updated_at,t.name AS shop_name,t.slug,u.display_name AS requester,u.phone AS requester_phone FROM public.support_tickets st JOIN public.tenants t ON t.id=st.tenant_id LEFT JOIN public.users u ON u.id=st.user_id ORDER BY st.created_at DESC LIMIT 500`;
+    return send(res,200,{records:rows});
+   }
+   const rows=await sql`SELECT a.id,a.action,a.resource_type,a.resource_id,a.metadata,a.created_at,u.display_name AS actor_name,u.phone AS actor_phone,t.name AS shop_name FROM public.audit_logs a LEFT JOIN public.users u ON u.id=a.actor_user_id LEFT JOIN public.tenants t ON t.id=a.tenant_id ORDER BY a.created_at DESC LIMIT 500`;
+   return send(res,200,{records:rows});
+  }
   if(req.method==='GET'&&String(req.query?.action||'')==='complaints'){
    const rows=await sql`SELECT c.id,c.buyer_name,c.buyer_phone,c.issue_type,c.details,c.payment_made,c.payment_amount_minor,c.payment_reference,c.status,c.admin_notes,c.created_at,c.updated_at,t.name AS shop_name,t.slug,o.order_number,COALESCE((SELECT json_agg(json_build_object('id',a.id,'fileName',a.file_name,'contentType',a.content_type,'sizeBytes',a.size_bytes)) FROM public.shop_complaint_attachments a WHERE a.complaint_id=c.id AND a.upload_status='ready'),'[]'::json) AS attachments FROM public.shop_complaints c JOIN public.tenants t ON t.id=c.tenant_id LEFT JOIN public.orders o ON o.id=c.order_id AND o.tenant_id=c.tenant_id ORDER BY c.created_at DESC LIMIT 500`;
    return send(res,200,{complaints:rows.map((r:any)=>({...r,paymentAmount:r.payment_amount_minor==null?null:Number(r.payment_amount_minor)/100}))});
