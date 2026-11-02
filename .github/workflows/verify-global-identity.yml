@@ -1,0 +1,31 @@
+name: Verify DASNET global identity
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - api/auth.ts
+      - api/buyer-auth.ts
+      - api/store.ts
+      - src/BuyerAuthPage.tsx
+      - db/migrations/**
+      - docs/identity-architecture.md
+      - .github/workflows/verify-global-identity.yml
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package.json
+      - name: Install dependencies
+        run: npm install
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Production build
+        run: npm run build
