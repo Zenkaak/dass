@@ -108,7 +108,7 @@ export default async function handler(req:any,res:any){
    const rows=await sql`
     WITH profile AS (
      INSERT INTO public.store_customers(tenant_id,user_id,full_name,email,phone,alternative_phone,address,password_hash,password_salt,phone_verified_at)
-     VALUES(${tenantId},${user.id},${user.display_name},'',${phone},NULL,'',NULL,NULL,now())
+     VALUES(${tenantId},${user.id},${user.display_name},NULL,${phone},NULL,NULL,NULL,NULL,now())
      ON CONFLICT(tenant_id,phone) DO UPDATE SET user_id=COALESCE(store_customers.user_id,EXCLUDED.user_id),updated_at=now()
      WHERE store_customers.user_id IS NULL OR store_customers.user_id=EXCLUDED.user_id
      RETURNING id,full_name,email,phone,alternative_phone,address,user_id
