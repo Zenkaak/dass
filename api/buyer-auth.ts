@@ -130,7 +130,7 @@ export default async function handler(req:any,res:any){
    const salt=crypto.randomBytes(16).toString('hex');
    await sql`UPDATE public.users SET password_hash=${passwordHash(password,salt)},password_salt=${salt},updated_at=now() WHERE id=${users[0].id}`;
    await sql`DELETE FROM public.auth_sessions WHERE user_id=${users[0].id}`;
-   await sql`DELETE FROM public.store_customer_sessions WHERE customer_id IN (SELECT id FROM public.store_customers WHERE user_id=${users[0].id})`;
+   await sql`DELETE FROM public.store_customer_sessions WHERE customer_id IN (SELECT id FROM public.store_customers WHERE user_id=${users[0].id} OR phone=${phone})`;
    return send(res,200,{ok:true,message:'Password reset. Sign in again with your DASNET identity.'});
   }
   if(req.method==='POST'&&action==='change-password'){
@@ -145,6 +145,7 @@ export default async function handler(req:any,res:any){
    const salt=crypto.randomBytes(16).toString('hex');
    await sql`UPDATE public.users SET password_hash=${passwordHash(next,salt)},password_salt=${salt},updated_at=now() WHERE id=${user.id}`;
    await sql`DELETE FROM public.auth_sessions WHERE user_id=${user.id} AND token_hash<>${hash(session)}`;
+   await sql`DELETE FROM public.store_customer_sessions WHERE customer_id IN (SELECT id FROM public.store_customers WHERE user_id=${user.id})`;
    return send(res,200,{ok:true,message:'Password changed. Other signed-in sessions have been closed.'});
   }
   if(req.method==='POST'&&action==='update-profile'){
