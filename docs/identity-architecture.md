@@ -23,13 +23,13 @@ Shop-specific data remains scoped to a tenant:
 - Orders, chats, reviews and customer history.
 - Seller membership and role (owner/admin/editor/viewer).
 
-A person can therefore be a buyer in many shops and a seller in one or more shops. A buyer login never grants a seller role. Seller APIs must authorize the active tenant by checking `memberships` for the authenticated global user and the explicitly requested tenant.
+A person can therefore be a buyer in many shops but can have seller membership in only one shop. Buyer profiles are independent per shop and are not capped by the seller membership rule. A buyer login never grants a seller role. Seller APIs must authorize the authenticated global user against that one shop's `memberships` row; the database enforces one membership per seller identity.
 
 ## Target schema
 
 - `users`: canonical global account; unique normalized phone; one password hash/salt; verified phone timestamp.
 - `auth_sessions`: global opaque session token hashes, expiry, revocation and optional device metadata.
-- `memberships`: seller/staff roles scoped to a tenant.
+- `memberships`: seller/staff roles scoped to exactly one tenant per global user; a unique index on `user_id` enforces the one-shop seller rule.
 - `store_customers`: shop-specific buyer profile, with a required `user_id REFERENCES users(id)`; unique `(tenant_id,user_id)` and unique `(tenant_id,phone)` during compatibility period.
 - `store_customer_otp_challenges`: transition to global OTP challenges keyed by phone and purpose; rate limits shared across shops to prevent OTP abuse.
 - Orders continue to store immutable customer name/phone/email snapshots, while optionally adding `buyer_user_id` for account history. The order's `tenant_id` remains authoritative for shop privacy.
@@ -64,7 +64,7 @@ A person can therefore be a buyer in many shops and a seller in one or more shop
 ## Safe migration sequence
 
 1. Add nullable `store_customers.user_id` and indexes without dropping any existing columns/tables.
-2. Backfill existing buyer profiles to global users by normalized phone. Prefer an existing `users` row where present. For legacy buyer-only phones, create one user from a deterministic earliest verified buyer profile. Link all matching shop profiles to that user.
+2. Backfill existing buyer profiles to global users by normalized phone. Prefer an existing `users` row where present. For legacy buyer-only phones, create one user only when all profiles share the same verified password hash/salt. Link all matching shop profiles to that user.
 3. Detect duplicate phones with conflicting legacy password hashes, unverified phone records, invalid numbers, or email collisions. Produce a reconciliation report; do not silently overwrite an existing seller password or merge identities without verified phone ownership.
 4. Update buyer signup/login/reset/profile/session endpoints to use `users` + `auth_sessions`, and upsert tenant profiles. Preserve legacy buyer cookies temporarily for a controlled transition.
 5. Update `api/store.ts` checkout, customer order history, buyer chat and session guards to resolve the global session plus the current tenant profile. Enforce tenant filtering on every query.

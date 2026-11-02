@@ -9,6 +9,8 @@ ALTER TABLE public.store_customers
 -- during the rollback window and existing hashes are retained for reconciliation.
 ALTER TABLE public.store_customers ALTER COLUMN password_hash DROP NOT NULL;
 ALTER TABLE public.store_customers ALTER COLUMN password_salt DROP NOT NULL;
+ALTER TABLE public.store_customers ALTER COLUMN email DROP NOT NULL;
+ALTER TABLE public.store_customers ALTER COLUMN address DROP NOT NULL;
 
 -- Create global identities only for legacy buyer phones that have one unambiguous,
 -- verified password source. Existing global seller identities are never overwritten.
