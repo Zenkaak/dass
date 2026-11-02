@@ -70,6 +70,9 @@ type StorefrontFlowProps = {
   customerEmail?: string;
   customerAddress?: string;
   customerAlternativePhone?: string;
+  wishlistIds?: string[];
+  onToggleWishlist?: (id: string) => void;
+  onOpenProduct?: (product: StoreProduct) => void;
   onSignOut?: () => void;
   onOrderCreated?: (token: string, orderNumber: string) => void;
   chatPanel?: ReactNode;
@@ -180,6 +183,9 @@ export function StorefrontFlow({
   customerEmail: initialCustomerEmail = '',
   customerAddress: initialCustomerAddress = '',
   customerAlternativePhone: initialCustomerAlternativePhone = '',
+  wishlistIds = [],
+  onToggleWishlist,
+  onOpenProduct,
   onSignOut,
   onOrderCreated,
   chatPanel,
@@ -654,6 +660,10 @@ export function StorefrontFlow({
   }
 
   function renderAccountSection() {
+    if(view==='wishlist'){
+      const savedProducts=products.filter(product=>wishlistIds.includes(product.id));
+      return <section className="customer-flow"><FlowHeading title="Saved items" onBack={()=>onNavigate('account')} backLabel="My account"/><div className="customer-panel customer-account-detail"><div className="customer-panel-heading"><h2>Your wishlist</h2><span>{savedProducts.length} saved</span></div><p className="customer-preview-note">Saved items are stored on this device for this shop.</p>{savedProducts.length?<div className="customer-recommendation-row">{savedProducts.map(product=><article className="customer-recommendation-card" key={product.id}><ProductThumb product={product}/><strong>{product.name}</strong><b>{formatKes(product.price)}</b><div className="customer-wishlist-actions"><button type="button" className="customer-secondary-button" onClick={()=>onOpenProduct?.(product)}>View item</button><button type="button" className="customer-text-button" onClick={()=>onToggleWishlist?.(product.id)}>Remove</button></div></article>)}</div>:<div className="customer-empty-state"><span><ShoppingBag size={28}/></span><h2>No saved items yet</h2><p>Open a product and choose “Save to wishlist” to keep it here.</p><button type="button" className="customer-primary-button" onClick={()=>onNavigate('store')}>Browse products</button></div>}</div></section>;
+    }
     if (view === 'inbox') return (
       <section className="customer-flow">
         <FlowHeading title="Inbox & messages" onBack={() => onNavigate('account')} backLabel="My account" />
