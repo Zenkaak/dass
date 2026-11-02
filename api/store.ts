@@ -196,7 +196,9 @@ export default async function handler(req:any,res:any){
    const key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');let c:any=null;
    try{
     const method=((p.provider_result?.paymentMethod)||(p.default_payout_method||p.payout_method)||'till')==='paybill'?'paybill':'till';
-    if(p.encrypted_credentials?.ciphertext){const bundle=decryptBundle(p.encrypted_credentials,key,'seller'),sec=bundle.credentialsByType?.[method]||{...bundle,shortcode:p.shortcode,environment:p.environment};c={...sec,partyB:method==='paybill'?(p.paybill_party_b||p.party_b):(p.till_party_b||p.party_b),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
+    const sellerBundle=p.encrypted_credentials?.ciphertext?decryptBundle(p.encrypted_credentials,key,'seller'):null;
+    const sellerCredentials=sellerBundle?.credentialsByType?.[method]||(sellerBundle?.consumerKey?{...sellerBundle,shortcode:p.shortcode,environment:p.environment}:null);
+    if(sellerCredentials?.consumerKey&&sellerCredentials?.consumerSecret&&sellerCredentials?.passkey){c={...sellerCredentials,partyB:method==='paybill'?(p.paybill_party_b||((p.payout_method||p.default_payout_method)==='paybill'?p.party_b:'')):(p.till_party_b||((p.payout_method||p.default_payout_method)==='till'?p.party_b:'')),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
     else if(p.central_credentials?.data){const sec=decryptBundle(p.central_credentials,key,'platform');c={...sec,shortcode:p.central_shortcode,environment:p.central_environment,partyB:method==='paybill'?(p.paybill_party_b||((p.payout_method||p.default_payout_method)==='paybill'?p.party_b:'')):(p.till_party_b||((p.payout_method||p.default_payout_method)==='till'?p.party_b:'')),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
     if(!c)throw Error('No payment credentials available');
     const checked=await verifyStk(c,checkout);
