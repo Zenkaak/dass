@@ -7,6 +7,7 @@ import { SellerShopControls } from './SellerShopControls';
 import { BuyerAuthPage } from './BuyerAuthPage';
 import { storefrontCategories } from './storefrontCatalog';
 import { marketplaceFaqs } from './marketplaceFaqs';
+import { PlatformAdminDashboard } from './PlatformAdminDashboard';
 
 const sellerCategoryOptions = Array.from(new Set(storefrontCategories.flatMap(category => [category.name, ...category.subcategories.filter(child => !child.startsWith('All '))])));
 const storeAccentColors = [
@@ -368,7 +369,8 @@ function PlatformAdmin(){
 export default function App() {
   const path = window.location.pathname.replace(/^\/+|\/+$/g, '');
   const hostname = window.location.hostname.toLowerCase();
-  const tenantSubdomain = hostname.endsWith('.dasmarket.co.ke') && !['www','app'].includes(hostname.split('.')[0]) ? hostname.split('.')[0] : '';
+  const tenantSubdomain = hostname.endsWith('.dasmarket.co.ke') && !['www','app','mambu'].includes(hostname.split('.')[0]) ? hostname.split('.')[0] : '';
+  if (hostname === 'mambu.dasmarket.co.ke' || hostname === 'mambu.dasmarket.co.ke.') return <PlatformAdminDashboard />;
   if (tenantSubdomain) return <MerchantStore slug={tenantSubdomain} initialBuyerPage={path||'store'} />;
   if (!path) return <LandingPage />;
   if (path === 'signup') return <AuthPage initial="signup" />;
