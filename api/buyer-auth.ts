@@ -5,7 +5,7 @@ const env=(k:string)=>(process.env[k]||'').trim();
 const hash=(s:string)=>crypto.createHash('sha256').update(s).digest('hex');
 const send=(res:any,status:number,body:any)=>res.status(status).json(body);
 const db=()=>{const url=env('POSTGRES_URL')||env('DATABASE_URL')||env('NEON_DATABASE_URL');if(!url)throw Error('DB_CONFIG');return neon(url)};
-const phoneOf=(value:any)=>{let p=String(value||'').trim().replace(/[\\s().+-]/g,'');if(/^0[17]\\d{8}$/.test(p))p='+254'+p.slice(1);else if(/^254[17]\\d{8}$/.test(p))p='+'+p;return /^\\+254[17]\\d{8}$/.test(p)?p:''};
+const phoneOf=(value:any)=>{let p=String(value||'').trim().replace(/[\s().+-]/g,'');if(/^0[17]\d{8}$/.test(p))p='+254'+p.slice(1);else if(/^254[17]\d{8}$/.test(p))p='+'+p;return /^\+254[17]\d{8}$/.test(p)?p:''};
 const passwordHash=(password:string,salt:string)=>crypto.scryptSync(password,salt,64).toString('hex');
 const equal=(a:string,b:string)=>{const x=Buffer.from(a),y=Buffer.from(b);return x.length===y.length&&crypto.timingSafeEqual(x,y)};
 function cookie(res:any,value:string,maxAge:number){res.setHeader('Set-Cookie',[ `das_session=${encodeURIComponent(value)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`,`das_buyer_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0` ])}
@@ -32,7 +32,7 @@ async function issue(sql:any,phone:string,purpose:'signup'|'password_reset',ip:s
 }
 async function verify(sql:any,phone:string,purpose:'signup'|'password_reset',code:string){
  const rows=await sql`SELECT id,code_hash,code_salt FROM public.auth_otp_challenges WHERE phone=${phone} AND purpose=${purpose} AND consumed_at IS NULL AND expires_at>now() AND attempts<5 ORDER BY created_at DESC LIMIT 1`;
- const challenge=rows[0];if(!challenge||!/^\\d{6}$/.test(code))return false;
+ const challenge=rows[0];if(!challenge||!/^\d{6}$/.test(code))return false;
  if(!equal(hash(`${phone}:${purpose}:${challenge.code_salt}:${code}`),challenge.code_hash)){await sql`UPDATE public.auth_otp_challenges SET attempts=attempts+1 WHERE id=${challenge.id}`;return false}
  await sql`UPDATE public.auth_otp_challenges SET consumed_at=now() WHERE id=${challenge.id}`;return true;
 }
@@ -67,7 +67,7 @@ export default async function handler(req:any,res:any){
   }
   if(req.method==='POST'&&action==='signup'){
    const phone=phoneOf(body.phone),name=String(body.name||'').trim().slice(0,120),email=String(body.email||'').trim().toLowerCase().slice(0,254),altRaw=String(body.alternativePhone||'').trim(),alt=altRaw?phoneOf(altRaw):null,address=String(body.address||'').trim().slice(0,300),password=String(body.password||''),code=String(body.code||'');
-   if(!phone||name.length<2||!/^\\S+@\\S+\\.\\S+$/.test(email)||!address)return send(res,400,{error:'Complete your name, valid email, phone and delivery address.'});
+   if(!phone||name.length<2||!/^\S+@\S+\.\S+$/.test(email)||!address)return send(res,400,{error:'Complete your name, valid email, phone and delivery address.'});
    if(altRaw&&!alt)return send(res,400,{error:'Enter a valid Kenyan alternative phone number.'});
    if(!validPassword(password))return send(res,400,{error:'Use a password of at least 10 characters with letters and numbers.'});
    if((await sql`SELECT id FROM public.users WHERE phone=${phone} LIMIT 1`).length)return send(res,409,{error:'This phone already has a DASNET identity. Sign in instead.'});
@@ -153,7 +153,7 @@ export default async function handler(req:any,res:any){
    if(!sessions.length)return send(res,401,{error:'Your session has expired. Sign in again.'});
    const name=String(body.name||'').trim().slice(0,120),email=String(body.email||'').trim().toLowerCase().slice(0,254),altRaw=String(body.alternativePhone||'').trim(),alt=altRaw?phoneOf(altRaw):null,address=String(body.address||'').trim().slice(0,300);
    if(name.length<2)return send(res,400,{error:'Enter your full name.'});
-   if(!/^\\S+@\\S+\\.\\S+$/.test(email))return send(res,400,{error:'Enter a valid email address.'});
+   if(!/^\S+@\S+\.\S+$/.test(email))return send(res,400,{error:'Enter a valid email address.'});
    if(altRaw&&!alt)return send(res,400,{error:'Enter a valid Kenyan alternative phone number.'});
    if(!address)return send(res,400,{error:'Enter your default delivery address.'});
    const rows=await sql`UPDATE public.store_customers SET full_name=${name},email=${email},alternative_phone=${alt},address=${address},updated_at=now() WHERE tenant_id=${tenantId} AND user_id=${sessions[0].user_id} RETURNING id,full_name,email,phone,alternative_phone,address`;
