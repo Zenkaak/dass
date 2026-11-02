@@ -6,6 +6,12 @@ const send=(res:any,s:number,b:unknown)=>res.status(s).json(b);
 const hash=(s:string)=>crypto.createHash('sha256').update(s).digest('hex');
 const db=()=>{const u=env('POSTGRES_URL')||env('DATABASE_URL')||env('NEON_DATABASE_URL');if(!u)throw Error('DB_CONFIG');return neon(u)};
 function token(req:any){const c=String(req.headers.cookie||'').split(';').map((s:string)=>s.trim()).find((s:string)=>s.startsWith('das_session='));try{return c?decodeURIComponent(c.slice(12)):''}catch{return ''}}
+async function buyerSession(sql:any,req:any,tenantId:string){
+ const raw=String(req.headers.cookie||'').split(';').map((x:string)=>x.trim()).find((x:string)=>x.startsWith('das_buyer_session='));let value='';try{value=raw?decodeURIComponent(raw.slice('das_buyer_session='.length)):''}catch{}
+ if(!value)return null;
+ const rows=await sql`SELECT c.id,c.full_name,c.phone,c.email FROM public.store_customer_sessions s JOIN public.store_customers c ON c.id=s.customer_id AND c.tenant_id=s.tenant_id WHERE s.tenant_id=${tenantId} AND s.token_hash=${hash(value)} AND s.expires_at>now() LIMIT 1`;
+ return rows[0]||null;
+}
 async function seller(sql:any,req:any){
  const t=token(req);if(!t)return null;
  const rows=await sql`SELECT u.id AS user_id,m.tenant_id,t.slug,t.name AS shop_name,m.role,si.description AS shop_description FROM public.auth_sessions ss JOIN public.users u ON u.id=ss.user_id JOIN public.memberships m ON m.user_id=u.id JOIN public.tenants t ON t.id=m.tenant_id LEFT JOIN public.sites si ON si.tenant_id=t.id WHERE ss.token_hash=${hash(t)} AND ss.expires_at>now() AND t.status IN ('trial','active') ORDER BY m.created_at LIMIT 1`;
@@ -198,10 +204,29 @@ export default async function handler(req:any,res:any){
    return send(res,200,{ok:true,created:rows.length,total:totals.reduce((n:number,r:any)=>n+Number(r.total||0),0),categories:totals,message:rows.length?rows.length+' test products added.':'The test catalogue is already complete.'});
   }
 
+  if(req.method==='GET'&&action==='customer-orders'){
+   const slug=String(req.query?.slug||'').toLowerCase().trim();
+   const shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
+   if(!shops.length)return send(res,404,{error:'Shop not found.'});
+   const customer=await buyerSession(sql,req,shops[0].id);if(!customer)return send(res,401,{error:'Sign in to view your orders.'});
+   const rows=await sql`SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.customer_email,o.subtotal_minor,o.total_minor,o.created_at,o.status,o.delivery_status,o.delivery_updated_at,o.delivery_method,o.delivery_county,o.delivery_sub_county,o.delivery_estate,o.delivery_address,o.delivery_directions,o.pickup_station,
+    COALESCE((SELECT json_agg(json_build_object('id',i.product_id,'name',i.product_name,'quantity',i.quantity,'price',i.unit_price_minor,'lineTotal',i.line_total_minor) ORDER BY i.created_at) FROM public.order_items i WHERE i.tenant_id=o.tenant_id AND i.order_id=o.id),'[]'::json) AS items,
+    pay.status AS payment_status,pay.provider_receipt
+    FROM public.orders o
+    LEFT JOIN LATERAL (SELECT p.status,p.provider_receipt FROM public.payments p WHERE p.tenant_id=o.tenant_id AND p.order_id=o.id ORDER BY p.created_at DESC LIMIT 1) pay ON true
+    WHERE o.tenant_id=${shops[0].id} AND o.customer_phone=${customer.phone} ORDER BY o.created_at DESC LIMIT 100`;
+   return send(res,200,{orders:rows.map((o:any)=>({id:o.id,orderNumber:o.order_number,createdAt:o.created_at,customerName:o.customer_name,customerPhone:o.customer_phone,customerEmail:o.customer_email||'',subtotal:Number(o.subtotal_minor)/100,total:Number(o.total_minor)/100,orderStatus:o.status,deliveryStatus:o.delivery_status||'pending_delivery',deliveryUpdatedAt:o.delivery_updated_at,deliveryMethod:o.delivery_method||'home',deliveryCounty:o.delivery_county||'',deliverySubCounty:o.delivery_sub_county||'',deliveryEstate:o.delivery_estate||'',deliveryAddress:o.delivery_address||'',deliveryDirections:o.delivery_directions||'',pickupStation:o.pickup_station||'',paymentStatus:o.payment_status||'unpaid',receipt:o.provider_receipt||null,items:(o.items||[]).map((i:any)=>({id:i.id,name:i.name,quantity:Number(i.quantity),price:Number(i.price)/100,lineTotal:Number(i.lineTotal)/100}))}))});
+  }
   if((req.method==='GET'||req.method==='POST')&&action==='customer-chat'){
-   const b=req.body||{},tokenValue=String(req.method==='GET'?req.query?.token:b.token||'').trim();
-   if(!/^[a-f0-9]{64}$/.test(tokenValue))return send(res,401,{error:'This chat link is invalid or expired.'});
-   const rows=await sql`SELECT id,tenant_id,order_number,customer_name,status,delivery_status,delivery_updated_at,created_at,total_minor,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station FROM public.orders WHERE customer_chat_token_hash=${hash(tokenValue)} LIMIT 1`;
+   const b=req.body||{},tokenValue=String(req.method==='GET'?req.query?.token:b.token||'').trim(),orderId=String(req.method==='GET'?req.query?.orderId:b.orderId||'').trim(),slug=String(req.method==='GET'?req.query?.slug:b.slug||'').toLowerCase().trim();
+   let rows:any[]=[];
+   if(/^[a-f0-9]{64}$/.test(tokenValue)){
+    rows=await sql`SELECT id,tenant_id,order_number,customer_name,status,delivery_status,delivery_updated_at,created_at,total_minor,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station FROM public.orders WHERE customer_chat_token_hash=${hash(tokenValue)} LIMIT 1`;
+   }else if(orderId&&slug){
+    const shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;if(!shops.length)return send(res,404,{error:'Shop not found.'});
+    const customer=await buyerSession(sql,req,shops[0].id);if(!customer)return send(res,401,{error:'Sign in to access this order conversation.'});
+    rows=await sql`SELECT id,tenant_id,order_number,customer_name,status,delivery_status,delivery_updated_at,created_at,total_minor,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station FROM public.orders WHERE id=${orderId} AND tenant_id=${shops[0].id} AND customer_phone=${customer.phone} LIMIT 1`;
+   }
    if(!rows.length)return send(res,401,{error:'This chat link is invalid or expired.'});
    const order=rows[0];
    if(req.method==='POST'){
@@ -217,6 +242,7 @@ export default async function handler(req:any,res:any){
   if(req.method==='POST'&&action==='chat-attachment'){
    const b=req.body||{},mode=String(b.mode||''),tokenValue=String(b.token||'').trim();let order:any=null,tenantId='',uploader='merchant',userId:string|null=null;
    if(tokenValue){if(!/^[a-f0-9]{64}$/.test(tokenValue))return send(res,401,{error:'This chat link is invalid or expired.'});const rows=await sql`SELECT id,tenant_id FROM public.orders WHERE customer_chat_token_hash=${hash(tokenValue)} LIMIT 1`;order=rows[0];uploader='customer';}
+   else if(b.orderId&&b.slug){const shops=await sql`SELECT id FROM public.tenants WHERE slug=${String(b.slug).toLowerCase()} AND status IN ('trial','active') LIMIT 1`;if(!shops.length)return send(res,404,{error:'Shop not found.'});const customer=await buyerSession(sql,req,shops[0].id);if(!customer)return send(res,401,{error:'Sign in to access this order attachment.'});const rows=await sql`SELECT id,tenant_id FROM public.orders WHERE id=${String(b.orderId)} AND tenant_id=${shops[0].id} AND customer_phone=${customer.phone} LIMIT 1`;order=rows[0];uploader='customer';}
    else if(me){const orderId=String(b.orderId||'');if(!orderId)return send(res,400,{error:'Order reference is required.'});if(!['owner','admin','editor','viewer'].includes(me.role))return send(res,403,{error:'You do not have permission to access order conversations.'});const rows=await sql`SELECT id,tenant_id FROM public.orders WHERE id=${orderId} AND tenant_id=${me.tenant_id} LIMIT 1`;order=rows[0];tenantId=me.tenant_id;userId=me.user_id;}
    if(!order)return send(res,404,{error:'Order not found or chat link expired.'});tenantId=order.tenant_id;
    if(mode==='upload'){
@@ -322,7 +348,7 @@ export default async function handler(req:any,res:any){
     const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dass-gamma.vercel.app'))).replace(/\/$/,'')+'/api/store?action=daraja-callback';
     const stk=await startStk(payment,o[0],phone,total/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):orderNo.slice(-12),callbackUrl);
     await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
-    return send(res,201,{ok:true,orderNumber:o[0].order_number,paymentStatus:'pending',checkoutRequestId:stk.checkoutId,chatToken:customerChatToken,message:'M-PESA prompt sent. Enter your PIN on your phone to complete payment.'});
+    return send(res,201,{ok:true,orderId:o[0].id,orderNumber:o[0].order_number,paymentStatus:'pending',checkoutRequestId:stk.checkoutId,chatToken:customerChatToken,message:'M-PESA prompt sent. Enter your PIN on your phone to complete payment.'});
    }catch(e:any){
     await sql`UPDATE public.payments SET status='failed',provider_result=${JSON.stringify({error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
     console.error('Daraja STK initiation failed',e?.message||e);
