@@ -2369,3 +2369,50 @@
  .buyer-auth-links .buyer-auth-forgot{margin-left:0}
 }
 @media(prefers-reduced-motion:reduce){.buyer-auth-redesign *{transition:none!important;animation:none!important}}
+
+
+/* Buyer authentication modal: centered, roomier, photographic backdrop; no platform branding. */
+.buyer-auth-page.buyer-auth-redesign{
+  min-height:100svh!important;width:100%!important;display:grid!important;place-items:center!important;
+  padding:clamp(18px,4vw,56px)!important;overflow:auto!important;
+  background:#102333!important;
+}
+.buyer-auth-redesign .buyer-auth-backdrop{
+  position:fixed!important;inset:0!important;z-index:-1!important;opacity:1!important;
+  background:
+    linear-gradient(115deg,rgba(7,20,32,.72),rgba(9,34,48,.58)),
+    url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=2400&q=85') center/cover no-repeat!important;
+  transform:scale(1.015);
+}
+.buyer-auth-redesign .buyer-auth-layout{width:100%;display:block!important}
+.buyer-auth-redesign .buyer-auth-story,.buyer-auth-redesign .buyer-auth-brand,.buyer-auth-redesign .buyer-auth-mobile-brand{display:none!important}
+.buyer-auth-redesign .buyer-auth-card.buyer-auth-modal{
+  width:min(100%,700px)!important;max-width:700px!important;min-height:560px;
+  margin:0 auto!important;padding:clamp(30px,5vw,58px)!important;
+  align-self:center!important;border:1px solid rgba(255,255,255,.78)!important;
+  border-radius:24px!important;background:rgba(255,255,255,.97)!important;
+  box-shadow:0 32px 100px rgba(0,0,0,.42),0 8px 28px rgba(0,0,0,.16)!important;
+  backdrop-filter:blur(14px);
+}
+.buyer-auth-redesign .buyer-auth-heading{margin-top:32px!important}
+.buyer-auth-redesign .buyer-auth-card h1{font-size:clamp(27px,3.5vw,36px)!important}
+.buyer-auth-redesign .buyer-auth-card .buyer-auth-intro{max-width:560px;font-size:14px!important}
+.buyer-auth-redesign .buyer-auth-form{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:20px;row-gap:18px}
+.buyer-auth-redesign .buyer-auth-form>label,
+.buyer-auth-redesign .buyer-auth-form>.buyer-auth-resend,
+.buyer-auth-redesign .buyer-auth-form>.buyer-auth-error,
+.buyer-auth-redesign .buyer-auth-form>.buyer-auth-notice,
+.buyer-auth-redesign .buyer-auth-form>.buyer-auth-actions{grid-column:1/-1}
+.buyer-auth-redesign .buyer-auth-form input{min-height:54px!important;font-size:15px!important}
+.buyer-auth-redesign .buyer-auth-actions .buyer-auth-submit{min-height:54px!important}
+.buyer-auth-redesign .buyer-auth-links{margin-top:24px!important}
+@media(max-width:640px){
+ .buyer-auth-page.buyer-auth-redesign{min-height:100svh!important;padding:14px!important;align-items:center!important}
+ .buyer-auth-redesign .buyer-auth-card.buyer-auth-modal{
+   width:min(100%,540px)!important;min-height:0;padding:25px 20px!important;border-radius:19px!important
+ }
+ .buyer-auth-redesign .buyer-auth-heading{margin-top:24px!important}
+ .buyer-auth-redesign .buyer-auth-form{grid-template-columns:minmax(0,1fr);gap:15px}
+ .buyer-auth-redesign .buyer-auth-form>label{grid-column:1}
+}
+@media(prefers-reduced-motion:reduce){.buyer-auth-redesign .buyer-auth-backdrop{transform:none}}
