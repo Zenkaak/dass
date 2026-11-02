@@ -2543,34 +2543,36 @@
 }
 
 
-/* Store product highlights mirror the single-slide DASNET marketing carousel. */
+/* Compact, polished single-product marketing carousel for merchant storefronts. */
 .store-page .store-product-marketing-stage {
   position: relative;
-  min-height: 390px;
+  min-height: 310px;
   overflow: hidden;
-  border-radius: 15px;
-  background: #f0f3f6;
+  border: 1px solid #e8edf2;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f8fafc, #eef2f6);
 }
 .store-page .store-product-marketing-card {
   position: absolute;
   inset: 0;
   display: flex;
-  width: min(100%, 360px);
+  width: min(100%, 270px);
   margin: 0 auto;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid #e5e9ed;
-  border-radius: 14px;
+  border: 1px solid #e4e9ef;
+  border-radius: 12px;
   background: #fff;
+  box-shadow: 0 7px 22px rgba(20, 34, 52, .09);
   opacity: 0;
-  transform: translateX(28px);
+  transform: translateX(22px) scale(.985);
   pointer-events: none;
-  transition: opacity .55s ease, transform .55s ease;
+  transition: opacity .45s ease, transform .45s ease;
 }
 .store-page .store-product-marketing-card.active {
   position: relative;
   opacity: 1;
-  transform: translateX(0);
+  transform: translateX(0) scale(1);
   pointer-events: auto;
 }
 .store-page .store-product-marketing-card .market-product-open {
@@ -2583,38 +2585,51 @@
   background: #fff;
 }
 .store-page .store-product-marketing-card .market-product-art {
-  height: 255px !important;
+  height: 170px !important;
+  background: #f4f6f8;
 }
 .store-page .store-product-marketing-card .market-product-info {
   display: grid;
-  gap: 7px;
-  padding: 14px;
+  gap: 5px;
+  padding: 10px 12px 8px;
 }
-.store-page .store-product-marketing-card .market-product-info h3 { font-size: 16px; }
-.store-page .store-product-marketing-card .market-product-info > strong { font-size: 17px; }
+.store-page .store-product-marketing-card .market-product-info h3 {
+  font-size: 13px;
+  line-height: 1.35;
+}
+.store-page .store-product-marketing-card .market-product-info > strong { font-size: 14px; }
+.store-page .store-product-marketing-card .market-product-info > small { font-size: 10px; }
 .store-page .store-product-marketing-card .market-product-add {
-  width: calc(100% - 28px);
-  margin: auto 14px 14px;
+  width: calc(100% - 24px);
+  min-height: 34px;
+  margin: auto 12px 11px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 11px;
 }
 .store-product-marketing-number {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  top: 9px;
+  right: 9px;
   z-index: 2;
-  color: #7c8794;
-  font-size: 11px;
-  font-weight: 850;
+  padding: 4px 7px;
+  border: 1px solid #e5e9ee;
+  border-radius: 20px;
+  color: #536173;
+  background: rgba(255,255,255,.94);
+  font-size: 9px;
+  font-weight: 800;
 }
 .store-product-marketing-number i { font-style: normal; opacity: .65; }
 .store-product-marketing-dots {
   display: flex;
   justify-content: center;
   gap: 7px;
-  margin-top: 13px;
+  margin-top: 11px;
 }
 .store-product-marketing-dots button {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   padding: 0;
   border: 0;
   border-radius: 10px;
@@ -2623,16 +2638,22 @@
   transition: width .2s ease, background .2s ease;
 }
 .store-product-marketing-dots button.active {
-  width: 25px;
+  width: 21px;
   background: #d97716;
 }
 @media (max-width: 760px) {
-  .store-page .store-product-marketing-stage { min-height: 330px; }
-  .store-page .store-product-marketing-card { width: min(100%, 300px); }
-  .store-page .store-product-marketing-card .market-product-art { height: 205px !important; }
-  .store-page .store-product-marketing-card .market-product-info { padding: 11px; }
-  .store-page .store-product-marketing-card .market-product-info h3 { font-size: 13px; }
-  .store-page .store-product-marketing-card .market-product-info > strong { font-size: 14px; }
+  .store-page .store-product-marketing-stage { min-height: 270px; }
+  .store-page .store-product-marketing-card { width: min(100%, 230px); }
+  .store-page .store-product-marketing-card .market-product-art { height: 142px !important; }
+  .store-page .store-product-marketing-card .market-product-info { padding: 8px 10px 6px; }
+  .store-page .store-product-marketing-card .market-product-info h3 { font-size: 12px; }
+  .store-page .store-product-marketing-card .market-product-info > strong { font-size: 13px; }
+  .store-page .store-product-marketing-card .market-product-add {
+    width: calc(100% - 20px);
+    margin: auto 10px 9px;
+    min-height: 31px;
+    font-size: 10px;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .store-page .store-product-marketing-card,
