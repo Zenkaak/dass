@@ -117,10 +117,14 @@ export default async function handler(req:any,res:any){
   const sql=db();action=String(req.query?.action||req.body?.action||'');
   if(req.method==='GET'&&action==='storefront'){
    const slug=String(req.query?.slug||'').toLowerCase();
-   const rows=await sql`SELECT t.id AS tenant_id,t.name AS shop_name,t.slug,s.description,s.logo_url,s.whatsapp_number,s.storefront_theme FROM public.tenants t LEFT JOIN public.sites s ON s.tenant_id=t.id WHERE t.slug=${slug} AND t.status IN ('trial','active') LIMIT 1`;
+   // Fetch shop metadata and its active catalogue in one database round-trip.
+   const rows=await sql`SELECT t.id AS tenant_id,t.name AS shop_name,t.slug,s.description,s.logo_url,s.whatsapp_number,s.storefront_theme,
+    COALESCE((SELECT jsonb_agg(jsonb_build_object('id',p.id,'name',p.name,'description',p.description,'product_type',p.product_type,'price_minor',p.price_minor,'currency',p.currency,'stock_quantity',p.stock_quantity,'is_active',p.is_active,'images',p.images,'metadata',p.metadata,'sku',p.sku) ORDER BY p.created_at DESC) FROM public.products p WHERE p.tenant_id=t.id AND p.is_active=true),'[]'::jsonb) AS products
+    FROM public.tenants t LEFT JOIN public.sites s ON s.tenant_id=t.id WHERE t.slug=${slug} AND t.status IN ('trial','active') LIMIT 1`;
    if(!rows.length)return send(res,404,{error:'Shop not found'});
-   const ps=await sql`SELECT id,name,description,product_type,price_minor,currency,stock_quantity,is_active,images,metadata FROM public.products WHERE tenant_id=${rows[0].tenant_id} AND is_active=true ORDER BY created_at DESC`;
-   return send(res,200,{shop:{name:rows[0].shop_name,slug:rows[0].slug,description:rows[0].description||'',logoUrl:rows[0].logo_url||'',whatsappNumber:rows[0].whatsapp_number||'',theme:/^#[0-9a-f]{6}$/i.test(String(rows[0].storefront_theme||''))?rows[0].storefront_theme:'#e47a13'},products:ps.map((p:any)=>productOut(p,true))});
+   const row=rows[0];
+   res.setHeader('Cache-Control','public, s-maxage=10, stale-while-revalidate=30');
+   return send(res,200,{shop:{name:row.shop_name,slug:row.slug,description:row.description||'',logoUrl:row.logo_url||'',whatsappNumber:row.whatsapp_number||'',theme:/^#[0-9a-f]{6}$/i.test(String(row.storefront_theme||''))?row.storefront_theme:'#e47a13'},products:(row.products||[]).map((p:any)=>productOut(p,true))});
   }
   if(req.method==='POST'&&action==='daraja-callback'){
    const cb=req.body?.Body?.stkCallback||{},checkout=String(cb.CheckoutRequestID||''),resultCode=Number(cb.ResultCode);
