@@ -9,7 +9,7 @@ function token(req:any){const c=String(req.headers.cookie||'').split(';').map((s
 async function buyerSession(sql:any,req:any,tenantId:string){
  const global=token(req);
  if(global){
-  const rows=await sql`SELECT c.id,c.full_name,c.phone,c.email,c.address FROM public.auth_sessions s JOIN public.store_customers c ON c.user_id=s.user_id AND c.tenant_id=${tenantId} WHERE s.token_hash=${hash(global)} AND s.expires_at>now() LIMIT 1`;
+  const rows=await sql`SELECT c.id,c.full_name,c.phone,c.email,c.address FROM public.auth_sessions s JOIN public.store_customers c ON c.user_id=s.user_id AND c.tenant_id=${tenantId} WHERE s.token_hash=${hash(global)} AND s.expires_at>now() AND c.is_banned=false LIMIT 1`;
   return rows[0]||null;
  }
  const raw=String(req.headers.cookie||'').split(';').map((x:string)=>x.trim()).find((x:string)=>x.startsWith('das_buyer_session='));let legacy='';try{legacy=raw?decodeURIComponent(raw.slice('das_buyer_session='.length)):''}catch{}
