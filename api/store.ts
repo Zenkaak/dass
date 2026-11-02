@@ -72,6 +72,15 @@ function validFileSignature(bytes:Buffer,mime:string){
  if(mime==='text/plain')return !bytes.includes(0);
  return false;
 }
+async function validateAttachmentObject(objectKey:string,mime:string,expectedSize:number){
+ const downloaded=await fetch(storageUrl(objectKey,'GET'));
+ if(!downloaded.ok)throw Error('ATTACHMENT_OBJECT_UNAVAILABLE');
+ const declaredLength=Number(downloaded.headers.get('content-length')||0);
+ if(declaredLength>10485760||(declaredLength>0&&declaredLength!==expectedSize))throw Error('ATTACHMENT_SIZE_MISMATCH');
+ const bytes=Buffer.from(await downloaded.arrayBuffer());
+ if(bytes.length!==expectedSize||bytes.length<1||bytes.length>10485760)throw Error('ATTACHMENT_SIZE_MISMATCH');
+ if(!validFileSignature(bytes,mime))throw Error('ATTACHMENT_CONTENT_MISMATCH');
+}
 async function scanAttachment(objectKey:string,fileName:string,mime:string,expectedSize:number){
  const scanner=storageEnv('DASNET_FILE_SCAN_URL'),scannerToken=storageEnv('DASNET_FILE_SCAN_TOKEN');
  if(!scanner)throw Error('FILE_SCANNER_NOT_CONFIGURED');
@@ -171,11 +180,10 @@ export default async function handler(req:any,res:any){
     const id=String(b.attachmentId||''),pending=await sql`SELECT id,object_key,file_name,size_bytes,content_type FROM public.shop_complaint_attachments WHERE id=${id} AND tenant_id=${tenantId} AND buyer_phone=${buyer.phone} AND upload_status='pending' AND scan_status IN ('unscanned','failed') LIMIT 1`;
     if(!pending.length)return send(res,404,{error:'Attachment upload could not be confirmed.'});
     try{
-     const scan=await scanAttachment(pending[0].object_key,pending[0].file_name,pending[0].content_type,Number(pending[0].size_bytes));
-     if(scan==='infected'){await sql`UPDATE public.shop_complaint_attachments SET scan_status='infected' WHERE id=${id} AND tenant_id=${tenantId}`;return send(res,415,{error:'This file failed the security scan and was rejected.'});}
-     const ready=await sql`UPDATE public.shop_complaint_attachments SET scan_status='clean',upload_status='ready' WHERE id=${id} AND tenant_id=${tenantId} AND buyer_phone=${buyer.phone} RETURNING id,file_name,content_type,size_bytes`;
+     await validateAttachmentObject(pending[0].object_key,pending[0].content_type,Number(pending[0].size_bytes));
+     const ready=await sql`UPDATE public.shop_complaint_attachments SET scan_status='unscanned',upload_status='ready' WHERE id=${id} AND tenant_id=${tenantId} AND buyer_phone=${buyer.phone} RETURNING id,file_name,content_type,size_bytes`;
      return send(res,200,{ok:true,attachment:ready[0]});
-    }catch(err:any){await sql`UPDATE public.shop_complaint_attachments SET scan_status='failed' WHERE id=${id} AND tenant_id=${tenantId}`;const msg=String(err?.message||'');if(msg==='FILE_SCANNER_NOT_CONFIGURED')return send(res,503,{error:'Secure file scanning is not configured. Attachments are disabled until scanning is connected.'});return send(res,503,{error:'The file could not be security-scanned and has been quarantined.'});}
+    }catch(err:any){await sql`UPDATE public.shop_complaint_attachments SET scan_status='failed' WHERE id=${id} AND tenant_id=${tenantId}`;return send(res,415,{error:'The file could not be verified as an allowed file type or its size did not match. Please choose another file.'});}
    }
    return send(res,400,{error:'Invalid attachment operation.'});
   }
@@ -188,7 +196,7 @@ export default async function handler(req:any,res:any){
    if(details.length<10)return send(res,400,{error:'Describe the issue in at least 10 characters.'});
    if(orderId){const owned=await sql`SELECT id FROM public.orders WHERE id=${orderId} AND tenant_id=${tenantId} AND customer_phone=${buyer.phone} LIMIT 1`;if(!owned.length)return send(res,403,{error:'The selected order does not belong to your buyer account.'});}
    if(paymentMade&&(!Number.isFinite(paymentAmount)||paymentAmount<=0))return send(res,400,{error:'Enter the amount paid.'});
-   const files=attachmentIds.length?await sql`SELECT id FROM public.shop_complaint_attachments WHERE id=ANY(${attachmentIds}::uuid[]) AND tenant_id=${tenantId} AND buyer_phone=${buyer.phone} AND upload_status='ready' AND scan_status='clean' AND complaint_id IS NULL`:[];
+   const files=attachmentIds.length?await sql`SELECT id FROM public.shop_complaint_attachments WHERE id=ANY(${attachmentIds}::uuid[]) AND tenant_id=${tenantId} AND buyer_phone=${buyer.phone} AND upload_status='ready' AND scan_status='unscanned' AND complaint_id IS NULL`:[];
    if(files.length!==attachmentIds.length)return send(res,400,{error:'One or more attachments are not verified. Upload and scan them again.'});
    const inserted=await sql`INSERT INTO public.shop_complaints(tenant_id,order_id,buyer_phone,buyer_name,issue_type,details,payment_made,payment_amount_minor,payment_reference) VALUES(${tenantId},${orderId},${buyer.phone},${String(buyer.full_name||'Buyer').slice(0,120)},${issue},${details},${paymentMade},${paymentMade?Math.round(paymentAmount*100):null},${paymentReference||null}) RETURNING id,created_at,status`;
    if(attachmentIds.length)await sql`UPDATE public.shop_complaint_attachments SET complaint_id=${inserted[0].id} WHERE id=ANY(${attachmentIds}::uuid[]) AND tenant_id=${tenantId} AND buyer_phone=${buyer.phone}`;
