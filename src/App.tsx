@@ -371,7 +371,11 @@ export default function App() {
   const path = window.location.pathname.replace(/^\/+|\/+$/g, '');
   const hostname = window.location.hostname.toLowerCase();
   const tenantSubdomain = hostname.endsWith('.dasmarket.co.ke') && !['www','app','mambu'].includes(hostname.split('.')[0]) ? hostname.split('.')[0] : '';
-  if (hostname === 'mambu.dasmarket.co.ke' || hostname === 'mambu.dasmarket.co.ke.') return <PlatformAdminDashboard />;
+  if (hostname === 'mambu.dasmarket.co.ke') {
+    if (path === 'login') return <AuthPage initial="login" />;
+    if (path === 'reset-password') return <AuthPage initial="reset" />;
+    return <PlatformAdminDashboard />;
+  }
   if (tenantSubdomain) return <MerchantStore slug={tenantSubdomain} initialBuyerPage={path||'store'} />;
   if (!path) return <LandingPage />;
   if (path === 'signup') return <AuthPage initial="signup" />;
