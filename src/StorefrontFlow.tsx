@@ -74,6 +74,7 @@ type StorefrontFlowProps = {
   shopPrivacyPolicy?: string;
   shopReturnPolicy?: string;
   shopDeliveryPolicy?: string;
+  shopFaqs?: Array<{question:string;answer:string}>;
   products: StoreProduct[];
   recentlyViewed?: string[];
   cart: Record<string, number>;
@@ -199,6 +200,7 @@ export function StorefrontFlow({
   shopPrivacyPolicy = '',
   shopReturnPolicy = '',
   shopDeliveryPolicy = '',
+  shopFaqs = [],
   products,
   recentlyViewed: recentlyViewedIds = [],
   cart,
@@ -750,7 +752,7 @@ export function StorefrontFlow({
     <section className="customer-flow storefront-all-faqs">
       <FlowHeading title="Frequently asked questions" onBack={() => onNavigate('store')} backLabel="Back to shop" />
       <p className="storefront-all-faqs-intro">Helpful answers about buying, sellers, payments, delivery and staying safe on DASNET.</p>
-      <div className="storefront-all-faqs-list">{marketplaceFaqs.map(([question,answer])=><details key={question}><summary>{question}<span>＋</span></summary><p>{answer}</p></details>)}</div>
+      <div className="storefront-all-faqs-list">{(shopFaqs.length?shopFaqs:marketplaceFaqs).map((faq:any)=><details key={faq.question}><summary>{faq.question}<span>＋</span></summary><p>{faq.answer}</p></details>)}</div>
     </section>
   );
 
