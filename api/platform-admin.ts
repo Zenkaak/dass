@@ -63,7 +63,7 @@ export default async function handler(req:any,res:any){
     return send(res,200,{records:rows});
    }
    if(action==='shops'){
-    const rows=await sql`SELECT t.id,t.name,t.slug,t.status,t.created_at,u.display_name AS owner_name,u.phone AS owner_phone,s.title AS storefront_title,s.contact_phone,s.contact_email,COALESCE((SELECT json_agg(json_build_object('hostname',d.hostname,'primary',d.is_primary,'verifiedAt',d.verified_at)) FROM public.domains d WHERE d.tenant_id=t.id),'[]'::json) AS domains,(SELECT count(*)::int FROM public.products p WHERE p.tenant_id=t.id) AS products,(SELECT count(*)::int FROM public.orders o WHERE o.tenant_id=t.id) AS orders FROM public.tenants t LEFT JOIN public.users u ON u.id=t.created_by LEFT JOIN public.sites s ON s.tenant_id=t.id ORDER BY t.created_at DESC LIMIT 300`;
+    const rows=await sql`SELECT t.id,t.name,t.slug,t.status,t.ban_reason,t.created_at,u.display_name AS owner_name,u.phone AS owner_phone,s.title AS storefront_title,s.contact_phone,s.contact_email,COALESCE((SELECT json_agg(json_build_object('hostname',d.hostname,'primary',d.is_primary,'verifiedAt',d.verified_at)) FROM public.domains d WHERE d.tenant_id=t.id),'[]'::json) AS domains,(SELECT count(*)::int FROM public.products p WHERE p.tenant_id=t.id) AS products,(SELECT count(*)::int FROM public.orders o WHERE o.tenant_id=t.id) AS orders FROM public.tenants t LEFT JOIN public.users u ON u.id=t.created_by LEFT JOIN public.sites s ON s.tenant_id=t.id ORDER BY t.created_at DESC LIMIT 300`;
     return send(res,200,{records:rows});
    }
    if(action==='support'){
@@ -77,14 +77,20 @@ export default async function handler(req:any,res:any){
    const rows=await sql`SELECT c.id,c.buyer_name,c.buyer_phone,c.issue_type,c.details,c.payment_made,c.payment_amount_minor,c.payment_reference,c.status,c.admin_notes,c.created_at,c.updated_at,t.name AS shop_name,t.slug,o.order_number,COALESCE((SELECT json_agg(json_build_object('id',a.id,'fileName',a.file_name,'contentType',a.content_type,'sizeBytes',a.size_bytes)) FROM public.shop_complaint_attachments a WHERE a.complaint_id=c.id AND a.upload_status='ready'),'[]'::json) AS attachments FROM public.shop_complaints c JOIN public.tenants t ON t.id=c.tenant_id LEFT JOIN public.orders o ON o.id=c.order_id AND o.tenant_id=c.tenant_id ORDER BY c.created_at DESC LIMIT 500`;
    return send(res,200,{complaints:rows.map((r:any)=>({...r,paymentAmount:r.payment_amount_minor==null?null:Number(r.payment_amount_minor)/100}))});
   }
-  if(req.method==='POST'&&['edit_shop','edit_seller','edit_product','edit_order','edit_buyer','update_support','ban_buyer'].includes(String(req.body?.action||''))){
+  if(req.method==='POST'&&['edit_shop','edit_seller','edit_product','edit_order','edit_buyer','update_support','ban_buyer','shop_access'].includes(String(req.body?.action||''))){
    const action=String(req.body.action),id=String(req.body?.id||''),v=req.body||{};
    if(!/^[0-9a-f-]{36}$/i.test(id))return send(res,400,{error:'Invalid record id.'});
    let updated:any[]=[];
+   if(action==='shop_access'){
+    const banned=v.banned===true||v.banned==='true',reason=String(v.reason||'').trim().slice(0,1500);
+    if(banned&&!reason)return send(res,400,{error:'A reason is required to ban a shop.'});
+    updated=banned ? await sql`UPDATE public.tenants SET status='banned',status_before_ban=CASE WHEN status='banned' THEN status_before_ban ELSE status END,ban_reason=${reason},updated_at=now() WHERE id=${id} RETURNING id,name,slug,status,ban_reason` : await sql`UPDATE public.tenants SET status=COALESCE(NULLIF(status_before_ban,'banned'),'active'),status_before_ban=NULL,ban_reason=NULL,updated_at=now() WHERE id=${id} RETURNING id,name,slug,status,ban_reason`;
+    if(!updated.length)return send(res,404,{error:'Shop not found.'});
+   }
    if(action==='edit_shop'){
     const name=String(v.name||'').trim().slice(0,120),slug=String(v.slug||'').trim().toLowerCase(),siteTitle=String(v.storefront_title||name).trim().slice(0,120);
     if(!name||! /^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/.test(slug))return send(res,400,{error:'Enter a shop name and a valid slug (3–50 lowercase letters, numbers or hyphens).'});
-    const shopStatus=String(v.status||'active');if(!['trial','active','past_due','suspended','closed'].includes(shopStatus))return send(res,400,{error:'Invalid shop status.'});updated=await sql`UPDATE public.tenants SET name=${name},slug=${slug},status=${shopStatus},updated_at=now() WHERE id=${id} RETURNING id,name,slug,status`;
+    const shopStatus=String(v.status||'active');if(!['trial','active','past_due','suspended','closed','banned'].includes(shopStatus))return send(res,400,{error:'Invalid shop status.'});updated=await sql`UPDATE public.tenants SET name=${name},slug=${slug},status=${shopStatus},updated_at=now() WHERE id=${id} RETURNING id,name,slug,status`;
     if(!updated.length)return send(res,404,{error:'Shop not found.'});
     await sql`UPDATE public.sites SET title=${siteTitle},description=${String(v.storefront_description||'').slice(0,5000)},contact_phone=${String(v.contact_phone||'').slice(0,40)||null},contact_email=${String(v.contact_email||'').slice(0,254)||null},whatsapp_number=${String(v.whatsapp_number||'').slice(0,40)||null},storefront_theme=${String(v.storefront_theme||'#e47a13').slice(0,32)},terms_and_conditions=${String(v.terms_and_conditions||'').slice(0,20000)},privacy_policy=${String(v.privacy_policy||'').slice(0,20000)},return_policy=${String(v.return_policy||'').slice(0,20000)},delivery_policy=${String(v.delivery_policy||'').slice(0,20000)},updated_at=now() WHERE tenant_id=${id}`;
    }
@@ -125,7 +131,7 @@ export default async function handler(req:any,res:any){
     updated=await sql`UPDATE public.support_tickets SET status=${status},priority=${priority},response=${response||null},updated_at=now() WHERE id=${id} RETURNING id,ticket_number,status,priority,response`;
     if(!updated.length)return send(res,404,{error:'Support ticket not found.'});
    }
-   const tenantId=['edit_shop','edit_seller'].includes(action)?id:(action==='ban_buyer'?(await sql`SELECT tenant_id FROM public.store_customers WHERE id=${id} LIMIT 1`)[0]?.tenant_id:null);
+   const tenantId=['edit_shop','edit_seller','shop_access'].includes(action)?id:(action==='ban_buyer'?(await sql`SELECT tenant_id FROM public.store_customers WHERE id=${id} LIMIT 1`)[0]?.tenant_id:null);
    await sql`INSERT INTO public.audit_logs(tenant_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${tenantId},${users[0].id},${'platform.'+action},${action.replace('edit_','')},${id},${JSON.stringify({changedFields:Object.keys(v).filter(k=>!['action','id'].includes(k))})}::jsonb)`;
    return send(res,200,{ok:true,record:updated[0]});
   }
