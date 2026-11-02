@@ -171,7 +171,7 @@ export default async function handler(req:any,res:any){
    }
    const legacy=legacyToken(req);
    if(legacy){
-    const rows=await sql`SELECT c.id,c.user_id,c.full_name,c.email,c.phone,c.alternative_phone,c.address FROM public.store_customer_sessions s JOIN public.store_customers c ON c.id=s.customer_id AND c.tenant_id=s.tenant_id WHERE s.tenant_id=${tenantId} AND s.token_hash=${hash(legacy)} AND s.expires_at>now() AND c.user_id IS NOT NULL LIMIT 1`;
+    const rows=await sql`SELECT c.id,c.user_id,c.full_name,c.email,c.phone,c.alternative_phone,c.address FROM public.store_customer_sessions s JOIN public.store_customers c ON c.id=s.customer_id AND c.tenant_id=s.tenant_id WHERE s.tenant_id=${tenantId} AND s.token_hash=${hash(legacy)} AND s.expires_at>now() AND c.user_id IS NOT NULL AND c.is_banned=false LIMIT 1`;
     if(rows.length){
      const token=crypto.randomBytes(32).toString('base64url');
      await sql`INSERT INTO public.auth_sessions(token_hash,user_id,expires_at) VALUES(${hash(token)},${rows[0].user_id},now()+interval '7 days')`;
