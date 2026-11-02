@@ -28,6 +28,6 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
       - name: Parse every Vercel API function
-        run: npx --no-install esbuild api/*.ts --outdir=/tmp/dasnet-api-compile-check --platform=node --format=esm --target=node22
+        run: npx --yes esbuild api/*.ts --outdir=/tmp/dasnet-api-compile-check --platform=node --format=esm --target=node22
       - name: Production build
         run: npm run build
