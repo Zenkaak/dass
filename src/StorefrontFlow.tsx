@@ -59,6 +59,8 @@ type BuyerOrder = {
   paymentStatus: string;
   receipt?: string | null;
   orderStatus?: string | null;
+  discount?: number;
+  couponCode?: string | null;
   deliveryStatus?: string | null;
   deliveryUpdatedAt?: string | null;
 };
