@@ -2907,3 +2907,14 @@
 @media(prefers-reduced-motion:reduce) {
   .store-page .store-product-marketing-card { transition: none; }
 }
+
+.store-page .store-product-marketing-card,
+.store-page .store-product-marketing-card.active {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  flex-direction: column;
+  align-self: stretch;
+}
