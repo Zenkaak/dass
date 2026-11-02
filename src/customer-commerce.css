@@ -2466,3 +2466,78 @@
 .buyer-auth-redesign .buyer-auth-links{margin-top:14px!important}
 .buyer-auth-redesign .buyer-auth-secure{margin-top:12px!important}
 @media(max-width:640px){.buyer-auth-redesign .buyer-auth-card.buyer-auth-modal{width:min(100%,440px)!important;padding:18px 15px!important;border-radius:14px!important}}
+
+
+/* Merchant storefront product marketing, safety and FAQ sections */
+.store-product-marketing {
+  margin: 0 0 26px;
+  padding: 22px;
+  border: 1px solid #e5eaf0;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #fff 0%, #f6f9fc 100%);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, .055);
+}
+.store-product-marketing-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:18px; margin-bottom:17px; }
+.store-product-marketing-heading > div:first-child > span { color:#d46b12; font-size:10px; font-weight:850; letter-spacing:.13em; }
+.store-product-marketing-heading h2 { margin:5px 0 4px; color:#172033; font-size:clamp(19px,2vw,25px); line-height:1.2; font-weight:850; }
+.store-product-marketing-heading p { margin:0; color:#687386; font-size:13px; }
+.store-product-marketing-controls { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.store-product-marketing-controls > span { color:#738096; font-size:11px; font-weight:700; font-variant-numeric:tabular-nums; }
+.store-product-marketing-controls button { display:inline-flex; align-items:center; gap:7px; border:1px solid #dbe2eb; border-radius:9px; padding:8px 11px; color:#172033; background:#fff; font-size:12px; font-weight:750; cursor:pointer; }
+.store-product-marketing-controls button:disabled { opacity:.45; cursor:not-allowed; }
+.store-product-marketing-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:13px; }
+.store-product-marketing-card { min-width:0; overflow:hidden; border:1px solid #e7ebf1; border-radius:13px; background:#fff; }
+.store-product-marketing-open { display:flex; width:100%; min-width:0; gap:12px; align-items:center; padding:10px; border:0; text-align:left; background:transparent; cursor:pointer; }
+.store-product-marketing-image { display:block; flex:0 0 94px; width:94px; height:94px; overflow:hidden; border-radius:10px; background:#f1f4f7; }
+.store-product-marketing-image img { display:block; width:100%; height:100%; object-fit:cover; }
+.store-product-marketing-copy { display:flex; min-width:0; flex-direction:column; gap:6px; }
+.store-product-marketing-copy small { color:#7b8493; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+.store-product-marketing-copy strong { display:-webkit-box; overflow:hidden; color:#202a3b; font-size:13px; line-height:1.35; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+.store-product-marketing-copy b { color:#d46b12; font-size:14px; }
+.store-product-marketing-cta { display:block; width:calc(100% - 20px); margin:0 10px 10px; padding:9px 12px; border:0; border-radius:8px; color:#fff; background:#d97716; font-size:12px; font-weight:800; cursor:pointer; }
+.store-product-marketing-cta:disabled { opacity:.55; cursor:not-allowed; }
+.store-product-marketing-empty { margin:0; padding:20px; border:1px dashed #d5dce6; border-radius:12px; color:#697586; text-align:center; font-size:13px; }
+.store-product-marketing-progress { height:3px; overflow:hidden; margin-top:15px; border-radius:99px; background:#e9edf2; }
+.store-product-marketing-progress span { display:block; height:100%; border-radius:inherit; background:#d97716; transition:width .35s ease; }
+.store-trust-section, .store-faq-section { margin-top:28px; padding:26px; border:1px solid #e6eaf0; border-radius:18px; background:#fff; }
+.store-info-heading { max-width:760px; margin-bottom:19px; }
+.store-info-heading > span { color:#d46b12; font-size:10px; font-weight:850; letter-spacing:.13em; }
+.store-info-heading h2 { margin:5px 0 7px; color:#172033; font-size:clamp(21px,2.4vw,28px); font-weight:850; }
+.store-info-heading p { margin:0; color:#687386; font-size:13px; line-height:1.65; }
+.store-trust-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:13px; }
+.store-trust-grid article { min-width:0; padding:17px; border:1px solid #e8edf3; border-radius:13px; background:#f9fbfd; }
+.store-trust-grid article > svg { display:block; margin-bottom:11px; color:#d97716; }
+.store-trust-grid article strong { display:block; margin-bottom:7px; color:#202a3b; font-size:14px; line-height:1.35; }
+.store-trust-grid article p, .store-trust-grid article li { color:#667286; font-size:12px; line-height:1.65; }
+.store-trust-grid article p { margin:0 0 8px; }
+.store-trust-grid article ul { margin:7px 0 0; padding-left:17px; }
+.store-trust-grid article li + li { margin-top:4px; }
+.store-trust-disclaimer { margin:16px 0 0; padding:13px 15px; border-left:3px solid #d97716; border-radius:8px; color:#596579; background:#fff8ef; font-size:12px; line-height:1.65; }
+.store-trust-disclaimer strong { color:#293447; }
+.store-faq-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.store-faq-grid details { align-self:start; min-width:0; border:1px solid #e7ebf1; border-radius:11px; background:#fbfcfe; }
+.store-faq-grid summary { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:14px 15px; color:#253044; font-size:13px; line-height:1.45; font-weight:750; cursor:pointer; list-style:none; }
+.store-faq-grid summary::-webkit-details-marker { display:none; }
+.store-faq-grid summary span { flex:0 0 auto; color:#d97716; font-size:18px; }
+.store-faq-grid details[open] summary { color:#b85e0e; }
+.store-faq-grid details p { margin:0; padding:0 15px 15px; color:#667286; font-size:12px; line-height:1.7; }
+@media (max-width: 900px) {
+  .store-product-marketing-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .store-trust-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 600px) {
+  .store-product-marketing, .store-trust-section, .store-faq-section { margin-top:18px; padding:15px; border-radius:13px; }
+  .store-product-marketing-heading { align-items:flex-start; }
+  .store-product-marketing-heading h2 { font-size:19px; }
+  .store-product-marketing-heading p { max-width:220px; font-size:11px; }
+  .store-product-marketing-controls { flex-direction:column; align-items:flex-end; gap:5px; }
+  .store-product-marketing-controls button { padding:7px 9px; }
+  .store-product-marketing-grid { grid-template-columns:1fr; gap:9px; }
+  .store-product-marketing-open { gap:11px; }
+  .store-product-marketing-image { flex-basis:82px; width:82px; height:82px; }
+  .store-trust-grid, .store-faq-grid { grid-template-columns:1fr; }
+  .store-trust-grid article { padding:14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .store-product-marketing-progress span { transition:none; }
+}
