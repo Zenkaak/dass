@@ -95,4 +95,6 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: team_FUjJJLDSAITzmg32U4dQzNwD
           VERCEL_PROJECT_ID: prj_vZuYn5UoOgZbJ9NGLvyiTAFHfWPe
-        run: npx vercel deploy --prod --yes --scope=cheruiyott233-4429s-projects --token="$VERCEL_TOKEN"
+        run: |
+          echo "Deploying DASNET production commit: $GITHUB_SHA"
+          npx vercel deploy --prod --yes --scope=cheruiyott233-4429s-projects --token="$VERCEL_TOKEN"
