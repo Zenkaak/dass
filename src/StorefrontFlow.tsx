@@ -31,6 +31,7 @@ type PaymentMethod = 'card' | 'airtel' | 'mpesa' | 'delivery';
 type DeliveryMethod = 'pickup' | 'home';
 type BuyerOrder = {
   orderNumber: string;
+  orderId?: string;
   createdAt: string;
   customerName: string;
   customerPhone: string;
@@ -70,7 +71,8 @@ type StorefrontFlowProps = {
   onSignOut?: () => void;
   onOrderCreated?: (token: string, orderNumber: string) => void;
   chatPanel?: ReactNode;
-  onOpenChat?: (token: string, orderNumber: string) => void;
+  onOpenChat?: (token: string, orderNumber: string, orderId?: string) => void;
+  onProfileUpdated?: (customer: any) => void;
 };
 
 const paymentLabels: Record<PaymentMethod, string> = {
@@ -179,6 +181,7 @@ export function StorefrontFlow({
   onOrderCreated,
   chatPanel,
   onOpenChat,
+  onProfileUpdated,
 }: StorefrontFlowProps) {
   const orderStorageKey = `dasnet-storefront-orders-${slug}`;
   const lines = useMemo(() => Object.entries(cart)
@@ -192,6 +195,8 @@ export function StorefrontFlow({
     [lines],
   );
   const [orders, setOrders] = useState<BuyerOrder[]>(() => storedOrders(orderStorageKey));
+  const [ordersLoading,setOrdersLoading]=useState(false),[ordersError,setOrdersError]=useState('');
+  const [profileName,setProfileName]=useState(initialCustomerName),[profileEmail,setProfileEmail]=useState(initialCustomerEmail),[profilePhoneAlt,setProfilePhoneAlt]=useState(''),[profileAddress,setProfileAddress]=useState(initialCustomerAddress),[profileSaving,setProfileSaving]=useState(false),[profileMessage,setProfileMessage]=useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mpesa');
   const [submitting, setSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
@@ -211,7 +216,8 @@ export function StorefrontFlow({
   const [newsletterEnabled, setNewsletterEnabled] = useState(false);
   const [orderTab, setOrderTab] = useState<'ongoing' | 'delivered' | 'cancelled'>('ongoing');
 
-  useEffect(() => { setCustomerName(initialCustomerName); setCustomerPhone(initialCustomerPhone); setCustomerEmail(initialCustomerEmail); if(initialCustomerAddress&&!deliveryAddress)setDeliveryAddress(initialCustomerAddress); }, [initialCustomerName,initialCustomerPhone,initialCustomerEmail,initialCustomerAddress]);
+  useEffect(() => { setCustomerName(initialCustomerName); setCustomerPhone(initialCustomerPhone); setCustomerEmail(initialCustomerEmail); setProfileName(initialCustomerName); setProfileEmail(initialCustomerEmail); setProfileAddress(initialCustomerAddress); if(initialCustomerAddress&&!deliveryAddress)setDeliveryAddress(initialCustomerAddress); }, [initialCustomerName,initialCustomerPhone,initialCustomerEmail,initialCustomerAddress]);
+  useEffect(()=>{let live=true;const load=async()=>{setOrdersLoading(true);try{const r=await fetch('/api/store?action=customer-orders&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'});const d=await r.json().catch(()=>({}));if(!r.ok){if(r.status!==401)throw Error(d.error||'Could not load your orders');return;}const next:BuyerOrder[]=(Array.isArray(d.orders)?d.orders:[]).map((o:any)=>({orderId:o.id,orderNumber:o.orderNumber,createdAt:o.createdAt,customerName:o.customerName,customerPhone:o.customerPhone,customerEmail:o.customerEmail||'',paymentMethod:'mpesa',deliveryMethod:o.deliveryMethod==='pickup'?'pickup':'home',deliveryAddress:o.deliveryAddress||'',pickupStation:o.pickupStation||'',deliveryCounty:o.deliveryCounty||'',deliverySubCounty:o.deliverySubCounty||'',deliveryEstate:o.deliveryEstate||'',deliveryDirections:o.deliveryDirections||'',subtotal:Number(o.subtotal)||0,deliveryFee:0,total:Number(o.total)||0,lines:(o.items||[]).map((i:any)=>({product:{id:String(i.id||('item-'+i.name)),name:i.name,price:Number(i.price)||0,category:'Product'},quantity:Number(i.quantity)||1})),chatToken:'',paymentStatus:o.paymentStatus||'unpaid',receipt:o.receipt||null,orderStatus:o.orderStatus||null,deliveryStatus:o.deliveryStatus||null}));if(live){setOrders(next);setOrdersError('');}}catch(e:any){if(live)setOrdersError(e.message||'Could not load your orders.')}finally{if(live)setOrdersLoading(false)}};if(initialCustomerPhone)load();else setOrders([]);return()=>{live=false}},[slug,initialCustomerPhone]);
 
   useEffect(() => {
     try {
@@ -300,6 +306,7 @@ export function StorefrontFlow({
       const createdAt = new Date().toISOString();
       const order: BuyerOrder = {
         orderNumber: data.orderNumber,
+        orderId: data.orderId,
         createdAt,
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim(),
@@ -335,7 +342,7 @@ export function StorefrontFlow({
 
   function openOrder(order: BuyerOrder, next: string) {
     setActiveOrderNumber(order.orderNumber);
-    if (order.chatToken) onOpenChat?.(order.chatToken, order.orderNumber);
+    if (order.chatToken || order.orderId) onOpenChat?.(order.chatToken, order.orderNumber, order.orderId);
     onNavigate(next);
   }
 
@@ -623,6 +630,8 @@ export function StorefrontFlow({
     );
   }
 
+  async function saveProfile(e:any){e.preventDefault();if(profileSaving)return;setProfileSaving(true);setProfileMessage('');try{const r=await fetch('/api/buyer-auth?action=update-profile&slug='+encodeURIComponent(slug),{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug,name:profileName,email:profileEmail,alternativePhone:profilePhoneAlt,address:profileAddress})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Profile could not be saved.');onProfileUpdated?.(d.customer);setProfileMessage('Your profile has been updated.');}catch(e:any){setProfileMessage(e.message||'Profile could not be saved.')}finally{setProfileSaving(false)}}
+  function renderProfile(){return <section className="customer-flow"><FlowHeading title="My profile" onBack={()=>onNavigate('account')} backLabel="My account"/><form className="customer-panel customer-account-detail" onSubmit={saveProfile}><div className="customer-contact-fields"><label className="customer-form-label">Full name<input required minLength={2} maxLength={120} value={profileName} onChange={e=>setProfileName(e.target.value)}/></label><label className="customer-form-label">Email address<input type="email" maxLength={254} value={profileEmail} onChange={e=>setProfileEmail(e.target.value)}/></label><label className="customer-form-label">Primary phone<input value={initialCustomerPhone} disabled readOnly/></label><label className="customer-form-label">Alternative phone<input type="tel" value={profilePhoneAlt} onChange={e=>setProfilePhoneAlt(e.target.value)} placeholder="Optional Kenyan mobile number"/></label><label className="customer-form-label">Default delivery address<textarea rows={3} maxLength={300} value={profileAddress} onChange={e=>setProfileAddress(e.target.value)} placeholder="Your default delivery address"/></label></div>{profileMessage&&<p role="status" className="customer-preview-note">{profileMessage}</p>}<div className="customer-flow-actions"><button className="customer-primary-button" type="submit" disabled={profileSaving}>{profileSaving?'Saving…':'Save profile'}</button></div></form></section>}
   function renderAccount() {
     return (
       <section className="customer-flow customer-account-page">
@@ -642,11 +651,11 @@ export function StorefrontFlow({
       <section className="customer-flow">
         <FlowHeading title="Inbox & messages" onBack={() => onNavigate('account')} backLabel="My account" />
         <div className="customer-panel customer-inbox-list">
-          <div className="customer-panel-heading"><h2>Order conversations</h2><span>{orders.filter((order) => Boolean(order.chatToken)).length} chats</span></div>
-          {orders.filter((order) => Boolean(order.chatToken)).length ? orders.filter((order) => Boolean(order.chatToken)).map((order) => (
+          <div className="customer-panel-heading"><h2>Order conversations</h2><span>{orders.filter((order) => Boolean(order.chatToken||order.orderId)).length} chats</span></div>
+          {orders.filter((order) => Boolean(order.chatToken||order.orderId)).length ? orders.filter((order) => Boolean(order.chatToken||order.orderId)).map((order) => (
             <article className="customer-order-card" key={order.orderNumber}>
               <div className="customer-order-card-heading"><div><small>ORDER {order.orderNumber}</small><strong>{new Date(order.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}</strong></div><span className="customer-order-status">Seller chat</span></div>
-              <div className="customer-order-card-footer"><span>{order.lines[0]?.product.name || 'Order'}{order.lines.length > 1 ? ` + ${order.lines.length - 1} more` : ''}</span><div><button type="button" className="customer-primary-button" onClick={() => onOpenChat?.(order.chatToken, order.orderNumber)}>Open conversation</button></div></div>
+              <div className="customer-order-card-footer"><span>{order.lines[0]?.product.name || 'Order'}{order.lines.length > 1 ? ` + ${order.lines.length - 1} more` : ''}</span><div><button type="button" className="customer-primary-button" onClick={() => onOpenChat?.(order.chatToken, order.orderNumber, order.orderId)}>Open conversation</button></div></div>
             </article>
           )) : <div className="customer-empty-state"><span><ShoppingBag size={28}/></span><h2>No messages yet</h2><p>Conversations with sellers appear here after you place an order.</p><button type="button" className="customer-primary-button" onClick={() => onNavigate('orders')}>View my orders</button></div>}
         </div>
@@ -669,7 +678,7 @@ export function StorefrontFlow({
   }
 
   if (view === 'store') return null;
-  const pageContent = view === 'cart' ? renderCart() : view === 'checkout/payment' ? (lines.length ? renderCheckoutPayment() : renderCart()) : view === 'checkout/review' ? (lines.length ? renderReview() : renderCart()) : view === 'checkout/complete' ? renderSuccess() : view === 'orders' ? renderOrders() : view === 'order-detail' ? renderOrderDetail() : view === 'order-tracking' ? renderTracking() : (view === 'account' || view === 'profile') ? renderAccount() : renderAccountSection() || (<section className="customer-flow"><FlowHeading title="Shopping assistant" onBack={() => onNavigate('store')} /><div className="customer-panel customer-account-detail"><Search size={24} /><p>{accountSectionCopy.assistant.description}</p><button type="button" className="customer-secondary-button" onClick={() => onNavigate('store')}>Back to the store</button></div></section>);
+  const pageContent = view === 'cart' ? renderCart() : view === 'checkout/payment' ? (lines.length ? renderCheckoutPayment() : renderCart()) : view === 'checkout/review' ? (lines.length ? renderReview() : renderCart()) : view === 'checkout/complete' ? renderSuccess() : view === 'orders' ? renderOrders() : view === 'order-detail' ? renderOrderDetail() : view === 'order-tracking' ? renderTracking() : view === 'account' ? renderAccount() : view === 'profile' ? renderProfile() : renderAccountSection() || (<section className="customer-flow"><FlowHeading title="Shopping assistant" onBack={() => onNavigate('store')} /><div className="customer-panel customer-account-detail"><Search size={24} /><p>{accountSectionCopy.assistant.description}</p><button type="button" className="customer-secondary-button" onClick={() => onNavigate('store')}>Back to the store</button></div></section>);
   // The storefront-level marketplace header is the single buyer navigation surface for every route.
   // Do not mount a second sticky nav here: nested sticky bars overlapped the account/cart content
   // and intercepted taps on mobile.
