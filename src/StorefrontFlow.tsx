@@ -265,7 +265,110 @@ export function StorefrontFlow({
   useEffect(()=>{setAppliedCoupon(null);if(voucherCode)setVoucherMessage('Your cart changed. Reapply the coupon.');},[subtotal]);
   useEffect(()=>{let live=true;fetch('/api/store?action=coupons-public&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'}).then(r=>r.json()).then(d=>{if(live)setShopCoupons(Array.isArray(d.coupons)?d.coupons:[])}).catch(()=>{});return()=>{live=false}},[slug]);
   useEffect(() => { setCustomerName(initialCustomerName); setCustomerPhone(initialCustomerPhone); setPaymentPhone(initialCustomerPhone); setCustomerEmail(initialCustomerEmail); setProfileName(initialCustomerName); setProfileEmail(initialCustomerEmail); setProfileAddress(initialCustomerAddress); setProfilePhoneAlt(initialCustomerAlternativePhone); if(initialCustomerAddress&&!deliveryAddress)setDeliveryAddress(initialCustomerAddress); }, [initialCustomerName,initialCustomerPhone,initialCustomerEmail,initialCustomerAddress,initialCustomerAlternativePhone]);
-  useEffect(()=>{let live=true;setOrders(initialCustomerPhone?(storedOrders(orderStorageKey).length?storedOrders(orderStorageKey):storedOrders(legacyOrderStorageKey)):[]);const load=async()=>{if(!initialCustomerPhone){setOrders([]);setOrdersLoading(false);return;}setOrdersLoading(true);try{const r=await fetch('/api/store?action=customer-orders&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'});const d=await r.json().catch(()=>({}));if(!r.ok){if(r.status===401){if(live)setOrdersError('Your buyer session needs refreshing. Sign in again to securely load your orders.');return;}throw Error(d.error||'Could not load your orders');}const next:BuyerOrder[]=(Array.isArray(d.orders)?d.orders:[]).map((o:any)=>({orderId:o.id,orderNumber:o.orderNumber,createdAt:o.createdAt,customerName:o.customerName,customerPhone:o.customerPhone,customerEmail:o.customerEmail||'',paymentMethod:'mpesa',deliveryMethod:o.deliveryMethod==='pickup'?'pickup':'home',deliveryAddress:o.deliveryAddress||'',pickupStation:o.pickupStation||'',deliveryCounty:o.deliveryCounty||'',deliverySubCounty:o.deliverySubCounty||'',deliveryEstate:o.deliveryEstate||'',deliveryDirections:o.deliveryDirections||'',subtotal:Number(o.subtotal)||0,deliveryFee:0,total:Number(o.total)||0,lines:(o.items||[]).map((i:any)=>({product:{id:String(i.id||('item-'+i.name)),name:i.name,price:Number(i.price)||0,category:i.category||'Product',images:i.image?[i.image]:[]},quantity:Number(i.quantity)||1})),chatToken:'',paymentStatus:o.paymentStatus||'unpaid',receipt:o.receipt||null,orderStatus:o.orderStatus||null,deliveryStatus:o.deliveryStatus||null,deliveryUpdatedAt:o.deliveryUpdatedAt||null}));const cached=[...storedOrders(orderStorageKey),...storedOrders(legacyOrderStorageKey)];const merged=[...next,...cached.filter(old=>!next.some(fresh=>(fresh.orderId&&fresh.orderId===old.orderId)||fresh.orderNumber===old.orderNumber))];if(live){setOrders(merged);setOrdersError('');}}catch(e:any){if(live)setOrdersError(e.message||'Could not load your orders.')}finally{if(live)setOrdersLoading(false)}};if(initialCustomerPhone)load();else setOrders([]);return()=>{live=false}},[slug,initialCustomerPhone,orderStorageKey]);
+  useEffect(() => {
+    let live = true;
+    let requestInFlight = false;
+    const cached = initialCustomerPhone
+      ? [...storedOrders(orderStorageKey), ...storedOrders(legacyOrderStorageKey)]
+      : [];
+    setOrders(cached.filter((order, index, all) =>
+      all.findIndex((item) => (item.orderId && item.orderId === order.orderId) || item.orderNumber === order.orderNumber) === index
+    ));
+    setOrdersError('');
+
+    if (!initialCustomerPhone) {
+      setOrdersLoading(false);
+      return () => { live = false; };
+    }
+
+    const loadOrders = async () => {
+      if (requestInFlight || !live) return;
+      requestInFlight = true;
+      setOrdersLoading(true);
+      try {
+        const response = await fetch('/api/store?action=customer-orders&slug=' + encodeURIComponent(slug), {
+          credentials: 'same-origin',
+          cache: 'no-store',
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          if (response.status === 401) throw Error('Your buyer session needs refreshing. Sign in again to securely load your orders.');
+          throw Error(data.error || 'Could not load your orders.');
+        }
+        const serverOrders: BuyerOrder[] = (Array.isArray(data.orders) ? data.orders : []).map((order: any) => ({
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          createdAt: order.createdAt,
+          customerName: order.customerName,
+          customerPhone: order.customerPhone,
+          customerEmail: order.customerEmail || '',
+          paymentMethod: 'mpesa',
+          deliveryMethod: order.deliveryMethod === 'pickup' ? 'pickup' : 'home',
+          deliveryAddress: order.deliveryAddress || '',
+          pickupStation: order.pickupStation || '',
+          deliveryCounty: order.deliveryCounty || '',
+          deliverySubCounty: order.deliverySubCounty || '',
+          deliveryEstate: order.deliveryEstate || '',
+          deliveryDirections: order.deliveryDirections || '',
+          subtotal: Number(order.subtotal) || 0,
+          deliveryFee: 0,
+          total: Number(order.total) || 0,
+          lines: (order.items || []).map((item: any) => ({
+            product: {
+              id: String(item.id || ('item-' + item.name)),
+              name: item.name,
+              price: Number(item.price) || 0,
+              category: item.category || 'Product',
+              images: item.image ? [item.image] : [],
+            },
+            quantity: Number(item.quantity) || 1,
+          })),
+          chatToken: '',
+          paymentStatus: order.paymentStatus || 'unpaid',
+          receipt: order.receipt || null,
+          orderStatus: order.orderStatus || null,
+          deliveryStatus: order.deliveryStatus || null,
+          deliveryUpdatedAt: order.deliveryUpdatedAt || null,
+        }));
+
+        if (live) {
+          // Merge into the latest state, never replace it with a stale request snapshot.
+          // Orders are append-only in the buyer history, so a transient empty response
+          // must not make an already-known order disappear.
+          setOrders((current) => {
+            const merged = [...current];
+            for (const incoming of serverOrders) {
+              const index = merged.findIndex((existing) =>
+                (incoming.orderId && existing.orderId === incoming.orderId) ||
+                existing.orderNumber === incoming.orderNumber
+              );
+              if (index >= 0) {
+                merged[index] = { ...merged[index], ...incoming, chatToken: merged[index].chatToken || incoming.chatToken };
+              } else {
+                merged.push(incoming);
+              }
+            }
+            return merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          });
+          setOrdersError('');
+        }
+      } catch (error: any) {
+        if (live) setOrdersError(error.message || 'Could not load your orders.');
+      } finally {
+        requestInFlight = false;
+        if (live) setOrdersLoading(false);
+      }
+    };
+
+    void loadOrders();
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void loadOrders();
+    }, 15000);
+    return () => {
+      live = false;
+      window.clearInterval(timer);
+    };
+  }, [slug, initialCustomerPhone, orderStorageKey, legacyOrderStorageKey]);
 
   useEffect(() => {
     try {
@@ -279,23 +382,7 @@ export function StorefrontFlow({
   const total = Math.max(0, subtotal - Number(appliedCoupon?.discount||0));
   const activeOrder = orders.find((order) => order.orderNumber === activeOrderNumber) || orders[0];
   useEffect(()=>{if(activeOrder?.orderId)setRetryPaymentPhone(activeOrder.customerPhone||initialCustomerPhone);if(activeOrder?.orderId&&['order-detail','order-tracking'].includes(view))onOpenChat?.('',activeOrder.orderNumber,activeOrder.orderId)},[view,activeOrder?.orderId,initialCustomerPhone]);
-  useEffect(() => {
-    const refresh = async () => {
-      const refreshed = await Promise.all(orders.map(async (order) => {
-        if (!order.chatToken) return order;
-        try {
-          const response = await fetch('/api/store?action=customer-chat&token=' + encodeURIComponent(order.chatToken));
-          const data = await response.json();
-          if (!response.ok) return order;
-          return { ...order, paymentStatus: data.order?.paymentStatus || order.paymentStatus, receipt: data.order?.receipt || order.receipt, orderStatus: data.order?.status, deliveryStatus: data.order?.deliveryStatus };
-        } catch { return order; }
-      }));
-      setOrders((current) => JSON.stringify(current) === JSON.stringify(refreshed) ? current : refreshed);
-    };
-    if (orders.length) refresh();
-    const timer=window.setInterval(()=>{if(document.visibilityState==='visible')refresh()},5000);
-    return()=>window.clearInterval(timer);
-  }, [orders.map((order) => order.chatToken).join('|')]);
+
   useEffect(()=>{const status=String(activeOrder?.paymentStatus||'');if(lastPaymentStatus.current&&lastPaymentStatus.current!=='succeeded'&&status==='succeeded'){setPaymentCelebration(true);const timer=window.setTimeout(()=>setPaymentCelebration(false),5200);lastPaymentStatus.current=status;return()=>window.clearTimeout(timer)}if(status)lastPaymentStatus.current=status},[activeOrder?.paymentStatus]);
   async function retryActiveOrderPayment(){if(!activeOrder?.orderId||retryingOrder)return;const cleaned=retryPaymentPhone.trim().replace(/[\s().-]/g,'');if(!/^\+?254[17]\d{8}$|^0[17]\d{8}$/.test(cleaned)){setRetryMessage('Enter a valid Kenyan M-PESA number (07…, 01… or 254…).');return;}setRetryingOrder(true);setRetryMessage('');try{const r=await fetch('/api/store?action=customer-payment-retry',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug,orderId:activeOrder.orderId,paymentPhone:cleaned})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Could not retry payment');setOrders(current=>current.map(order=>order.orderId===activeOrder.orderId?{...order,paymentStatus:'pending'}:order));setRetryMessage('M-PESA prompt sent. Enter your PIN to complete payment.')}catch(e:any){setRetryMessage(e.message||'Could not retry payment')}finally{setRetryingOrder(false)}}
   const recentlyViewedProducts = recentlyViewedIds
