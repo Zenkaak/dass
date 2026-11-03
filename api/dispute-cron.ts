@@ -12,7 +12,8 @@ async function verifyGitHubOidc(token:string){
   if(claims.iss!=='https://token.actions.githubusercontent.com'||!aud.includes('dasnet-dispute-escalation'))return false;
   if(String(claims.repository||'').toLowerCase()!=='zenkaak/dass'||claims.ref!=='refs/heads/main')return false;
   if(String(claims.workflow_ref||'').toLowerCase()!=='zenkaak/dass/.github/workflows/escalate-disputes.yml@refs/heads/main')return false;
-  if(String(claims.sub||'').toLowerCase()!=='repo:zenkaak/dass:ref:refs/heads/main')return false;
+  const subject=String(claims.sub||'').toLowerCase();if(!['repo:zenkaak/dass:ref:refs/heads/main','repo:zenkaak@262563148/dass@1438529271:ref:refs/heads/main'].includes(subject))return false;
+  if(String(claims.repository_id||'')!=='1438529271'||String(claims.repository_owner_id||'')!=='262563148')return false;
   if(!Number.isFinite(claims.exp)||claims.exp<now-15||!Number.isFinite(claims.iat)||claims.iat>now+30)return false;
   const response=await fetch('https://token.actions.githubusercontent.com/.well-known/jwks',{headers:{'Accept':'application/json'}});
   if(!response.ok)return false;
