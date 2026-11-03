@@ -192,9 +192,13 @@ export default async function handler(req:any,res:any){
   if(req.method==='POST'&&req.body?.action==='complaint_status'){
    const id=String(req.body?.id||''),status=String(req.body?.status||''),notes=String(req.body?.adminNotes||'').trim().slice(0,3000);
    if(!['open','under_review','resolved','rejected'].includes(status))return send(res,400,{error:'Invalid complaint status.'});
-   const rows=await sql`UPDATE public.shop_complaints SET status=${status},admin_notes=${notes||null},updated_at=now() WHERE id=${id} RETURNING id,tenant_id,buyer_phone,status,admin_notes,updated_at`;
+   const finalDecision=['resolved','rejected'].includes(status);const rows=await sql`UPDATE public.shop_complaints SET status=${status},dispute_status=CASE WHEN ${finalDecision} THEN 'closed' ELSE dispute_status END,admin_notes=${notes||null},dispute_closed_at=CASE WHEN ${finalDecision} THEN now() ELSE dispute_closed_at END,updated_at=now() WHERE id=${id} RETURNING id,tenant_id,buyer_phone,status,dispute_status,admin_notes,updated_at`;
    if(!rows.length)return send(res,404,{error:'Complaint not found.'});
-   await sql`INSERT INTO public.buyer_notifications(tenant_id,buyer_phone,complaint_id,notification_type,title,detail) VALUES(${rows[0].tenant_id},${rows[0].buyer_phone},${rows[0].id},'complaint_update','Your report was updated',${'DASNET has updated the status of your report to '+status.replaceAll('_',' ')+'.'})`;
+   const verdictTitle=status==='resolved'?'DASNET resolved your report':status==='rejected'?'DASNET rejected your report':'DASNET updated your report';const verdictDetail=notes||('DASNET support updated the case status to '+status.replaceAll('_',' ')+'.');
+   await sql`INSERT INTO public.buyer_notifications(tenant_id,buyer_phone,complaint_id,notification_type,title,detail) VALUES(${rows[0].tenant_id},${rows[0].buyer_phone},${rows[0].id},'complaint_update',${verdictTitle},${verdictDetail})`;
+   const shop=await sql`SELECT created_by FROM public.tenants WHERE id=${rows[0].tenant_id} LIMIT 1`;
+   await sql`INSERT INTO public.dispute_notifications(tenant_id,complaint_id,recipient_role,recipient_phone,recipient_user_id,title,detail) VALUES(${rows[0].tenant_id},${rows[0].id},'buyer',${rows[0].buyer_phone},NULL,${verdictTitle},${verdictDetail})`;
+   if(shop[0]?.created_by)await sql`INSERT INTO public.dispute_notifications(tenant_id,complaint_id,recipient_role,recipient_phone,recipient_user_id,title,detail) VALUES(${rows[0].tenant_id},${rows[0].id},'seller',NULL,${shop[0].created_by},${verdictTitle},${verdictDetail})`;
    return send(res,200,{ok:true,complaint:rows[0]});
   }
   if(req.method==='GET'){
