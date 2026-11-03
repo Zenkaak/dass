@@ -44,6 +44,8 @@ export default async function handler(req:any,res:any){
  const body=req.body||{},action=String(req.query?.action||body.action||''),slug=String(req.method==='GET'?req.query?.slug:body.slug||'').toLowerCase().trim();
  try{
   const sql=db();
+  await sql`UPDATE public.tenants SET status=COALESCE(NULLIF(status_before_ban,'banned'),'active'),status_before_ban=NULL,ban_reason=NULL,ban_expires_at=NULL,updated_at=now() WHERE status='banned' AND ban_expires_at IS NOT NULL AND ban_expires_at<=now()`;
+  await sql`UPDATE public.store_customers SET is_banned=false,ban_reason=NULL,banned_until=NULL,updated_at=now() WHERE is_banned=true AND banned_until IS NOT NULL AND banned_until<=now()`;
   if(!/^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/.test(slug))return send(res,400,{error:'Invalid shop.'});
   const shops=await sql`SELECT id,name FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
   if(!shops.length)return send(res,404,{error:'Shop not found.'});
