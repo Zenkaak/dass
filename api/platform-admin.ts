@@ -74,7 +74,7 @@ export default async function handler(req:any,res:any){
    return send(res,200,{records:rows});
   }
   if(req.method==='GET'&&String(req.query?.action||'')==='complaints'){
-   const rows=await sql`SELECT c.id,c.buyer_name,c.buyer_phone,c.issue_type,c.details,c.payment_made,c.payment_amount_minor,c.payment_reference,c.status,c.admin_notes,c.created_at,c.updated_at,t.name AS shop_name,t.slug,o.order_number,COALESCE((SELECT json_agg(json_build_object('id',a.id,'fileName',a.file_name,'contentType',a.content_type,'sizeBytes',a.size_bytes)) FROM public.shop_complaint_attachments a WHERE a.complaint_id=c.id AND a.upload_status='ready'),'[]'::json) AS attachments FROM public.shop_complaints c JOIN public.tenants t ON t.id=c.tenant_id LEFT JOIN public.orders o ON o.id=c.order_id AND o.tenant_id=c.tenant_id ORDER BY c.created_at DESC LIMIT 500`;
+   const rows=await sql`SELECT c.id,c.buyer_name,c.buyer_phone,c.issue_type,c.details,c.payment_made,c.payment_amount_minor,c.payment_reference,c.status,c.admin_notes,c.created_at,c.updated_at,c.product_id,t.id AS tenant_id,t.name AS shop_name,t.slug,t.status AS shop_status,t.ban_reason,t.ban_expires_at,o.id AS order_id,o.order_number,o.customer_name AS order_buyer_name,o.customer_phone AS order_buyer_phone,o.customer_email AS order_buyer_email,p.name AS product_name,p.slug AS product_slug,sc.full_name AS buyer_full_name,sc.email AS buyer_email,sc.alternative_phone AS buyer_alternative_phone,sc.phone_verified_at AS buyer_phone_verified_at,u.display_name AS seller_name,u.phone AS seller_phone,u.email AS seller_email,COALESCE((SELECT json_agg(json_build_object('id',a.id,'fileName',a.file_name,'contentType',a.content_type,'sizeBytes',a.size_bytes,'scanStatus',a.scan_status)) FROM public.shop_complaint_attachments a WHERE a.complaint_id=c.id AND a.upload_status='ready'),'[]'::json) AS attachments FROM public.shop_complaints c JOIN public.tenants t ON t.id=c.tenant_id LEFT JOIN public.orders o ON o.id=c.order_id AND o.tenant_id=c.tenant_id LEFT JOIN public.products p ON p.id=c.product_id AND p.tenant_id=c.tenant_id LEFT JOIN public.store_customers sc ON sc.tenant_id=c.tenant_id AND right(regexp_replace(sc.phone,'[^0-9]','','g'),9)=right(regexp_replace(c.buyer_phone,'[^0-9]','','g'),9) LEFT JOIN public.users u ON u.id=t.created_by ORDER BY c.created_at DESC LIMIT 500`;
    return send(res,200,{complaints:rows.map((r:any)=>({...r,paymentAmount:r.payment_amount_minor==null?null:Number(r.payment_amount_minor)/100}))});
   }
   if(req.method==='POST'&&['edit_shop','edit_seller','edit_product','edit_order','edit_buyer','update_support','ban_buyer','shop_access'].includes(String(req.body?.action||''))){
@@ -134,6 +134,21 @@ export default async function handler(req:any,res:any){
    const tenantId=['edit_shop','edit_seller','shop_access'].includes(action)?id:(action==='ban_buyer'?(await sql`SELECT tenant_id FROM public.store_customers WHERE id=${id} LIMIT 1`)[0]?.tenant_id:null);
    await sql`INSERT INTO public.audit_logs(tenant_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${tenantId},${users[0].id},${'platform.'+action},${action.replace('edit_','')},${id},${JSON.stringify({changedFields:Object.keys(v).filter(k=>!['action','id'].includes(k))})}::jsonb)`;
    return send(res,200,{ok:true,record:updated[0]});
+  }
+  if(req.method==='POST'&&req.body?.action==='complaint_restrict'){
+   const id=String(req.body?.id||''),target=String(req.body?.target||''),days=Number(req.body?.durationDays||0),reason=String(req.body?.reason||'').trim().slice(0,1500);
+   if(!/^[0-9a-f-]{36}$/i.test(id)||!['buyer','shop'].includes(target)||!Number.isInteger(days)||days<0||days>365||!reason)return send(res,400,{error:'Choose a valid target, duration (0 for permanent, up to 365 days) and reason.'});
+   const report=await sql`SELECT id,tenant_id,buyer_phone FROM public.shop_complaints WHERE id=${id} LIMIT 1`;
+   if(!report.length)return send(res,404,{error:'Complaint not found.'});
+   if(target==='buyer'){
+    const updated=await sql`UPDATE public.store_customers SET is_banned=true,ban_reason=${reason},banned_until=${days>0?new Date(Date.now()+days*86400000).toISOString():null},updated_at=now() WHERE tenant_id=${report[0].tenant_id} AND right(regexp_replace(phone,'[^0-9]','','g'),9)=right(regexp_replace(${report[0].buyer_phone},'[^0-9]','','g'),9) RETURNING id,full_name,phone,is_banned,banned_until`;
+    if(!updated.length)return send(res,404,{error:'Buyer account for this shop was not found.'});
+   }else{
+    const updated=await sql`UPDATE public.tenants SET status='banned',status_before_ban=CASE WHEN status='banned' THEN status_before_ban ELSE status END,ban_reason=${reason},ban_expires_at=${days>0?new Date(Date.now()+days*86400000).toISOString():null},updated_at=now() WHERE id=${report[0].tenant_id} RETURNING id,name,slug,status,ban_expires_at`;
+    if(!updated.length)return send(res,404,{error:'Shop not found.'});
+   }
+   await sql`INSERT INTO public.audit_logs(tenant_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${report[0].tenant_id},${users[0].id},${'platform.complaint.'+target+'.restricted'},${target},${id},${JSON.stringify({durationDays:days,reason,complaintId:id})}::jsonb)`;
+   return send(res,200,{ok:true,target,durationDays:days,reason});
   }
   if(req.method==='POST'&&req.body?.action==='complaint_status'){
    const id=String(req.body?.id||''),status=String(req.body?.status||''),notes=String(req.body?.adminNotes||'').trim().slice(0,3000);
