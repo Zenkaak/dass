@@ -601,7 +601,7 @@ export default async function handler(req:any,res:any){
    return send(res,200,{shop:{name:me.shop_name,slug:me.slug,description:me.shop_description||'',logoUrl:site[0]?.logo_url||'',whatsappNumber:site[0]?.whatsapp_number||'',theme:/^#[0-9a-f]{6}$/i.test(String(site[0]?.storefront_theme||''))?site[0].storefront_theme:'#e47a13'},products:ps.map((p:any)=>productOut(p,true))});
   }
   if(req.method==='GET'&&action==='orders'){
-   const os=await sql`SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.total_minor,o.currency,o.status,o.delivery_status,o.delivery_updated_at,o.created_at,pay.status AS payment_status,pay.provider_receipt,pay.payment_message,COALESCE(json_agg(json_build_object('name',i.product_name,'quantity',i.quantity,'unitPrice',i.unit_price_minor,'lineTotal',i.line_total_minor)) FILTER (WHERE i.id IS NOT NULL),'[]'::json) AS items FROM public.orders o LEFT JOIN public.order_items i ON i.tenant_id=o.tenant_id AND i.order_id=o.id LEFT JOIN LATERAL (SELECT p.status,p.provider_receipt,COALESCE(p.provider_result->>'error',p.provider_result->'callback'->'ResultDesc'->>0,p.provider_result->'callback'->'Body'->'stkCallback'->>'ResultDesc') AS payment_message FROM public.payments p WHERE p.tenant_id=o.tenant_id AND p.order_id=o.id ORDER BY p.created_at DESC LIMIT 1) pay ON true WHERE o.tenant_id=${me.tenant_id} GROUP BY o.id,pay.status,pay.provider_receipt,pay.payment_message ORDER BY o.created_at DESC LIMIT 100`;
+   const os=await sql`SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.total_minor,o.currency,o.status,o.delivery_method,o.delivery_county,o.delivery_sub_county,o.delivery_estate,o.delivery_address,o.delivery_directions,o.pickup_station,o.delivery_status,o.delivery_updated_at,o.created_at,pay.status AS payment_status,pay.provider_receipt,pay.payment_message,COALESCE(json_agg(json_build_object('name',i.product_name,'quantity',i.quantity,'unitPrice',i.unit_price_minor,'lineTotal',i.line_total_minor)) FILTER (WHERE i.id IS NOT NULL),'[]'::json) AS items FROM public.orders o LEFT JOIN public.order_items i ON i.tenant_id=o.tenant_id AND i.order_id=o.id LEFT JOIN LATERAL (SELECT p.status,p.provider_receipt,COALESCE(p.provider_result->>'error',p.provider_result->'callback'->'ResultDesc'->>0,p.provider_result->'callback'->'Body'->'stkCallback'->>'ResultDesc') AS payment_message FROM public.payments p WHERE p.tenant_id=o.tenant_id AND p.order_id=o.id ORDER BY p.created_at DESC LIMIT 1) pay ON true WHERE o.tenant_id=${me.tenant_id} GROUP BY o.id,pay.status,pay.provider_receipt,pay.payment_message ORDER BY o.created_at DESC LIMIT 100`;
    return send(res,200,{orders:os.map((o:any)=>({...o,total:Number(o.total_minor)/100,items:o.items}))});
   }
   if(req.method==='POST'&&action==='product-image-upload'){
@@ -710,6 +710,10 @@ export default async function handler(req:any,res:any){
    if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission.'});
    const id=String(req.body?.id||''),status=String(req.body?.status||'');
    if(!['pending','confirmed','processing','fulfilled','cancelled'].includes(status))return send(res,400,{error:'Invalid order status.'});
+   if(['processing','fulfilled'].includes(status)){
+    const payment=await sql`SELECT status FROM public.payments WHERE tenant_id=${me.tenant_id} AND order_id=${id} ORDER BY created_at DESC LIMIT 1`;
+    if(payment[0]?.status!=='succeeded')return send(res,409,{error:'Confirm successful payment before processing or fulfilling this order.'});
+   }
    const r=await sql`UPDATE public.orders SET status=${status},updated_at=now() WHERE id=${id} AND tenant_id=${me.tenant_id} RETURNING id`;
    if(r.length)await audit(sql,me.tenant_id,me.user_id,'order.status.updated','order',id,{status});
    return r.length?send(res,200,{ok:true}):send(res,404,{error:'Order not found.'});
@@ -718,6 +722,10 @@ export default async function handler(req:any,res:any){
    if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission to update delivery.'});
    const id=String(req.body?.id||''),deliveryStatus=String(req.body?.deliveryStatus||'');
    if(!['pending_delivery','in_transit','delivered'].includes(deliveryStatus))return send(res,400,{error:'Invalid delivery status.'});
+   if(['in_transit','delivered'].includes(deliveryStatus)){
+    const payment=await sql`SELECT status FROM public.payments WHERE tenant_id=${me.tenant_id} AND order_id=${id} ORDER BY created_at DESC LIMIT 1`;
+    if(payment[0]?.status!=='succeeded')return send(res,409,{error:'Successful payment is required before an order can be dispatched or marked delivered.'});
+   }
    const r=await sql`UPDATE public.orders SET delivery_status=${deliveryStatus},delivery_updated_at=now(),updated_at=now() WHERE id=${id} AND tenant_id=${me.tenant_id} RETURNING id`;
    if(r.length)await audit(sql,me.tenant_id,me.user_id,'order.delivery.updated','order',id,{deliveryStatus});
    return r.length?send(res,200,{ok:true}):send(res,404,{error:'Order not found.'});
