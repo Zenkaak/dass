@@ -268,6 +268,53 @@ export default async function handler(req:any,res:any){
     WHERE o.tenant_id=${shops[0].id} AND o.customer_phone=${customer.phone} ORDER BY o.created_at DESC LIMIT 100`;
    return send(res,200,{orders:rows.map((o:any)=>({id:o.id,orderNumber:o.order_number,createdAt:o.created_at,customerName:o.customer_name,customerPhone:o.customer_phone,customerEmail:o.customer_email||'',subtotal:Number(o.subtotal_minor)/100,discount:Number(o.discount_minor||0)/100,couponCode:o.coupon_code||null,total:Number(o.total_minor)/100,orderStatus:o.status,deliveryStatus:o.delivery_status||'pending_delivery',deliveryUpdatedAt:o.delivery_updated_at,deliveryMethod:o.delivery_method||'home',deliveryCounty:o.delivery_county||'',deliverySubCounty:o.delivery_sub_county||'',deliveryEstate:o.delivery_estate||'',deliveryAddress:o.delivery_address||'',deliveryDirections:o.delivery_directions||'',pickupStation:o.pickup_station||'',paymentStatus:o.payment_status||'unpaid',receipt:o.provider_receipt||null,items:(o.items||[]).map((i:any)=>({id:i.id,name:i.name,quantity:Number(i.quantity),price:Number(i.price)/100,lineTotal:Number(i.lineTotal)/100}))}))});
   }
+  if(req.method==='POST'&&action==='customer-payment-retry'){
+   const b=req.body||{},slug=String(b.slug||'').toLowerCase().trim(),orderId=String(b.orderId||'').trim();
+   if(!slug||!orderId)return send(res,400,{error:'Order reference is required.'});
+   const shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
+   if(!shops.length)return send(res,404,{error:'Shop not found.'});
+   const tenantId=shops[0].id,buyer=await buyerSession(sql,req,tenantId);
+   if(!buyer)return send(res,401,{error:'Sign in to retry payment.'});
+   const orders=await sql`SELECT id,order_number,total_minor,status,customer_phone FROM public.orders WHERE id=${orderId} AND tenant_id=${tenantId} AND customer_phone=${buyer.phone} LIMIT 1`;
+   if(!orders.length)return send(res,404,{error:'Order not found for this buyer.'});
+   const order=orders[0];
+   if(['cancelled','refunded'].includes(String(order.status)))return send(res,409,{error:'This order is cancelled or refunded and cannot be paid.'});
+   const prior=await sql`SELECT status FROM public.payments WHERE tenant_id=${tenantId} AND order_id=${order.id} ORDER BY created_at DESC LIMIT 1`;
+   if(prior[0]?.status==='succeeded')return send(res,409,{error:'This order is already paid.'});
+   if(['initiated','pending'].includes(String(prior[0]?.status||'')))return send(res,409,{error:'A payment prompt is already awaiting a result. Please wait before retrying.'});
+   if(prior[0]?.status!=='failed'&&prior[0]?.status!=='cancelled')return send(res,409,{error:'Retry is available only after a payment has failed or been cancelled.'});
+   const configs=await sql`SELECT pc.*,pt.shortcode AS central_till_shortcode,pt.environment AS central_till_environment,pt.encrypted_credentials AS central_till_credentials,pb.shortcode AS central_paybill_shortcode,pb.environment AS central_paybill_environment,pb.encrypted_credentials AS central_paybill_credentials FROM public.tenants t LEFT JOIN public.payment_configs pc ON pc.tenant_id=t.id LEFT JOIN public.platform_payment_methods pt ON pt.method='till' LEFT JOIN public.platform_payment_methods pb ON pb.method='paybill' WHERE t.id=${tenantId} LIMIT 1`;
+   const cfg=configs[0]||{},key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');
+   const method=String(cfg.default_payout_method||cfg.payout_method||'till')==='paybill'?'paybill':'till';let payment:any=null;
+   try{
+    if(method==='till'&&!((cfg.till_party_b)||(cfg.payout_method==='till'&&cfg.party_b)))return send(res,409,{error:'The shop Till destination is not configured.'});
+    if(method==='paybill'&&!((cfg.paybill_party_b)||(cfg.payout_method==='paybill'&&cfg.party_b)))return send(res,409,{error:'The shop PayBill destination is not configured.'});
+    if(method==='paybill'&&!cfg.account_reference)return send(res,409,{error:'The shop PayBill account reference is missing.'});
+    const sellerBundle=cfg.encrypted_credentials?.ciphertext?decryptBundle(cfg.encrypted_credentials,key,'seller'):null;
+    const sellerCredentials=sellerBundle?.credentialsByType?.[method]||(sellerBundle?.consumerKey?{...sellerBundle,shortcode:cfg.shortcode,environment:cfg.environment}:null);
+    const centralBlob=method==='paybill'?cfg.central_paybill_credentials:cfg.central_till_credentials;
+    if(sellerCredentials?.consumerKey&&sellerCredentials?.consumerSecret&&sellerCredentials?.passkey){
+     payment={...sellerCredentials,partyB:method==='paybill'?(cfg.paybill_party_b||((cfg.payout_method||cfg.default_payout_method)==='paybill'?cfg.party_b:'')):(cfg.till_party_b||((cfg.payout_method||cfg.default_payout_method)==='till'?cfg.party_b:'')),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};
+    }else if(centralBlob?.data){
+     const central=decryptBundle(centralBlob,key,'platform');
+     payment={...central,shortcode:method==='paybill'?cfg.central_paybill_shortcode:cfg.central_till_shortcode,partyB:method==='paybill'?(cfg.paybill_party_b||((cfg.payout_method||cfg.default_payout_method)==='paybill'?cfg.party_b:'')):(cfg.till_party_b||((cfg.payout_method||cfg.default_payout_method)==='till'?cfg.party_b:'')),environment:method==='paybill'?cfg.central_paybill_environment:cfg.central_till_environment,accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};
+    }
+   }catch(e:any){console.error('Buyer retry credentials failed',e?.message||e);return send(res,503,{error:'Payment credentials could not be loaded securely.'});}
+   if(!payment?.consumerKey||!payment?.consumerSecret||!payment?.passkey||!payment?.shortcode||!payment?.partyB)return send(res,503,{error:'This shop has not completed the required M-PESA payment setup.'});
+   if(payment.environment!=='production')return send(res,503,{error:'Live payment retry is disabled while this shop is using sandbox credentials.'});
+   const amount=Number(order.total_minor);if(!Number.isSafeInteger(amount)||amount<1)return send(res,400,{error:'This order has an invalid total.'});
+   const paymentId=crypto.randomUUID();
+   const inserted=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result) VALUES(${tenantId},${order.id},'mpesa_daraja',${normalizePhone(buyer.phone)},${amount},'KES','initiated',${paymentId},${JSON.stringify({paymentMethod:method,source:'buyer_payment_retry'})}::jsonb) RETURNING id`;
+   try{
+    const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dass-gamma.vercel.app'))).replace(/\/$/,'')+'/api/store?action=daraja-callback';
+    const stk=await startStk(payment,order,normalizePhone(buyer.phone),amount/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):order.order_number.slice(-12),callbackUrl);
+    await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({paymentMethod:method,source:'buyer_payment_retry',merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${inserted[0].id}`;
+    return send(res,200,{ok:true,checkoutRequestId:stk.checkoutId,message:'M-PESA prompt sent. Enter your PIN to complete payment.'});
+   }catch(e:any){
+    await sql`UPDATE public.payments SET status='failed',provider_result=${JSON.stringify({paymentMethod:method,source:'buyer_payment_retry',error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${inserted[0].id}`;
+    console.error('Buyer payment retry failed',e?.message||e);return send(res,502,{error:e?.message||'Could not start the M-PESA payment prompt.'});
+   }
+  }
   if((req.method==='GET'||req.method==='POST')&&action==='customer-chat'){
    const b=req.body||{},tokenValue=String(req.method==='GET'?req.query?.token:b.token||'').trim(),orderId=String(req.method==='GET'?req.query?.orderId:b.orderId||'').trim(),slug=String(req.method==='GET'?req.query?.slug:b.slug||'').toLowerCase().trim();
    let rows:any[]=[];
