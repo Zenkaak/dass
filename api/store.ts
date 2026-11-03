@@ -23,6 +23,8 @@ async function seller(sql:any,req:any){
  return rows[0]||null;
 }
 async function audit(sql:any,tenantId:string,actorId:string,action:string,type:string,id:string|null,metadata:any={}){await sql`INSERT INTO public.audit_logs(tenant_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${tenantId},${actorId},${action},${type},${id},${JSON.stringify(metadata)}::jsonb)`}
+async function notifyBuyer(sql:any,tenantId:string,buyerPhone:string,orderId:string|null,type:string,title:string,detail:string,complaintId:string|null=null){if(!buyerPhone)return;await sql`INSERT INTO public.buyer_notifications(tenant_id,buyer_phone,order_id,complaint_id,notification_type,title,detail) VALUES(${tenantId},${buyerPhone},${orderId},${complaintId},${type},${title},${detail})`;}
+async function notifyOrderBuyer(sql:any,tenantId:string,orderId:string,type:string,title:string,detail:string){const rows=await sql`SELECT customer_phone FROM public.orders WHERE id=${orderId} AND tenant_id=${tenantId} LIMIT 1`;if(rows.length)await notifyBuyer(sql,tenantId,rows[0].customer_phone,orderId,type,title,detail);}
 const slugify=(s:string)=>s.toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,70);
 function normalizePhone(value:any){
  let p=String(value||'').trim().replace(/[\s().-]/g,'');
@@ -210,6 +212,7 @@ export default async function handler(req:any,res:any){
    if(resultCode!==0){
     const terminalStatus=resultCode===1032?'cancelled':'failed';
     await sql`UPDATE public.payments SET status=${terminalStatus},provider_result=${JSON.stringify({callback:cb,resultCode,resultDescription:String(cb.ResultDesc||'')})}::jsonb,updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
+    await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'payment_update',terminalStatus==='cancelled'?'Payment cancelled':'Payment failed','Payment for your order was '+terminalStatus+'.');
     return send(res,200,{ResultCode:0,ResultDesc:terminalStatus==='cancelled'?'Customer cancelled payment':'Payment failure recorded'});
    }
    const key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');let c:any=null;
@@ -227,6 +230,8 @@ export default async function handler(req:any,res:any){
     if(!receipt||Math.round(amount*100)!==Number(p.amount_minor)||phone.replace(/^\+/, '')!==String(p.phone).replace(/^\+/,''))throw Error('Callback details do not match the pending order.');
     await sql`UPDATE public.payments SET status='succeeded',provider_receipt=${receipt},provider_result=${JSON.stringify({callback:cb,query:checked})}::jsonb,verified_at=now(),updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
     await sql`UPDATE public.orders SET status='confirmed',updated_at=now() WHERE id=${p.order_id} AND status='pending'`;
+    await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'payment_update','Payment confirmed','Your M-PESA payment was confirmed for order '+p.order_number+'.');
+    await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'order_update','Order confirmed','Your order '+p.order_number+' has been confirmed by the shop.');
     await sql`UPDATE public.store_coupons SET used_count=used_count+1,updated_at=now() WHERE tenant_id=${p.tenant_id} AND code=(SELECT coupon_code FROM public.orders WHERE id=${p.order_id} AND tenant_id=${p.tenant_id}) AND coupon_code IS NOT NULL`;
     await sql`UPDATE public.payment_configs SET callback_verified_at=now() WHERE tenant_id=${p.tenant_id}`;
    }catch(err:any){console.error('Daraja callback verification failed',err?.message||err);}
@@ -720,6 +725,7 @@ export default async function handler(req:any,res:any){
     const rate=await sql`SELECT count(*)::int AS n FROM public.order_messages WHERE tenant_id=${me.tenant_id} AND order_id=${orderId} AND sender_type='merchant' AND created_at>now()-interval '1 minute'`;
     if(Number(rate[0]?.n||0)>=12)return send(res,429,{error:'Please wait before sending another message.'});
     await sql`INSERT INTO public.order_messages(tenant_id,order_id,sender_type,sender_user_id,message) VALUES(${me.tenant_id},${orderId},'merchant',${me.user_id},${message})`;
+    const chatOrder=await sql`SELECT order_number,customer_phone FROM public.orders WHERE id=${orderId} AND tenant_id=${me.tenant_id} LIMIT 1`;if(chatOrder.length)await notifyBuyer(sql,me.tenant_id,chatOrder[0].customer_phone,orderId,'chat_message','New shop message','You received a new message about order '+chatOrder[0].order_number+'.');
     await audit(sql,me.tenant_id,me.user_id,'order.message.sent','order',orderId,{sender:'merchant'});
    }
    const messages=await sql`SELECT id,sender_type,message,created_at FROM public.order_messages WHERE tenant_id=${me.tenant_id} AND order_id=${orderId} ORDER BY created_at ASC LIMIT 100`;
@@ -734,7 +740,7 @@ export default async function handler(req:any,res:any){
     if(payment[0]?.status!=='succeeded')return send(res,409,{error:'Confirm successful payment before processing or fulfilling this order.'});
    }
    const r=await sql`UPDATE public.orders SET status=${status},updated_at=now() WHERE id=${id} AND tenant_id=${me.tenant_id} RETURNING id`;
-   if(r.length)await audit(sql,me.tenant_id,me.user_id,'order.status.updated','order',id,{status});
+   if(r.length){await notifyOrderBuyer(sql,me.tenant_id,id,'order_update','Order status updated','Your order status is now '+status.replaceAll('_',' ')+'.');await audit(sql,me.tenant_id,me.user_id,'order.status.updated','order',id,{status});}
    return r.length?send(res,200,{ok:true}):send(res,404,{error:'Order not found.'});
   }
   if(req.method==='POST'&&action==='order-delivery-status'){
@@ -746,7 +752,7 @@ export default async function handler(req:any,res:any){
     if(payment[0]?.status!=='succeeded')return send(res,409,{error:'Successful payment is required before an order can be dispatched or marked delivered.'});
    }
    const r=await sql`UPDATE public.orders SET delivery_status=${deliveryStatus},delivery_updated_at=now(),updated_at=now() WHERE id=${id} AND tenant_id=${me.tenant_id} RETURNING id`;
-   if(r.length)await audit(sql,me.tenant_id,me.user_id,'order.delivery.updated','order',id,{deliveryStatus});
+   if(r.length){const title=deliveryStatus==='delivered'?'Order delivered':deliveryStatus==='in_transit'?'Order in transit':'Delivery status updated';await notifyOrderBuyer(sql,me.tenant_id,id,'delivery_update',title,'Your order delivery status is now '+deliveryStatus.replaceAll('_',' ')+'.');await audit(sql,me.tenant_id,me.user_id,'order.delivery.updated','order',id,{deliveryStatus});}
    return r.length?send(res,200,{ok:true}):send(res,404,{error:'Order not found.'});
   }
   if(req.method==='POST'&&action==='order'){
