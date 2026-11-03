@@ -421,6 +421,12 @@
 .seller-order-delivery-head>span{background:#e0edff;color:#0874e8}
 .seller-order-delivery-head h3{color:#17365f!important}
 .seller-order-delivery-head p{margin:4px 0 0;color:#6b809c;font-size:11px}
+.seller-order-delivery-destination{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.seller-order-delivery-destination>div{min-width:0;background:#fff;border:1px solid #dce8f7;border-radius:10px;padding:10px 12px;display:grid;gap:4px}
+.seller-order-delivery-destination>div.wide{grid-column:1/-1}
+.seller-order-delivery-destination small{color:#71859d;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.seller-order-delivery-destination strong{color:#183653;font-size:13px;font-weight:700;overflow-wrap:anywhere;white-space:pre-wrap}
+@media(max-width:560px){.seller-order-delivery-destination{grid-template-columns:1fr}.seller-order-delivery-destination>div.wide{grid-column:auto}}
 .seller-order-approved-delivery .seller-delivery-progress{gap:5px}
 .seller-order-approved-delivery .seller-delivery-progress>span{font-size:19px;flex:0 1 90px;color:#8294ad}
 .seller-order-approved-delivery .seller-delivery-progress>span.active{color:#0874e8}
