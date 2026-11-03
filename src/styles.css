@@ -3214,3 +3214,27 @@ html,body,#root{
 .seller-app[data-theme="light"] .seller-status{filter:saturate(.85)}
 .customer-order-review-link{display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:6px 9px;border:1px solid #f1d48b;border-radius:7px;background:#fff8e7;color:#8b5b00;font-size:11px;font-weight:750;cursor:pointer}
 .customer-delivered-review-prompt{display:grid;gap:4px;padding:12px 14px;border:1px solid #f0d99f;border-radius:10px;background:#fff9e9;color:#684b0b}.customer-delivered-review-prompt strong{font-size:13px}.customer-delivered-review-prompt span{font-size:11px;line-height:1.5}
+
+
+/* Keep the seller mobile shortcut bar consistent with the light dashboard theme. */
+@media(max-width:850px){
+  .seller-app[data-theme="light"] .seller-mobile-bottom{
+    background:#fff!important;
+    border-top:1px solid #dce5ef!important;
+    box-shadow:0 -6px 22px rgba(23,43,69,.08)!important;
+    color:#53677f!important;
+  }
+  .seller-app[data-theme="light"] .seller-mobile-bottom button{
+    background:transparent!important;
+    color:#71839a!important;
+  }
+  .seller-app[data-theme="light"] .seller-mobile-bottom button.active{
+    color:#1266c3!important;
+    background:#edf5ff!important;
+  }
+  .seller-app[data-theme="light"] .seller-mobile-bottom button:focus-visible{
+    outline:2px solid #2379ee!important;
+    outline-offset:-3px!important;
+    border-radius:8px;
+  }
+}
