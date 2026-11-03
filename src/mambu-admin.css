@@ -119,3 +119,20 @@
 
 /* Case alerts in seller notifications reuse the same typography and row rhythm as order alerts. */
 .seller-notice-row.dispute-notice-compact{display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;border:0;border-bottom:1px solid #e8edf3;background:#fff;text-align:left;cursor:pointer}.seller-notice-row.dispute-notice-compact .seller-notice-copy{display:grid;gap:4px;min-width:0;flex:1}.seller-notice-row.dispute-notice-compact .seller-notice-copy strong{font-size:14px!important;line-height:1.4!important;font-weight:650!important;color:#26364a!important}.seller-notice-row.dispute-notice-compact .seller-notice-copy small{font-size:13px!important;line-height:1.45!important;color:#65758a!important}.seller-notice-row.dispute-notice-compact time{font-size:12px!important;white-space:nowrap}.seller-notice-row.dispute-notice-compact .order{width:38px;height:38px;display:grid;place-items:center;flex:none;border-radius:11px;background:#e8f4f1;color:#176c59}.seller-top-user{border:0;background:transparent;cursor:pointer;text-align:left}
+
+
+/* Storefront header identity and mobile drawer stacking */
+.store-market-shop-name{min-width:0;max-width:clamp(90px,18vw,220px);margin-left:auto;padding:0 12px;color:#25364b;font-size:14px;font-weight:800;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.store-market-actions{flex-shrink:0}
+@media(max-width:700px){
+  .store-market-header{position:sticky!important;top:0!important;z-index:1400!important;isolation:isolate}
+  .market-global-drawer{position:fixed!important;z-index:1602!important;top:calc(env(safe-area-inset-top,0px) + 82px)!important;right:auto!important;bottom:0!important;left:0!important;height:auto!important;max-height:calc(100dvh - 82px)!important;transform:translateX(-105%);will-change:transform;overflow-x:hidden!important;overflow-y:auto!important}
+  .market-global-drawer.is-mobile-open{transform:translateX(0)!important}
+  .market-global-drawer-scrim{position:fixed!important;z-index:1601!important;top:calc(env(safe-area-inset-top,0px) + 78px)!important;right:0!important;bottom:0!important;left:0!important;inset:auto!important}
+  .store-market-shop-name{max-width:clamp(72px,24vw,150px);margin-left:auto;padding:0 5px;font-size:12px}
+  .store-market-brand{flex:0 0 auto}
+  .store-market-actions{gap:5px!important}
+}
+.seller-notice-row.dispute-notice-compact .seller-notice-copy strong{display:block;max-width:100%;font-size:12px!important;line-height:1.3!important;font-weight:700!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seller-notice-row.dispute-notice-compact .seller-notice-copy small{display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;max-width:100%;font-size:12px!important;line-height:1.4!important;overflow-wrap:anywhere}
+.seller-notice-row.dispute-notice-compact{align-items:center;min-height:68px;padding:10px 14px}
