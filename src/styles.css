@@ -3342,3 +3342,33 @@ html,body,#root{
 .dispute-notifications button{flex-shrink:0;border:1px solid #e9cda9;background:#fff;color:#97520e;border-radius:7px;padding:6px 9px;font-size:10px;font-weight:700}
 
 .dispute-evidence a{color:#a6530c;font-size:10px;font-weight:800;text-decoration:none;border:1px solid #efd7bc;border-radius:6px;padding:5px 8px}.dispute-evidence a:hover{background:#fff4e8}
+
+
+/* Final seller light-theme pass: remove legacy dark surfaces from every workspace tab. */
+.seller-app[data-theme="light"] .seller-content :is(.seller-feature-grid article,.seller-table-panel,.seller-editor,.seller-panel,.seller-account-card,.seller-account-hero,.seller-product-detail,.seller-product-sections>section,.seller-detail-card,.seller-order-chat,.seller-order-items,.seller-order-status-editor,.seller-order-customer-payment,.seller-order-approved,.seller-order-messages-panel){
+  background:#fff!important;border-color:#e5eaf1!important;color:#26364a!important;box-shadow:0 3px 14px rgba(25,42,64,.045)!important;
+}
+.seller-app[data-theme="light"] .seller-content :is(.seller-feature-grid article,.seller-product-sections>section) :is(h2,h3,h4,strong,b,dt,dd){color:#26364a!important}
+.seller-app[data-theme="light"] .seller-content :is(.seller-feature-grid article,.seller-page-heading,.seller-editor,.seller-table-panel,.seller-panel,.seller-account-card) :is(p,small,span,label,dt){color:#68788d}
+.seller-app[data-theme="light"] .seller-content :is(.seller-orders-toolbar input,.seller-table select,.seller-copy-field input,.seller-editor input,.seller-editor textarea,.seller-editor select,.seller-settings-form input,.seller-settings-form textarea,.seller-settings-form select){
+  background:#fff!important;color:#25364a!important;border:1px solid #dce3ec!important;color-scheme:light;
+}
+.seller-app[data-theme="light"] .seller-content :is(.seller-orders-toolbar input,.seller-editor input,.seller-editor textarea,.seller-settings-form input,.seller-settings-form textarea)::placeholder{color:#9aa7b8!important}
+.seller-app[data-theme="light"] .seller-content :is(.seller-table th,.seller-mini-head){background:#f8fafc!important;color:#64748b!important;border-color:#edf0f4!important}
+.seller-app[data-theme="light"] .seller-content :is(.seller-table td,.seller-mini-row){color:#344256!important;border-color:#edf0f4!important}
+.seller-app[data-theme="light"] .seller-content :is(.seller-table td strong,.seller-mini-row strong,.seller-product-line strong,.seller-feature-grid strong){color:#1e2d42!important}
+.seller-app[data-theme="light"] .seller-content :is(.seller-table td small,.seller-mini-row small,.seller-product-line small,.seller-feature-grid span){color:#718096!important}
+.seller-app[data-theme="light"] .seller-content :is(.seller-table-actions button,.seller-quick-panel>button:not(.seller-primary-btn),.seller-copy-field button){
+  background:#f8fafc!important;color:#475569!important;border:1px solid #e2e8f0!important;
+}
+.seller-app[data-theme="light"] .seller-content :is(.seller-quick-panel>button:not(.seller-primary-btn),.seller-table-actions button):hover{background:#fff4e8!important;color:#a94d08!important}
+.seller-app[data-theme="light"] .seller-content .seller-page-heading p,
+.seller-app[data-theme="light"] .seller-content .seller-muted,
+.seller-app[data-theme="light"] .seller-content .seller-empty{color:#718096!important}
+.seller-app[data-theme="light"] .seller-topbar-title .seller-mobile-menu-btn{background:#fff!important;color:#475569!important;border-color:#e2e8f0!important}
+.seller-app[data-theme="light"] .seller-rail .seller-nav-link.active{background:#fff2e5!important;color:#a94d08!important}
+.seller-app[data-theme="light"] .seller-rail .seller-nav-link.active svg{color:#b65b13!important}
+@media(max-width:850px){
+ .seller-app[data-theme="light"] .seller-rail{background:#fff!important;border-right:1px solid #e5eaf1!important}
+ .seller-app[data-theme="light"] .seller-mobile-bottom{background:#fff!important;border-top:1px solid #e5eaf1!important}
+}
