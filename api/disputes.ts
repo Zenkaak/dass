@@ -68,6 +68,8 @@ export default async function handler(req:any,res:any){
    const id2=row[0].id;
    await sql`INSERT INTO public.dispute_messages(tenant_id,complaint_id,sender_role,sender_id,sender_name,message) VALUES(${tenantId},${id2},${who.role},${who.senderId},${who.name},${'Report opened: '+details})`;
    await notify(sql,tenantId,id2,who.role==='buyer'?'seller':'buyer',who.role==='seller'?buyer.phone:null,who.role==='buyer'?shops[0].created_by:null,'A report has been initiated',who.role==='buyer'?'A buyer has opened a report. You can now discuss it in the dispute chat.':'The seller has opened a report concerning your order. You can now discuss it in the dispute chat.');
+   await notify(sql,tenantId,id2,who.role,who.role==='buyer'?buyer.phone:null,who.role==='seller'?who.senderId:null,'Report opened successfully','Your report is now open. Both parties can communicate in the case chat for one hour.');
+   await notify(sql,tenantId,id2,'admin',null,null,'New dispute report','A new buyer/seller report has been opened.');
    return send(res,201,{ok:true,id:id2,deadlineAt:row[0].dispute_deadline_at});
   }
   const c=await loadCase(sql,id,tenantId);if(!c)return send(res,404,{error:'Report not found.'});
