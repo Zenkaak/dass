@@ -14,7 +14,7 @@ function storageUrl(key:string,method:'PUT'|'GET',mime='application/octet-stream
  const endpoint=env('AWS_ENDPOINT_URL_S3'),access=env('AWS_ACCESS_KEY_ID'),secret=env('AWS_SECRET_ACCESS_KEY'),bucket=env('NEON_STORAGE_BUCKET')||'documents';
  if(!endpoint||!access||!secret)throw Error('ATTACHMENT_STORAGE_CONFIG');
  const host=new URL(endpoint).host,region=host.match(/\.([a-z]{2}-[a-z]+-\d)\.aws\.neon\.tech$/)?.[1]||env('AWS_REGION')||'us-east-2',now=new Date(),amz=now.toISOString().slice(0,19).replace(/[-:T]/g,'')+'Z',day=amz.slice(0,8),scope=day+'/'+region+'/s3/aws4_request',path='/'+bucket+'/'+key.split('/').map(awsEncode).join('/');
- const params:any={'X-Amz-Algorithm':'AWS4-HMAC-SHA256','X-Amz-Credential':access+'/'+scope,'X-Amz-Date':amz,'X-Amz-Expires':'300','X-Amz-SignedHeaders':'host'};
+ const params:any={'X-Amz-Algorithm':'AWS4-HMAC-SHA256','X-Amz-Credential':access+'/'+scope,'X-Amz-Date':amz,'X-Amz-Expires':'300','X-Amz-SignedHeaders':'host'};if(method==='GET')params['response-content-disposition']='attachment';
  const query=Object.keys(params).sort().map(k=>awsEncode(k)+'='+awsEncode(params[k])).join('&'),canonical=[method,path,query,'host:'+host+'\n','host','UNSIGNED-PAYLOAD'].join('\n'),toSign=['AWS4-HMAC-SHA256',amz,scope,crypto.createHash('sha256').update(canonical).digest('hex')].join('\n');
  const kd=hmac('AWS4'+secret,day),kr=hmac(kd,region),ks=hmac(hmac(kr,'s3'),'aws4_request');
  return endpoint.replace(/\/$/,'')+path+'?'+query+'&X-Amz-Signature='+hmac(ks,toSign,'hex');
