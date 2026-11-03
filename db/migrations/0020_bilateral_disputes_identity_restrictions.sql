@@ -10,7 +10,14 @@ ALTER TABLE public.shop_complaints
   ADD COLUMN IF NOT EXISTS dispute_closed_at timestamptz;
 
 UPDATE public.shop_complaints
-SET dispute_deadline_at = COALESCE(dispute_deadline_at, created_at + interval '1 hour')
+SET dispute_status = CASE
+      WHEN status = 'resolved' THEN 'closed'
+      WHEN status IN ('rejected','under_review') THEN 'escalated'
+      ELSE COALESCE(dispute_status,'open')
+    END,
+    dispute_closed_at = CASE WHEN status = 'resolved' THEN COALESCE(dispute_closed_at,updated_at,created_at) ELSE dispute_closed_at END,
+    dispute_escalated_at = CASE WHEN status IN ('rejected','under_review') THEN COALESCE(dispute_escalated_at,updated_at,created_at) ELSE dispute_escalated_at END,
+    dispute_deadline_at = CASE WHEN status = 'open' THEN COALESCE(dispute_deadline_at,created_at + interval '1 hour') ELSE dispute_deadline_at END
 WHERE dispute_deadline_at IS NULL;
 
 ALTER TABLE public.shop_complaints
