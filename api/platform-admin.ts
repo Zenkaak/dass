@@ -45,6 +45,22 @@ export default async function handler(req:any,res:any){
    }
    return send(res,400,{error:'Unsupported record type.'});
   }
+  if(req.method==='GET'&&String(req.query?.action||'')==='lookup'){
+   const type=String(req.query?.type||''),term=String(req.query?.q||'').trim().slice(0,160);
+   if(!['case','order','product'].includes(type))return send(res,400,{error:'Choose cases, orders or products.'});
+   if(term.length<2)return send(res,400,{error:'Enter at least two characters to search.'});
+   const like='%'+term+'%';
+   if(type==='order'){
+    const rows=await sql`SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.customer_email,o.status,o.delivery_status,o.total_minor,o.currency,o.created_at,t.name AS shop_name,t.slug,COALESCE((SELECT count(*)::int FROM public.order_items i WHERE i.order_id=o.id AND i.tenant_id=o.tenant_id),0) AS item_count FROM public.orders o JOIN public.tenants t ON t.id=o.tenant_id WHERE o.order_number ILIKE ${like} OR o.customer_phone ILIKE ${like} OR o.customer_email ILIKE ${like} OR o.customer_name ILIKE ${like} ORDER BY o.created_at DESC LIMIT 30`;
+    return send(res,200,{type,records:rows});
+   }
+   if(type==='product'){
+    const rows=await sql`SELECT p.id,p.name,p.slug,p.sku,p.product_type,p.price_minor,p.currency,p.stock_quantity,p.is_active,p.created_at,t.name AS shop_name,t.slug AS shop_slug FROM public.products p JOIN public.tenants t ON t.id=p.tenant_id WHERE p.name ILIKE ${like} OR p.sku ILIKE ${like} OR p.slug ILIKE ${like} OR t.name ILIKE ${like} OR t.slug ILIKE ${like} ORDER BY p.created_at DESC LIMIT 30`;
+    return send(res,200,{type,records:rows});
+   }
+   const rows=await sql`SELECT c.id,c.buyer_name,c.buyer_phone,c.issue_type,c.details,c.payment_made,c.payment_amount_minor,c.payment_reference,c.status,c.admin_notes,c.created_at,c.updated_at,c.product_id,t.id AS tenant_id,t.name AS shop_name,t.slug,t.status AS shop_status,t.ban_reason,t.ban_expires_at,s.contact_phone AS shop_contact_phone,s.contact_email AS shop_contact_email,s.whatsapp_number AS shop_whatsapp,o.id AS order_id,o.order_number,o.status AS order_status,o.delivery_status,o.total_minor AS order_total_minor,o.delivery_method,o.delivery_county,o.delivery_sub_county,o.delivery_estate,o.delivery_address,o.delivery_directions,o.customer_name AS order_buyer_name,o.customer_phone AS order_buyer_phone,o.customer_email AS order_buyer_email,p.name AS product_name,p.slug AS product_slug,sc.full_name AS buyer_full_name,sc.email AS buyer_email,sc.alternative_phone AS buyer_alternative_phone,sc.phone_verified_at AS buyer_phone_verified_at,sc.is_banned AS buyer_is_banned,sc.banned_until AS buyer_banned_until,u.display_name AS seller_name,u.phone AS seller_phone,u.email AS seller_email,COALESCE((SELECT json_agg(json_build_object('id',a.id,'fileName',a.file_name,'contentType',a.content_type,'sizeBytes',a.size_bytes,'scanStatus',a.scan_status)) FROM public.shop_complaint_attachments a WHERE a.complaint_id=c.id AND a.upload_status='ready'),'[]'::json) AS attachments,COALESCE((SELECT json_agg(json_build_object('id',pay.id,'receipt',pay.provider_receipt,'status',pay.status,'amount_minor',pay.amount_minor,'created_at',pay.created_at) ORDER BY pay.created_at DESC) FROM public.payments pay WHERE pay.order_id=o.id AND pay.tenant_id=o.tenant_id),'[]'::json) AS order_payments FROM public.shop_complaints c JOIN public.tenants t ON t.id=c.tenant_id LEFT JOIN public.sites s ON s.tenant_id=t.id LEFT JOIN public.orders o ON o.id=c.order_id AND o.tenant_id=c.tenant_id LEFT JOIN public.products p ON p.id=c.product_id AND p.tenant_id=c.tenant_id LEFT JOIN public.store_customers sc ON sc.tenant_id=c.tenant_id AND right(regexp_replace(sc.phone,'[^0-9]','','g'),9)=right(regexp_replace(c.buyer_phone,'[^0-9]','','g'),9) LEFT JOIN public.users u ON u.id=t.created_by WHERE c.id::text ILIKE ${like} OR c.buyer_phone ILIKE ${like} OR c.buyer_name ILIKE ${like} OR c.details ILIKE ${like} OR o.order_number ILIKE ${like} OR sc.email ILIKE ${like} ORDER BY c.created_at DESC LIMIT 30`;
+   return send(res,200,{type,records:rows.map((r:any)=>({...r,paymentAmount:r.payment_amount_minor==null?null:Number(r.payment_amount_minor)/100}))});
+  }
   if(req.method==='GET'&&['orders','products','buyers','transactions','shops','support','audit'].includes(String(req.query?.action||''))){
    const action=String(req.query.action);
    if(action==='orders'){
