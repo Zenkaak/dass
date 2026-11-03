@@ -239,6 +239,7 @@ export function StorefrontFlow({
   useEffect(()=>{try{localStorage.setItem('dasnet-buyer-notifications-'+slug,String(inAppNotificationsEnabled))}catch{}},[slug,inAppNotificationsEnabled]);
   const [profileName,setProfileName]=useState(initialCustomerName),[profileEmail,setProfileEmail]=useState(initialCustomerEmail),[profilePhoneAlt,setProfilePhoneAlt]=useState(''),[profileAddress,setProfileAddress]=useState(initialCustomerAddress),[profileSaving,setProfileSaving]=useState(false),[profileMessage,setProfileMessage]=useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mpesa');
+  const [paymentModal,setPaymentModal]=useState<PaymentMethod|null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('home');
@@ -575,19 +576,17 @@ export function StorefrontFlow({
   }
 
   function renderCheckoutPayment() {
-    const choices: { id: PaymentMethod; title: string; description: string; mark: string; available: boolean }[] = [
-      { id: 'mpesa', title: 'Pay with M-PESA', description: 'Primary payment · Secure STK Push to your phone', mark: 'M-PESA', available: true },
-      { id: 'card', title: 'Pay with bank card', description: 'Visa and Mastercard · Coming soon', mark: 'Coming soon', available: false },
-      { id: 'airtel', title: 'Pay with Airtel Money', description: 'Airtel Money · Coming soon', mark: 'Coming soon', available: false },
-      { id: 'delivery', title: 'Pay on delivery', description: 'Coming soon', mark: 'Coming soon', available: false },
+    const choices: { id: 'mpesa'|'airtel'|'card'; label: string; configured: boolean; hint: string }[] = [
+      { id: 'mpesa', label: 'MPESA', configured: true, hint: 'Safaricom M-PESA' },
+      { id: 'airtel', label: 'AIRTEL', configured: false, hint: 'Airtel Money is not configured for this shop' },
+      { id: 'card', label: 'CARD', configured: false, hint: 'Card payments are not configured for this shop' },
     ];
-    const paymentOption = (choice: typeof choices[number]) => (
-      <button type="button" key={choice.id} className={`customer-payment-option${paymentMethod === choice.id ? ' is-selected' : ''}`} onClick={() => choice.available && setPaymentMethod(choice.id)} aria-pressed={paymentMethod === choice.id} disabled={!choice.available}>
-        <span className="customer-radio" aria-hidden="true">{paymentMethod === choice.id && <i />}</span>
-        <span className="customer-payment-copy"><strong>{choice.title}</strong><small>{choice.description}</small></span>
-        <b className="customer-payment-mark">{choice.mark}</b>
-      </button>
-    );
+    const choosePayment=(choice:typeof choices[number])=>{
+      if(!choice.configured){setCheckoutError(choice.hint+'.');return;}
+      setCheckoutError('');
+      setPaymentMethod(choice.id);
+      setPaymentModal(choice.id);
+    };
     return (
       <section className="customer-flow">
         <FlowHeading title="Select payment" onBack={() => onNavigate('cart')} backLabel="Back to cart" />
@@ -602,21 +601,22 @@ export function StorefrontFlow({
             </div>
             <div className="customer-panel">
               <div className="customer-panel-heading"><h2>Payment method</h2><span>Choose one</span></div>
-              <div className="customer-payment-list">
-                <h3 className="customer-payment-group-title">Pre-pay now</h3>
-                {choices.slice(0, 3).map(paymentOption)}
-                <div className="customer-card-preview"><strong>M-PESA checkout</strong><span>Choose the number that should receive the STK Push. It can be different from your buyer account number.</span><label className="customer-form-label" style={{display:'block',marginTop:12}}>Phone number to pay with<input type="tel" inputMode="tel" autoComplete="tel" placeholder="07XX XXX XXX or 2547XXXXXXXX" value={paymentPhone} onChange={e=>setPaymentPhone(e.target.value)} required maxLength={16}/><small>The M-PESA prompt will be sent to this number. Your order remains pending until Safaricom confirms payment.</small></label></div>
-                <h3 className="customer-payment-group-title customer-payment-delivery-title">Pay on delivery</h3>
-                {paymentOption(choices[3])}
+              <div className="customer-payment-method-tabs" role="group" aria-label="Choose payment method">
+                {choices.map(choice=><button type="button" key={choice.id} className={'customer-payment-method-tab '+choice.id+(paymentMethod===choice.id?' is-selected':'')+(!choice.configured?' is-unavailable':'')} onClick={()=>choosePayment(choice)} aria-pressed={paymentMethod===choice.id} aria-disabled={!choice.configured} title={choice.configured?choice.hint:choice.hint}>
+                  <strong>{choice.label}</strong><small>{choice.configured?'Select':'Not configured'}</small>
+                </button>)}
               </div>
+              <p className="customer-payment-config-note">Only payment methods configured by this shop can be selected. Choose a method to open its secure payment window.</p>
             </div>
           </div>
           {renderSummary()}
         </div>
+        {checkoutError&&<p className="customer-checkout-error" role="alert">{checkoutError}</p>}
         <div className="customer-flow-actions">
           <button type="button" className="customer-secondary-button" onClick={() => onNavigate('cart')}>Modify cart</button>
           <button type="button" className="customer-primary-button" disabled={!lines.length || paymentMethod !== 'mpesa'} onClick={() => onNavigate('checkout/review')}>Continue <ArrowRight size={17} /></button>
         </div>
+        {paymentModal==='mpesa'&&<div className="customer-payment-modal-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setPaymentModal(null)}}><section className="customer-payment-modal" role="dialog" aria-modal="true" aria-labelledby="customer-payment-modal-title"><button type="button" className="customer-payment-modal-close" aria-label="Close payment window" onClick={()=>setPaymentModal(null)}>×</button><span className="customer-payment-modal-mark">M</span><h2 id="customer-payment-modal-title">Pay with M-PESA</h2><p>Enter the Kenyan mobile number that should receive the STK payment prompt. It can be different from your buyer account number.</p><label className="customer-form-label">Phone number to pay with<input type="tel" inputMode="tel" autoComplete="tel" placeholder="07XX XXX XXX or 2547XXXXXXXX" value={paymentPhone} onChange={e=>setPaymentPhone(e.target.value)} required maxLength={16}/></label><small className="customer-payment-modal-note">Your order remains pending until Safaricom confirms payment.</small><div className="customer-payment-modal-actions"><button type="button" className="customer-secondary-button" onClick={()=>setPaymentModal(null)}>Cancel</button><button type="button" className="customer-primary-button" onClick={()=>setPaymentModal(null)}>Use M-PESA <ArrowRight size={16}/></button></div></section></div>}
       </section>
     );
   }
