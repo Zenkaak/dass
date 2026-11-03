@@ -3472,8 +3472,33 @@
   .store-page .store-market-actions .store-market-cart{width:38px!important;height:38px!important;flex-basis:38px;margin-left:1px!important}
 }
 
-/* Never let the floating WhatsApp shortcut cover cart or checkout actions. */
-.store-page.is-checkout-route .store-whatsapp-float,
-.store-page:has(.customer-mobile-checkout-bar) .store-whatsapp-float,
-.store-page:has(.customer-checkout-grid) .store-whatsapp-float,
-.store-page:has(.customer-checkout-stack) .store-whatsapp-float{display:none!important;pointer-events:none!important}
+/* The floating WhatsApp shortcut stays available except when it would cover a control. */
+.store-whatsapp-float.is-obscured{display:none!important;pointer-events:none!important}
+
+/* Compact horizontal payment method selector. */
+.customer-payment-method-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:16px}
+.customer-payment-method-tab{min-width:0;min-height:66px;border:1px solid #e2e8ef;border-radius:12px;background:#fff;color:#253746;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;transition:border-color .16s,background .16s,box-shadow .16s}
+.customer-payment-method-tab strong{font-size:13px;letter-spacing:.045em;font-weight:800}
+.customer-payment-method-tab small{font-size:10px;color:#778491}
+.customer-payment-method-tab.is-selected{border:2px solid var(--store-accent,#e47a13);background:color-mix(in srgb,var(--store-accent,#e47a13) 7%,white);box-shadow:0 0 0 2px color-mix(in srgb,var(--store-accent,#e47a13) 10%,transparent)}
+.customer-payment-method-tab.is-unavailable{background:#f8fafc;color:#9aa4ad;cursor:not-allowed}
+.customer-payment-method-tab.is-unavailable small{color:#a1aab3}
+.customer-payment-config-note{margin:0 16px 16px;color:#788591;font-size:11px;line-height:1.5}
+.customer-payment-modal-backdrop{position:fixed;inset:0;z-index:2000;display:grid;place-items:center;padding:18px;background:rgba(13,25,38,.56);backdrop-filter:blur(3px)}
+.customer-payment-modal{position:relative;width:min(440px,100%);padding:26px;border:1px solid #e7ebef;border-radius:18px;background:#fff;box-shadow:0 24px 80px rgba(0,0,0,.24)}
+.customer-payment-modal-close{position:absolute;top:12px;right:14px;width:34px;height:34px;border:0;border-radius:50%;background:#f1f4f6;color:#526170;font-size:23px;cursor:pointer}
+.customer-payment-modal-mark{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:#e8f8ee;color:#168348;font-size:22px;font-weight:900}
+.customer-payment-modal h2{margin:16px 0 7px;color:#203342;font-size:21px}
+.customer-payment-modal>p{margin:0 0 18px;color:#6f7d89;font-size:13px;line-height:1.55}
+.customer-payment-modal .customer-form-label{display:grid;gap:7px;font-size:12px;font-weight:700}
+.customer-payment-modal .customer-form-label input{width:100%;min-height:46px;padding:10px 12px;border:1px solid #dce3e9;border-radius:9px;font:inherit;font-size:15px}
+.customer-payment-modal-note{display:block;margin-top:9px;color:#7a8792;font-size:11px;line-height:1.45}
+.customer-payment-modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:22px}
+.customer-payment-modal-actions button{min-height:42px}
+@media(max-width:480px){
+ .customer-payment-method-tabs{gap:7px;padding:13px}
+ .customer-payment-method-tab{min-height:60px;border-radius:10px}
+ .customer-payment-method-tab strong{font-size:12px}
+ .customer-payment-method-tab small{font-size:9px}
+ .customer-payment-modal{padding:22px 18px}
+}
