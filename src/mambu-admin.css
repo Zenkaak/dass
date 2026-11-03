@@ -110,3 +110,6 @@
 .dispute-notification-row span{min-width:0;display:grid;gap:4px}.dispute-notification-row strong{font-size:12px}.dispute-notification-row small{font-size:11px;color:#65758a;line-height:1.4}.dispute-notification-row time{flex:none;color:#8390a0;font-size:10px}
 .dispute-verdict{margin:16px 0;padding:16px;border:1px solid #b8d9ca;border-left:4px solid #16835d;border-radius:12px;background:#effaf4;color:#145c43}
 .dispute-verdict strong{display:block;font-size:14px}.dispute-verdict p{margin:8px 0;color:#285c49;font-size:13px;line-height:1.6;white-space:pre-wrap}.dispute-verdict small{color:#477866;font-size:10px}
+
+.seller-alert.auth-message.success{background:#e8f7ef!important;border:1px solid #9bd4b4!important;color:#176344!important;font-weight:650!important;opacity:1!important}
+.dispute-notification-title>span{display:flex;align-items:center;gap:10px}.dispute-notification-refresh{display:grid;place-items:center;width:30px;height:30px;border:1px solid #dce5ef;border-radius:8px;background:#fff;color:#35516b;cursor:pointer}.dispute-notification-refresh:disabled{opacity:.55;cursor:wait}
