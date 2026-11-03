@@ -138,7 +138,7 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
 
  if(buyerPage==='buyer-login'||buyerPage==='buyer-signup') return <BuyerAuthPage slug={slug} shopName={shop?.name||'This shop'} initial={buyerPage==='buyer-signup'?'signup':'login'} onBack={()=>navigateBuyerPage('store')} onAuthenticated={(customer)=>{setBuyerCustomer(customer);const target=buyerReturnPage||'account';setBuyerPage(target);setAccountMenuOpen(false);const next=buyerPath(target);if(window.location.pathname!==next)window.history.pushState({buyerPage:target},'',next)}}/>;
  return <main className={"store-page"+(buyerPage==='faqs'?" store-faq-route":"")} data-store-theme='marketplace' style={{'--store-accent':shop?.theme||'#e47a13'} as any}>
-  <div className="store-shop-promo-banner" aria-label="Store promotion"><span className="store-shop-promo-mark">✦</span><span>SHOP THE COLLECTION</span></div>
+  <div className="store-shop-promo-banner" aria-label="Store promotion"><span>SHOP THE COLLECTION</span></div>
   <nav className="store-market-header" aria-label="Store navigation">
     <div className="store-market-header-inner">
       <button type="button" className="store-market-menu" aria-label="Open categories" aria-expanded={mobileSidebarOpen} onClick={()=>setMobileSidebarOpen(v=>!v)}><Menu size={21}/></button>
