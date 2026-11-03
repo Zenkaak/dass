@@ -1,4 +1,4 @@
-import storeHandler from './store';
+import storeHandler from './store.js';
 
 const PAYMENT_ACTIONS=new Set(['customer-payment-retry','order-prompt','daraja-callback']);
 
