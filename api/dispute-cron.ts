@@ -10,9 +10,9 @@ async function verifyGitHubOidc(token:string){
   const aud=Array.isArray(claims.aud)?claims.aud:[claims.aud];
   const now=Math.floor(Date.now()/1000);
   if(claims.iss!=='https://token.actions.githubusercontent.com'||!aud.includes('dasnet-dispute-escalation'))return false;
-  if(claims.repository!=='Zenkaak/dass'||claims.ref!=='refs/heads/main')return false;
-  if(claims.workflow_ref!=='Zenkaak/dass/.github/workflows/escalate-disputes.yml@refs/heads/main')return false;
-  if(claims.sub!=='repo:Zenkaak/dass:ref:refs/heads/main')return false;
+  if(String(claims.repository||'').toLowerCase()!=='zenkaak/dass'||claims.ref!=='refs/heads/main')return false;
+  if(String(claims.workflow_ref||'').toLowerCase()!=='zenkaak/dass/.github/workflows/escalate-disputes.yml@refs/heads/main')return false;
+  if(String(claims.sub||'').toLowerCase()!=='repo:zenkaak/dass:ref:refs/heads/main')return false;
   if(!Number.isFinite(claims.exp)||claims.exp<now-15||!Number.isFinite(claims.iat)||claims.iat>now+30)return false;
   const response=await fetch('https://token.actions.githubusercontent.com/.well-known/jwks',{headers:{'Accept':'application/json'}});
   if(!response.ok)return false;
