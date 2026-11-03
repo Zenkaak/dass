@@ -76,10 +76,10 @@ export default async function handler(req:any,res:any){
   }
   const c=await loadCase(sql,id,tenantId);if(!c)return send(res,404,{error:'Report not found.'});
   if(who.role==='buyer'&&phoneOf(who.phone)!==phoneOf(c.buyer_phone))return send(res,403,{error:'This report belongs to another buyer.'});
-  if(['resolved','closed','escalated'].includes(c.dispute_status))return send(res,409,{error:'This dispute is closed or escalated and can no longer be changed by the parties.'});
+  if(['resolved','closed'].includes(c.dispute_status)||(c.dispute_status==='escalated'&&who.role!=='admin'))return send(res,409,{error:'This dispute is closed or escalated and can no longer be changed by the parties.'});
   if(action==='message'){
    const message=String(b.message||'').trim().slice(0,4000);if(!message)return send(res,400,{error:'Write a message first.'});
-   if(c.dispute_deadline_at&&new Date(c.dispute_deadline_at).getTime()<=Date.now())return send(res,409,{error:'The one-hour resolution window has ended. This case is being escalated.'});
+   if(who.role!=='admin'&&c.dispute_deadline_at&&new Date(c.dispute_deadline_at).getTime()<=Date.now())return send(res,409,{error:'The one-hour resolution window has ended. This case is being escalated.'});
    const mentions=[...new Set((message.match(/@(buyer|seller)\b/gi)||[]).map((x:string)=>x.toLowerCase().slice(1)))];
    const row=await sql`INSERT INTO public.dispute_messages(tenant_id,complaint_id,sender_role,sender_id,sender_name,message,mentions) VALUES(${tenantId},${id},${who.role},${who.senderId},${who.name},${message},${mentions}) RETURNING id,created_at`;
    const target=who.role==='buyer'?'seller':'buyer';
@@ -88,7 +88,7 @@ export default async function handler(req:any,res:any){
    for(const mention of mentions){const mr=mention==='buyer'?'buyer':'seller';if(mr!==who.role)await notify(sql,tenantId,id,mr,mr==='buyer'?c.buyer_phone:null,mr==='seller'?c.seller_user_id:null,'You were mentioned in a dispute',who.name+' mentioned @'+mr+' in the report chat.');}
    return send(res,201,{ok:true,message:row[0]});
   }
-  if(action==='propose_resolution'){
+  if(action==='propose_resolution'){if(who.role==='admin')return send(res,403,{error:'Only the buyer or seller can propose a resolution.'});
    const note=String(b.note||'').trim().slice(0,1500);if(note.length<5)return send(res,400,{error:'Describe how the issue has been resolved.'});
    const next=who.role==='buyer'?'seller':'buyer';
    const updated=await sql`UPDATE public.shop_complaints SET dispute_status='resolution_pending',resolution_proposed_by=${who.role},resolution_note=${note},resolution_proposed_at=now(),updated_at=now() WHERE id=${id} AND tenant_id=${tenantId} AND dispute_status='open' AND dispute_deadline_at>now() RETURNING id`;
@@ -97,7 +97,7 @@ export default async function handler(req:any,res:any){
    await sql`INSERT INTO public.dispute_messages(tenant_id,complaint_id,sender_role,sender_id,sender_name,message) VALUES(${tenantId},${id},${who.role},${who.senderId},${who.name},${'Proposed resolution: '+note})`;
    return send(res,200,{ok:true,status:'resolution_pending'});
   }
-  if(action==='respond_resolution'){
+  if(action==='respond_resolution'){if(who.role==='admin')return send(res,403,{error:'Only the other party can accept or reject a resolution.'});
    if(c.dispute_status!=='resolution_pending'||c.resolution_proposed_by===who.role)return send(res,409,{error:'Only the other party can respond to this resolution proposal.'});
    const decision=String(b.decision||'');if(!['accept','reject'].includes(decision))return send(res,400,{error:'Choose accept or reject.'});
    const status=decision==='accept'?'closed':'escalated';
