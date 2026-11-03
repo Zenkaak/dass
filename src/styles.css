@@ -3331,3 +3331,12 @@ html,body,#root{
 .dispute-propose{display:grid;gap:9px}.dispute-escalated{display:flex;gap:10px;align-items:flex-start;background:#f7fafc}.dispute-escalated>svg{color:#b65b13;flex-shrink:0}
 @media(max-width:850px){.disputes-layout{grid-template-columns:1fr}.dispute-case-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.dispute-row{align-items:flex-start}.dispute-row .dispute-status{font-size:9px}}
 @media(max-width:560px){.disputes-heading{align-items:flex-start}.disputes-heading h2{font-size:19px}.dispute-case{padding:10px}.dispute-row{padding:12px 10px;gap:8px}.dispute-row-copy small:last-child{max-width:42vw}.dispute-case-summary{gap:12px}.dispute-message{max-width:95%}.dispute-resolution>div{display:grid}.dispute-resolution button{justify-content:center}}
+
+
+.dispute-notifications{background:#fffaf2;border:1px solid #f1ddc4;border-radius:11px;padding:12px 14px;display:grid;gap:8px}
+.dispute-notifications>strong{font-size:11px;color:#92500f}
+.dispute-notifications>div{display:flex;align-items:center;gap:12px;justify-content:space-between;padding-top:8px;border-top:1px solid #f3e7d9}
+.dispute-notifications span{display:grid;gap:3px;min-width:0}
+.dispute-notifications b{font-size:11px;color:#344256}
+.dispute-notifications small{font-size:10px;color:#718096;line-height:1.4}
+.dispute-notifications button{flex-shrink:0;border:1px solid #e9cda9;background:#fff;color:#97520e;border-radius:7px;padding:6px 9px;font-size:10px;font-weight:700}
