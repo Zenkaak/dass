@@ -107,7 +107,7 @@ function productOut(p:any,includeMetadata=false){
   if(value.startsWith('s3://'))return storageUrl(value.slice(5).replace(/^documents\//,''),'GET');
   return value;
  }).filter(Boolean);
- return {id:p.id,name:p.name,description:p.description,images,imageUrl:images[0]||'',category:String(p.metadata?.category||(p.product_type==='data_bundle'?'Data bundles':p.product_type==='digital'?'Digital products':'Shop products')),spotlight:Boolean(p.metadata?.spotlight),testProduct:Boolean(p.metadata?.test_product),type:p.product_type,price:Number(p.price_minor)/100,currency:p.currency,stockQuantity:p.stock_quantity,active:p.is_active,sku:p.sku||'',...(includeMetadata?{metadata:p.metadata||{}}:{})};
+ return {id:p.id,name:p.name,description:p.description,images,imageUrl:images[0]||'',category:String(p.metadata?.category||(p.product_type==='data_bundle'?'Data bundles':p.product_type==='digital'?'Digital products':'Shop products')),spotlight:Boolean(p.metadata?.spotlight),testProduct:Boolean(p.metadata?.test_product),type:p.product_type,price:Number(p.price_minor)/100,currency:p.currency,stockQuantity:p.stock_quantity,active:p.is_active,sku:p.sku||'',ratingAverage:Number(p.rating_average||0),ratingCount:Number(p.rating_count||0),...(includeMetadata?{metadata:p.metadata||{}}:{})};
 }
 export default async function handler(req:any,res:any){
  res.setHeader('Cache-Control','no-store');
@@ -123,7 +123,7 @@ export default async function handler(req:any,res:any){
    const slug=String(req.query?.slug||'').toLowerCase();
    // Fetch shop metadata and its active catalogue in one database round-trip.
    const rows=await sql`SELECT t.id AS tenant_id,t.name AS shop_name,t.slug,s.description,s.logo_url,s.whatsapp_number,s.contact_phone,s.contact_email,s.terms_and_conditions,s.privacy_policy,s.return_policy,s.delivery_policy,s.storefront_faqs,s.storefront_theme,
-    COALESCE((SELECT jsonb_agg(jsonb_build_object('id',p.id,'name',p.name,'description',p.description,'product_type',p.product_type,'price_minor',p.price_minor,'currency',p.currency,'stock_quantity',p.stock_quantity,'is_active',p.is_active,'images',p.images,'metadata',p.metadata,'sku',p.sku) ORDER BY p.created_at DESC) FROM public.products p WHERE p.tenant_id=t.id AND p.is_active=true),'[]'::jsonb) AS products
+    COALESCE((SELECT jsonb_agg(jsonb_build_object('id',p.id,'name',p.name,'description',p.description,'product_type',p.product_type,'price_minor',p.price_minor,'currency',p.currency,'stock_quantity',p.stock_quantity,'is_active',p.is_active,'images',p.images,'metadata',p.metadata,'sku',p.sku,'rating_average',COALESCE((SELECT AVG(pr.rating)::numeric(3,2) FROM public.product_reviews pr WHERE pr.tenant_id=p.tenant_id AND pr.product_id=p.id AND pr.status='published'),0),'rating_count',(SELECT COUNT(*)::int FROM public.product_reviews pr WHERE pr.tenant_id=p.tenant_id AND pr.product_id=p.id AND pr.status='published')) ORDER BY p.created_at DESC) FROM public.products p WHERE p.tenant_id=t.id AND p.is_active=true),'[]'::jsonb) AS products
     FROM public.tenants t LEFT JOIN public.sites s ON s.tenant_id=t.id WHERE t.slug=${slug} AND t.status IN ('trial','active') LIMIT 1`;
    if(!rows.length)return send(res,404,{error:'Shop not found'});
    const row=rows[0];
