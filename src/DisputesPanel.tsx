@@ -9,10 +9,10 @@ async function api(slug:string,method:'GET'|'POST',payload:any={}){
  if(!r.ok)throw Error(d.error||'Dispute request failed.');return d;
 }
 export function DisputesPanel({slug,viewerRole='seller',initialReportId,embedded=false,orders=[]}:{slug:string;viewerRole?:'buyer'|'seller'|'admin';initialReportId?:string;embedded?:boolean;orders?:Array<{id:string;label:string}>}){
- const [reports,setReports]=useState<Report[]>([]),[notifications,setNotifications]=useState<any[]>([]),[active,setActive]=useState<Report|null>(null),[messages,setMessages]=useState<any[]>([]),[attachments,setAttachments]=useState<any[]>([]);
+ const [reports,setReports]=useState<Report[]>([]),[active,setActive]=useState<Report|null>(null),[messages,setMessages]=useState<any[]>([]),[attachments,setAttachments]=useState<any[]>([]);
  const [draft,setDraft]=useState(''),[resolution,setResolution]=useState(''),[buyerPhone,setBuyerPhone]=useState(''),[details,setDetails]=useState(''),[issueType,setIssueType]=useState('other'),[orderId,setOrderId]=useState(''),[newFiles,setNewFiles]=useState<File[]>([]),[showCreate,setShowCreate]=useState(false);
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[serverNow,setServerNow]=useState(Date.now());
- const load=useCallback(async()=>{if(!slug)return;const d=await api(slug,'GET');setReports(d.reports||[]);setNotifications(d.notifications||[]);setServerNow(Date.now());},[slug]);
+ const load=useCallback(async()=>{if(!slug)return;const d=await api(slug,'GET');setReports(d.reports||[]);setServerNow(Date.now());},[slug]);
  const openCase=useCallback(async(id:string)=>{const d=await api(slug,'GET',{id});setActive(d.report);setMessages(d.messages||[]);setAttachments(d.attachments||[]);setServerNow(Date.now());},[slug]);
  useEffect(()=>{load().catch(e=>setError(e.message));const poll=window.setInterval(()=>{load().catch(()=>{});},15000);const tick=window.setInterval(()=>setServerNow(Date.now()),1000);return()=>{window.clearInterval(poll);window.clearInterval(tick)}},[load]);
  useEffect(()=>{if(initialReportId)openCase(initialReportId).catch(e=>setError(e.message));},[initialReportId,openCase]);
