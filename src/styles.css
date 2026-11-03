@@ -3340,3 +3340,5 @@ html,body,#root{
 .dispute-notifications b{font-size:11px;color:#344256}
 .dispute-notifications small{font-size:10px;color:#718096;line-height:1.4}
 .dispute-notifications button{flex-shrink:0;border:1px solid #e9cda9;background:#fff;color:#97520e;border-radius:7px;padding:6px 9px;font-size:10px;font-weight:700}
+
+.dispute-evidence a{color:#a6530c;font-size:10px;font-weight:800;text-decoration:none;border:1px solid #efd7bc;border-radius:6px;padding:5px 8px}.dispute-evidence a:hover{background:#fff4e8}
