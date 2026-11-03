@@ -9,12 +9,12 @@ function token(req:any){const c=String(req.headers.cookie||'').split(';').map((s
 async function buyerSession(sql:any,req:any,tenantId:string){
  const global=token(req);
  if(global){
-  const rows=await sql`SELECT c.id,c.full_name,c.phone,c.email,c.address FROM public.auth_sessions s JOIN public.store_customers c ON c.user_id=s.user_id AND c.tenant_id=${tenantId} WHERE s.token_hash=${hash(global)} AND s.expires_at>now() AND c.is_banned=false LIMIT 1`;
+  const rows=await sql`SELECT c.id,c.full_name,c.phone,c.email,c.address FROM public.auth_sessions s JOIN public.store_customers c ON c.user_id=s.user_id AND c.tenant_id=${tenantId} WHERE s.token_hash=${hash(global)} AND s.expires_at>now() AND c.is_banned=false AND (c.banned_until IS NULL OR c.banned_until<=now()) LIMIT 1`;
   return rows[0]||null;
  }
  const raw=String(req.headers.cookie||'').split(';').map((x:string)=>x.trim()).find((x:string)=>x.startsWith('das_buyer_session='));let legacy='';try{legacy=raw?decodeURIComponent(raw.slice('das_buyer_session='.length)):''}catch{}
  if(!legacy)return null;
- const rows=await sql`SELECT c.id,c.full_name,c.phone,c.email,c.address FROM public.store_customer_sessions s JOIN public.store_customers c ON c.id=s.customer_id AND c.tenant_id=s.tenant_id WHERE s.tenant_id=${tenantId} AND s.token_hash=${hash(legacy)} AND s.expires_at>now() AND c.user_id IS NOT NULL AND c.is_banned=false LIMIT 1`;
+ const rows=await sql`SELECT c.id,c.full_name,c.phone,c.email,c.address FROM public.store_customer_sessions s JOIN public.store_customers c ON c.id=s.customer_id AND c.tenant_id=s.tenant_id WHERE s.tenant_id=${tenantId} AND s.token_hash=${hash(legacy)} AND s.expires_at>now() AND c.user_id IS NOT NULL AND c.is_banned=false AND (c.banned_until IS NULL OR c.banned_until<=now()) LIMIT 1`;
  return rows[0]||null;
 }
 async function seller(sql:any,req:any){
@@ -23,6 +23,8 @@ async function seller(sql:any,req:any){
  return rows[0]||null;
 }
 async function audit(sql:any,tenantId:string,actorId:string,action:string,type:string,id:string|null,metadata:any={}){await sql`INSERT INTO public.audit_logs(tenant_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${tenantId},${actorId},${action},${type},${id},${JSON.stringify(metadata)}::jsonb)`}
+async function notifyBuyer(sql:any,tenantId:string,buyerPhone:string,orderId:string|null,type:string,title:string,detail:string,complaintId:string|null=null){if(!buyerPhone)return;await sql`INSERT INTO public.buyer_notifications(tenant_id,buyer_phone,order_id,complaint_id,notification_type,title,detail) VALUES(${tenantId},${buyerPhone},${orderId},${complaintId},${type},${title},${detail})`;}
+async function notifyOrderBuyer(sql:any,tenantId:string,orderId:string,type:string,title:string,detail:string){const rows=await sql`SELECT customer_phone FROM public.orders WHERE id=${orderId} AND tenant_id=${tenantId} LIMIT 1`;if(rows.length)await notifyBuyer(sql,tenantId,rows[0].customer_phone,orderId,type,title,detail);}
 const slugify=(s:string)=>s.toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,70);
 function normalizePhone(value:any){
  let p=String(value||'').trim().replace(/[\s().-]/g,'');
@@ -112,7 +114,11 @@ export default async function handler(req:any,res:any){
  if(!['GET','POST','DELETE'].includes(req.method)){res.setHeader('Allow','GET, POST, DELETE');return send(res,405,{error:'Method not allowed'});}
  let action='';
  try{
-  const sql=db();action=String(req.query?.action||req.body?.action||'');
+  const sql=db();
+  // Expire temporary moderation automatically without requiring a scheduled job.
+  await sql`UPDATE public.tenants SET status=COALESCE(NULLIF(status_before_ban,'banned'),'active'),status_before_ban=NULL,ban_reason=NULL,ban_expires_at=NULL,updated_at=now() WHERE status='banned' AND ban_expires_at IS NOT NULL AND ban_expires_at<=now()`;
+  await sql`UPDATE public.store_customers SET is_banned=false,ban_reason=NULL,banned_until=NULL,updated_at=now() WHERE is_banned=true AND banned_until IS NOT NULL AND banned_until<=now()`;
+  action=String(req.query?.action||req.body?.action||'');
   if(req.method==='GET'&&action==='storefront'){
    const slug=String(req.query?.slug||'').toLowerCase();
    // Fetch shop metadata and its active catalogue in one database round-trip.
@@ -165,18 +171,33 @@ export default async function handler(req:any,res:any){
    }
    return send(res,400,{error:'Invalid attachment operation.'});
   }
+  if(req.method==='GET'&&action==='buyer-reports'){
+   const slug=String(req.query?.slug||'').toLowerCase().trim(),shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
+   if(!shops.length)return send(res,404,{error:'Shop not found.'});
+   const buyer=await buyerSession(sql,req,shops[0].id);if(!buyer)return send(res,401,{error:'Sign in to view your reports.'});
+   const reports=await sql`SELECT c.id,c.issue_type,c.details,c.status,c.admin_notes,c.created_at,c.updated_at,c.payment_made,c.payment_amount_minor,c.payment_reference,o.id AS order_id,o.order_number,p.id AS product_id,p.name AS product_name FROM public.shop_complaints c LEFT JOIN public.orders o ON o.id=c.order_id AND o.tenant_id=c.tenant_id LEFT JOIN public.products p ON p.id=c.product_id AND p.tenant_id=c.tenant_id WHERE c.tenant_id=${shops[0].id} AND right(regexp_replace(c.buyer_phone,'[^0-9]','','g'),9)=right(regexp_replace(${buyer.phone},'[^0-9]','','g'),9) ORDER BY c.created_at DESC LIMIT 100`;
+   return send(res,200,{reports:reports.map((r:any)=>({...r,paymentAmount:r.payment_amount_minor==null?null:Number(r.payment_amount_minor)/100}))});
+  }
+  if(req.method==='GET'&&action==='buyer-notifications'){
+   const slug=String(req.query?.slug||'').toLowerCase().trim(),shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
+   if(!shops.length)return send(res,404,{error:'Shop not found.'});
+   const buyer=await buyerSession(sql,req,shops[0].id);if(!buyer)return send(res,401,{error:'Sign in to view notifications.'});
+   const rows=await sql`SELECT n.id,n.notification_type,n.title,n.detail,n.created_at,n.read_at,n.order_id,o.order_number,n.complaint_id FROM public.buyer_notifications n LEFT JOIN public.orders o ON o.id=n.order_id AND o.tenant_id=n.tenant_id WHERE n.tenant_id=${shops[0].id} AND right(regexp_replace(n.buyer_phone,'[^0-9]','','g'),9)=right(regexp_replace(${buyer.phone},'[^0-9]','','g'),9) ORDER BY n.created_at DESC LIMIT 50`;
+   return send(res,200,{notifications:rows});
+  }
   if(req.method==='POST'&&action==='complaint'){
    const b=req.body||{},slug=String(b.slug||'').toLowerCase().trim(),shops=await sql`SELECT id,name FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
    if(!shops.length)return send(res,404,{error:'Shop not found.'});
    const tenantId=shops[0].id,buyer=await buyerSession(sql,req,tenantId);if(!buyer)return send(res,401,{error:'Sign in before submitting a report.'});
-   const issue=String(b.issueType||''),details=String(b.details||'').trim().slice(0,5000),orderId=String(b.orderId||'').trim()||null,paymentMade=Boolean(b.paymentMade),paymentAmount=Number(b.paymentAmount||0),paymentReference=String(b.paymentReference||'').trim().slice(0,100),attachmentIds=Array.isArray(b.attachmentIds)?[...new Set(b.attachmentIds.map((x:any)=>String(x)))].slice(0,8):[];
+   const issue=String(b.issueType||''),details=String(b.details||'').trim().slice(0,5000),orderId=String(b.orderId||'').trim()||null,productId=String(b.productId||'').trim()||null,paymentMade=Boolean(b.paymentMade),paymentAmount=Number(b.paymentAmount||0),paymentReference=String(b.paymentReference||'').trim().slice(0,100),attachmentIds=Array.isArray(b.attachmentIds)?[...new Set(b.attachmentIds.map((x:any)=>String(x)))].slice(0,8):[];
    if(!['payment','delivery','product_quality','wrong_item','seller_communication','refund_return','shop_listing','other'].includes(issue))return send(res,400,{error:'Choose a valid issue type.'});
    if(details.length<10)return send(res,400,{error:'Describe the issue in at least 10 characters.'});
    if(orderId){const owned=await sql`SELECT id FROM public.orders WHERE id=${orderId} AND tenant_id=${tenantId} AND right(regexp_replace(customer_phone,'[^0-9]','','g'),9)=right(regexp_replace(${buyer.phone},'[^0-9]','','g'),9) LIMIT 1`;if(!owned.length)return send(res,403,{error:'The selected order does not belong to your buyer account.'});}
+   if(productId){const product=await sql`SELECT id FROM public.products WHERE id=${productId} AND tenant_id=${tenantId} LIMIT 1`;if(!product.length)return send(res,400,{error:'The selected product does not belong to this shop.'});if(orderId){const ordered=await sql`SELECT id FROM public.order_items WHERE tenant_id=${tenantId} AND order_id=${orderId} AND product_id=${productId} LIMIT 1`;if(!ordered.length)return send(res,400,{error:'The selected product is not part of the selected order.'});}}
    if(paymentMade&&(!Number.isFinite(paymentAmount)||paymentAmount<=0))return send(res,400,{error:'Enter the amount paid.'});
    const files=attachmentIds.length?await sql`SELECT id FROM public.shop_complaint_attachments WHERE id=ANY(${attachmentIds}::uuid[]) AND tenant_id=${tenantId} AND buyer_phone=${buyer.phone} AND upload_status='ready' AND scan_status='unscanned' AND complaint_id IS NULL`:[];
    if(files.length!==attachmentIds.length)return send(res,400,{error:'One or more attachments are not verified. Upload and scan them again.'});
-   const inserted=await sql`INSERT INTO public.shop_complaints(tenant_id,order_id,buyer_phone,buyer_name,issue_type,details,payment_made,payment_amount_minor,payment_reference) VALUES(${tenantId},${orderId},${buyer.phone},${String(buyer.full_name||'Buyer').slice(0,120)},${issue},${details},${paymentMade},${paymentMade?Math.round(paymentAmount*100):null},${paymentReference||null}) RETURNING id,created_at,status`;
+   const inserted=await sql`INSERT INTO public.shop_complaints(tenant_id,order_id,product_id,buyer_phone,buyer_name,issue_type,details,payment_made,payment_amount_minor,payment_reference) VALUES(${tenantId},${orderId},${productId},${buyer.phone},${String(buyer.full_name||'Buyer').slice(0,120)},${issue},${details},${paymentMade},${paymentMade?Math.round(paymentAmount*100):null},${paymentReference||null}) RETURNING id,created_at,status`;
    if(attachmentIds.length)await sql`UPDATE public.shop_complaint_attachments SET complaint_id=${inserted[0].id} WHERE id=ANY(${attachmentIds}::uuid[]) AND tenant_id=${tenantId} AND buyer_phone=${buyer.phone}`;
    return send(res,201,{ok:true,report:{id:inserted[0].id,shopName:shops[0].name,status:inserted[0].status,createdAt:inserted[0].created_at},message:'Your report has been sent to DASNET for review.'});
   }
@@ -191,6 +212,7 @@ export default async function handler(req:any,res:any){
    if(resultCode!==0){
     const terminalStatus=resultCode===1032?'cancelled':'failed';
     await sql`UPDATE public.payments SET status=${terminalStatus},provider_result=${JSON.stringify({callback:cb,resultCode,resultDescription:String(cb.ResultDesc||'')})}::jsonb,updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
+    await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'payment_update',terminalStatus==='cancelled'?'Payment cancelled':'Payment failed','Payment for your order was '+terminalStatus+'.');
     return send(res,200,{ResultCode:0,ResultDesc:terminalStatus==='cancelled'?'Customer cancelled payment':'Payment failure recorded'});
    }
    const key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');let c:any=null;
@@ -208,6 +230,8 @@ export default async function handler(req:any,res:any){
     if(!receipt||Math.round(amount*100)!==Number(p.amount_minor)||phone.replace(/^\+/, '')!==String(p.phone).replace(/^\+/,''))throw Error('Callback details do not match the pending order.');
     await sql`UPDATE public.payments SET status='succeeded',provider_receipt=${receipt},provider_result=${JSON.stringify({callback:cb,query:checked})}::jsonb,verified_at=now(),updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
     await sql`UPDATE public.orders SET status='confirmed',updated_at=now() WHERE id=${p.order_id} AND status='pending'`;
+    await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'payment_update','Payment confirmed','Your M-PESA payment was confirmed.');
+    await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'order_update','Order confirmed','Your order has been confirmed by the shop.');
     await sql`UPDATE public.store_coupons SET used_count=used_count+1,updated_at=now() WHERE tenant_id=${p.tenant_id} AND code=(SELECT coupon_code FROM public.orders WHERE id=${p.order_id} AND tenant_id=${p.tenant_id}) AND coupon_code IS NOT NULL`;
     await sql`UPDATE public.payment_configs SET callback_verified_at=now() WHERE tenant_id=${p.tenant_id}`;
    }catch(err:any){console.error('Daraja callback verification failed',err?.message||err);}
@@ -701,6 +725,7 @@ export default async function handler(req:any,res:any){
     const rate=await sql`SELECT count(*)::int AS n FROM public.order_messages WHERE tenant_id=${me.tenant_id} AND order_id=${orderId} AND sender_type='merchant' AND created_at>now()-interval '1 minute'`;
     if(Number(rate[0]?.n||0)>=12)return send(res,429,{error:'Please wait before sending another message.'});
     await sql`INSERT INTO public.order_messages(tenant_id,order_id,sender_type,sender_user_id,message) VALUES(${me.tenant_id},${orderId},'merchant',${me.user_id},${message})`;
+    const chatOrder=await sql`SELECT order_number,customer_phone FROM public.orders WHERE id=${orderId} AND tenant_id=${me.tenant_id} LIMIT 1`;if(chatOrder.length)await notifyBuyer(sql,me.tenant_id,chatOrder[0].customer_phone,orderId,'chat_message','New shop message','You received a new message about order '+chatOrder[0].order_number+'.');
     await audit(sql,me.tenant_id,me.user_id,'order.message.sent','order',orderId,{sender:'merchant'});
    }
    const messages=await sql`SELECT id,sender_type,message,created_at FROM public.order_messages WHERE tenant_id=${me.tenant_id} AND order_id=${orderId} ORDER BY created_at ASC LIMIT 100`;
@@ -715,7 +740,7 @@ export default async function handler(req:any,res:any){
     if(payment[0]?.status!=='succeeded')return send(res,409,{error:'Confirm successful payment before processing or fulfilling this order.'});
    }
    const r=await sql`UPDATE public.orders SET status=${status},updated_at=now() WHERE id=${id} AND tenant_id=${me.tenant_id} RETURNING id`;
-   if(r.length)await audit(sql,me.tenant_id,me.user_id,'order.status.updated','order',id,{status});
+   if(r.length){await notifyOrderBuyer(sql,me.tenant_id,id,'order_update','Order status updated','Your order status is now '+status.replaceAll('_',' ')+'.');await audit(sql,me.tenant_id,me.user_id,'order.status.updated','order',id,{status});}
    return r.length?send(res,200,{ok:true}):send(res,404,{error:'Order not found.'});
   }
   if(req.method==='POST'&&action==='order-delivery-status'){
@@ -727,7 +752,7 @@ export default async function handler(req:any,res:any){
     if(payment[0]?.status!=='succeeded')return send(res,409,{error:'Successful payment is required before an order can be dispatched or marked delivered.'});
    }
    const r=await sql`UPDATE public.orders SET delivery_status=${deliveryStatus},delivery_updated_at=now(),updated_at=now() WHERE id=${id} AND tenant_id=${me.tenant_id} RETURNING id`;
-   if(r.length)await audit(sql,me.tenant_id,me.user_id,'order.delivery.updated','order',id,{deliveryStatus});
+   if(r.length){const title=deliveryStatus==='delivered'?'Order delivered':deliveryStatus==='in_transit'?'Order in transit':'Delivery status updated';await notifyOrderBuyer(sql,me.tenant_id,id,'delivery_update',title,'Your order delivery status is now '+deliveryStatus.replaceAll('_',' ')+'.');await audit(sql,me.tenant_id,me.user_id,'order.delivery.updated','order',id,{deliveryStatus});}
    return r.length?send(res,200,{ok:true}):send(res,404,{error:'Order not found.'});
   }
   if(req.method==='POST'&&action==='order'){
