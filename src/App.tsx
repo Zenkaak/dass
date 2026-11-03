@@ -372,7 +372,7 @@ function SellerDashboard({initialOrderNumber=''}:{initialOrderNumber?:string}){
     </>}</>}
    </div>
   </section>
-  <nav className="seller-mobile-bottom" aria-label="Seller shortcuts">{[{id:'overview',label:'Home',icon:LayoutDashboard},{id:'orders',label:'Orders',icon:ShoppingBag},{id:'products',label:'Products',icon:Package},{id:'transactions',label:'Activity',icon:WalletCards},{id:'account',label:'Account',icon:Store}].map(x=><button type="button" key={x.id} className={tab===x.id?'active':''} onClick={()=>navigateSellerTab(x.id)}><x.icon size={18}/><span>{x.label}</span></button>)}</nav>
+  <nav className="seller-mobile-bottom" aria-label="Seller shortcuts">{[{id:'overview',label:'Home',icon:LayoutDashboard},{id:'orders',label:'Orders',icon:ShoppingBag},{id:'products',label:'Products',icon:Package},{id:'reports',label:'Reports',icon:MessageCircle},{id:'account',label:'Account',icon:Store}].map(x=><button type="button" key={x.id} className={tab===x.id?'active':''} onClick={()=>navigateSellerTab(x.id)}><x.icon size={18}/><span>{x.label}</span></button>)}</nav>
  {shop?.whatsappNumber&&<a className="store-whatsapp-float" href={`https://wa.me/${shop.whatsappNumber.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer" aria-label={`Chat with ${shop.name} on WhatsApp`}><MessageCircle size={23}/></a>}
  </main>;
 }
