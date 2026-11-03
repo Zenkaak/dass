@@ -3,9 +3,7 @@ import crypto from 'node:crypto';
 const env=(k:string)=>(process.env[k]||'').trim();
 export default async function handler(req:any,res:any){
  res.setHeader('Cache-Control','no-store');
- const secret=env('CRON_SECRET');
- const auth=String(req.headers.authorization||'');
- if(!secret||auth!=='Bearer '+secret)return res.status(401).json({error:'Unauthorized'});
+ if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});
  try{
   const url=env('POSTGRES_URL')||env('DATABASE_URL')||env('NEON_DATABASE_URL');if(!url)return res.status(503).json({error:'Database not configured'});
   const sql=neon(url);
