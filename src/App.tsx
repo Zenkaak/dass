@@ -119,6 +119,30 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
   useEffect(()=>{fetch('/api/buyer-auth?action=session&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'}).then(async r=>{if(!r.ok)return null;const d=await r.json();return d.customer||null}).then(setBuyerCustomer).catch(()=>setBuyerCustomer(null)).finally(()=>setBuyerAuthChecked(true))},[slug]);
  useEffect(()=>{if(!buyerAuthChecked||buyerCustomer)return;const protectedPage=['account','profile','orders','order-detail','order-tracking','inbox','wishlist','recently-viewed','address-book','vouchers','reviews','notifications','followed-shops','newsletter','notification-settings','public-profile','account-management','close-account','checkout/payment','checkout/review'];if(protectedPage.includes(buyerPage)){setBuyerReturnPage(buyerPage);setBuyerPage('buyer-login');const next=buyerPath('buyer-login');if(window.location.pathname!==next)window.history.replaceState({buyerPage:'buyer-login'},'',next)}},[buyerAuthChecked,buyerCustomer,buyerPage]);
  useEffect(()=>{const syncBuyerPage=()=>{const parts=window.location.pathname.replace(/^\/+|\/+$/g,'').split('/').filter(Boolean);const hostIsTenant=window.location.hostname.toLowerCase().endsWith('.dasmarket.co.ke')&&!['www','app'].includes(window.location.hostname.toLowerCase().split('.')[0]);const routeParts=hostIsTenant?parts:(parts[0]===slug?parts.slice(1):[]);if(routeParts.length>=3){const key=decodeURIComponent(routeParts[routeParts.length-1]);const found=products.find(p=>p.sku===key||p.id===key);if(found){setSelectedProduct(found);setBuyerPage('product-detail');return}}if(routeParts.length>=1){const parent=storefrontCategories.find(c=>categorySlug(c.name)===routeParts[0]);if(parent){const child=routeParts[1];const selected=child?(child==='all-games'||child.startsWith('all-')?parent.name:(parent.subcategories.find(c=>(parent.name==='Gaming'&&child==='video-games'&&c==='Video Games')||categorySlug(c)===child)||parent.name)):parent.name;setFilter(selected);setBuyerPage('store');setSelectedProduct(null);return}}const routeKey=routeParts.map(part=>part.toLowerCase()).join('/');if(routeKey==='my-reports/reports/new'||routeKey==='my-reports/reports'){setBuyerInitialReportId('');setBuyerPage('my-reports');setSelectedProduct(null);return}setBuyerPage(routeKey||'store');setSelectedProduct(null)};syncBuyerPage();window.addEventListener('popstate',syncBuyerPage);return()=>window.removeEventListener('popstate',syncBuyerPage)},[slug,products]); useEffect(()=>{if(!selectedProduct)return;setRecentlyViewed(current=>{const next=[selectedProduct.id,...current.filter(id=>id!==selectedProduct.id)].slice(0,12);try{localStorage.setItem('dasnet-recently-viewed-'+slug,JSON.stringify(next))}catch{}return next})},[selectedProduct?.id,slug]);
+ // Hide the storefront WhatsApp shortcut only while it physically overlaps an interactive control.
+ useEffect(()=>{
+  const checkOverlap=()=>{
+   const floating=document.querySelector<HTMLElement>('.store-whatsapp-float');
+   if(!floating)return;
+   const a=floating.getBoundingClientRect();
+   const pad=5;
+   const overlaps=Array.from(document.querySelectorAll<HTMLElement>('button,a,[role="tab"]')).some(el=>{
+    if(el===floating||floating.contains(el)||el.closest('.store-whatsapp-float'))return false;
+    const style=window.getComputedStyle(el);
+    if(style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0||el.getAttribute('aria-hidden')==='true')return false;
+    const b=el.getBoundingClientRect();
+    if(b.width<1||b.height<1)return false;
+    return a.left<b.right+pad&&a.right>b.left-pad&&a.top<b.bottom+pad&&a.bottom>b.top-pad;
+   });
+   floating.classList.toggle('is-obscured',overlaps);
+  };
+  checkOverlap();
+  const observer=new MutationObserver(checkOverlap);
+  observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','aria-hidden']});
+  window.addEventListener('resize',checkOverlap);
+  window.addEventListener('scroll',checkOverlap,true);
+  return()=>{observer.disconnect();window.removeEventListener('resize',checkOverlap);window.removeEventListener('scroll',checkOverlap,true)};
+ },[buyerPage,shop?.whatsappNumber]);
  // Customer conversations belong in the customer workspace, not on the public storefront.
  useEffect(()=>{if(!chatToken&&!chatOrderId)return;let live=true;const query=chatToken?'token='+encodeURIComponent(chatToken):'orderId='+encodeURIComponent(chatOrderId)+'&slug='+encodeURIComponent(slug);const refresh=()=>fetch('/api/store?action=customer-chat&'+query,{credentials:'same-origin',cache:'no-store'}).then(async r=>{const d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Could not load conversation');if(live){setChatMessages(d.messages||[]);setChatAttachments(d.attachments||[]);setChatOrder(d.order||null)}}).catch(e=>{if(live)setChatError(e.message)});refresh();const timer=window.setInterval(refresh,5000);return()=>{live=false;window.clearInterval(timer)}},[chatToken,chatOrderId,slug]);
  useEffect(()=>{const status=String(chatOrder?.paymentStatus||'');if(previousPaymentStatus.current&&previousPaymentStatus.current!=='succeeded'&&status==='succeeded'){setPaymentCelebration(true);const timer=window.setTimeout(()=>setPaymentCelebration(false),5200);previousPaymentStatus.current=status;return()=>window.clearTimeout(timer)}if(status)previousPaymentStatus.current=status},[chatOrder?.paymentStatus]);
