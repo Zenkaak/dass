@@ -230,8 +230,8 @@ export default async function handler(req:any,res:any){
     if(!receipt||Math.round(amount*100)!==Number(p.amount_minor)||phone.replace(/^\+/, '')!==String(p.phone).replace(/^\+/,''))throw Error('Callback details do not match the pending order.');
     await sql`UPDATE public.payments SET status='succeeded',provider_receipt=${receipt},provider_result=${JSON.stringify({callback:cb,query:checked})}::jsonb,verified_at=now(),updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
     await sql`UPDATE public.orders SET status='confirmed',updated_at=now() WHERE id=${p.order_id} AND status='pending'`;
-    await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'payment_update','Payment confirmed','Your M-PESA payment was confirmed for order '+p.order_number+'.');
-    await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'order_update','Order confirmed','Your order '+p.order_number+' has been confirmed by the shop.');
+    await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'payment_update','Payment confirmed','Your M-PESA payment was confirmed.');
+    await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'order_update','Order confirmed','Your order has been confirmed by the shop.');
     await sql`UPDATE public.store_coupons SET used_count=used_count+1,updated_at=now() WHERE tenant_id=${p.tenant_id} AND code=(SELECT coupon_code FROM public.orders WHERE id=${p.order_id} AND tenant_id=${p.tenant_id}) AND coupon_code IS NOT NULL`;
     await sql`UPDATE public.payment_configs SET callback_verified_at=now() WHERE tenant_id=${p.tenant_id}`;
    }catch(err:any){console.error('Daraja callback verification failed',err?.message||err);}
