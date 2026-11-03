@@ -275,7 +275,7 @@ export default async function handler(req:any,res:any){
    if(!shops.length)return send(res,404,{error:'Shop not found.'});
    const tenantId=shops[0].id,buyer=await buyerSession(sql,req,tenantId);
    if(!buyer)return send(res,401,{error:'Sign in to retry payment.'});
-   const orders=await sql`SELECT id,order_number,total_minor,status,customer_phone FROM public.orders WHERE id=${orderId} AND tenant_id=${tenantId} AND customer_phone=${buyer.phone} LIMIT 1`;
+   const orders=await sql`SELECT id,order_number,total_minor,status,customer_phone FROM public.orders WHERE id=${orderId} AND tenant_id=${tenantId} AND right(regexp_replace(customer_phone,'[^0-9]','','g'),9)=right(regexp_replace(${buyer.phone},'[^0-9]','','g'),9) LIMIT 1`;
    if(!orders.length)return send(res,404,{error:'Order not found for this buyer.'});
    const order=orders[0];if(!paymentPhone)return send(res,400,{error:'Enter a valid Kenyan M-PESA phone number to receive the payment prompt.'});
    if(['cancelled','refunded'].includes(String(order.status)))return send(res,409,{error:'This order is cancelled or refunded and cannot be paid.'});
