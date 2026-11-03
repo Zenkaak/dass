@@ -3372,3 +3372,39 @@ html,body,#root{
  .seller-app[data-theme="light"] .seller-rail{background:#fff!important;border-right:1px solid #e5eaf1!important}
  .seller-app[data-theme="light"] .seller-mobile-bottom{background:#fff!important;border-top:1px solid #e5eaf1!important}
 }
+
+
+/* Reports & complaints: dedicated create flow */
+.disputes-list-view{display:grid;gap:16px;min-width:0}
+.disputes-list-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:17px 19px;background:#fff;border:1px solid #e5eaf0;border-radius:14px}
+.disputes-list-toolbar>div{display:grid;gap:3px}
+.disputes-list-toolbar strong{font-size:16px;color:#1d2a3b}
+.disputes-list-toolbar span{font-size:12px;color:#7b8796}
+.disputes-new-report-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 17px;border:0;border-radius:10px;background:#1769aa;color:#fff;font-weight:750;font-size:13px;cursor:pointer;box-shadow:0 4px 12px #1769aa24}
+.disputes-new-report-button:hover{background:#12588f}
+.disputes-new-report-button>span{font-size:20px;line-height:1}
+.dispute-create-page{display:grid;gap:15px;max-width:820px;width:100%;margin:0 auto;padding:22px;background:#fff;border:1px solid #e2e8f0;border-radius:16px;box-shadow:0 8px 28px #1720330b}
+.dispute-create-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;padding-bottom:15px;border-bottom:1px solid #edf0f4}
+.dispute-create-heading>div{display:grid;gap:5px}
+.dispute-create-heading small{font-size:10px;font-weight:800;letter-spacing:1.5px;color:#b66a18}
+.dispute-create-heading strong{font-size:19px;color:#1e2d40}
+.dispute-create-heading p{margin:0;color:#748195;font-size:12px;line-height:1.5}
+.dispute-create-page>label{display:grid;gap:7px;color:#35445a;font-size:12px;font-weight:700}
+.dispute-create-page input:not([type=file]),.dispute-create-page select,.dispute-create-page textarea{width:100%;min-height:44px;padding:11px 12px;border:1px solid #dce3eb;border-radius:9px;background:#fbfcfe;color:#26364a;font:inherit;font-weight:450;font-size:13px;outline:none}
+.dispute-create-page textarea{min-height:125px;resize:vertical;line-height:1.55}
+.dispute-create-page input:focus,.dispute-create-page select:focus,.dispute-create-page textarea:focus{border-color:#6aa4d6;box-shadow:0 0 0 3px #1769aa14}
+.dispute-create-page label>small,.dispute-file-picker>small{font-size:11px;color:#8793a3;font-weight:450;line-height:1.45}
+.dispute-file-picker{padding:14px;border:1px dashed #b9c9d9;border-radius:11px;background:#f8fafc}
+.dispute-file-picker>span{display:flex;align-items:center;gap:8px;color:#245f91}
+.dispute-file-picker>span small{margin-left:auto;color:#8591a0;font-weight:500}
+.dispute-file-picker input[type=file]{width:100%;font-size:12px;color:#65748a}
+.dispute-new-file-list{display:grid;gap:7px}
+.dispute-new-file-list>div{display:flex;align-items:center;gap:9px;min-width:0;padding:9px 11px;border:1px solid #e5eaf0;border-radius:9px;background:#fbfcfe}
+.dispute-new-file-list>div>span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:#33445b}
+.dispute-new-file-list>div>small{font-size:10px;color:#7e8b9b;white-space:nowrap}
+.dispute-new-file-list>div>button{border:0;background:transparent;color:#b34242;font-size:11px;font-weight:700;cursor:pointer}
+.dispute-create-actions{display:flex;align-items:center;gap:9px;padding-top:6px}
+.dispute-create-actions>button:first-child{min-height:44px;padding:0 18px;border:0;border-radius:9px;background:#1769aa;color:white;font-size:13px;font-weight:750;cursor:pointer}
+.dispute-create-actions>button:disabled{opacity:.55;cursor:not-allowed}
+.dispute-create-cancel{min-height:40px;padding:0 13px;border:1px solid #dce3eb;border-radius:9px;background:#fff;color:#566579;font-size:12px;font-weight:700;cursor:pointer}
+@media(max-width:600px){.disputes-list-toolbar{align-items:flex-start;flex-direction:column}.disputes-new-report-button{width:100%}.dispute-create-page{padding:15px}.dispute-create-heading strong{font-size:17px}.dispute-file-picker>span{flex-wrap:wrap}.dispute-file-picker>span small{margin-left:0;width:100%}.dispute-create-actions{flex-direction:column;align-items:stretch}.dispute-create-actions>button{width:100%}}
