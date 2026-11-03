@@ -3471,3 +3471,9 @@
   .store-page .store-market-actions .store-market-account{width:36px!important;height:38px!important}
   .store-page .store-market-actions .store-market-cart{width:38px!important;height:38px!important;flex-basis:38px;margin-left:1px!important}
 }
+
+/* Never let the floating WhatsApp shortcut cover cart or checkout actions. */
+.store-page.is-checkout-route .store-whatsapp-float,
+.store-page:has(.customer-mobile-checkout-bar) .store-whatsapp-float,
+.store-page:has(.customer-checkout-grid) .store-whatsapp-float,
+.store-page:has(.customer-checkout-stack) .store-whatsapp-float{display:none!important;pointer-events:none!important}
