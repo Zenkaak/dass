@@ -28,7 +28,19 @@ export function DisputesPanel({slug,viewerRole='seller',initialReportId,embedded
  async function upload(file:File){if(!active)return;await run(async()=>{const d=await api(slug,'POST',{action:'attachment-upload',id:active.id,fileName:file.name,contentType:file.type,size:file.size});const put=await fetch(d.uploadUrl,{method:'PUT',headers:{'Content-Type':file.type},body:file});if(!put.ok)throw Error('Evidence upload failed.');await api(slug,'POST',{action:'attachment-complete',id:active.id,attachmentId:d.attachmentId});await openCase(active.id);setNotice('Evidence uploaded and verified.')})}
  const statusLabel=(r:Report)=>String(r.dispute_status||'open').replaceAll('_',' ');
  return <section className={'disputes-workspace'+(embedded?' disputes-embedded':'')}>
-  {!embedded&&<div className="disputes-heading"><div><span className="disputes-eyebrow">CASE MANAGEMENT</span><h2>Reports & complaints</h2><p>Resolve buyer and seller concerns transparently. Each case has a one-hour resolution window.</p></div><div className="disputes-heading-actions">{viewerRole!=='admin'&&<button type="button" className="disputes-new-report-button" onClick={()=>setShowCreate(true)}><span>＋</span> Open new report</button>}<button className="disputes-refresh" onClick={()=>load().catch(e=>setError(e.message))}><RefreshCw size={16}/> Refresh</button></div></div>}
+   {!embedded && (
+    <div className="disputes-heading">
+     <div>
+      <span className="disputes-eyebrow">CASE MANAGEMENT</span>
+      <h2>Reports & complaints</h2>
+      <p>Resolve buyer and seller concerns transparently. Each case has a one-hour resolution window.</p>
+     </div>
+     <div className="disputes-heading-actions">
+      {viewerRole !== 'admin' && <button type="button" className="disputes-new-report-button" onClick={() => setShowCreate(true)}><span>＋</span> Open new report</button>}
+      <button className="disputes-refresh" onClick={() => load().catch(e => setError(e.message))}><RefreshCw size={16}/> Refresh</button>
+     </div>
+    </div>
+   )}
   {error&&<div className="disputes-alert error"><AlertTriangle size={16}/>{error}</div>}{notice&&<div className="disputes-alert success">{notice}</div>}
   {active?<div className="dispute-case">
    <div className="dispute-case-top">{!embedded&&<button className="disputes-back" onClick={()=>setActive(null)}><ArrowLeft size={16}/> All reports</button>}<span className={'dispute-status '+String(active.dispute_status||'open')}>{statusLabel(active)}</span></div>
