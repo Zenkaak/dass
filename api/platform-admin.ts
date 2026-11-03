@@ -49,7 +49,7 @@ export default async function handler(req:any,res:any){
    const type=String(req.query?.type||''),term=String(req.query?.q||'').trim().slice(0,160);
    if(!['case','order','product'].includes(type))return send(res,400,{error:'Choose cases, orders or products.'});
    if(term.length<2)return send(res,400,{error:'Enter at least two characters to search.'});
-   const like='%'+term+'%',digits=term.replace(/[^0-9]/g,''),caseTerm=term.replace(/^case\\s*#?/i,'').trim(),caseLike='%'+caseTerm+'%';
+   const like='%'+term+'%',digits=term.replace(/[^0-9]/g,''),caseTerm=term.replace(/^case\s*#?/i,'').trim(),caseLike='%'+caseTerm+'%';
    if(type==='order'){
     const rows=await sql`SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.customer_email,o.status,o.delivery_status,o.total_minor,o.currency,o.created_at,t.name AS shop_name,t.slug,COALESCE((SELECT count(*)::int FROM public.order_items i WHERE i.order_id=o.id AND i.tenant_id=o.tenant_id),0) AS item_count FROM public.orders o JOIN public.tenants t ON t.id=o.tenant_id WHERE o.order_number ILIKE ${like} OR o.customer_phone ILIKE ${like} OR o.customer_email ILIKE ${like} OR o.customer_name ILIKE ${like} OR (${digits.length>=5} AND regexp_replace(o.customer_phone,'[^0-9]','','g') ILIKE ${'%'+digits+'%'}) ORDER BY o.created_at DESC LIMIT 30`;
     return send(res,200,{type,records:rows});
