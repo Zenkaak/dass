@@ -138,13 +138,12 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
 
  if(buyerPage==='buyer-login'||buyerPage==='buyer-signup') return <BuyerAuthPage slug={slug} shopName={shop?.name||'This shop'} initial={buyerPage==='buyer-signup'?'signup':'login'} onBack={()=>navigateBuyerPage('store')} onAuthenticated={(customer)=>{setBuyerCustomer(customer);const target=buyerReturnPage||'account';setBuyerPage(target);setAccountMenuOpen(false);const next=buyerPath(target);if(window.location.pathname!==next)window.history.pushState({buyerPage:target},'',next)}}/>;
  return <main className={"store-page"+(buyerPage==='faqs'?" store-faq-route":"")} data-store-theme='marketplace' style={{'--store-accent':shop?.theme||'#e47a13'} as any}>
-  <div className="store-shop-promo-banner" aria-label={(shop?.name||'Shop')+' storefront banner'}><span className="store-shop-promo-mark">✦</span><strong>{shop?.name||'Welcome to our shop'}</strong><span>SHOP THE COLLECTION</span></div>
+  <div className="store-shop-promo-banner" aria-label="Store promotion"><span className="store-shop-promo-mark">✦</span><span>SHOP THE COLLECTION</span></div>
   <nav className="store-market-header" aria-label="Store navigation">
     <div className="store-market-header-inner">
       <button type="button" className="store-market-menu" aria-label="Open categories" aria-expanded={mobileSidebarOpen} onClick={()=>setMobileSidebarOpen(v=>!v)}><Menu size={21}/></button>
       <a className="store-market-brand store-merchant-brand" href={buyerPath('store')} onClick={e=>{e.preventDefault();navigateBuyerPage('store')}} aria-label={shop?.name||'Seller storefront'}>
         {shop?.logoUrl?<img className="store-market-brand-logo" src={shop.logoUrl} alt=""/>:<span className="store-market-brand-mark">{(shop?.name||'S').trim().charAt(0).toUpperCase()}</span>}
-        <span className="store-merchant-brand-name">{shop?.name||'Seller store'}</span>
       </a>
       <select className="store-market-category-select" aria-label="Product category" value={filter} onChange={e=>selectStoreCategory(e.target.value)}>
         {categoryList.map(category=><option key={category} value={category}>{category==='All products'?'All categories':category}</option>)}
@@ -152,6 +151,7 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
       <button type="button" className="store-market-home-button" aria-label="Go to shop home" title="Shop home" onClick={()=>{setFilter('All products');setSearch('');navigateBuyerPage('store')}}><Home size={19}/></button>
       <label className="store-market-search"><Search size={18}/><input type="search" value={search} onChange={e=>{setSearch(e.target.value);setFilter('All products')}} onKeyDown={e=>{if(e.key==='Enter'){navigateBuyerPage('store');document.getElementById('market-spotlight')?.scrollIntoView({behavior:'smooth',block:'start'})}}} placeholder={`Search ${shop?.name||'this shop'}`}/></label>
       <button type="button" className="store-market-search-button" onClick={()=>{setFilter('All products');navigateBuyerPage('store');document.getElementById('market-spotlight')?.scrollIntoView({behavior:'smooth',block:'start'})}}>Search</button>
+      <div className="store-market-shop-name" title={shop?.name||'Seller store'}>{shop?.name||'Seller store'}</div>
       <div className="store-market-actions">
         <div className="buyer-notification-wrap">
           <button type="button" className="store-market-account buyer-notification-button" aria-label={buyerNotifications.length?'Order notifications, '+buyerNotifications.length+' updates':'Order notifications'} aria-expanded={buyerNotificationsOpen} onClick={()=>{setAccountMenuOpen(false);setBuyerNotificationsOpen(v=>!v)}}>
