@@ -113,6 +113,7 @@ export default async function handler(req:any,res:any){
     if(!allowed.includes(status)||!delivery.includes(deliveryStatus))return send(res,400,{error:'Select a valid order and delivery status.'});
     updated=await sql`UPDATE public.orders SET status=${status},delivery_status=${deliveryStatus},delivery_updated_at=now(),updated_at=now() WHERE id=${id} RETURNING id,order_number,status,delivery_status`;
     if(!updated.length)return send(res,404,{error:'Order not found.'});
+    const buyer=await sql`SELECT customer_phone FROM public.orders WHERE id=${id} LIMIT 1`;if(buyer.length)await sql`INSERT INTO public.buyer_notifications(tenant_id,buyer_phone,order_id,notification_type,title,detail) SELECT tenant_id,${buyer[0].customer_phone},${id},'order_update','Order updated by DASNET','DASNET updated your order status to '+${status.replaceAll('_',' ')}+'.' FROM public.orders WHERE id=${id}`;
    }
    if(action==='edit_buyer'){
     const fullName=String(v.full_name||'').trim().slice(0,120),email=String(v.email||'').trim().toLowerCase().slice(0,254)||null,alternative=String(v.alternative_phone||'').trim().slice(0,40)||null,address=String(v.address||'').trim().slice(0,1000)||null;
@@ -163,8 +164,10 @@ export default async function handler(req:any,res:any){
   if(req.method==='POST'&&req.body?.action==='complaint_status'){
    const id=String(req.body?.id||''),status=String(req.body?.status||''),notes=String(req.body?.adminNotes||'').trim().slice(0,3000);
    if(!['open','under_review','resolved','rejected'].includes(status))return send(res,400,{error:'Invalid complaint status.'});
-   const rows=await sql`UPDATE public.shop_complaints SET status=${status},admin_notes=${notes||null},updated_at=now() WHERE id=${id} RETURNING id,status,admin_notes,updated_at`;
-   return rows.length?send(res,200,{ok:true,complaint:rows[0]}):send(res,404,{error:'Complaint not found.'});
+   const rows=await sql`UPDATE public.shop_complaints SET status=${status},admin_notes=${notes||null},updated_at=now() WHERE id=${id} RETURNING id,tenant_id,buyer_phone,status,admin_notes,updated_at`;
+   if(!rows.length)return send(res,404,{error:'Complaint not found.'});
+   await sql`INSERT INTO public.buyer_notifications(tenant_id,buyer_phone,complaint_id,notification_type,title,detail) VALUES(${rows[0].tenant_id},${rows[0].buyer_phone},${rows[0].id},'complaint_update','Your report was updated','DASNET has updated the status of your report to '+${status.replaceAll('_',' ')}+'.')`;
+   return send(res,200,{ok:true,complaint:rows[0]});
   }
   if(req.method==='GET'){
    const [summary,tenants,cfg]=await Promise.all([
