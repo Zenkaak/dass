@@ -581,7 +581,7 @@ export function StorefrontFlow({
       { id: 'airtel', label: 'AIRTEL', configured: false, hint: 'Airtel Money is not configured for this shop' },
       { id: 'card', label: 'CARD', configured: false, hint: 'Card payments are not configured for this shop' },
     ];
-    const confirmMpesa=()=>{if(!/^\\+?254[17]\\d{8}$|^0[17]\\d{8}$/.test(paymentPhone.trim().replace(/[\\s().-]/g,''))){setCheckoutError('Enter a valid Kenyan M-PESA phone number to receive the payment prompt.');return;}setCheckoutError('');setPaymentModal(null);};
+    const confirmMpesa=()=>{if(!/^\+?254[17]\d{8}$|^0[17]\d{8}$/.test(paymentPhone.trim().replace(/[\s().-]/g,''))){setCheckoutError('Enter a valid Kenyan M-PESA phone number to receive the payment prompt.');return;}setCheckoutError('');setPaymentModal(null);};
     const choosePayment=(choice:typeof choices[number])=>{
       if(!choice.configured){setCheckoutError(choice.hint+'.');return;}
       setCheckoutError('');
