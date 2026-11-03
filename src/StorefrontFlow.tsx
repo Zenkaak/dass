@@ -1,5 +1,5 @@
 import { marketplaceFaqs } from './marketplaceFaqs';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -233,6 +233,7 @@ export function StorefrontFlow({
     [lines],
   );
   const [orders, setOrders] = useState<BuyerOrder[]>(() => storedOrders(orderStorageKey));
+  const [retryingOrder,setRetryingOrder]=useState(false);const [retryMessage,setRetryMessage]=useState('');const [paymentCelebration,setPaymentCelebration]=useState(false);const lastPaymentStatus=useRef<string|null>(null);
   const [ordersLoading,setOrdersLoading]=useState(false),[ordersError,setOrdersError]=useState('');
   const [currentPassword,setCurrentPassword]=useState(''),[newPassword,setNewPassword]=useState(''),[confirmPassword,setConfirmPassword]=useState(''),[passwordSaving,setPasswordSaving]=useState(false),[passwordMessage,setPasswordMessage]=useState('');
   const [inAppNotificationsEnabled,setInAppNotificationsEnabled]=useState(()=>{try{return localStorage.getItem('dasnet-buyer-notifications-'+slug)!=='false'}catch{return true}});
@@ -290,7 +291,11 @@ export function StorefrontFlow({
       setOrders((current) => JSON.stringify(current) === JSON.stringify(refreshed) ? current : refreshed);
     };
     if (orders.length) refresh();
+    const timer=window.setInterval(()=>{if(document.visibilityState==='visible')refresh()},5000);
+    return()=>window.clearInterval(timer);
   }, [orders.map((order) => order.chatToken).join('|')]);
+  useEffect(()=>{const status=String(activeOrder?.paymentStatus||'');if(lastPaymentStatus.current&&lastPaymentStatus.current!=='succeeded'&&status==='succeeded'){setPaymentCelebration(true);const timer=window.setTimeout(()=>setPaymentCelebration(false),5200);lastPaymentStatus.current=status;return()=>window.clearTimeout(timer)}if(status)lastPaymentStatus.current=status},[activeOrder?.paymentStatus]);
+  async function retryActiveOrderPayment(){if(!activeOrder?.orderId||retryingOrder)return;setRetryingOrder(true);setRetryMessage('');try{const r=await fetch('/api/store?action=customer-payment-retry',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug,orderId:activeOrder.orderId})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Could not retry payment');setOrders(current=>current.map(order=>order.orderId===activeOrder.orderId?{...order,paymentStatus:'pending'}:order));setRetryMessage('M-PESA prompt sent. Enter your PIN to complete payment.')}catch(e:any){setRetryMessage(e.message||'Could not retry payment')}finally{setRetryingOrder(false)}}
   const recentlyViewedProducts = recentlyViewedIds
     .map((id) => products.find((product) => product.id === id))
     .filter((product): product is StoreProduct => Boolean(product));
@@ -629,9 +634,11 @@ export function StorefrontFlow({
   }
 
   function renderOrderDetail() {
+    const celebration=paymentCelebration?<div className="buyer-payment-celebration" role="status" aria-live="polite"><div className="buyer-confetti-burst">{Array.from({length:36},(_,i)=><i key={i} style={{'--confetti-angle':(i*10)+'deg','--confetti-delay':((i%7)*0.035)+'s'} as any}>{['✦','✧','●','◆','🎉'][i%5]}</i>)}</div><div className="buyer-celebration-message"><strong>Payment successful!</strong><span>Your order is confirmed. Thank you for shopping.</span></div></div>:null;
     if (!activeOrder) return <div className="customer-flow"><FlowHeading title="Order details" onBack={() => onNavigate('orders')} backLabel="My orders" /><div className="customer-empty-state"><h2>No order selected</h2><button type="button" className="customer-primary-button" onClick={() => onNavigate('orders')}>View my orders</button></div></div>;
     return (
       <section className="customer-flow">
+        {celebration}
         <FlowHeading title="Order details" onBack={() => onNavigate('orders')} backLabel="My orders" />
         <div className="customer-order-detail-heading"><div><small>ORDER NUMBER</small><h2>{activeOrder.orderNumber}</h2><span>Placed {new Date(activeOrder.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })}</span></div><span className="customer-order-status">Order placed</span></div>
         <div className="customer-checkout-grid">
@@ -654,6 +661,7 @@ export function StorefrontFlow({
             <div className="customer-summary-row"><span>Delivery</span><strong>{formatKes(activeOrder.deliveryFee)}</strong></div>
             <div className="customer-summary-row customer-summary-total"><span>Total</span><strong>{formatKes(activeOrder.total)}</strong></div>
             <p className="customer-preview-note"><WalletCards size={15} /> {paymentLabels[activeOrder.paymentMethod]}</p>
+            {['failed','cancelled'].includes(String(activeOrder.paymentStatus).toLowerCase())&&<div className="customer-summary-retry"><button type="button" className="buyer-retry-payment" onClick={retryActiveOrderPayment} disabled={retryingOrder}>{retryingOrder?'Sending M-PESA prompt…':'↻ Retry payment'}</button>{retryMessage&&<small role="status">{retryMessage}</small>}</div>}
           </aside>
         </div>
       </section>
