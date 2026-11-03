@@ -7,6 +7,8 @@ const hash=(s:string)=>crypto.createHash('sha256').update(s).digest('hex');
 const db=()=>{const u=env('POSTGRES_URL')||env('DATABASE_URL')||env('NEON_DATABASE_URL');if(!u)throw Error('DB_CONFIG');return neon(u)};
 function token(req:any){const c=String(req.headers.cookie||'').split(';').map((s:string)=>s.trim()).find((s:string)=>s.startsWith('das_session='));try{return c?decodeURIComponent(c.slice(12)):''}catch{return ''}}
 async function buyerSession(sql:any,req:any,tenantId:string){
+ // Expire customer moderation only within the tenant whose buyer session is being checked.
+ await sql`UPDATE public.store_customers SET is_banned=false,ban_reason=NULL,banned_until=NULL,updated_at=now() WHERE tenant_id=${tenantId} AND is_banned=true AND banned_until IS NOT NULL AND banned_until<=now()`;
  const global=token(req);
  if(global){
   const rows=await sql`SELECT c.id,c.full_name,c.phone,c.email,c.address FROM public.auth_sessions s JOIN public.store_customers c ON c.user_id=s.user_id AND c.tenant_id=${tenantId} WHERE s.token_hash=${hash(global)} AND s.expires_at>now() AND c.is_banned=false AND (c.banned_until IS NULL OR c.banned_until<=now()) LIMIT 1`;
@@ -115,12 +117,11 @@ export default async function handler(req:any,res:any){
  let action='';
  try{
   const sql=db();
-  // Expire temporary moderation automatically without requiring a scheduled job.
-  await sql`UPDATE public.tenants SET status=COALESCE(NULLIF(status_before_ban,'banned'),'active'),status_before_ban=NULL,ban_reason=NULL,ban_expires_at=NULL,updated_at=now() WHERE status='banned' AND ban_expires_at IS NOT NULL AND ban_expires_at<=now()`;
-  await sql`UPDATE public.store_customers SET is_banned=false,ban_reason=NULL,banned_until=NULL,updated_at=now() WHERE is_banned=true AND banned_until IS NOT NULL AND banned_until<=now()`;
   action=String(req.query?.action||req.body?.action||'');
   if(req.method==='GET'&&action==='storefront'){
    const slug=String(req.query?.slug||'').toLowerCase();
+   // Expire moderation only for the requested shop; never scan/update every tenant on every API call.
+   await sql`UPDATE public.tenants SET status=COALESCE(NULLIF(status_before_ban,'banned'),'active'),status_before_ban=NULL,ban_reason=NULL,ban_expires_at=NULL,updated_at=now() WHERE slug=${slug} AND status='banned' AND ban_expires_at IS NOT NULL AND ban_expires_at<=now()`;
    // Fetch shop metadata and its active catalogue in one database round-trip.
    const rows=await sql`SELECT t.id AS tenant_id,t.name AS shop_name,t.slug,s.description,s.logo_url,s.whatsapp_number,s.contact_phone,s.contact_email,s.terms_and_conditions,s.privacy_policy,s.return_policy,s.delivery_policy,s.storefront_faqs,s.storefront_theme,
     COALESCE((SELECT jsonb_agg(jsonb_build_object('id',p.id,'name',p.name,'description',p.description,'product_type',p.product_type,'price_minor',p.price_minor,'currency',p.currency,'stock_quantity',p.stock_quantity,'is_active',p.is_active,'images',p.images,'metadata',p.metadata,'sku',p.sku,'rating_average',COALESCE((SELECT AVG(pr.rating)::numeric(3,2) FROM public.product_reviews pr WHERE pr.tenant_id=p.tenant_id AND pr.product_id=p.id AND pr.status='published'),0),'rating_count',(SELECT COUNT(*)::int FROM public.product_reviews pr WHERE pr.tenant_id=p.tenant_id AND pr.product_id=p.id AND pr.status='published')) ORDER BY p.created_at DESC) FROM public.products p WHERE p.tenant_id=t.id AND p.is_active=true),'[]'::jsonb) AS products
