@@ -31,6 +31,10 @@ export default async function handler(req:any,res:any){
     const rows=await sql`SELECT t.*,u.display_name AS owner_name,u.phone AS owner_phone,u.email AS owner_email,s.title AS storefront_title,s.description AS storefront_description,s.logo_url,s.contact_phone,s.contact_email,s.whatsapp_number,s.storefront_theme,s.terms_and_conditions,s.privacy_policy,s.return_policy,s.delivery_policy,s.storefront_faqs,COALESCE((SELECT json_agg(json_build_object('hostname',d.hostname,'primary',d.is_primary,'verifiedAt',d.verified_at)) FROM public.domains d WHERE d.tenant_id=t.id),'[]'::json) AS domains,(SELECT count(*)::int FROM public.products p WHERE p.tenant_id=t.id) AS products,(SELECT count(*)::int FROM public.orders o WHERE o.tenant_id=t.id) AS orders FROM public.tenants t LEFT JOIN public.users u ON u.id=t.created_by LEFT JOIN public.sites s ON s.tenant_id=t.id WHERE t.id=${id} LIMIT 1`;
     return rows.length?send(res,200,{record:rows[0]}):send(res,404,{error:'Shop not found.'});
    }
+   if(type==='users'){
+    const rows=await sql`SELECT u.id,u.display_name,u.phone,u.email,u.phone_verified_at,u.created_at,COALESCE((SELECT json_agg(json_build_object('id',t.id,'name',t.name,'slug',t.slug,'status',t.status) ORDER BY t.created_at DESC) FROM public.tenants t WHERE t.created_by=u.id),'[]'::json) AS shops FROM public.users u WHERE u.id=${id} LIMIT 1`;
+    return rows.length?send(res,200,{record:rows[0]}):send(res,404,{error:'User account not found.'});
+   }
    if(type==='buyers'){
     const rows=await sql`SELECT sc.*,u.display_name AS account_name,u.email AS account_email,u.phone_verified_at AS account_verified_at,t.name AS shop_name,t.slug AS shop_slug,COALESCE((SELECT json_agg(json_build_object('id',o.id,'order_number',o.order_number,'status',o.status,'total_minor',o.total_minor,'created_at',o.created_at) ORDER BY o.created_at DESC) FROM public.orders o WHERE o.tenant_id=sc.tenant_id AND o.customer_phone=sc.phone),'[]'::json) AS orders FROM public.store_customers sc JOIN public.tenants t ON t.id=sc.tenant_id LEFT JOIN public.users u ON u.id=sc.user_id WHERE sc.id=${id} LIMIT 1`;
     return rows.length?send(res,200,{record:rows[0]}):send(res,404,{error:'Buyer not found.'});
@@ -47,11 +51,15 @@ export default async function handler(req:any,res:any){
   }
   if(req.method==='GET'&&String(req.query?.action||'')==='lookup'){
    const type=String(req.query?.type||''),term=String(req.query?.q||'').trim().slice(0,160);
-   if(!['case','order','product'].includes(type))return send(res,400,{error:'Choose cases, orders or products.'});
+   if(!['case','order','product','user'].includes(type))return send(res,400,{error:'Choose cases, orders, products or users.'});
    if(term.length<2)return send(res,400,{error:'Enter at least two characters to search.'});
    const like='%'+term+'%',digits=term.replace(/[^0-9]/g,''),caseTerm=term.replace(/^case\s*#?/i,'').trim(),caseLike='%'+caseTerm+'%';
    if(type==='order'){
     const rows=await sql`SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.customer_email,o.status,o.delivery_status,o.total_minor,o.currency,o.created_at,t.name AS shop_name,t.slug,COALESCE((SELECT count(*)::int FROM public.order_items i WHERE i.order_id=o.id AND i.tenant_id=o.tenant_id),0) AS item_count FROM public.orders o JOIN public.tenants t ON t.id=o.tenant_id WHERE o.order_number ILIKE ${like} OR o.customer_phone ILIKE ${like} OR o.customer_email ILIKE ${like} OR o.customer_name ILIKE ${like} OR (${digits.length>=5} AND regexp_replace(o.customer_phone,'[^0-9]','','g') ILIKE ${'%'+digits+'%'}) ORDER BY o.created_at DESC LIMIT 30`;
+    return send(res,200,{type,records:rows});
+   }
+   if(type==='user'){
+    const rows=await sql`SELECT u.id,u.display_name,u.phone,u.email,u.phone_verified_at,u.created_at,COALESCE((SELECT json_agg(json_build_object('id',t.id,'name',t.name,'slug',t.slug,'status',t.status) ORDER BY t.created_at DESC) FROM public.tenants t WHERE t.created_by=u.id),'[]'::json) AS shops FROM public.users u WHERE u.display_name ILIKE ${like} OR u.phone ILIKE ${like} OR u.email ILIKE ${like} OR (${digits.length>=5} AND regexp_replace(u.phone,'[^0-9]','','g') ILIKE ${'%'+digits+'%'}) ORDER BY u.created_at DESC LIMIT 30`;
     return send(res,200,{type,records:rows});
    }
    if(type==='product'){
