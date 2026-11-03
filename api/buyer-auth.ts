@@ -6,6 +6,9 @@ const hash=(s:string)=>crypto.createHash('sha256').update(s).digest('hex');
 const send=(res:any,status:number,body:any)=>res.status(status).json(body);
 const db=()=>{const url=env('POSTGRES_URL')||env('DATABASE_URL')||env('NEON_DATABASE_URL');if(!url)throw Error('DB_CONFIG');return neon(url)};
 const phoneOf=(value:any)=>{let p=String(value||'').trim().replace(/[\s().+-]/g,'');if(/^0[17]\d{8}$/.test(p))p='+254'+p.slice(1);else if(/^254[17]\d{8}$/.test(p))p='+'+p;return /^\+254[17]\d{8}$/.test(p)?p:''};
+const requestIp=(req:any)=>String(req.headers['x-real-ip']||req.socket?.remoteAddress||'').trim();
+async function restricted(sql:any,scope:'seller'|'buyer',phone:string,email:string,ip:string){for(const [kind,value] of [['phone',phone],['email',email.toLowerCase()],['ip',ip]] as string[][]){if(!value)continue;const found=await sql`SELECT id FROM public.identity_restrictions WHERE identity_type=${kind} AND identity_hash=${hash(value.trim().toLowerCase())} AND restriction_scope IN (${scope},'all') AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at>now()) LIMIT 1`;if(found.length)return true;}return false;}
+async function recordSignals(sql:any,customerId:string,phone:string,email:string,ip:string){for(const [kind,value] of [['phone',phone],['email',email.toLowerCase()],['ip',ip]] as string[][]){if(value)await sql`INSERT INTO public.auth_identity_signals(customer_id,identity_type,identity_hash) VALUES(${customerId},${kind},${hash(value.trim().toLowerCase())}) ON CONFLICT DO NOTHING`;}}
 const passwordHash=(password:string,salt:string)=>crypto.scryptSync(password,salt,64).toString('hex');
 const equal=(a:string,b:string)=>{const x=Buffer.from(a),y=Buffer.from(b);return x.length===y.length&&crypto.timingSafeEqual(x,y)};
 function cookie(res:any,value:string,maxAge:number){res.setHeader('Set-Cookie',[ `das_session=${encodeURIComponent(value)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`,`das_buyer_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0` ])}
@@ -44,6 +47,7 @@ export default async function handler(req:any,res:any){
  const body=req.body||{},action=String(req.query?.action||body.action||''),slug=String(req.method==='GET'?req.query?.slug:body.slug||'').toLowerCase().trim();
  try{
   const sql=db();
+  await sql`UPDATE public.store_customers SET is_banned=false,ban_reason=NULL,banned_until=NULL,updated_at=now() WHERE is_banned=true AND banned_until IS NOT NULL AND banned_until<=now()`;
   await sql`UPDATE public.tenants SET status=COALESCE(NULLIF(status_before_ban,'banned'),'active'),status_before_ban=NULL,ban_reason=NULL,ban_expires_at=NULL,updated_at=now() WHERE status='banned' AND ban_expires_at IS NOT NULL AND ban_expires_at<=now()`;
   await sql`UPDATE public.store_customers SET is_banned=false,ban_reason=NULL,banned_until=NULL,updated_at=now() WHERE is_banned=true AND banned_until IS NOT NULL AND banned_until<=now()`;
   if(!/^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/.test(slug))return send(res,400,{error:'Invalid shop.'});
@@ -52,7 +56,7 @@ export default async function handler(req:any,res:any){
   const tenant=shops[0],tenantId=tenant.id;
 
   if(req.method==='POST'&&action==='send-code'){
-   const phone=phoneOf(body.phone);if(!phone)return send(res,400,{error:'Enter a valid Kenyan mobile number.'});
+   const phone=phoneOf(body.phone);if(!phone)return send(res,400,{error:'Enter a valid Kenyan mobile number.'});if(await restricted(sql,'buyer',phone,String(body.email||'').trim().toLowerCase(),requestIp(req)))return send(res,403,{error:'This buyer identity is restricted. Contact DASNET support.'});
    if((await sql`SELECT id FROM public.store_customers WHERE tenant_id=${tenantId} AND phone=${phone} LIMIT 1`).length)return send(res,409,{error:'You already have a buyer profile in this shop. Please sign in.'});
    if((await sql`SELECT id FROM public.users WHERE phone=${phone} LIMIT 1`).length)return send(res,409,{error:'This phone already has a DASNET identity. Sign in instead; your buyer profile will be created for this shop.'});
    const ip=String(req.headers['x-forwarded-for']||req.socket?.remoteAddress||'').split(',')[0].trim();
@@ -69,7 +73,7 @@ export default async function handler(req:any,res:any){
   }
   if(req.method==='POST'&&action==='signup'){
    const phone=phoneOf(body.phone),name=String(body.name||'').trim().slice(0,120),email=String(body.email||'').trim().toLowerCase().slice(0,254),altRaw=String(body.alternativePhone||'').trim(),alt=altRaw?phoneOf(altRaw):null,address=String(body.address||'').trim().slice(0,300),password=String(body.password||''),code=String(body.code||'');
-   if(!phone||name.length<2||!/^\S+@\S+\.\S+$/.test(email)||!address)return send(res,400,{error:'Complete your name, valid email, phone and delivery address.'});
+   if(!phone||name.length<2||!/^\S+@\S+\.\S+$/.test(email)||!address)return send(res,400,{error:'Complete your name, valid email, phone and delivery address.'});if(await restricted(sql,'buyer',phone,email,requestIp(req)))return send(res,403,{error:'This buyer identity is restricted. Contact DASNET support.'});
    if(altRaw&&!alt)return send(res,400,{error:'Enter a valid Kenyan alternative phone number.'});
    if(!validPassword(password))return send(res,400,{error:'Use a password of at least 10 characters with letters and numbers.'});
    if((await sql`SELECT id FROM public.users WHERE phone=${phone} LIMIT 1`).length)return send(res,409,{error:'This phone already has a DASNET identity. Sign in instead.'});
@@ -99,10 +103,10 @@ export default async function handler(req:any,res:any){
     SELECT p.* FROM profile p JOIN session s ON true
    `;
    if(!rows.length)return send(res,409,{error:'This phone could not be linked safely. Sign in to the existing DASNET account or contact support.'});
-   cookie(res,token,604800);return send(res,201,{ok:true,customer:customer(rows[0])});
+   await recordSignals(sql,rows[0].id,phone,email,requestIp(req));cookie(res,token,604800);return send(res,201,{ok:true,customer:customer(rows[0])});
   }
   if(req.method==='POST'&&action==='login'){
-   const phone=phoneOf(body.phone),password=String(body.password||'');if(!phone||!password)return send(res,400,{error:'Enter your mobile number and password.'});
+   const phone=phoneOf(body.phone),password=String(body.password||'');if(!phone||!password)return send(res,400,{error:'Enter your mobile number and password.'});if(await restricted(sql,'buyer',phone,'',requestIp(req)))return send(res,403,{error:'This buyer identity is restricted. Contact DASNET support.'});
    const blocked=await sql`SELECT id FROM public.store_customers WHERE tenant_id=${tenantId} AND phone=${phone} AND is_banned=true LIMIT 1`;if(blocked.length)return send(res,403,{error:'Buyer access to this shop has been restricted. Contact the shop or DASNET support.'});
    const users=await sql`SELECT id,display_name,password_hash,password_salt,phone_verified_at FROM public.users WHERE phone=${phone} LIMIT 1`,user=users[0];
    if(!user||!user.password_hash||!user.password_salt||!equal(passwordHash(password,user.password_salt),user.password_hash))return send(res,401,{error:'Invalid phone number or password.'});

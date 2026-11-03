@@ -125,6 +125,7 @@ export default async function handler(req:any,res:any){
     const banned=v.banned===true||v.banned==='true',reason=String(v.reason||'').trim().slice(0,1000)||null;
     updated=await sql`UPDATE public.store_customers SET is_banned=${banned},ban_reason=${banned?reason:null},updated_at=now() WHERE id=${id} RETURNING id,full_name,phone,is_banned,ban_reason`;
     if(!updated.length)return send(res,404,{error:'Buyer profile not found.'});
+    const signals=await sql`SELECT identity_type,identity_hash FROM public.auth_identity_signals WHERE customer_id=${updated[0].id}`;const identities=[...signals,...[['phone',hash(String(updated[0].phone||'').trim().toLowerCase())]].map(([identity_type,identity_hash]:any)=>({identity_type,identity_hash}))];if(banned){for(const item of identities)await sql`INSERT INTO public.identity_restrictions(identity_type,identity_hash,restriction_scope,reason,expires_at) VALUES(${item.identity_type},${item.identity_hash},'all',${reason||'Buyer account restricted'},NULL) ON CONFLICT(identity_type,identity_hash,restriction_scope) DO UPDATE SET reason=EXCLUDED.reason,revoked_at=NULL,expires_at=NULL`;}else{const hashes=identities.map((x:any)=>x.identity_hash);if(hashes.length)await sql`UPDATE public.identity_restrictions SET revoked_at=now() WHERE identity_hash=ANY(${hashes}::text[]) AND restriction_scope='all' AND revoked_at IS NULL`;}
    }
    if(action==='update_support'){
     const status=String(v.status||''),priority=String(v.priority||'normal'),response=String(v.response||'').trim().slice(0,10000);
@@ -142,8 +143,11 @@ export default async function handler(req:any,res:any){
    const report=await sql`SELECT id,tenant_id,buyer_phone FROM public.shop_complaints WHERE id=${id} LIMIT 1`;
    if(!report.length)return send(res,404,{error:'Complaint not found.'});
    if(target==='buyer'){
-    const updated=await sql`UPDATE public.store_customers SET is_banned=true,ban_reason=${reason},banned_until=${days>0?new Date(Date.now()+days*86400000).toISOString():null},updated_at=now() WHERE tenant_id=${report[0].tenant_id} AND right(regexp_replace(phone,'[^0-9]','','g'),9)=right(regexp_replace(${report[0].buyer_phone},'[^0-9]','','g'),9) RETURNING id,full_name,phone,is_banned,banned_until`;
+    const updated=await sql`UPDATE public.store_customers SET is_banned=true,ban_reason=${reason},banned_until=${days>0?new Date(Date.now()+days*86400000).toISOString():null},updated_at=now() WHERE tenant_id=${report[0].tenant_id} AND right(regexp_replace(phone,'[^0-9]','','g'),9)=right(regexp_replace(${report[0].buyer_phone},'[^0-9]','','g'),9) RETURNING id,full_name,phone,email,is_banned,banned_until`;
     if(!updated.length)return send(res,404,{error:'Buyer account for this shop was not found.'});
+    const signals=await sql`SELECT identity_type,identity_hash FROM public.auth_identity_signals WHERE customer_id=${updated[0].id}`;
+    const identities=[...signals,...[['phone',hash(String(updated[0].phone||'').trim().toLowerCase())],...(updated[0].email?[['email',hash(String(updated[0].email).trim().toLowerCase())]]:[])].map(([identity_type,identity_hash]:any)=>({identity_type,identity_hash}))];
+    for(const item of identities)await sql`INSERT INTO public.identity_restrictions(identity_type,identity_hash,restriction_scope,reason,source_complaint_id,expires_at) VALUES(${item.identity_type},${item.identity_hash},'all',${reason},${id},${days>0?new Date(Date.now()+days*86400000).toISOString():null}) ON CONFLICT(identity_type,identity_hash,restriction_scope) DO UPDATE SET reason=EXCLUDED.reason,source_complaint_id=EXCLUDED.source_complaint_id,expires_at=EXCLUDED.expires_at,revoked_at=NULL`;
    }else{
     const updated=await sql`UPDATE public.tenants SET status='banned',status_before_ban=CASE WHEN status='banned' THEN status_before_ban ELSE status END,ban_reason=${reason},ban_expires_at=${days>0?new Date(Date.now()+days*86400000).toISOString():null},updated_at=now() WHERE id=${report[0].tenant_id} RETURNING id,name,slug,status,ban_expires_at`;
     if(!updated.length)return send(res,404,{error:'Shop not found.'});
@@ -151,12 +155,35 @@ export default async function handler(req:any,res:any){
    await sql`INSERT INTO public.audit_logs(tenant_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${report[0].tenant_id},${users[0].id},${'platform.complaint.'+target+'.restricted'},${target},${id},${JSON.stringify({durationDays:days,reason,complaintId:id})}::jsonb)`;
    return send(res,200,{ok:true,target,durationDays:days,reason});
   }
+  if(req.method==='POST'&&req.body?.action==='complaint_restrict_seller'){
+   const id=String(req.body?.id||''),days=Number(req.body?.durationDays||0),reason=String(req.body?.reason||'').trim().slice(0,1500);
+   if(!/^[0-9a-f-]{36}$/i.test(id)||!Number.isInteger(days)||days<0||days>365||!reason)return send(res,400,{error:'Choose a valid duration and reason.'});
+   const report=await sql`SELECT tenant_id FROM public.shop_complaints WHERE id=${id} LIMIT 1`;
+   if(!report.length)return send(res,404,{error:'Complaint not found.'});
+   const owner=await sql`SELECT t.created_by,u.phone,u.email FROM public.tenants t JOIN public.users u ON u.id=t.created_by WHERE t.id=${report[0].tenant_id} LIMIT 1`;
+   if(!owner.length)return send(res,404,{error:'Seller identity was not found.'});
+   const expires=days>0?new Date(Date.now()+days*86400000).toISOString():null;
+   const signals=await sql`SELECT identity_type,identity_hash FROM public.auth_identity_signals WHERE user_id=${owner[0].created_by}`;
+   const identities=[...signals,...[['phone',hash(String(owner[0].phone||'').trim().toLowerCase())],...(owner[0].email?[['email',hash(String(owner[0].email).trim().toLowerCase())]]:[])].map(([identity_type,identity_hash]:any)=>({identity_type,identity_hash}))];
+   for(const item of identities)await sql`INSERT INTO public.identity_restrictions(identity_type,identity_hash,restriction_scope,reason,source_complaint_id,expires_at) VALUES(${item.identity_type},${item.identity_hash},'all',${reason},${id},${expires}) ON CONFLICT(identity_type,identity_hash,restriction_scope) DO UPDATE SET reason=EXCLUDED.reason,source_complaint_id=EXCLUDED.source_complaint_id,expires_at=EXCLUDED.expires_at,revoked_at=NULL`;
+   await sql`UPDATE public.tenants SET status='banned',status_before_ban=CASE WHEN status='banned' THEN status_before_ban ELSE status END,ban_reason=${reason},ban_expires_at=${expires},updated_at=now() WHERE id=${report[0].tenant_id}`;
+   await sql`INSERT INTO public.audit_logs(tenant_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${report[0].tenant_id},${users[0].id},'platform.complaint.seller.restricted','seller',${id},${JSON.stringify({durationDays:days,reason,complaintId:id})}::jsonb)`;
+   return send(res,200,{ok:true,target:'seller',durationDays:days,reason});
+  }
+  if(req.method==='POST'&&req.body?.action==='complaint_restore_seller'){
+   const id=String(req.body?.id||'');if(!/^[0-9a-f-]{36}$/i.test(id))return send(res,400,{error:'Invalid restore request.'});
+   const report=await sql`SELECT tenant_id FROM public.shop_complaints WHERE id=${id} LIMIT 1`;if(!report.length)return send(res,404,{error:'Complaint not found.'});
+   await sql`UPDATE public.identity_restrictions SET revoked_at=now() WHERE source_complaint_id=${id} AND restriction_scope='all'`;
+   await sql`UPDATE public.tenants SET status=COALESCE(NULLIF(status_before_ban,'banned'),'active'),status_before_ban=NULL,ban_reason=NULL,ban_expires_at=NULL,updated_at=now() WHERE id=${report[0].tenant_id} AND status='banned'`;
+   await sql`INSERT INTO public.audit_logs(tenant_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${report[0].tenant_id},${users[0].id},'platform.complaint.seller.restored','seller',${id},'{}'::jsonb)`;
+   return send(res,200,{ok:true,target:'seller'});
+  }
   if(req.method==='POST'&&req.body?.action==='complaint_restore'){
    const id=String(req.body?.id||''),target=String(req.body?.target||'');
    if(!/^[0-9a-f-]{36}$/i.test(id)||!['buyer','shop'].includes(target))return send(res,400,{error:'Invalid restore request.'});
    const report=await sql`SELECT id,tenant_id,buyer_phone FROM public.shop_complaints WHERE id=${id} LIMIT 1`;
    if(!report.length)return send(res,404,{error:'Complaint not found.'});
-   if(target==='buyer')await sql`UPDATE public.store_customers SET is_banned=false,ban_reason=NULL,banned_until=NULL,updated_at=now() WHERE tenant_id=${report[0].tenant_id} AND right(regexp_replace(phone,'[^0-9]','','g'),9)=right(regexp_replace(${report[0].buyer_phone},'[^0-9]','','g'),9)`;
+   if(target==='buyer'){await sql`UPDATE public.store_customers SET is_banned=false,ban_reason=NULL,banned_until=NULL,updated_at=now() WHERE tenant_id=${report[0].tenant_id} AND right(regexp_replace(phone,'[^0-9]','','g'),9)=right(regexp_replace(${report[0].buyer_phone},'[^0-9]','','g'),9)`;await sql`UPDATE public.identity_restrictions SET revoked_at=now() WHERE source_complaint_id=${id} AND restriction_scope='all' AND revoked_at IS NULL`;}
    else await sql`UPDATE public.tenants SET status=COALESCE(NULLIF(status_before_ban,'banned'),'active'),status_before_ban=NULL,ban_reason=NULL,ban_expires_at=NULL,updated_at=now() WHERE id=${report[0].tenant_id} AND status='banned'`;
    await sql`INSERT INTO public.audit_logs(tenant_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${report[0].tenant_id},${users[0].id},${'platform.complaint.'+target+'.restored'},${target},${id},${JSON.stringify({complaintId:id})}::jsonb)`;
    return send(res,200,{ok:true,target});

@@ -1,0 +1,23 @@
+name: Escalate expired DASNET disputes
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dasnet-dispute-deadline-sweep
+  cancel-in-progress: false
+
+jobs:
+  escalate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Escalate expired dispute cases
+        run: |
+          curl --fail --silent --show-error --max-time 30 \
+            --request POST \
+            --header 'Content-Type: application/json' \
+            https://dasmarket.co.ke/api/dispute-cron
