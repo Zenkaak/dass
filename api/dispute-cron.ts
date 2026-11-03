@@ -1,10 +1,35 @@
 import { neon } from '@neondatabase/serverless';
+import crypto from 'node:crypto';
 const env=(k:string)=>(process.env[k]||'').trim();
+async function verifyGitHubOidc(token:string){
+ try{
+  const parts=token.split('.');if(parts.length!==3)return false;
+  const header=JSON.parse(Buffer.from(parts[0],'base64url').toString('utf8'));
+  const claims=JSON.parse(Buffer.from(parts[1],'base64url').toString('utf8'));
+  if(header.alg!=='RS256'||!header.kid)return false;
+  const aud=Array.isArray(claims.aud)?claims.aud:[claims.aud];
+  const now=Math.floor(Date.now()/1000);
+  if(claims.iss!=='https://token.actions.githubusercontent.com'||!aud.includes('dasnet-dispute-escalation'))return false;
+  if(claims.repository!=='Zenkaak/dass'||claims.ref!=='refs/heads/main')return false;
+  if(claims.workflow_ref!=='Zenkaak/dass/.github/workflows/escalate-disputes.yml@refs/heads/main')return false;
+  if(claims.sub!=='repo:Zenkaak/dass:ref:refs/heads/main')return false;
+  if(!Number.isFinite(claims.exp)||claims.exp<now-15||!Number.isFinite(claims.iat)||claims.iat>now+30)return false;
+  const response=await fetch('https://token.actions.githubusercontent.com/.well-known/jwks',{headers:{'Accept':'application/json'}});
+  if(!response.ok)return false;
+  const jwks=await response.json() as any;
+  const jwk=(jwks.keys||[]).find((key:any)=>key.kid===header.kid&&key.kty==='RSA');
+  if(!jwk)return false;
+  const publicKey=crypto.createPublicKey({key:jwk,format:'jwk'});
+  return crypto.verify('RSA-SHA256',Buffer.from(parts[0]+'.'+parts[1]),publicKey,Buffer.from(parts[2],'base64url'));
+ }catch{return false;}
+}
 export default async function handler(req:any,res:any){
  res.setHeader('Cache-Control','no-store');
- if(req.method!=='GET')return res.status(405).json({error:'Method not allowed'});
- const secret=env('CRON_SECRET');
- if(!secret||String(req.headers.authorization||'')!=='Bearer '+secret)return res.status(401).json({error:'Unauthorized'});
+ if(!['GET','POST'].includes(req.method))return res.status(405).json({error:'Method not allowed'});
+ const authorization=String(req.headers.authorization||''),provided=authorization.startsWith('Bearer ')?authorization.slice(7):'';
+ const configuredSecret=env('CRON_SECRET');
+ const authorized=(configuredSecret&&provided===configuredSecret)||await verifyGitHubOidc(provided);
+ if(!authorized)return res.status(401).json({error:'Unauthorized'});
  try{
   const url=env('POSTGRES_URL')||env('DATABASE_URL')||env('NEON_DATABASE_URL');if(!url)return res.status(503).json({error:'Database not configured'});
   const sql=neon(url);
