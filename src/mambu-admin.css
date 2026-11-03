@@ -58,3 +58,30 @@
 .mambu-complaint-drawer .mambu-complaint-moderation-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
 @media(max-width:850px){.mambu-complaint-grid{grid-template-columns:1fr}.mambu-complaint-drawer{width:100%;max-width:100%}.mambu-complaint-drawer .mambu-drawer-body{grid-template-columns:1fr;padding:16px}.mambu-complaint-drawer .mambu-drawer-body>.mambu-drawer-tags,.mambu-complaint-drawer .mambu-drawer-body>h3,.mambu-complaint-drawer .mambu-drawer-body>.mambu-report-text,.mambu-complaint-drawer .mambu-admin-case-chat{grid-column:1}.mambu-complaints-intro{align-items:flex-start}.mambu-complaint-card-bottom{flex-wrap:wrap}}
 @media(max-width:560px){.mambu-complaints-intro{padding:15px}.mambu-complaints-intro h2{font-size:18px}.mambu-complaints-total{min-width:65px;padding:8px}.mambu-complaint-card{padding:14px}.mambu-complaint-card-title{align-items:flex-start;flex-direction:column;gap:4px}.mambu-complaint-drawer .mambu-drawer-body{padding:14px}.mambu-admin-case-chat{padding:12px!important}}
+
+
+/* Complaint detail drawer — structured, readable case dossier */
+.mambu-complaint-drawer .mambu-drawer-body{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:20px 22px 30px;background:#f5f7fa}
+.mambu-complaint-drawer .mambu-drawer-body>.mambu-drawer-tags{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:2px 0}
+.mambu-complaint-drawer .mambu-drawer-body>h3{grid-column:1/-1;margin:0;padding:15px 17px;border:1px solid #e4e9ef;border-radius:12px;background:#fff;color:#233249;font-size:18px;text-transform:capitalize}
+.mambu-complaint-drawer .mambu-drawer-body>.mambu-report-text{grid-column:1/-1;margin:0;padding:15px 17px;border:1px solid #e4e9ef;border-radius:12px;background:#fff;color:#536278;font-size:13px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
+.mambu-complaint-drawer .mambu-drawer-body>section{min-width:0;margin:0;padding:17px;border:1px solid #e3e9f0;border-radius:13px;background:#fff;box-shadow:0 2px 7px #15243b05}
+.mambu-complaint-drawer .mambu-drawer-body>section h4{display:flex;align-items:center;gap:8px;margin:0 0 13px;color:#26364a;font-size:11px;font-weight:850;letter-spacing:1px;text-transform:uppercase}
+.mambu-complaint-drawer .mambu-drawer-body>section p{margin:7px 0;color:#647287;font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+.mambu-complaint-drawer .mambu-drawer-body>section p b{color:#25364b}
+.mambu-complaint-drawer .mambu-drawer-body>section .mambu-complaint-links{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.mambu-complaint-drawer .mambu-drawer-body>section .mambu-complaint-links a{display:inline-flex;align-items:center;min-height:36px;padding:0 12px;border:1px solid #d8e4ef;border-radius:9px;background:#f5f9fd;color:#1769aa;font-size:11px;font-weight:750;text-decoration:none}
+.mambu-complaint-drawer .mambu-drawer-body>section .mambu-complaint-links a:hover{background:#eaf3fb;border-color:#a8c7e2}
+.mambu-complaint-drawer .mambu-drawer-body>section.mambu-admin-case-chat{grid-column:1/-1;padding:18px!important;border-color:#dce5ee!important;background:#f8fafc!important}
+.mambu-complaint-drawer .mambu-drawer-body>section:has(.mambu-complaint-moderation-actions),.mambu-complaint-drawer .mambu-drawer-body>section:has(textarea){grid-column:1/-1}
+.mambu-complaint-drawer .mambu-drawer-body>section label{display:grid;gap:6px;margin:10px 0;color:#425168;font-size:11px;font-weight:750}
+.mambu-complaint-drawer .mambu-drawer-body>section label select,.mambu-complaint-drawer .mambu-drawer-body>section label textarea{width:100%;min-height:40px;padding:10px;border:1px solid #dce3eb;border-radius:8px;background:#fbfcfe;color:#25364b;font:inherit;font-size:12px}
+.mambu-complaint-drawer .mambu-drawer-body>section .mambu-complaint-moderation-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.mambu-complaint-drawer .mambu-drawer-body>section .mambu-complaint-moderation-actions button{min-height:40px;border-radius:8px;font-size:11px}
+.mambu-complaint-drawer .mambu-drawer-body>section .mambu-warning{display:flex;align-items:flex-start;gap:7px;padding:10px;border-radius:8px;background:#fff8eb;color:#91601b;font-size:10px}
+.mambu-complaint-drawer .mambu-drawer-body>section .mambu-attachment{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #edf0f4}
+.mambu-complaint-drawer .mambu-drawer-body>section .mambu-attachment span{display:grid;gap:3px;min-width:0}
+.mambu-complaint-drawer .mambu-drawer-body>section .mambu-attachment b{overflow-wrap:anywhere;font-size:11px;color:#304158}
+.mambu-complaint-drawer .mambu-drawer-body>section .mambu-attachment small{font-size:10px;color:#8793a3}
+@media(max-width:850px){.mambu-complaint-drawer .mambu-drawer-body{grid-template-columns:1fr;padding:14px}.mambu-complaint-drawer .mambu-drawer-body>.mambu-drawer-tags,.mambu-complaint-drawer .mambu-drawer-body>h3,.mambu-complaint-drawer .mambu-drawer-body>.mambu-report-text,.mambu-complaint-drawer .mambu-drawer-body>section.mambu-admin-case-chat,.mambu-complaint-drawer .mambu-drawer-body>section:has(.mambu-complaint-moderation-actions),.mambu-complaint-drawer .mambu-drawer-body>section:has(textarea){grid-column:1}}
+@media(max-width:560px){.mambu-complaint-drawer .mambu-drawer-body>section{padding:14px}.mambu-complaint-drawer .mambu-drawer-body>section .mambu-complaint-moderation-actions{grid-template-columns:1fr}}
