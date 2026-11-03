@@ -39,7 +39,7 @@ export default async function handler(req:any,res:any){
  res.setHeader('Cache-Control','no-store');
  if(!['GET','POST'].includes(req.method))return send(res,405,{error:'Method not allowed'});
  try{
-  const sql=db(),b=req.body||{},slug=String(req.method==='GET'?req.query?.slug:b.slug||'').toLowerCase().trim(),shops=await sql`SELECT id,name,created_by FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
+  const sql=db(),b=req.body||{},slug=String(req.method==='GET'?req.query?.slug:b.slug||'').toLowerCase().trim(),shops=await sql`SELECT id,name,created_by FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active','banned') LIMIT 1`;
   if(!shops.length)return send(res,404,{error:'Shop not found.'});
   const tenantId=shops[0].id,who=await actor(sql,req,tenantId);if(!who)return send(res,401,{error:'Sign in to access dispute reports.'});
   await escalateExpired(sql,tenantId);
