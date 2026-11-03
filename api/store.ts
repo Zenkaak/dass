@@ -183,7 +183,9 @@ export default async function handler(req:any,res:any){
    if(!shops.length)return send(res,404,{error:'Shop not found.'});
    const buyer=await buyerSession(sql,req,shops[0].id);if(!buyer)return send(res,401,{error:'Sign in to view notifications.'});
    const rows=await sql`SELECT n.id,n.notification_type,n.title,n.detail,n.created_at,n.read_at,n.order_id,o.order_number,n.complaint_id FROM public.buyer_notifications n LEFT JOIN public.orders o ON o.id=n.order_id AND o.tenant_id=n.tenant_id WHERE n.tenant_id=${shops[0].id} AND right(regexp_replace(n.buyer_phone,'[^0-9]','','g'),9)=right(regexp_replace(${buyer.phone},'[^0-9]','','g'),9) ORDER BY n.created_at DESC LIMIT 50`;
-   return send(res,200,{notifications:rows});
+   const disputeRows=await sql`SELECT id,title,detail,created_at,read_at,complaint_id FROM public.dispute_notifications WHERE tenant_id=${shops[0].id} AND recipient_role='buyer' AND right(regexp_replace(recipient_phone,'[^0-9]','','g'),9)=right(regexp_replace(${buyer.phone},'[^0-9]','','g'),9) ORDER BY created_at DESC LIMIT 30`;
+   const notifications=[...rows,...disputeRows.map((n:any)=>({...n,notification_type:'dispute_update'}))].sort((a:any,b:any)=>new Date(b.created_at).getTime()-new Date(a.created_at).getTime()).slice(0,50);
+   return send(res,200,{notifications});
   }
   if(req.method==='POST'&&action==='complaint'){
    const b=req.body||{},slug=String(b.slug||'').toLowerCase().trim(),shops=await sql`SELECT id,name FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
