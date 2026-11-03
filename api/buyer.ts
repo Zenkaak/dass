@@ -1,4 +1,4 @@
-import storeHandler from './store';
+import storeHandler from './store.js';
 
 const BUYER_ACTIONS=new Set([
  'coupons-public','coupon-validate','complaint-attachment','buyer-reports',
