@@ -207,6 +207,19 @@ function SellerOrderPage({order,orderNumber,shop,payoutForm,paymentPromptPhone,p
     </div>
    </section>
    <section className="seller-delivery-card seller-order-approved-delivery">
+    <div className="seller-order-approved-section-head seller-order-delivery-head"><span>📍</span><div><h3>Delivery Information</h3><p>Original delivery instructions submitted by the buyer at checkout.</p></div></div>
+    <div className="seller-order-delivery-destination">
+     <div><small>Delivery method</small><strong>{order.delivery_method==='pickup'?'Pickup / collection':'Home delivery'}</strong></div>
+     {order.delivery_method==='pickup'?<div><small>Preferred pickup station / area</small><strong>{order.pickup_station||'Not provided'}</strong></div>:<>
+      <div><small>County</small><strong>{order.delivery_county||'Not provided'}</strong></div>
+      <div><small>Sub-county</small><strong>{order.delivery_sub_county||'Not provided'}</strong></div>
+      <div><small>Estate / area</small><strong>{order.delivery_estate||'Not provided'}</strong></div>
+      <div className="wide"><small>Physical delivery address</small><strong>{order.delivery_address||'Not provided'}</strong></div>
+      <div className="wide"><small>Directions / landmarks</small><strong>{order.delivery_directions||'No extra directions provided'}</strong></div>
+     </>}
+    </div>
+   </section>
+   <section className="seller-delivery-card seller-order-approved-delivery">
     <div className="seller-order-approved-section-head seller-order-delivery-head"><span>🚚</span><div><h3>Delivery Status</h3><p>Update delivery status to keep the buyer informed.</p></div></div>
     <div className="seller-delivery-progress"><span className="active">◷<b>Pending Delivery</b></span><i className={['in_transit','delivered'].includes(deliveryState)?'active':''}/><span className={['in_transit','delivered'].includes(deliveryState)?'active':''}>🚚<b>In Transit</b></span><i className={deliveryState==='delivered'?'active':''}/><span className={deliveryState==='delivered'?'active':''}>✓<b>Delivered</b></span></div>
     <label>Update delivery status<select aria-label="Update delivery status" value={deliveryState} onChange={e=>onDeliveryStatusChange(e.target.value)}><option value="pending_delivery">Pending delivery</option><option value="in_transit">In transit</option><option value="delivered">Delivered</option></select></label>
