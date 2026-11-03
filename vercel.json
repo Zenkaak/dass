@@ -1,4 +1,10 @@
 {
+  "crons": [
+    {
+      "path": "/api/dispute-cron",
+      "schedule": "* * * * *"
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",

@@ -1,9 +1,10 @@
 import { neon } from '@neondatabase/serverless';
-import crypto from 'node:crypto';
 const env=(k:string)=>(process.env[k]||'').trim();
 export default async function handler(req:any,res:any){
  res.setHeader('Cache-Control','no-store');
- if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});
+ if(req.method!=='GET')return res.status(405).json({error:'Method not allowed'});
+ const secret=env('CRON_SECRET');
+ if(!secret||String(req.headers.authorization||'')!=='Bearer '+secret)return res.status(401).json({error:'Unauthorized'});
  try{
   const url=env('POSTGRES_URL')||env('DATABASE_URL')||env('NEON_DATABASE_URL');if(!url)return res.status(503).json({error:'Database not configured'});
   const sql=neon(url);
