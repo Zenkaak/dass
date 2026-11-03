@@ -143,8 +143,11 @@ export default async function handler(req:any,res:any){
    const report=await sql`SELECT id,tenant_id,buyer_phone FROM public.shop_complaints WHERE id=${id} LIMIT 1`;
    if(!report.length)return send(res,404,{error:'Complaint not found.'});
    if(target==='buyer'){
-    const updated=await sql`UPDATE public.store_customers SET is_banned=true,ban_reason=${reason},banned_until=${days>0?new Date(Date.now()+days*86400000).toISOString():null},updated_at=now() WHERE tenant_id=${report[0].tenant_id} AND right(regexp_replace(phone,'[^0-9]','','g'),9)=right(regexp_replace(${report[0].buyer_phone},'[^0-9]','','g'),9) RETURNING id,full_name,phone,is_banned,banned_until`;
+    const updated=await sql`UPDATE public.store_customers SET is_banned=true,ban_reason=${reason},banned_until=${days>0?new Date(Date.now()+days*86400000).toISOString():null},updated_at=now() WHERE tenant_id=${report[0].tenant_id} AND right(regexp_replace(phone,'[^0-9]','','g'),9)=right(regexp_replace(${report[0].buyer_phone},'[^0-9]','','g'),9) RETURNING id,full_name,phone,email,is_banned,banned_until`;
     if(!updated.length)return send(res,404,{error:'Buyer account for this shop was not found.'});
+    const signals=await sql`SELECT identity_type,identity_hash FROM public.auth_identity_signals WHERE customer_id=${updated[0].id}`;
+    const identities=[...signals,...[['phone',hash(String(updated[0].phone||'').trim().toLowerCase())],...(updated[0].email?[['email',hash(String(updated[0].email).trim().toLowerCase())]]:[])].map(([identity_type,identity_hash]:any)=>({identity_type,identity_hash}))];
+    for(const item of identities)await sql`INSERT INTO public.identity_restrictions(identity_type,identity_hash,restriction_scope,reason,source_complaint_id,expires_at) VALUES(${item.identity_type},${item.identity_hash},'buyer',${reason},${id},${days>0?new Date(Date.now()+days*86400000).toISOString():null}) ON CONFLICT(identity_type,identity_hash,restriction_scope) DO UPDATE SET reason=EXCLUDED.reason,source_complaint_id=EXCLUDED.source_complaint_id,expires_at=EXCLUDED.expires_at,revoked_at=NULL`;
    }else{
     const updated=await sql`UPDATE public.tenants SET status='banned',status_before_ban=CASE WHEN status='banned' THEN status_before_ban ELSE status END,ban_reason=${reason},ban_expires_at=${days>0?new Date(Date.now()+days*86400000).toISOString():null},updated_at=now() WHERE id=${report[0].tenant_id} RETURNING id,name,slug,status,ban_expires_at`;
     if(!updated.length)return send(res,404,{error:'Shop not found.'});
