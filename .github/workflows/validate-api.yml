@@ -21,5 +21,7 @@ jobs:
           cache-dependency-path: package.json
       - name: Install dependencies
         run: npm install
+      - name: Build the full application
+        run: npm run build
       - name: Parse every Vercel API function
         run: npx --yes esbuild api/*.ts --outdir=/tmp/dasnet-api-compile-check --platform=node --format=esm --target=node22
