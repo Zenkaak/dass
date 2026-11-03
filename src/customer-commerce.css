@@ -3363,3 +3363,31 @@
 }
 .store-whatsapp-float{position:fixed;right:18px;bottom:22px;width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#20b968;color:#fff;z-index:80;box-shadow:0 8px 24px #0004}
 .store-whatsapp-float:hover{transform:translateY(-2px)}
+
+
+/* Restore the approved marketplace card details: wishlist heart and verified review stars. */
+.store-page .market-products-grid > article.market-product-card-approved{position:relative!important}
+.store-page .market-products-grid > article.market-product-card-approved .market-product-favorite{
+ position:absolute!important;z-index:5!important;top:9px!important;right:9px!important;
+ display:grid!important;place-items:center!important;width:30px!important;height:30px!important;
+ padding:0!important;border:1px solid #e7ebef!important;border-radius:50%!important;
+ background:rgba(255,255,255,.96)!important;color:#657386!important;
+ box-shadow:0 2px 7px rgba(20,35,52,.10)!important;cursor:pointer!important;
+}
+.store-page .market-products-grid > article.market-product-card-approved .market-product-favorite.active{color:#e34b63!important;border-color:#f4cbd2!important;background:#fff7f8!important}
+.store-page .market-products-grid > article.market-product-card-approved .market-product-favorite svg{display:block!important}
+.store-page .market-products-grid > article.market-product-card-approved .market-product-info .market-product-rating{
+ display:flex!important;align-items:center!important;gap:5px!important;min-height:13px!important;
+ color:#7a8796!important;font-size:9px!important;line-height:1!important;
+}
+.store-page .market-products-grid > article.market-product-card-approved .market-product-stars{
+ display:inline-flex!important;align-items:center!important;gap:1px!important;color:#f2a51a!important;
+}
+.store-page .market-products-grid > article.market-product-card-approved .market-product-rating>span:last-child{white-space:nowrap!important}
+@media(max-width:760px){
+ .store-page .market-products-grid > article.market-product-card-approved .market-product-favorite{
+  top:6px!important;right:6px!important;width:26px!important;height:26px!important;
+ }
+ .store-page .market-products-grid > article.market-product-card-approved .market-product-rating{font-size:8px!important;gap:3px!important}
+ .store-page .market-products-grid > article.market-product-card-approved .market-product-stars svg{width:9px!important;height:9px!important}
+}
