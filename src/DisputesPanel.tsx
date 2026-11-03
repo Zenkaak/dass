@@ -13,7 +13,7 @@ export function DisputesPanel({slug,viewerRole='seller',initialReportId,embedded
  const [draft,setDraft]=useState(''),[resolution,setResolution]=useState(''),[buyerPhone,setBuyerPhone]=useState(''),[details,setDetails]=useState(''),[issueType,setIssueType]=useState('other'),[orderId,setOrderId]=useState(''),[newFiles,setNewFiles]=useState<File[]>([]),[showCreate,setShowCreate]=useState(()=>window.location.pathname.endsWith('/reports/new'));
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[serverNow,setServerNow]=useState(Date.now());
  const load=useCallback(async()=>{if(!slug)return;const d=await api(slug,'GET');setReports(d.reports||[]);setNotifications(d.notifications||[]);setServerNow(Date.now());},[slug]);
- const reportsPath=()=>{const path=window.location.pathname.replace(/\/$/,'');return path.endsWith('/reports/new')?path.slice(0,-4):path.endsWith('/reports')?path:path+'/reports';};
+ const reportsPath=()=>{const path=window.location.pathname.replace(/\/$/,'');if(path.includes('/my-reports/reports'))return path.slice(0,path.indexOf('/my-reports/reports'))+'/my-reports';return path.endsWith('/reports/new')?path.slice(0,-4):path.endsWith('/reports')?path:path+'/reports';};
  function openCreateRoute(){const base=reportsPath();window.location.assign(base+'/new');}
  function closeCreateRoute(){setNewFiles([]);if(window.location.pathname.endsWith('/reports/new'))window.location.assign(reportsPath());else setShowCreate(false);}
  useEffect(()=>{const sync=()=>setShowCreate(window.location.pathname.endsWith('/reports/new'));window.addEventListener('popstate',sync);return()=>window.removeEventListener('popstate',sync)},[]);
