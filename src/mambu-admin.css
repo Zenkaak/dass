@@ -136,3 +136,53 @@
 .seller-notice-row.dispute-notice-compact .seller-notice-copy strong{display:block;max-width:100%;font-size:12px!important;line-height:1.3!important;font-weight:700!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .seller-notice-row.dispute-notice-compact .seller-notice-copy small{display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;max-width:100%;font-size:12px!important;line-height:1.4!important;overflow-wrap:anywhere}
 .seller-notice-row.dispute-notice-compact{align-items:center;min-height:68px;padding:10px 14px}
+
+
+/* Platform admin refresh: searchable command centre, faster navigation and clearer controls */
+.mambu-topbar{position:sticky;top:0;z-index:80;box-shadow:0 4px 16px rgba(20,35,55,.035)}
+.mambu-content{max-width:1580px;padding-top:24px}
+.mambu-global-lookup{margin:18px 0 20px;padding:22px 24px;background:linear-gradient(120deg,#172b45,#294765);border:1px solid #36516d;border-radius:16px;color:#fff;box-shadow:0 12px 28px rgba(25,49,76,.12)}
+.mambu-global-lookup-head{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.mambu-global-lookup-head>div>span{font-size:9px;letter-spacing:1.5px;font-weight:850;color:#f5b96f}
+.mambu-global-lookup-head h2{font-size:20px;margin:7px 0 5px;letter-spacing:-.35px}
+.mambu-global-lookup-head p{font-size:11px;color:#c1d0e0;margin:0}
+.mambu-global-lookup-head>svg{color:#f4b56a;flex:none}
+.mambu-global-lookup-form{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:8px;margin-top:18px}
+.mambu-global-lookup-form select,.mambu-global-lookup-form input{width:100%;min-width:0;box-sizing:border-box;height:45px;padding:0 13px;border:1px solid #dbe3ed;border-radius:8px;background:#fff;color:#26364b;font:inherit;font-size:12px;outline:none}
+.mambu-global-lookup-form input:focus,.mambu-global-lookup-form select:focus{border-color:#f2b56d;box-shadow:0 0 0 3px rgba(242,181,109,.18)}
+.mambu-global-lookup-form button{height:45px;padding:0 18px;border:0;border-radius:8px;background:#ed9b42;color:#1c2b3f;font-size:11px;font-weight:850;cursor:pointer;white-space:nowrap}
+.mambu-global-lookup-form button:disabled{opacity:.65;cursor:wait}
+.mambu-global-results{display:grid;gap:1px;margin-top:12px;overflow:hidden;border:1px solid rgba(255,255,255,.15);border-radius:9px;background:rgba(255,255,255,.12)}
+.mambu-global-results button{display:flex;align-items:center;gap:12px;width:100%;padding:11px 13px;border:0;background:#fff;color:#26364b;text-align:left;cursor:pointer}
+.mambu-global-results button:hover{background:#fff8ef}
+.mambu-global-results button>span{min-width:0;flex:1}
+.mambu-global-results b,.mambu-global-results small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mambu-global-results b{font-size:11px}.mambu-global-results small{margin-top:4px;color:#7b8798;font-size:10px}
+.mambu-global-results em{font-size:9px;font-style:normal;text-transform:capitalize;color:#617187;background:#eef2f6;padding:5px 8px;border-radius:20px}
+.mambu-lookup-empty{font-size:11px;color:#d5dfeb;margin:12px 0 0}
+.mambu-shop-filter{display:flex;align-items:center;gap:10px;margin:0 0 12px;color:#65748a;font-size:11px;font-weight:750}
+.mambu-shop-filter select{min-width:210px;max-width:100%;height:38px;padding:0 10px;border:1px solid #dfe5ec;border-radius:8px;background:#fff;color:#26364b;font:inherit;font-size:11px}
+.mambu-table-wrap{box-shadow:0 5px 18px rgba(27,43,65,.025)}
+.mambu-table-wrap tr:hover td{background:#fffaf4}
+.mambu-table-wrap td:last-child{white-space:nowrap}
+.mambu-action{transition:background .15s,border-color .15s}
+.mambu-action.good{border-color:#cce8d8;background:#f2fbf5}
+.mambu-action.danger{border-color:#f0d6d2;background:#fff8f7}
+.mambu-section-intro{display:flex;justify-content:space-between;align-items:flex-end;gap:16px}
+.mambu-stat-grid article{box-shadow:0 4px 14px rgba(27,43,65,.025)}
+@media(max-width:700px){
+ .mambu-global-lookup{padding:17px 14px;margin:12px 0 16px;border-radius:12px}
+ .mambu-global-lookup-head h2{font-size:17px}
+ .mambu-global-lookup-form{grid-template-columns:1fr 1fr;gap:7px}
+ .mambu-global-lookup-form select{grid-column:1/-1}
+ .mambu-global-lookup-form input{grid-column:1/-1}
+ .mambu-global-lookup-form button{grid-column:1/-1}
+ .mambu-shop-filter{align-items:flex-start;flex-direction:column;gap:6px}
+ .mambu-shop-filter select{width:100%}
+ .mambu-sidebar.mobile-open{position:fixed!important;inset:0 auto 0 0!important;width:min(300px,86vw)!important;height:100dvh!important;min-height:100dvh!important;z-index:1200!important;overflow-y:auto;box-shadow:18px 0 50px rgba(13,25,42,.28)}
+ .mambu-sidebar.mobile-open .mambu-side-label{display:block}
+ .mambu-sidebar.mobile-open nav{display:grid}
+ .mambu-sidebar.mobile-open .mambu-sidebar-bottom{display:grid}
+ .mambu-topbar{z-index:100}
+}
+@media(min-width:701px){.mambu-mobile-menu{display:none!important}}
