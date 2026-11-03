@@ -3432,8 +3432,6 @@
   .disputes-workspace.disputes-create-route .dispute-create-page{padding:17px!important;border-radius:12px!important}
 }
 
-/* Keep the floating seller WhatsApp contact clear of the checkout action. */
-.store-page.is-checkout-route .store-whatsapp-float{display:none!important}
 
 /* Give storefront notification, account and cart controls deliberate touch spacing. */
 .store-page .store-market-actions{
