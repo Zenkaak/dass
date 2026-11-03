@@ -249,6 +249,7 @@ export function StorefrontFlow({
   const [deliveryDirections, setDeliveryDirections] = useState('');
   const [customerName, setCustomerName] = useState(initialCustomerName);
   const [customerPhone, setCustomerPhone] = useState(initialCustomerPhone);
+  const [paymentPhone, setPaymentPhone] = useState(initialCustomerPhone);
   const [customerEmail, setCustomerEmail] = useState(initialCustomerEmail);
   const [deliveryAddress, setDeliveryAddress] = useState(initialCustomerAddress);
   const [pickupStation, setPickupStation] = useState('');
@@ -262,8 +263,8 @@ export function StorefrontFlow({
 
   useEffect(()=>{setAppliedCoupon(null);if(voucherCode)setVoucherMessage('Your cart changed. Reapply the coupon.');},[subtotal]);
   useEffect(()=>{let live=true;fetch('/api/store?action=coupons-public&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'}).then(r=>r.json()).then(d=>{if(live)setShopCoupons(Array.isArray(d.coupons)?d.coupons:[])}).catch(()=>{});return()=>{live=false}},[slug]);
-  useEffect(() => { setCustomerName(initialCustomerName); setCustomerPhone(initialCustomerPhone); setCustomerEmail(initialCustomerEmail); setProfileName(initialCustomerName); setProfileEmail(initialCustomerEmail); setProfileAddress(initialCustomerAddress); setProfilePhoneAlt(initialCustomerAlternativePhone); if(initialCustomerAddress&&!deliveryAddress)setDeliveryAddress(initialCustomerAddress); }, [initialCustomerName,initialCustomerPhone,initialCustomerEmail,initialCustomerAddress,initialCustomerAlternativePhone]);
-  useEffect(()=>{let live=true;setOrders(initialCustomerPhone?storedOrders(orderStorageKey):[]);const load=async()=>{if(!initialCustomerPhone){setOrders([]);setOrdersLoading(false);return;}setOrdersLoading(true);try{const r=await fetch('/api/store?action=customer-orders&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'});const d=await r.json().catch(()=>({}));if(!r.ok){if(r.status===401){if(live){setOrders([]);try{localStorage.removeItem(orderStorageKey)}catch{}}return;}throw Error(d.error||'Could not load your orders');}const next:BuyerOrder[]=(Array.isArray(d.orders)?d.orders:[]).map((o:any)=>({orderId:o.id,orderNumber:o.orderNumber,createdAt:o.createdAt,customerName:o.customerName,customerPhone:o.customerPhone,customerEmail:o.customerEmail||'',paymentMethod:'mpesa',deliveryMethod:o.deliveryMethod==='pickup'?'pickup':'home',deliveryAddress:o.deliveryAddress||'',pickupStation:o.pickupStation||'',deliveryCounty:o.deliveryCounty||'',deliverySubCounty:o.deliverySubCounty||'',deliveryEstate:o.deliveryEstate||'',deliveryDirections:o.deliveryDirections||'',subtotal:Number(o.subtotal)||0,deliveryFee:0,total:Number(o.total)||0,lines:(o.items||[]).map((i:any)=>({product:{id:String(i.id||('item-'+i.name)),name:i.name,price:Number(i.price)||0,category:i.category||'Product',images:i.image?[i.image]:[]},quantity:Number(i.quantity)||1})),chatToken:'',paymentStatus:o.paymentStatus||'unpaid',receipt:o.receipt||null,orderStatus:o.orderStatus||null,deliveryStatus:o.deliveryStatus||null,deliveryUpdatedAt:o.deliveryUpdatedAt||null}));if(live){setOrders(next);setOrdersError('');}}catch(e:any){if(live)setOrdersError(e.message||'Could not load your orders.')}finally{if(live)setOrdersLoading(false)}};if(initialCustomerPhone)load();else setOrders([]);return()=>{live=false}},[slug,initialCustomerPhone,orderStorageKey]);
+  useEffect(() => { setCustomerName(initialCustomerName); setCustomerPhone(initialCustomerPhone); setPaymentPhone(initialCustomerPhone); setCustomerEmail(initialCustomerEmail); setProfileName(initialCustomerName); setProfileEmail(initialCustomerEmail); setProfileAddress(initialCustomerAddress); setProfilePhoneAlt(initialCustomerAlternativePhone); if(initialCustomerAddress&&!deliveryAddress)setDeliveryAddress(initialCustomerAddress); }, [initialCustomerName,initialCustomerPhone,initialCustomerEmail,initialCustomerAddress,initialCustomerAlternativePhone]);
+  useEffect(()=>{let live=true;setOrders(initialCustomerPhone?storedOrders(orderStorageKey):[]);const load=async()=>{if(!initialCustomerPhone){setOrders([]);setOrdersLoading(false);return;}setOrdersLoading(true);try{const r=await fetch('/api/store?action=customer-orders&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'});const d=await r.json().catch(()=>({}));if(!r.ok){if(r.status===401){if(live)setOrdersError('Your buyer session needs refreshing. Sign in again to securely load your orders.');return;}throw Error(d.error||'Could not load your orders');}const next:BuyerOrder[]=(Array.isArray(d.orders)?d.orders:[]).map((o:any)=>({orderId:o.id,orderNumber:o.orderNumber,createdAt:o.createdAt,customerName:o.customerName,customerPhone:o.customerPhone,customerEmail:o.customerEmail||'',paymentMethod:'mpesa',deliveryMethod:o.deliveryMethod==='pickup'?'pickup':'home',deliveryAddress:o.deliveryAddress||'',pickupStation:o.pickupStation||'',deliveryCounty:o.deliveryCounty||'',deliverySubCounty:o.deliverySubCounty||'',deliveryEstate:o.deliveryEstate||'',deliveryDirections:o.deliveryDirections||'',subtotal:Number(o.subtotal)||0,deliveryFee:0,total:Number(o.total)||0,lines:(o.items||[]).map((i:any)=>({product:{id:String(i.id||('item-'+i.name)),name:i.name,price:Number(i.price)||0,category:i.category||'Product',images:i.image?[i.image]:[]},quantity:Number(i.quantity)||1})),chatToken:'',paymentStatus:o.paymentStatus||'unpaid',receipt:o.receipt||null,orderStatus:o.orderStatus||null,deliveryStatus:o.deliveryStatus||null,deliveryUpdatedAt:o.deliveryUpdatedAt||null}));if(live){setOrders(next);setOrdersError('');}}catch(e:any){if(live)setOrdersError(e.message||'Could not load your orders.')}finally{if(live)setOrdersLoading(false)}};if(initialCustomerPhone)load();else setOrders([]);return()=>{live=false}},[slug,initialCustomerPhone,orderStorageKey]);
 
   useEffect(() => {
     try {
@@ -318,6 +319,10 @@ export function StorefrontFlow({
       setCheckoutError('This payment method is coming soon. Choose M-PESA to continue.');
       return;
     }
+    if (!/^\+?254[17]\d{8}$|^0[17]\d{8}$/.test(paymentPhone.trim().replace(/[\s().-]/g,''))) {
+      setCheckoutError('Enter a valid Kenyan M-PESA phone number to receive the payment prompt.');
+      return;
+    }
     if (deliveryMethod === 'home' && (!deliveryCounty || !deliverySubCounty || !deliveryEstate.trim() || !deliveryAddress.trim())) {
       setCheckoutError('Complete your county, sub-county, estate/area and physical delivery address.');
       return;
@@ -337,6 +342,7 @@ export function StorefrontFlow({
           couponCode: appliedCoupon?.code || '',
           customerName: customerName.trim(),
           customerPhone: customerPhone.trim(),
+          paymentPhone: paymentPhone.trim(),
           customerEmail: customerEmail.trim(),
           deliveryMethod,
           deliveryCounty,
@@ -512,7 +518,7 @@ export function StorefrontFlow({
               <div className="customer-payment-list">
                 <h3 className="customer-payment-group-title">Pre-pay now</h3>
                 {choices.slice(0, 3).map(paymentOption)}
-                <div className="customer-card-preview"><strong>M-PESA checkout</strong><span>After you confirm, an STK prompt will be sent to your phone. Your order remains pending until Safaricom confirms payment.</span></div>
+                <div className="customer-card-preview"><strong>M-PESA checkout</strong><span>Choose the number that should receive the STK Push. It can be different from your buyer account number.</span><label className="customer-form-label" style={{display:'block',marginTop:12}}>Phone number to pay with<input type="tel" inputMode="tel" autoComplete="tel" placeholder="07XX XXX XXX or 2547XXXXXXXX" value={paymentPhone} onChange={e=>setPaymentPhone(e.target.value)} required maxLength={16}/><small>The M-PESA prompt will be sent to this number. Your order remains pending until Safaricom confirms payment.</small></label></div>
                 <h3 className="customer-payment-group-title customer-payment-delivery-title">Pay on delivery</h3>
                 {paymentOption(choices[3])}
               </div>
