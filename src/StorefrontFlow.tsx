@@ -319,7 +319,7 @@ export function StorefrontFlow({
       setCheckoutError('This payment method is coming soon. Choose M-PESA to continue.');
       return;
     }
-    if (!/^\\+?254[17]\\d{8}$|^0[17]\\d{8}$/.test(paymentPhone.trim().replace(/[\\s().-]/g,''))) {
+    if (!/^\+?254[17]\d{8}$|^0[17]\d{8}$/.test(paymentPhone.trim().replace(/[\s().-]/g,''))) {
       setCheckoutError('Enter a valid Kenyan M-PESA phone number to receive the payment prompt.');
       return;
     }
