@@ -10,13 +10,13 @@ function hmac(key:any,value:string,encoding?:any){return crypto.createHmac('sha2
 function storageUrl(key:string,method:'PUT'|'GET',mime='application/octet-stream'){
  const endpoint=storageEnv('AWS_ENDPOINT_URL_S3'),access=storageEnv('AWS_ACCESS_KEY_ID'),secret=storageEnv('AWS_SECRET_ACCESS_KEY'),configuredRegion=storageEnv('AWS_REGION'),bucket=storageEnv('NEON_STORAGE_BUCKET')||'documents';
  if(!endpoint||!access||!secret)throw Error('ATTACHMENT_STORAGE_CONFIG');
- const host=new URL(endpoint).host,endpointRegion=host.match(/\\.([a-z]{2}-[a-z]+-\\d)\\.aws\\.neon\\.tech$/)?.[1],region=endpointRegion||configuredRegion||'us-east-2',now=new Date(),amz=now.toISOString().slice(0,19).replace(/[-:T]/g,'')+'Z',day=amz.slice(0,8),scope=day+'/'+region+'/s3/aws4_request',path='/'+bucket+'/'+key.split('/').map(awsEncode).join('/');
+ const host=new URL(endpoint).host,endpointRegion=host.match(/\.([a-z]{2}-[a-z]+-\\d)\.aws\.neon\.tech$/)?.[1],region=endpointRegion||configuredRegion||'us-east-2',now=new Date(),amz=now.toISOString().slice(0,19).replace(/[-:T]/g,'')+'Z',day=amz.slice(0,8),scope=day+'/'+region+'/s3/aws4_request',path='/'+bucket+'/'+key.split('/').map(awsEncode).join('/');
  const params:any={'X-Amz-Algorithm':'AWS4-HMAC-SHA256','X-Amz-Credential':access+'/'+scope,'X-Amz-Date':amz,'X-Amz-Expires':'300','X-Amz-SignedHeaders':'host'};
  const canonicalQuery=Object.keys(params).sort().map(k=>awsEncode(k)+'='+awsEncode(params[k])).join('&');
- const canonical=[method,path,canonicalQuery,'host:'+host+'\\n','host','UNSIGNED-PAYLOAD'].join('\\n');
- const toSign=['AWS4-HMAC-SHA256',amz,scope,crypto.createHash('sha256').update(canonical).digest('hex')].join('\\n');
+ const canonical=[method,path,canonicalQuery,'host:'+host+'\n','host','UNSIGNED-PAYLOAD'].join('\n');
+ const toSign=['AWS4-HMAC-SHA256',amz,scope,crypto.createHash('sha256').update(canonical).digest('hex')].join('\n');
  const kDate=hmac('AWS4'+secret,day),kRegion=hmac(kDate,region),kService=hmac(kRegion,'s3'),kSigning=hmac(kService,'aws4_request'),signature=hmac(kSigning,toSign,'hex');
- return endpoint.replace(/\\/$/,'')+path+'?'+canonicalQuery+'&X-Amz-Signature='+signature;
+ return endpoint.replace(/\/$/,'')+path+'?'+canonicalQuery+'&X-Amz-Signature='+signature;
 }
 function productOut(p:any,includeMetadata=false){
  const raw=Array.isArray(p.images)?p.images:[];
@@ -37,9 +37,7 @@ export default async function handler(req:any,res:any){
   const sql=db();
   const slug=String(req.query?.slug||'').toLowerCase().trim();
   if(!slug)return send(res,400,{error:'Shop slug is required'});
- if(req.method==='GET'&&action==='storefront'){
-  const slug=String(req.query?.slug||'').toLowerCase();
-  // Expire moderation only for the requested shop; never scan/update every tenant on every API call.
+   // Expire moderation only for the requested shop; never scan/update every tenant on every API call.
   await sql`UPDATE public.tenants SET status=COALESCE(NULLIF(status_before_ban,'banned'),'active'),status_before_ban=NULL,ban_reason=NULL,ban_expires_at=NULL,updated_at=now() WHERE slug=${slug} AND status='banned' AND ban_expires_at IS NOT NULL AND ban_expires_at<=now()`;
   // Fetch shop metadata and its active catalogue in one database round-trip.
   const rows=await sql`SELECT t.id AS tenant_id,t.name AS shop_name,t.slug,s.description,s.logo_url,s.whatsapp_number,s.contact_phone,s.contact_email,s.terms_and_conditions,s.privacy_policy,s.return_policy,s.delivery_policy,s.storefront_faqs,s.storefront_theme,
