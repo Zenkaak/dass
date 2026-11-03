@@ -9,10 +9,10 @@ async function api(slug:string,method:'GET'|'POST',payload:any={}){
  if(!r.ok)throw Error(d.error||'Dispute request failed.');return d;
 }
 export function DisputesPanel({slug,viewerRole='seller',initialReportId,embedded=false,orders=[]}:{slug:string;viewerRole?:'buyer'|'seller'|'admin';initialReportId?:string;embedded?:boolean;orders?:Array<{id:string;label:string}>}){
- const [reports,setReports]=useState<Report[]>([]),[active,setActive]=useState<Report|null>(null),[messages,setMessages]=useState<any[]>([]),[attachments,setAttachments]=useState<any[]>([]);
+ const [reports,setReports]=useState<Report[]>([]),[active,setActive]=useState<Report|null>(null),[messages,setMessages]=useState<any[]>([]),[attachments,setAttachments]=useState<any[]>([]),[notifications,setNotifications]=useState<any[]>([]);
  const [draft,setDraft]=useState(''),[resolution,setResolution]=useState(''),[buyerPhone,setBuyerPhone]=useState(''),[details,setDetails]=useState(''),[issueType,setIssueType]=useState('other'),[orderId,setOrderId]=useState(''),[newFiles,setNewFiles]=useState<File[]>([]),[showCreate,setShowCreate]=useState(false);
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[serverNow,setServerNow]=useState(Date.now());
- const load=useCallback(async()=>{if(!slug)return;const d=await api(slug,'GET');setReports(d.reports||[]);setServerNow(Date.now());},[slug]);
+ const load=useCallback(async()=>{if(!slug)return;const d=await api(slug,'GET');setReports(d.reports||[]);setNotifications(d.notifications||[]);setServerNow(Date.now());},[slug]);
  const openCase=useCallback(async(id:string)=>{const d=await api(slug,'GET',{id});setActive(d.report);setMessages(d.messages||[]);setAttachments(d.attachments||[]);setServerNow(Date.now());},[slug]);
  useEffect(()=>{load().catch(e=>setError(e.message));const poll=window.setInterval(()=>{load().catch(()=>{});},15000);const tick=window.setInterval(()=>setServerNow(Date.now()),1000);return()=>{window.clearInterval(poll);window.clearInterval(tick)}},[load]);
  useEffect(()=>{if(initialReportId)openCase(initialReportId).catch(e=>setError(e.message));},[initialReportId,openCase]);
@@ -20,6 +20,7 @@ export function DisputesPanel({slug,viewerRole='seller',initialReportId,embedded
  async function run(fn:()=>Promise<void>){setBusy(true);setError('');setNotice('');try{await fn();}catch(e:any){setError(e.message||'Something went wrong.')}finally{setBusy(false)}}
  const deadline=active?.dispute_deadline_at?new Date(active.dispute_deadline_at).getTime():0;
  const remaining=Math.max(0,deadline-serverNow),timeLabel=Math.floor(remaining/60000)+'m '+Math.floor((remaining%60000)/1000)+'s';
+ async function openNotification(n:any){if(n.id){await api(slug,'POST',{action:'mark_notifications_read',notificationIds:[n.id]});setNotifications(v=>v.map(x=>x.id===n.id?{...x,read_at:new Date().toISOString()}:x));}if(n.complaint_id)await openCase(n.complaint_id);await load();}
  async function sendMessage(){if(!active||!draft.trim())return;await run(async()=>{await api(slug,'POST',{action:'message',id:active.id,message:draft});setDraft('');await openCase(active.id);await load()})}
  async function propose(){if(!active)return;await run(async()=>{await api(slug,'POST',{action:'propose_resolution',id:active.id,note:resolution});setResolution('');await openCase(active.id);await load()})}
  async function respond(decision:'accept'|'reject'){if(!active)return;await run(async()=>{await api(slug,'POST',{action:'respond_resolution',id:active.id,decision});await openCase(active.id);await load()})}
@@ -36,11 +37,11 @@ export function DisputesPanel({slug,viewerRole='seller',initialReportId,embedded
      </div>
      <div className="disputes-heading-actions">
       {viewerRole !== 'admin' && <button type="button" className="disputes-new-report-button" onClick={() => setShowCreate(true)}><span>＋</span> Open new report</button>}
-      <button className="disputes-refresh" onClick={() => load().catch(e => setError(e.message))}><RefreshCw size={16}/> Refresh</button>
+      <button className="disputes-refresh" onClick={() => run(async()=>{await load();if(active?.id)await openCase(active.id)})}><RefreshCw size={16}/> Refresh</button>
      </div>
     </div>
    )}
-  {error&&<div className="disputes-alert error"><AlertTriangle size={16}/>{error}</div>}{notice&&<div className="disputes-alert success">{notice}</div>}
+  {viewerRole!=='admin'&&notifications.length>0&&<div className="dispute-notification-panel"><div className="dispute-notification-title"><strong>Case notifications</strong><small>{notifications.filter(n=>!n.read_at).length} unread</small></div>{notifications.slice(0,8).map(n=><button type="button" key={n.id} className={'dispute-notification-row '+(!n.read_at?'unread':'')} onClick={()=>run(()=>openNotification(n))}><span><strong>{n.title}</strong><small>{n.detail}</small></span><time>{new Date(n.created_at).toLocaleString('en-KE')}</time></button>)}</div>}{error&&<div className="disputes-alert error"><AlertTriangle size={16}/>{error}</div>}{notice&&<div className="disputes-alert success">{notice}</div>}
   {active?<div className="dispute-case">
    <div className="dispute-case-top">{!embedded&&<button className="disputes-back" onClick={()=>setActive(null)}><ArrowLeft size={16}/> All reports</button>}<span className={'dispute-status '+String(active.dispute_status||'open')}>{statusLabel(active)}</span></div>
    <div className="dispute-case-summary"><div><small>REPORT REFERENCE</small><strong>#{active.id.slice(0,8).toUpperCase()}</strong></div><div><small>BUYER</small><strong>{active.buyer_name||'Buyer'} {viewerRole==='seller'?'· '+active.buyer_phone:''}</strong></div><div><small>ISSUE</small><strong>{String(active.issue_type||'other').replaceAll('_',' ')}</strong></div><div><small>RESOLUTION WINDOW</small><strong>{['open','resolution_pending'].includes(active.dispute_status)&&remaining>0?timeLabel:active.dispute_status==='closed'?'Closed':'Escalated'}</strong></div></div>
@@ -51,7 +52,7 @@ export function DisputesPanel({slug,viewerRole='seller',initialReportId,embedded
    </div>
    {active.dispute_status==='resolution_pending'&&viewerRole!=='admin'&&active.resolution_proposed_by!==viewerRole&&<div className="dispute-resolution"><strong>Resolution proposed</strong><p>{active.resolution_note}</p><div><button disabled={busy} onClick={()=>respond('accept')}><Check size={15}/> Accept — close case</button><button disabled={busy} onClick={()=>respond('reject')}><AlertTriangle size={15}/> Reject — escalate to DASNET</button></div></div>}
    {active.dispute_status==='open'&&remaining>0&&viewerRole!=='admin'&&<div className="dispute-propose"><label>Mark issue as resolved</label><textarea value={resolution} onChange={e=>setResolution(e.target.value)} placeholder="Explain what has been done to resolve the issue."/><button disabled={busy||resolution.trim().length<5} onClick={propose}>Propose resolution</button></div>}
-   {active.dispute_status==='escalated'&&<div className="dispute-escalated"><ShieldCheck size={18}/><div><strong>Escalated to DASNET support</strong><p>The parties can no longer close this case directly. Support will review the conversation and evidence.</p></div></div>}
+   {['resolved','rejected'].includes(active.status)&&<div className="dispute-verdict"><strong>{active.status==='resolved'?'DASNET verdict: Resolved':'DASNET verdict: Rejected'}</strong><p>{active.admin_notes||'DASNET support has completed its review.'}</p><small>Decision recorded {active.updated_at?new Date(active.updated_at).toLocaleString('en-KE'):''}</small></div>}{active.dispute_status==='escalated'&&<div className="dispute-escalated"><ShieldCheck size={18}/><div><strong>Escalated to DASNET support</strong><p>The parties can no longer close this case directly. Support will review the conversation and evidence.</p></div></div>}
    {active.dispute_status==='closed'&&<div className="dispute-escalated"><Check size={18}/><div><strong>Case closed</strong><p>The other party accepted the proposed resolution.</p></div></div>}
   </div>:<div className="disputes-list-view">
    {!embedded&&viewerRole!=='admin'&&<div className="disputes-list-toolbar"><div><strong>Your cases</strong><span>{reports.length} report{reports.length===1?'':'s'}</span></div></div>}
