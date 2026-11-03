@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 concurrency:
   group: dasnet-dispute-deadline-sweep
@@ -15,9 +16,27 @@ jobs:
   escalate:
     runs-on: ubuntu-latest
     steps:
+      - name: Obtain GitHub Actions OIDC token
+        id: oidc
+        shell: bash
+        run: |
+          token=$(curl --fail --silent --show-error \
+            --header "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=dasnet-dispute-escalation" | jq -r '.value')
+          if [ -z "$token" ] || [ "$token" = "null" ]; then
+            echo "::error::Could not obtain the GitHub Actions OIDC token."
+            exit 1
+          fi
+          echo "::add-mask::$token"
+          echo "token=$token" >> "$GITHUB_OUTPUT"
+
       - name: Escalate expired dispute cases
+        env:
+          DISPUTE_OIDC_TOKEN: ${{ steps.oidc.outputs.token }}
         run: |
           curl --fail --silent --show-error --max-time 30 \
+            --retry 2 --retry-all-errors \
             --request POST \
+            --header "Authorization: Bearer $DISPUTE_OIDC_TOKEN" \
             --header 'Content-Type: application/json' \
             https://dasmarket.co.ke/api/dispute-cron
