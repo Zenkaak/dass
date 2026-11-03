@@ -449,6 +449,8 @@ export default function App() {
   const hostname = window.location.hostname.toLowerCase();
   const tenantSubdomain = hostname.endsWith('.dasmarket.co.ke') && !['www','app','mambu'].includes(hostname.split('.')[0]) ? hostname.split('.')[0] : '';
   useEffect(()=>{if(tenantSubdomain||(!['','dashboard','login','signup','reset-password','platform-admin'].includes(path)&&!path.startsWith('dashboard/')))import('./customer-commerce.css').catch(()=>{});},[tenantSubdomain,path]);
+  // Warm the storefront UI chunks while the shop data request is in flight.
+  useEffect(()=>{if(tenantSubdomain){import('./StorefrontFlow').catch(()=>{});import('./BuyerAuthPage').catch(()=>{});}},[tenantSubdomain]);
   useEffect(()=>{if(hostname==='mambu.dasmarket.co.ke'||path==='dashboard'||path.startsWith('dashboard/')||path==='platform-admin')import('./mambu-admin.css').catch(()=>{});},[hostname,path]);
   if (hostname === 'mambu.dasmarket.co.ke') {
     if (path === 'login') return <Deferred><AuthPage initial="login" /></Deferred>;
