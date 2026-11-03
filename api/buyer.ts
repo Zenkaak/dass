@@ -3,7 +3,7 @@ import storeHandler from './store';
 const BUYER_ACTIONS=new Set([
  'coupons-public','coupon-validate','complaint-attachment','buyer-reports',
  'buyer-notifications','complaint','customer-orders','customer-chat',
- 'product-reviews','order'
+ 'product-reviews','order','chat-attachment'
 ]);
 
 export default async function handler(req:any,res:any){
