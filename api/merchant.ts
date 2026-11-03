@@ -1,4 +1,4 @@
-import storeHandler from './store';
+import storeHandler from './store.js';
 
 const MERCHANT_ACTIONS=new Set([
  'store-settings','coupons','coupon','payment-settings','payout-settings',
