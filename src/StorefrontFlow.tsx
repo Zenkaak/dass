@@ -269,7 +269,7 @@ export function StorefrontFlow({
   const [serverWishlist,setServerWishlist]=useState<string[]>([]),[serverWishlistLoaded,setServerWishlistLoaded]=useState(false);
   const togglePersistentWishlist=async(productId:string)=>{
     const enabled=!(serverWishlistLoaded?serverWishlist.includes(productId):wishlistIds.includes(productId));
-    try{await buyerFeatureRequest('buyer-wishlist',{productId,enabled});setServerWishlist(current=>enabled?[...new Set([...current,productId])]:current.filter(id=>id!==productId));onToggleWishlist?.(productId);}
+    try{await buyerFeatureRequest('buyer-wishlist',{productId,enabled});setServerWishlist(current=>enabled?[...new Set([...current,productId])]:current.filter(id=>id!==productId));}
     catch(error:any){setBuyerFeatureMessage(error.message||'Could not update your wishlist.');}
   };
   const buyerFeatureRequest=async(action:string,payload:any={})=>{
