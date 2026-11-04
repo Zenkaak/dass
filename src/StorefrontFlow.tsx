@@ -578,10 +578,11 @@ export function StorefrontFlow({
   }
 
   function renderCheckoutPayment() {
-    const choices: { id: 'mpesa'|'airtel'|'card'; label: string; configured: boolean; hint: string }[] = [
+    const choices: { id: PaymentMethod; label: string; configured: boolean; hint: string }[] = [
       { id: 'mpesa', label: 'MPESA', configured: true, hint: 'Safaricom M-PESA' },
       { id: 'airtel', label: 'AIRTEL', configured: false, hint: 'Airtel Money is not configured for this shop' },
       { id: 'card', label: 'CARD', configured: false, hint: 'Card payments are not configured for this shop' },
+      { id: 'delivery', label: 'PAY ON DELIVERY', configured: false, hint: 'Pay on delivery is not enabled for this shop' },
     ];
     const confirmMpesa=()=>{if(!/^\+?254[17]\d{8}$|^0[17]\d{8}$/.test(paymentPhone.trim().replace(/[\s().-]/g,''))){setCheckoutError('Enter a valid Kenyan M-PESA phone number to receive the payment prompt.');return;}setCheckoutError('');setPaymentModal(null);};
     const choosePayment=(choice:typeof choices[number])=>{
