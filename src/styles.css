@@ -4719,3 +4719,15 @@ body:has(.ds-store) .store-market-header{display:none!important}
  .ds-store-hero-dots button.active{width:19px}
 }
 @media(prefers-reduced-motion:reduce){.ds-store *{scroll-behavior:auto!important;transition:none!important}}
+
+/* Stage 3 — dedicated category discovery */
+.ds-store-category-section{padding-bottom:24px}
+.ds-store-category-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:11px}
+.ds-store-category-tile{position:relative;display:flex;min-width:0;min-height:132px;flex-direction:column;align-items:flex-start;justify-content:center;gap:7px;padding:15px;border:1px solid #ececec;border-radius:9px;background:linear-gradient(145deg,#fff 0%,#fafafa 100%);color:#242424;text-align:left;cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s}
+.ds-store-category-tile:hover{transform:translateY(-3px);border-color:#f0b36f;box-shadow:0 8px 20px rgba(25,25,25,.07)}
+.ds-store-category-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:11px;background:#fff0df;color:#c96a0c;font-size:23px}
+.ds-store-category-tile strong{font-size:12px;line-height:1.3}
+.ds-store-category-tile small{font-size:10px;color:#858585}
+.ds-store-category-tile>svg{position:absolute;right:12px;top:14px;color:#c87927}
+@media(max-width:900px){.ds-store-category-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:600px){.ds-store-category-section{padding:14px 10px 16px}.ds-store-category-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.ds-store-category-tile{min-height:112px;padding:10px;border-radius:8px;gap:6px}.ds-store-category-icon{width:35px;height:35px;border-radius:9px;font-size:20px}.ds-store-category-tile strong{font-size:11px}.ds-store-category-tile small{font-size:9px}.ds-store-category-tile>svg{right:8px;top:9px;width:12px;height:12px}}
