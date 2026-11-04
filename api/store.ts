@@ -206,7 +206,7 @@ export default async function handler(req:any,res:any){
    // when credential decryption or a verification API is unavailable.
    if(resultCode!==0){
     const terminalStatus=resultCode===1032?'cancelled':'failed';
-    await sql`UPDATE public.payments SET status=${terminalStatus},provider_result=${JSON.stringify({callback:cb,resultCode,resultDescription:String(cb.ResultDesc||'')})}::jsonb,updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
+    await sql`UPDATE public.payments SET status=${terminalStatus},provider_result=${JSON.stringify({...((p.provider_result&&typeof p.provider_result==='object')?p.provider_result:{}),callback:cb,resultCode,resultDescription:String(cb.ResultDesc||'')})}::jsonb,updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
     await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'payment_update',terminalStatus==='cancelled'?'Payment cancelled':'Payment failed','Payment for your order was '+terminalStatus+'.');
     return send(res,200,{ResultCode:0,ResultDesc:terminalStatus==='cancelled'?'Customer cancelled payment':'Payment failure recorded'});
    }
@@ -223,13 +223,14 @@ export default async function handler(req:any,res:any){
     const meta=cb.CallbackMetadata?.Item||[],val=(n:string)=>meta.find((x:any)=>x.Name===n)?.Value;
     const amount=Number(val('Amount')??checked.Amount),receipt=String(val('MpesaReceiptNumber')??checked.MpesaReceiptNumber??''),phone=String(val('PhoneNumber')??checked.PhoneNumber??'');
     if(!receipt||Math.round(amount*100)!==Number(p.amount_minor)||phone.replace(/^\+/, '')!==String(p.phone).replace(/^\+/,''))throw Error('Callback details do not match the pending order.');
-    await sql`UPDATE public.payments SET status='succeeded',provider_receipt=${receipt},provider_result=${JSON.stringify({callback:cb,query:checked})}::jsonb,verified_at=now(),updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
+    const paidUpdate=await sql`UPDATE public.payments SET status='succeeded',provider_receipt=${receipt},provider_result=${JSON.stringify({...((p.provider_result&&typeof p.provider_result==='object')?p.provider_result:{}),callback:cb,query:checked})}::jsonb,verified_at=now(),updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending') RETURNING id`;if(!paidUpdate.length)return send(res,200,{ResultCode:0,ResultDesc:'Already processed'});
+    const stockResult=await sql`WITH wanted AS (SELECT product_id,SUM(quantity)::integer AS quantity FROM public.order_items WHERE tenant_id=${p.tenant_id} AND order_id=${p.order_id} AND product_id IS NOT NULL GROUP BY product_id), eligible AS (SELECT COUNT(*)::integer AS count FROM wanted w JOIN public.products pr ON pr.id=w.product_id AND pr.tenant_id=${p.tenant_id} WHERE pr.stock_quantity IS NULL OR pr.stock_quantity>=w.quantity), updated AS (UPDATE public.products pr SET stock_quantity=CASE WHEN pr.stock_quantity IS NULL THEN NULL ELSE pr.stock_quantity-w.quantity END,updated_at=now() FROM wanted w,eligible e WHERE pr.id=w.product_id AND pr.tenant_id=${p.tenant_id} AND e.count=(SELECT COUNT(*) FROM wanted) RETURNING pr.id) SELECT (SELECT COUNT(*) FROM wanted)::integer AS wanted_count,(SELECT COUNT(*) FROM updated)::integer AS updated_count`;if(Number(stockResult[0]?.wanted_count||0)!==Number(stockResult[0]?.updated_count||0))console.error('Paid order inventory could not be fully decremented',{orderId:p.order_id,tenantId:p.tenant_id});
     await sql`UPDATE public.orders SET status='confirmed',updated_at=now() WHERE id=${p.order_id} AND status='pending'`;
     await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'payment_update','Payment confirmed','Your M-PESA payment was confirmed.');
     await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'order_update','Order confirmed','Your order has been confirmed by the shop.');
     await sql`UPDATE public.store_coupons SET used_count=used_count+1,updated_at=now() WHERE tenant_id=${p.tenant_id} AND code=(SELECT coupon_code FROM public.orders WHERE id=${p.order_id} AND tenant_id=${p.tenant_id}) AND coupon_code IS NOT NULL`;
     await sql`UPDATE public.payment_configs SET callback_verified_at=now() WHERE tenant_id=${p.tenant_id}`;
-   }catch(err:any){console.error('Daraja callback verification failed',err?.message||err);}
+   }catch(err:any){console.error('Daraja callback verification failed',err?.message||err);return send(res,503,{ResultCode:1,ResultDesc:'Payment verification is temporarily unavailable. Retry required.'});}
    return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
   }
   const me=await seller(sql,req);
