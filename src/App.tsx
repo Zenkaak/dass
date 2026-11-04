@@ -280,7 +280,7 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
         <div className="ds-store-section-title"><div><span className="ds-eyebrow">THE FULL COLLECTION</span><h2>Explore products</h2><p>Find the right product from this store.</p></div><span className="ds-store-count">{mixedProducts.length} products</span></div>
         <div className="ds-store-filter-row">
           <label><Search size={16}/><input aria-label="Filter products" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search products"/></label>
-          <select aria-label="Sort products" value={sort} onChange={e=>setSort(e.target.value as any)}><option value="featured">Featured</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="newest">Newest</option></select>
+          
         </div>
         {loading?<p className="catalogue-note">Loading products…</p>:error?<div className="auth-message error">{error}</div>:mixedProducts.length===0?<p className="catalogue-note">No products match your selection.</p>:<div className="ds-store-grid">{catalogueProducts.map(p=><article className="ds-store-card" key={p.id}>
           <button type="button" className={'ds-store-fav'+(wishlistIds.includes(p.id)?' active':'')} aria-label="Toggle favourite" onClick={()=>toggleWishlist(p.id)}><Heart size={17} fill={wishlistIds.includes(p.id)?'currentColor':'none'}/></button>
