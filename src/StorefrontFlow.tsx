@@ -692,31 +692,41 @@ export function StorefrontFlow({
               <div className="customer-review-summary"><WalletCards size={19} /><strong>{paymentLabels[paymentMethod]}</strong><span>STK prompt sent after you confirm. Payment is pending until verified.</span></div>
             </div>
             <div className="customer-panel">
-              <div className="customer-panel-heading"><h2>Delivery details</h2><button type="button" className="customer-text-button" onClick={()=>onNavigate('checkout/delivery')}>Change</button></div>
-              <div className="customer-review-summary"><MapPin size={19}/><strong>{deliveryMethod==='pickup'?'Pickup station':'Door delivery'}</strong><span>{deliveryMethod==='pickup'?pickupStation:[deliveryEstate,deliverySubCounty,deliveryCounty,deliveryAddress].filter(Boolean).join(', ')}</span></div>
-              <p className="customer-review-contact">{customerName} · {customerPhone}{customerEmail?' · '+customerEmail:''}</p>
+              <div className="customer-panel-heading"><h2>Delivery details</h2><button type="button" className="customer-text-button" onClick={() => document.getElementById('customer-delivery-options')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>Change</button></div>
+              <div className="customer-delivery-options" id="customer-delivery-options">
+                <label className={`customer-delivery-option${deliveryMethod === 'home' ? ' is-selected' : ''}`}><input type="radio" name="deliveryMethod" checked={deliveryMethod === 'home'} onChange={() => setDeliveryMethod('home')} /><span><strong>Home / business delivery</strong><small>Provide the location where the seller should deliver.</small></span></label>
+                <label className={`customer-delivery-option${deliveryMethod === 'pickup' ? ' is-selected' : ''}`}><input type="radio" name="deliveryMethod" checked={deliveryMethod === 'pickup'} onChange={() => setDeliveryMethod('pickup')} /><span><strong>Collect / meet-up</strong><small>Enter your preferred collection area; the seller will confirm the exact point.</small></span></label>
+              </div>
+              {deliveryMethod === 'home' ? <div className="customer-contact-fields customer-delivery-fields">
+                <label className="customer-form-label">County<select required value={deliveryCounty} onChange={(event) => { setDeliveryCounty(event.target.value); setDeliverySubCounty(''); }}><option value="">Select county</option>{['Baringo','Bomet','Bungoma','Busia','Elgeyo-Marakwet','Embu','Garissa','Homa Bay','Isiolo','Kajiado','Kakamega','Kericho','Kiambu','Kilifi','Kirinyaga','Kisii','Kisumu','Kitui','Kwale','Laikipia','Lamu','Machakos','Makueni','Mandera','Marsabit','Meru','Migori','Mombasa','Murang’a','Nairobi','Nakuru','Nandi','Narok','Nyamira','Nyandarua','Nyeri','Samburu','Siaya','Taita-Taveta','Tana River','Tharaka-Nithi','Trans Nzoia','Turkana','Uasin Gishu','Vihiga','Wajir','West Pokot'].map((county) => <option key={county} value={county}>{county}</option>)}</select></label>
+                <label className="customer-form-label">Sub-county<input required value={deliverySubCounty} onChange={(event) => setDeliverySubCounty(event.target.value)} placeholder="e.g. Westlands" /></label>
+                <label className="customer-form-label">Estate / area<input required value={deliveryEstate} onChange={(event) => setDeliveryEstate(event.target.value)} placeholder="e.g. Kilimani, near Yaya Centre" /></label>
+                <label className="customer-form-label">Physical address<input required value={deliveryAddress} onChange={(event) => setDeliveryAddress(event.target.value)} placeholder="Building, street, plot or house number" /></label>
+                <label className="customer-form-label">Directions / landmark (optional)<textarea value={deliveryDirections} onChange={(event) => setDeliveryDirections(event.target.value)} placeholder="Nearby landmark, gate details or directions" /></label>
+              </div> : <div className="customer-contact-fields"><label className="customer-form-label">Preferred pickup area / station<input required value={pickupStation} onChange={(event) => setPickupStation(event.target.value)} placeholder="Town, mall or preferred meeting area" /></label></div>}
+              <div className="customer-contact-fields">
+                <label className="customer-form-label">Full name<input required value={customerName} onChange={(event) => setCustomerName(event.target.value)} autoComplete="name" placeholder="Your name" /></label>
+                <label className="customer-form-label">Phone number<input required type="tel" value={customerPhone} onChange={(event) => setCustomerPhone(event.target.value)} autoComplete="tel" placeholder="07… or +254…" /></label>
+                <label className="customer-form-label">Email <small>(optional)</small><input type="email" value={customerEmail} onChange={(event) => setCustomerEmail(event.target.value)} autoComplete="email" placeholder="you@example.com" /></label>
+              </div>
             </div>
             <div className="customer-panel">
-              <div className="customer-panel-heading"><h2>Items in this order</h2><span>{activeOrder.lines.length} items</span></div>
-              {activeOrder.lines.map(({ product, quantity }) => <div className="customer-review-product" key={product.id}><ProductThumb product={product} /><div><strong>{product.name}</strong><small>Qty {quantity}</small><small>{formatKes(product.price)} each</small>{String(activeOrder.deliveryStatus||'').toLowerCase()==='delivered'&&activeOrder.paymentStatus==='succeeded'&&<button type="button" className="customer-order-review-link" onClick={()=>onOpenProduct?.(product)}>★ Review product</button>}</div><b>{formatKes(product.price * quantity)}</b></div>)}
-              {String(activeOrder.deliveryStatus||'').toLowerCase()==='delivered'?<div className="customer-delivered-review-prompt" role="status"><strong>How did we serve you?</strong><span>Your order has been delivered. Share a review of the products you purchased.</span></div>:null}
-              <div className="customer-flow-actions">{String(activeOrder.deliveryStatus||'').toLowerCase()==='delivered'?<button type="button" className="customer-primary-button" onClick={()=>onNavigate('store')}>Shop again <ArrowRight size={17}/></button>:<button type="button" className="customer-primary-button" onClick={() => openOrder(activeOrder, 'order-tracking')}>Track my item <ArrowRight size={17} /></button>}</div>
+              <div className="customer-panel-heading"><h2>Shipment 1 / 1</h2><span>Fulfilled by {shopName}</span></div>
+              {lines.map(({ product, quantity }) => (
+                <article className="customer-review-product" key={product.id}>
+                  <ProductThumb product={product} />
+                  <div><strong>{product.name}</strong><small>Qty {quantity} · {formatKes(product.price)}</small></div>
+                  <b>{formatKes(product.price * quantity)}</b>
+                </article>
+              ))}
             </div>
-            <div className="customer-panel">
-              <div className="customer-panel-heading"><h2>Delivery details</h2></div>
-              <p className="customer-order-address"><MapPin size={18} />{activeOrder.deliveryMethod === 'pickup' ? `Preferred collection: ${activeOrder.pickupStation || 'To be confirmed with seller'}` : [activeOrder.deliveryCounty, activeOrder.deliverySubCounty, activeOrder.deliveryEstate, activeOrder.deliveryAddress].filter(Boolean).join(', ') || 'Delivery destination not recorded'}{activeOrder.deliveryDirections ? ` · Directions: ${activeOrder.deliveryDirections}` : ''}</p>
-              <p className="customer-order-address"><UserRound size={18} />{activeOrder.customerName} · {activeOrder.customerPhone}</p>
-            </div>
-            {chatPanel}
           </div>
-          <aside className="customer-summary-card">
-            <h2>Payment summary</h2>
-            <div className="customer-summary-row"><span>Items</span><strong>{formatKes(activeOrder.subtotal)}</strong></div>
-            <div className="customer-summary-row"><span>Delivery</span><strong>{formatKes(activeOrder.deliveryFee)}</strong></div>
-            <div className="customer-summary-row customer-summary-total"><span>Total</span><strong>{formatKes(activeOrder.total)}</strong></div>
-            <p className="customer-preview-note"><WalletCards size={15} /> {paymentLabels[activeOrder.paymentMethod]}</p>
-            {['failed','cancelled'].includes(String(activeOrder.paymentStatus).toLowerCase())&&<div className="customer-summary-retry"><label className="customer-form-label">M-PESA number to pay with<input type="tel" inputMode="tel" autoComplete="tel" value={retryPaymentPhone} onChange={e=>setRetryPaymentPhone(e.target.value)} placeholder="07XX XXX XXX or 2547XXXXXXXX" maxLength={16}/></label><button type="button" className="buyer-retry-payment" onClick={retryActiveOrderPayment} disabled={retryingOrder}>{retryingOrder?'Sending M-PESA prompt…':'↻ Retry payment'}</button>{retryMessage&&<small role="status">{retryMessage}</small>}</div>}
-          </aside>
+          {renderSummary()}
+        </div>
+        {checkoutError && <p className="customer-preview-alert" role="alert">{checkoutError}</p>}
+        <div className="customer-flow-actions">
+          <button type="button" className="customer-secondary-button" onClick={() => onNavigate('cart')}>Modify cart</button>
+          <button type="button" className="customer-primary-button" disabled={!lines.length || !customerName.trim() || !customerPhone.trim() || paymentMethod !== 'mpesa' || submitting || (deliveryMethod === 'home' && (!deliveryCounty || !deliverySubCounty.trim() || !deliveryEstate.trim() || !deliveryAddress.trim())) || (deliveryMethod === 'pickup' && !pickupStation.trim())} onClick={placeOrder}>{submitting ? 'Starting M-PESA…' : 'Confirm & pay with M-PESA'} <ArrowRight size={17} /></button>
         </div>
       </section>
     );
