@@ -266,7 +266,12 @@ export function StorefrontFlow({
   const [buyerFeatureBusy,setBuyerFeatureBusy]=useState(false);
   const [closureRequest,setClosureRequest]=useState<any>(null);
   const [buyerFollowedShops,setBuyerFollowedShops]=useState<any[]>([]);
-  const [serverWishlist,setServerWishlist]=useState<any[]>([]);
+  const [serverWishlist,setServerWishlist]=useState<string[]>([]),[serverWishlistLoaded,setServerWishlistLoaded]=useState(false);
+  const togglePersistentWishlist=async(productId:string)=>{
+    const enabled=!(serverWishlistLoaded?serverWishlist.includes(productId):wishlistIds.includes(productId));
+    try{await buyerFeatureRequest('buyer-wishlist',{productId,enabled});setServerWishlist(current=>enabled?[...new Set([...current,productId])]:current.filter(id=>id!==productId));onToggleWishlist?.(productId);}
+    catch(error:any){setBuyerFeatureMessage(error.message||'Could not update your wishlist.');}
+  };
   const buyerFeatureRequest=async(action:string,payload:any={})=>{
     const response=await fetch('/api/buyer?action='+encodeURIComponent(action),{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug,...payload})});
     const data=await response.json().catch(()=>({}));
@@ -278,7 +283,7 @@ export function StorefrontFlow({
     if(!initialCustomerPhone)return;
     fetch('/api/buyer?action=buyer-account-data&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'})
       .then(async response=>{const data=await response.json().catch(()=>({}));if(!response.ok)throw Error(data.error||'Could not load saved account preferences.');return data;})
-      .then(data=>{if(!live)return;const followed=Array.isArray(data.followedShops)?data.followedShops:[];setBuyerFollowedShops(followed);setIsShopFollowed(followed.some((shop:any)=>shop.slug===slug));setNewsletterEnabled(Boolean(data.newsletter));setClosureRequest(data.closureRequest||null);setServerWishlist(Array.isArray(data.wishlist)?data.wishlist:[]);})
+      .then(data=>{if(!live)return;const followed=Array.isArray(data.followedShops)?data.followedShops:[];setBuyerFollowedShops(followed);setIsShopFollowed(followed.some((shop:any)=>shop.slug===slug));setNewsletterEnabled(Boolean(data.newsletter));setClosureRequest(data.closureRequest||null);setServerWishlist(Array.isArray(data.wishlist)?data.wishlist.map((item:any)=>String(item.id)):[]);setServerWishlistLoaded(true);})
       .catch(error=>{if(live)setBuyerFeatureMessage(error.message||'Could not load saved account preferences.');});
     return()=>{live=false;};
   },[slug,initialCustomerPhone]);
@@ -834,8 +839,8 @@ export function StorefrontFlow({
     const policyViews:any={'shop-terms':{title:'Terms & Conditions',body:shopTermsAndConditions},'shop-privacy':{title:'Privacy Policy',body:shopPrivacyPolicy},'shop-returns':{title:'Returns, refunds & exchanges',body:shopReturnPolicy},'shop-delivery':{title:'Delivery & collection policy',body:shopDeliveryPolicy}};
     if(policyViews[view])return <section className="customer-flow"><FlowHeading title={policyViews[view].title} onBack={()=>onNavigate('account')} backLabel="My account"/><article className="customer-panel customer-account-detail"><div className="customer-policy-publisher"><strong>{shopName}</strong><small>Published by this shop</small></div>{policyViews[view].body?<div style={{whiteSpace:'pre-wrap',lineHeight:1.75}}>{policyViews[view].body}</div>:<p className="customer-preview-note">This shop has not published this policy yet. Contact the seller if you need clarification before placing an order.</p>}</article></section>;
     if(view==='wishlist'){
-      const savedProducts=products.filter(product=>wishlistIds.includes(product.id));
-      return <section className="customer-flow"><FlowHeading title="Saved items" onBack={()=>onNavigate('account')} backLabel="My account"/><div className="customer-panel customer-account-detail"><div className="customer-panel-heading"><h2>Your wishlist</h2><span>{savedProducts.length} saved</span></div><p className="customer-preview-note">Saved items are stored on this device for this shop.</p>{savedProducts.length?<div className="customer-recommendation-row">{savedProducts.map(product=><article className="customer-recommendation-card" key={product.id}><ProductThumb product={product}/><strong>{product.name}</strong><b>{formatKes(product.price)}</b><div className="customer-wishlist-actions"><button type="button" className="customer-secondary-button" onClick={()=>onOpenProduct?.(product)}>View item</button><button type="button" className="customer-text-button" onClick={()=>onToggleWishlist?.(product.id)}>Remove</button></div></article>)}</div>:<div className="customer-empty-state"><span><ShoppingBag size={28}/></span><h2>No saved items yet</h2><p>Open a product and choose “Save to wishlist” to keep it here.</p><button type="button" className="customer-primary-button" onClick={()=>onNavigate('store')}>Browse products</button></div>}</div></section>;
+      const savedProducts=products.filter(product=>(serverWishlistLoaded?serverWishlist:wishlistIds).includes(product.id));
+      return <section className="customer-flow"><FlowHeading title="Saved items" onBack={()=>onNavigate('account')} backLabel="My account"/><div className="customer-panel customer-account-detail"><div className="customer-panel-heading"><h2>Your wishlist</h2><span>{savedProducts.length} saved</span></div><p className="customer-preview-note">Saved items are synced to your buyer account.</p>{savedProducts.length?<div className="customer-recommendation-row">{savedProducts.map(product=><article className="customer-recommendation-card" key={product.id}><ProductThumb product={product}/><strong>{product.name}</strong><b>{formatKes(product.price)}</b><div className="customer-wishlist-actions"><button type="button" className="customer-secondary-button" onClick={()=>onOpenProduct?.(product)}>View item</button><button type="button" className="customer-text-button" onClick={()=>togglePersistentWishlist(product.id)}>Remove</button></div></article>)}</div>:<div className="customer-empty-state"><span><ShoppingBag size={28}/></span><h2>No saved items yet</h2><p>Open a product and save it to your wishlist to keep it here.</p><button type="button" className="customer-primary-button" onClick={()=>onNavigate('store')}>Browse products</button></div>}</div></section>;
     }
     if (view === 'inbox') return (
       <section className="customer-flow">
