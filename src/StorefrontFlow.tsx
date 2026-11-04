@@ -250,7 +250,9 @@ export function StorefrontFlow({
   const [paymentPhone, setPaymentPhone] = useState(initialCustomerPhone);
   const [customerEmail, setCustomerEmail] = useState(initialCustomerEmail);
   const [deliveryAddress, setDeliveryAddress] = useState(initialCustomerAddress);
-  const [pickupStation, setPickupStation] = useState(()=>{try{return localStorage.getItem('dasnet-pickup-station-'+slug)||''}catch{return ''}});\n  const [pickupStationEditor,setPickupStationEditor]=useState(false);\n  const [pickupStationDraft,setPickupStationDraft]=useState('');
+  const [pickupStation, setPickupStation] = useState(()=>{try{return localStorage.getItem('dasnet-pickup-station-'+slug)||''}catch{return ''}});
+  const [pickupStationEditor,setPickupStationEditor]=useState(false);
+  const [pickupStationDraft,setPickupStationDraft]=useState('');
   const [voucherCode, setVoucherCode] = useState('');
   const [voucherMessage, setVoucherMessage] = useState('');
   const [appliedCoupon,setAppliedCoupon]=useState<any>(null),[shopCoupons,setShopCoupons]=useState<any[]>([]);
