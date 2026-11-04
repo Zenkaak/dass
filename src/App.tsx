@@ -183,7 +183,7 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
 
  if(buyerPage==='buyer-login'||buyerPage==='buyer-signup') return <Deferred><BuyerAuthPage slug={slug} shopName={shop?.name||'This shop'} initial={buyerPage==='buyer-signup'?'signup':'login'} onBack={()=>navigateBuyerPage('store')} onAuthenticated={(customer)=>{setBuyerCustomer(customer);const target=buyerReturnPage||'account';setBuyerPage(target);setAccountMenuOpen(false);const next=buyerPath(target);if(window.location.pathname!==next)window.history.pushState({buyerPage:target},'',next)}}/></Deferred>;
  return <main className={"store-page"+(buyerPage==='faqs'?" store-faq-route":"")+(buyerPage==='cart'||buyerPage.startsWith('checkout/')?" is-checkout-route":"")} data-store-theme='marketplace' style={{'--store-accent':shop?.theme||'#e47a13'} as any}>
-  <nav className="store-market-header" aria-label="Store navigation">
+  {buyerPage!=='store'&&<nav className="store-market-header" aria-label="Store navigation">
     <div className="store-market-header-inner">
       <button type="button" className="store-market-menu" aria-label="Open categories" aria-expanded={mobileSidebarOpen} onClick={()=>setMobileSidebarOpen(v=>!v)}><Menu size={21}/></button>
       <a className="store-market-brand store-merchant-brand" href={buyerPath('store')} onClick={e=>{e.preventDefault();navigateBuyerPage('store')}} aria-label={shop?.name||'Seller storefront'}>
@@ -215,7 +215,7 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
         <button type="button" className="store-market-cart" onClick={()=>navigateBuyerPage('cart')} aria-label={`Shopping cart, ${cartItems.reduce((n,[,q])=>n+q,0)} items`}><ShoppingCart size={22}/><b>{cartItems.reduce((n,[,q])=>n+q,0)}</b></button>
       </div>
     </div>
-  </nav>
+  </nav>}
   {mobileSidebarOpen&&<button type="button" className="market-sidebar-scrim market-global-drawer-scrim" aria-label="Close navigation menu" onClick={()=>setMobileSidebarOpen(false)}/>}
   <aside className={"market-sidebar market-global-drawer"+(mobileSidebarOpen?" is-mobile-open":"")} aria-label="Shop navigation">
     <div className="market-sidebar-shop"><a href={buyerPath('store')} onClick={e=>{e.preventDefault();navigateBuyerPage('store')}}><Store size={18}/><span><b>{shop?.name||'Shop categories'}</b><small>Browse this shop</small></span></a><button type="button" className="market-sidebar-close" aria-label="Close navigation" onClick={()=>setMobileSidebarOpen(false)}><X size={16}/></button></div>
