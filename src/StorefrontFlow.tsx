@@ -564,6 +564,7 @@ export function StorefrontFlow({
                         <h3>{product.name}</h3>
                         <p>{product.category || 'Product'} · Sold by {shopName}</p>
                         <strong>{formatKes(product.price)}</strong>
+                        <small className="customer-cart-line-total">Line total · {formatKes(product.price * quantity)}</small>
                         <small className="customer-cart-stock">{product.stockQuantity===0?'Currently out of stock':product.stockQuantity==null?'Stock confirmed at checkout':`${Math.max(0,product.stockQuantity)} available`}</small>
                         <div className="customer-mobile-quantity">
                           <button type="button" aria-label={`Decrease ${product.name} quantity`} onClick={() => updateQuantity(product.id, quantity - 1)}>−</button>
