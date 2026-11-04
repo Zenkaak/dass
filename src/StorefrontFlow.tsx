@@ -911,6 +911,57 @@ export function StorefrontFlow({
     );
   }
 
+  if (view.startsWith('collection/')) {
+    const collectionKey = view.split('/')[1] || 'all-products';
+    const collectionTitles: Record<string,string> = {
+      'all-products': 'All products',
+      'top-picks': 'Shop picks',
+      'featured-products': 'Featured products',
+      'new-finds': 'New finds',
+      'categories': 'Browse categories',
+    };
+    const collectionProducts = collectionKey === 'featured-products'
+      ? products.filter((product:any) => Boolean(product.spotlight))
+      : collectionKey === 'top-picks'
+        ? products.slice(0, 12)
+        : collectionKey === 'new-finds'
+          ? products.slice(0, 12)
+          : products;
+    const categories = [...new Set(products.map(product => String(product.category || 'Other')))].sort((a,b)=>a.localeCompare(b));
+    return (
+      <section className="customer-flow customer-collection-page">
+        <FlowHeading title={collectionTitles[collectionKey] || 'Shop products'} onBack={() => onNavigate('store')} />
+        {collectionKey === 'categories' ? (
+          <div className="customer-panel customer-collection-categories">
+            <p>Choose a category to browse products from {shopName}.</p>
+            <div className="customer-account-links">
+              {categories.map(category => <button type="button" className="customer-account-link" key={category} onClick={() => onNavigate(category.toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''))}>
+                <ShoppingBag size={18}/><span>{category}</span><ChevronRight size={16}/>
+              </button>)}
+            </div>
+          </div>
+        ) : (
+          <>
+            {collectionKey === 'featured-products' && collectionProducts.length === 0 && <p className="customer-preview-note">This shop has not marked any products as featured yet. Browse the full catalogue instead.</p>}
+            <div className="market-products-grid customer-collection-grid">
+              {(collectionProducts.length ? collectionProducts : products).map(product => (
+                <article className="market-product-card" key={product.id}>
+                  <button type="button" className="market-home-product-open" onClick={() => onOpenProduct?.(product)}>
+                    <ProductThumb product={product}/>
+                    <strong>{product.name}</strong>
+                    <b>{formatKes(product.price)}</b>
+                    <small>{product.stockQuantity === 0 ? 'Out of stock' : product.stockQuantity == null ? 'Available' : product.stockQuantity + ' in stock'}</small>
+                  </button>
+                  <button type="button" className="market-product-add" disabled={product.stockQuantity === 0} onClick={() => onCartChange({...cart,[product.id]:Math.min(99,product.stockQuantity ?? 99,(cart[product.id]||0)+1)})}>Add to cart</button>
+                </article>
+              ))}
+            </div>
+          </>
+        )}
+      </section>
+    );
+  }
+
   if (view === 'faqs') return (
     <section className="customer-flow storefront-all-faqs">
       <FlowHeading title="Frequently asked questions" onBack={() => onNavigate('store')} backLabel="Back to shop" />
