@@ -695,3 +695,133 @@
  .market-reference-flash-heading p{font-size:8px}
  .store-page .market-home-category-block{padding:12px 9px 8px}
 }
+
+/* Jumia-style cart, delivery, payment and order review surfaces. */
+.customer-workspace-shell{width:min(1180px,calc(100% - 24px));margin:14px auto 34px;color:#282828}
+.customer-flow{width:100%;padding:18px;background:#fff;border:1px solid #e7e9ec;border-radius:4px;color:#282828;font-family:Arial,Helvetica,sans-serif}
+.customer-flow-heading{display:flex;align-items:center;gap:13px;margin:0 0 18px;padding:0 0 13px;border-bottom:1px solid #eceff1}
+.customer-flow-heading h1{margin:0;color:#282828;font-size:22px;font-weight:700}
+.customer-back-button{display:inline-flex;align-items:center;gap:5px;padding:7px 10px;border:1px solid #e2e5e8;border-radius:3px;background:#fff;color:#4a5963;font-size:12px}
+.customer-checkout-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;align-items:start;gap:16px}
+.customer-checkout-stack,.customer-review-stack{display:grid;gap:12px;min-width:0}
+.customer-panel,.customer-summary-card{min-width:0;padding:16px;border:1px solid #e6e9ec;border-radius:4px;background:#fff}
+.customer-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
+.customer-panel-heading h2,.customer-summary-card h2{margin:0;color:#30383e;font-size:16px;font-weight:700}
+.customer-panel-heading>span{color:#78848d;font-size:11px}
+.customer-cart-lines{display:grid}
+.customer-cart-line{display:grid;grid-template-columns:104px minmax(0,1fr) auto;gap:14px;padding:14px 0;border-bottom:1px solid #edf0f2}
+.customer-cart-line:first-child{padding-top:0}
+.customer-cart-line:last-child{border-bottom:0;padding-bottom:0}
+.customer-cart-line img,.customer-cart-line .customer-product-thumb{width:104px;height:104px;object-fit:contain;border-radius:3px;background:#f8f9fa}
+.customer-cart-copy h3{margin:2px 0 6px;color:#30383e;font-size:14px;font-weight:700}
+.customer-cart-copy p{margin:0 0 8px;color:#7a858d;font-size:11px}
+.customer-cart-copy>strong{color:#242b31;font-size:16px}
+.customer-cart-controls{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:12px}
+.customer-remove-button,.customer-mobile-remove{padding:4px 0;border:0;background:none;color:#d46c17;font-size:11px;cursor:pointer}
+.customer-quantity,.customer-mobile-quantity{display:flex;align-items:center;border:1px solid #dfe3e6;border-radius:3px}
+.customer-quantity button,.customer-mobile-quantity button{width:30px;height:30px;border:0;background:#f7f8f9;color:#30383e;font-size:16px}
+.customer-quantity span,.customer-mobile-quantity span{min-width:30px;text-align:center;font-size:12px}
+.customer-mobile-quantity,.customer-mobile-remove{display:none}
+.customer-summary-card{position:sticky;top:78px}
+.customer-summary-card h2{padding-bottom:13px;border-bottom:1px solid #eceff1}
+.customer-summary-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #f0f1f2;color:#606b73;font-size:12px}
+.customer-summary-row strong{color:#30383e;font-size:13px}
+.customer-summary-total{padding-top:15px;color:#242b31;font-weight:700}
+.customer-summary-total strong{color:#d87516;font-size:18px}
+.customer-preview-note{display:flex;align-items:flex-start;gap:7px;margin:13px 0;color:#75818a;font-size:10px;line-height:1.5}
+.customer-primary-button{min-height:42px;padding:0 18px;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:3px;background:#f68b1e;color:#fff;font-size:12px;font-weight:800;cursor:pointer}
+.customer-primary-button:disabled{opacity:.48;cursor:not-allowed}
+.customer-secondary-button{min-height:40px;padding:0 15px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #dfe3e6;border-radius:3px;background:#fff;color:#4a555d;font-size:12px;font-weight:700}
+.customer-flow-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:16px}
+.customer-mobile-checkout-bar{display:none}
+.customer-section-title{display:flex;align-items:center;justify-content:space-between;margin:20px 0 12px}
+.customer-section-title h2{margin:0;font-size:17px}
+.customer-recommendation-row{display:grid;grid-auto-columns:150px;grid-auto-flow:column;gap:10px;overflow-x:auto}
+.customer-recommendation-card{padding:9px;border:1px solid #e6e9ec;border-radius:4px;background:#fff}
+.customer-recommendation-card img{width:100%;height:105px;object-fit:contain;background:#fafafa}
+.customer-recommendation-card strong,.customer-recommendation-card b{display:block;margin-top:7px;font-size:11px}
+.customer-recommendation-card b{color:#d87516;font-size:13px}
+.customer-delivery-tabs{display:grid;grid-template-columns:1fr 1fr;margin-bottom:14px;border-bottom:1px solid #e6e9ec}
+.customer-delivery-tabs button{min-height:45px;display:flex;align-items:center;justify-content:center;gap:8px;border:0;border-bottom:3px solid transparent;background:#fff;color:#65717a;font-size:11px;font-weight:800;cursor:pointer}
+.customer-delivery-tabs button.active{border-bottom-color:#f68b1e;color:#e47a13}
+.customer-delivery-pickup-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(230px,.9fr);gap:14px;align-items:stretch}
+.customer-pickup-empty{min-height:225px;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center}
+.customer-pickup-empty>svg{color:#f68b1e}
+.customer-pickup-empty h2{margin:10px 0 6px;font-size:16px}
+.customer-pickup-empty p{max-width:340px;margin:0 0 14px;color:#78848d;font-size:11px;line-height:1.5}
+.customer-pickup-selected{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid #d9eadf;border-radius:3px;background:#f3fbf6;color:#16834a}
+.customer-pickup-selected strong,.customer-pickup-selected small{display:block}
+.customer-pickup-selected strong{color:#263b31;font-size:13px}
+.customer-pickup-selected small{margin-top:4px;color:#718179;font-size:10px}
+.customer-pickup-form{display:grid;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid #edf0f2}
+.customer-pickup-map{position:relative;min-height:225px;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;padding:15px;border:1px solid #e2e7e7;border-radius:4px;background:#eef3ed}
+.customer-pickup-map-grid{position:absolute;inset:0;opacity:.85;background:linear-gradient(25deg,transparent 46%,#fff 47%,#fff 51%,transparent 52%),linear-gradient(105deg,transparent 44%,#fff 45%,#fff 49%,transparent 50%),linear-gradient(160deg,transparent 65%,#d4e4d0 66%,#d4e4d0 72%,transparent 73%),repeating-linear-gradient(0deg,transparent 0 35px,rgba(160,181,158,.24) 36px 37px),repeating-linear-gradient(90deg,transparent 0 43px,rgba(160,181,158,.2) 44px 45px)}
+.customer-map-pin{position:absolute;top:36%;left:52%;z-index:1;color:#e77717;filter:drop-shadow(0 2px 2px #777)}
+.customer-pickup-map>div:last-child{position:relative;z-index:2;width:100%;padding:10px;background:rgba(255,255,255,.94);border-radius:3px}
+.customer-pickup-map strong,.customer-pickup-map small{display:block}
+.customer-pickup-map strong{font-size:11px}
+.customer-pickup-map small{margin-top:4px;color:#7a858d;font-size:9px}
+.customer-contact-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.customer-form-label{display:grid;gap:6px;color:#56626a;font-size:11px;font-weight:700}
+.customer-form-label input,.customer-form-label select,.customer-form-label textarea,.customer-voucher-controls input{width:100%;min-height:40px;padding:9px 10px;border:1px solid #dce1e4;border-radius:3px;background:#fff;color:#30383e;font:inherit;font-size:12px}
+.customer-form-label textarea{min-height:75px;resize:vertical}
+.customer-door-delivery-panel .customer-contact-fields{margin-top:10px}
+.customer-voucher-controls{display:flex;gap:8px}
+.customer-voucher-controls button{padding:0 16px;border:0;border-radius:3px;background:#f68b1e;color:#fff;font-size:11px;font-weight:800}
+.customer-payment-method-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.customer-payment-method-tab{min-height:66px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;border:1px solid #e2e5e8;border-radius:3px;background:#fff;color:#4c5860;cursor:pointer}
+.customer-payment-method-tab strong{font-size:11px}
+.customer-payment-method-tab small{font-size:9px;color:#87929a}
+.customer-payment-method-tab.is-selected{border:2px solid #f68b1e;background:#fff8f0;color:#c86b12}
+.customer-payment-method-tab.is-unavailable{opacity:.55}
+.customer-payment-config-note,.customer-terms-copy{color:#78848d;font-size:10px;line-height:1.5}
+.customer-review-summary{display:flex;align-items:center;gap:10px;color:#d97817}
+.customer-review-summary strong{color:#30383e;font-size:12px;white-space:nowrap}
+.customer-review-summary span{color:#68747c;font-size:11px;line-height:1.4}
+.customer-review-contact{margin:10px 0 0;color:#75818a;font-size:10px}
+.customer-review-product{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #edf0f2}
+.customer-review-product img{width:64px;height:64px;object-fit:contain;background:#fafafa}
+.customer-review-product>div{flex:1}
+.customer-review-product strong,.customer-review-product small{display:block;font-size:11px}
+.customer-review-product small{margin-top:5px;color:#7a858d}
+.customer-review-product>b{font-size:12px}
+.customer-empty-state{min-height:300px;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center}
+.customer-empty-state>span{width:58px;height:58px;display:grid;place-items:center;border-radius:50%;background:#fff1e3;color:#f68b1e}
+.customer-empty-state h2{margin:13px 0 6px;font-size:19px}
+.customer-empty-state p{max-width:340px;color:#7a858d;font-size:12px;line-height:1.5}
+.customer-payment-modal-backdrop{position:fixed;inset:0;z-index:900;display:grid;place-items:center;padding:18px;background:rgba(20,25,30,.55)}
+.customer-payment-modal{position:relative;width:min(430px,100%);padding:24px;border-radius:5px;background:#fff;color:#30383e;box-shadow:0 15px 60px #0004}
+.customer-payment-modal h2{margin:12px 0 7px;font-size:20px}
+.customer-payment-modal p{color:#71808a;font-size:12px;line-height:1.5}
+.customer-payment-modal-mark{width:42px;height:42px;display:grid;place-items:center;border-radius:50%;background:#e6f7ed;color:#15924c;font-weight:900}
+.customer-payment-modal-close{position:absolute;top:10px;right:12px;border:0;background:none;font-size:24px}
+.customer-payment-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+@media(max-width:760px){
+ .customer-workspace-shell{width:100%;margin:8px auto 0}
+ .customer-flow{padding:13px 10px;border:0;border-radius:0}
+ .customer-flow-heading{margin-bottom:13px}
+ .customer-flow-heading h1{font-size:19px}
+ .customer-checkout-grid{grid-template-columns:1fr;gap:10px}
+ .customer-summary-card{position:static}
+ .customer-cart-line{grid-template-columns:82px minmax(0,1fr);gap:10px;padding:12px 0}
+ .customer-cart-line img,.customer-cart-line .customer-product-thumb{width:82px;height:82px}
+ .customer-cart-controls{display:none}
+ .customer-mobile-quantity{display:flex;width:max-content;margin-top:9px}
+ .customer-mobile-remove{display:inline-flex;margin-top:7px}
+ .customer-cart-copy h3{font-size:12px}
+ .customer-cart-copy>strong{font-size:14px}
+ .customer-mobile-checkout-bar{position:fixed;left:0;right:0;bottom:0;z-index:75;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));border-top:1px solid #e5e7e9;background:#fff;box-shadow:0 -4px 18px rgba(0,0,0,.1)}
+ .customer-mobile-checkout-bar span small,.customer-mobile-checkout-bar span strong{display:block}
+ .customer-mobile-checkout-bar span small{color:#77828a;font-size:9px}
+ .customer-mobile-checkout-bar span strong{margin-top:3px;color:#d87516;font-size:15px}
+ .customer-mobile-checkout-bar .customer-primary-button{min-width:150px}
+ .customer-cart-grid{padding-bottom:72px}
+ .customer-delivery-pickup-layout{grid-template-columns:1fr}
+ .customer-pickup-map{min-height:145px}
+ .customer-contact-fields{grid-template-columns:1fr}
+ .customer-payment-method-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .customer-flow-actions{position:sticky;bottom:0;z-index:10;margin:15px -10px -13px;padding:10px;background:rgba(255,255,255,.97);box-shadow:0 -4px 12px rgba(0,0,0,.06)}
+ .customer-flow-actions .customer-primary-button{flex:1}
+ .customer-review-summary{align-items:flex-start;flex-wrap:wrap}
+ .customer-review-summary span{flex-basis:100%;padding-left:28px}
+}
