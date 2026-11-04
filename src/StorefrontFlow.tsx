@@ -240,7 +240,7 @@ export function StorefrontFlow({
   const [paymentModal,setPaymentModal]=useState<PaymentMethod|null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
-  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('home');
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('pickup');
   const [deliveryCounty, setDeliveryCounty] = useState('');
   const [deliverySubCounty, setDeliverySubCounty] = useState('');
   const [deliveryEstate, setDeliveryEstate] = useState('');
@@ -250,7 +250,7 @@ export function StorefrontFlow({
   const [paymentPhone, setPaymentPhone] = useState(initialCustomerPhone);
   const [customerEmail, setCustomerEmail] = useState(initialCustomerEmail);
   const [deliveryAddress, setDeliveryAddress] = useState(initialCustomerAddress);
-  const [pickupStation, setPickupStation] = useState('');
+  const [pickupStation, setPickupStation] = useState(()=>{try{return localStorage.getItem('dasnet-pickup-station-'+slug)||''}catch{return ''}});\n  const [pickupStationEditor,setPickupStationEditor]=useState(false);\n  const [pickupStationDraft,setPickupStationDraft]=useState('');
   const [voucherCode, setVoucherCode] = useState('');
   const [voucherMessage, setVoucherMessage] = useState('');
   const [appliedCoupon,setAppliedCoupon]=useState<any>(null),[shopCoupons,setShopCoupons]=useState<any[]>([]);
@@ -532,7 +532,7 @@ export function StorefrontFlow({
         </>}
         <p className="customer-preview-note"><ShieldCheck size={15} /> Prices and stock are rechecked by the shop server before an M-PESA request is created.</p>
         {view === 'cart' && (
-          <button type="button" className="customer-primary-button" disabled={!lines.length} onClick={() => onNavigate('checkout/payment')}>
+          <button type="button" className="customer-primary-button" disabled={!lines.length} onClick={() => onNavigate('checkout/delivery')}>
             Checkout ({formatKes(subtotal)}) <ArrowRight size={17} />
           </button>
         )}
@@ -578,7 +578,7 @@ export function StorefrontFlow({
               </div>
               {renderSummary()}
             </div>
-            <div className="customer-mobile-checkout-bar"><span><small>Subtotal</small><strong>{formatKes(subtotal)}</strong></span><button type="button" className="customer-primary-button" onClick={() => onNavigate('checkout/payment')}>Checkout <ArrowRight size={17} /></button></div>
+            <div className="customer-mobile-checkout-bar"><span><small>Subtotal</small><strong>{formatKes(subtotal)}</strong></span><button type="button" className="customer-primary-button" onClick={() => onNavigate('checkout/delivery')}>Checkout <ArrowRight size={17} /></button></div>
             <section className="customer-recommendations">
               <div className="customer-section-title"><h2>{recentlyViewedProducts.length ? 'Recently viewed' : 'You may also like'}</h2><button type="button" onClick={() => onNavigate('store')}>See all <ArrowRight size={14} /></button></div>
               <div className="customer-recommendation-row">
@@ -602,6 +602,34 @@ export function StorefrontFlow({
     );
   }
 
+  function renderCheckoutDelivery() {
+    const savePickupStation=(event:any)=>{event.preventDefault();const value=pickupStationDraft.trim();if(!value)return;setPickupStation(value);try{localStorage.setItem('dasnet-pickup-station-'+slug,value)}catch{}setPickupStationEditor(false);};
+    return (
+      <section className="customer-flow customer-delivery-flow">
+        <FlowHeading title="Delivery" onBack={() => onNavigate('cart')} backLabel="Back to cart" />
+        <div className="customer-delivery-tabs" role="tablist" aria-label="Delivery method">
+          <button type="button" role="tab" aria-selected={deliveryMethod==='pickup'} className={deliveryMethod==='pickup'?'active':''} onClick={()=>setDeliveryMethod('pickup')}><MapPin size={16}/> PICKUP STATIONS</button>
+          <button type="button" role="tab" aria-selected={deliveryMethod==='home'} className={deliveryMethod==='home'?'active':''} onClick={()=>setDeliveryMethod('home')}><Package size={16}/> DOOR DELIVERY</button>
+        </div>
+        {deliveryMethod==='pickup'?<div className="customer-delivery-pickup-layout">
+          <div className="customer-panel customer-pickup-panel">
+            {pickupStation&&!pickupStationEditor?<><div className="customer-panel-heading"><h2>Selected pickup station</h2><button type="button" className="customer-text-button" onClick={()=>{setPickupStationDraft(pickupStation);setPickupStationEditor(true)}}>Change</button></div><div className="customer-pickup-selected"><MapPin size={22}/><div><strong>{pickupStation}</strong><small>Pickup location selected for this order</small></div></div></>:<><div className="customer-pickup-empty"><MapPin size={30}/><h2>No saved pickup station yet!</h2><p>Add a pickup station to continue. Save your preferred collection point for this shop.</p><button type="button" className="customer-primary-button" onClick={()=>{setPickupStationDraft(pickupStation);setPickupStationEditor(true)}}>Add new pickup station</button></div></>}
+            {pickupStationEditor&&<form className="customer-pickup-form" onSubmit={savePickupStation}><div className="customer-panel-heading"><h2>Add new pickup station</h2><button type="button" className="customer-text-button" onClick={()=>setPickupStationEditor(false)}>Cancel</button></div><label className="customer-form-label">Pickup station / collection point<input required value={pickupStationDraft} onChange={e=>setPickupStationDraft(e.target.value)} placeholder="Enter station, mall or collection point"/></label><label className="customer-form-label">Billing address<input value={deliveryAddress} onChange={e=>setDeliveryAddress(e.target.value)} placeholder="Town, estate or street"/></label><button type="submit" className="customer-primary-button">Save pickup station</button></form>}
+          </div>
+          <div className="customer-pickup-map"><div className="customer-pickup-map-grid"/><span className="customer-map-pin"><MapPin size={24}/></span><div><strong>Pickup station location</strong><small>Enter the collection point name to save your preferred location.</small></div></div>
+        </div>:<div className="customer-panel customer-door-delivery-panel"><div className="customer-panel-heading"><h2>Door delivery address</h2><span>Where should the seller deliver?</span></div><div className="customer-contact-fields customer-delivery-fields">
+          <label className="customer-form-label">County<select required value={deliveryCounty} onChange={event=>{setDeliveryCounty(event.target.value);setDeliverySubCounty('')}}><option value="">Select county</option>{['Baringo','Bomet','Bungoma','Busia','Elgeyo-Marakwet','Embu','Garissa','Homa Bay','Isiolo','Kajiado','Kakamega','Kericho','Kiambu','Kilifi','Kirinyaga','Kisii','Kisumu','Kitui','Kwale','Laikipia','Lamu','Machakos','Makueni','Mandera','Marsabit','Meru','Migori','Mombasa','Murang’a','Nairobi','Nakuru','Nandi','Narok','Nyamira','Nyandarua','Nyeri','Samburu','Siaya','Taita-Taveta','Tana River','Tharaka-Nithi','Trans Nzoia','Turkana','Uasin Gishu','Vihiga','Wajir','West Pokot'].map(county=><option key={county} value={county}>{county}</option>)}</select></label>
+          <label className="customer-form-label">Sub-county<input required value={deliverySubCounty} onChange={e=>setDeliverySubCounty(e.target.value)} placeholder="e.g. Westlands"/></label>
+          <label className="customer-form-label">Estate / area<input required value={deliveryEstate} onChange={e=>setDeliveryEstate(e.target.value)} placeholder="e.g. Kilimani"/></label>
+          <label className="customer-form-label">Physical address<input required value={deliveryAddress} onChange={e=>setDeliveryAddress(e.target.value)} placeholder="Building, street, plot or house number"/></label>
+          <label className="customer-form-label">Directions / landmark (optional)<textarea value={deliveryDirections} onChange={e=>setDeliveryDirections(e.target.value)} placeholder="Nearby landmark or directions"/></label>
+        </div></div>}
+        <div className="customer-panel customer-delivery-contact-panel"><div className="customer-panel-heading"><h2>Contact details</h2><span>Used for order updates</span></div><div className="customer-contact-fields"><label className="customer-form-label">Full name<input required value={customerName} onChange={e=>setCustomerName(e.target.value)} autoComplete="name" placeholder="Your name"/></label><label className="customer-form-label">Phone number<input required type="tel" value={customerPhone} onChange={e=>setCustomerPhone(e.target.value)} autoComplete="tel" placeholder="07… or +254…"/></label><label className="customer-form-label">Email <small>(optional)</small><input type="email" value={customerEmail} onChange={e=>setCustomerEmail(e.target.value)} autoComplete="email" placeholder="you@example.com"/></label></div></div>
+        <div className="customer-flow-actions"><button type="button" className="customer-secondary-button" onClick={()=>onNavigate('cart')}>Back to cart</button><button type="button" className="customer-primary-button" disabled={!customerName.trim()||!customerPhone.trim()||(deliveryMethod==='pickup'&&!pickupStation.trim())||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))} onClick={()=>onNavigate('checkout/payment')}>Continue to payment <ArrowRight size={17}/></button></div>
+      </section>
+    );
+  }
+
   function renderCheckoutPayment() {
     const choices: { id: PaymentMethod; label: string; configured: boolean; hint: string }[] = [
       { id: 'mpesa', label: 'MPESA', configured: true, hint: 'Safaricom M-PESA' },
@@ -618,7 +646,7 @@ export function StorefrontFlow({
     };
     return (
       <section className="customer-flow">
-        <FlowHeading title="Select payment" onBack={() => onNavigate('cart')} backLabel="Back to cart" />
+        <FlowHeading title="Select payment" onBack={() => onNavigate('checkout/delivery')} backLabel="Delivery" />
         <div className="customer-checkout-grid">
           <div className="customer-checkout-stack">
             <div className="customer-panel customer-voucher-panel">
@@ -642,7 +670,7 @@ export function StorefrontFlow({
         </div>
         {checkoutError&&<p className="customer-checkout-error" role="alert">{checkoutError}</p>}
         <div className="customer-flow-actions">
-          <button type="button" className="customer-secondary-button" onClick={() => onNavigate('cart')}>Modify cart</button>
+          <button type="button" className="customer-secondary-button" onClick={() => onNavigate('checkout/delivery')}>Change delivery</button>
           <button type="button" className="customer-primary-button" disabled={!lines.length || paymentMethod !== 'mpesa'} onClick={() => onNavigate('checkout/review')}>Continue <ArrowRight size={17} /></button>
         </div>
         {paymentModal==='mpesa'&&<div className="customer-payment-modal-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setPaymentModal(null)}}><section className="customer-payment-modal" role="dialog" aria-modal="true" aria-labelledby="customer-payment-modal-title"><button type="button" className="customer-payment-modal-close" aria-label="Close payment window" onClick={()=>setPaymentModal(null)}>×</button><span className="customer-payment-modal-mark">M</span><h2 id="customer-payment-modal-title">Pay with M-PESA</h2><p>Enter the Kenyan mobile number that should receive the STK payment prompt. It can be different from your buyer account number.</p><label className="customer-form-label">Phone number to pay with<input type="tel" inputMode="tel" autoComplete="tel" placeholder="07XX XXX XXX or 2547XXXXXXXX" value={paymentPhone} onChange={e=>setPaymentPhone(e.target.value)} required maxLength={16}/></label><small className="customer-payment-modal-note">Your order remains pending until Safaricom confirms payment.</small><div className="customer-payment-modal-actions"><button type="button" className="customer-secondary-button" onClick={()=>setPaymentModal(null)}>Cancel</button><button type="button" className="customer-primary-button" onClick={confirmMpesa}>Use M-PESA <ArrowRight size={16}/></button></div></section></div>}
@@ -662,109 +690,10 @@ export function StorefrontFlow({
               <div className="customer-review-summary"><WalletCards size={19} /><strong>{paymentLabels[paymentMethod]}</strong><span>STK prompt sent after you confirm. Payment is pending until verified.</span></div>
             </div>
             <div className="customer-panel">
-              <div className="customer-panel-heading"><h2>Delivery details</h2><button type="button" className="customer-text-button" onClick={() => document.getElementById('customer-delivery-options')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>Change</button></div>
-              <div className="customer-delivery-options" id="customer-delivery-options">
-                <label className={`customer-delivery-option${deliveryMethod === 'home' ? ' is-selected' : ''}`}><input type="radio" name="deliveryMethod" checked={deliveryMethod === 'home'} onChange={() => setDeliveryMethod('home')} /><span><strong>Home / business delivery</strong><small>Provide the location where the seller should deliver.</small></span></label>
-                <label className={`customer-delivery-option${deliveryMethod === 'pickup' ? ' is-selected' : ''}`}><input type="radio" name="deliveryMethod" checked={deliveryMethod === 'pickup'} onChange={() => setDeliveryMethod('pickup')} /><span><strong>Collect / meet-up</strong><small>Enter your preferred collection area; the seller will confirm the exact point.</small></span></label>
-              </div>
-              {deliveryMethod === 'home' ? <div className="customer-contact-fields customer-delivery-fields">
-                <label className="customer-form-label">County<select required value={deliveryCounty} onChange={(event) => { setDeliveryCounty(event.target.value); setDeliverySubCounty(''); }}><option value="">Select county</option>{['Baringo','Bomet','Bungoma','Busia','Elgeyo-Marakwet','Embu','Garissa','Homa Bay','Isiolo','Kajiado','Kakamega','Kericho','Kiambu','Kilifi','Kirinyaga','Kisii','Kisumu','Kitui','Kwale','Laikipia','Lamu','Machakos','Makueni','Mandera','Marsabit','Meru','Migori','Mombasa','Murang’a','Nairobi','Nakuru','Nandi','Narok','Nyamira','Nyandarua','Nyeri','Samburu','Siaya','Taita-Taveta','Tana River','Tharaka-Nithi','Trans Nzoia','Turkana','Uasin Gishu','Vihiga','Wajir','West Pokot'].map((county) => <option key={county} value={county}>{county}</option>)}</select></label>
-                <label className="customer-form-label">Sub-county<input required value={deliverySubCounty} onChange={(event) => setDeliverySubCounty(event.target.value)} placeholder="e.g. Westlands" /></label>
-                <label className="customer-form-label">Estate / area<input required value={deliveryEstate} onChange={(event) => setDeliveryEstate(event.target.value)} placeholder="e.g. Kilimani, near Yaya Centre" /></label>
-                <label className="customer-form-label">Physical address<input required value={deliveryAddress} onChange={(event) => setDeliveryAddress(event.target.value)} placeholder="Building, street, plot or house number" /></label>
-                <label className="customer-form-label">Directions / landmark (optional)<textarea value={deliveryDirections} onChange={(event) => setDeliveryDirections(event.target.value)} placeholder="Nearby landmark, gate details or directions" /></label>
-              </div> : <div className="customer-contact-fields"><label className="customer-form-label">Preferred pickup area / station<input required value={pickupStation} onChange={(event) => setPickupStation(event.target.value)} placeholder="Town, mall or preferred meeting area" /></label></div>}
-              <div className="customer-contact-fields">
-                <label className="customer-form-label">Full name<input required value={customerName} onChange={(event) => setCustomerName(event.target.value)} autoComplete="name" placeholder="Your name" /></label>
-                <label className="customer-form-label">Phone number<input required type="tel" value={customerPhone} onChange={(event) => setCustomerPhone(event.target.value)} autoComplete="tel" placeholder="07… or +254…" /></label>
-                <label className="customer-form-label">Email <small>(optional)</small><input type="email" value={customerEmail} onChange={(event) => setCustomerEmail(event.target.value)} autoComplete="email" placeholder="you@example.com" /></label>
-              </div>
+              <div className="customer-panel-heading"><h2>Delivery details</h2><button type="button" className="customer-text-button" onClick={()=>onNavigate('checkout/delivery')}>Change</button></div>
+              <div className="customer-review-summary"><MapPin size={19}/><strong>{deliveryMethod==='pickup'?'Pickup station':'Door delivery'}</strong><span>{deliveryMethod==='pickup'?pickupStation:[deliveryEstate,deliverySubCounty,deliveryCounty,deliveryAddress].filter(Boolean).join(', ')}</span></div>
+              <p className="customer-review-contact">{customerName} · {customerPhone}{customerEmail?' · '+customerEmail:''}</p>
             </div>
-            <div className="customer-panel">
-              <div className="customer-panel-heading"><h2>Shipment 1 / 1</h2><span>Fulfilled by {shopName}</span></div>
-              {lines.map(({ product, quantity }) => (
-                <article className="customer-review-product" key={product.id}>
-                  <ProductThumb product={product} />
-                  <div><strong>{product.name}</strong><small>Qty {quantity} · {formatKes(product.price)}</small></div>
-                  <b>{formatKes(product.price * quantity)}</b>
-                </article>
-              ))}
-            </div>
-          </div>
-          {renderSummary()}
-        </div>
-        {checkoutError && <p className="customer-preview-alert" role="alert">{checkoutError}</p>}
-        <div className="customer-flow-actions">
-          <button type="button" className="customer-secondary-button" onClick={() => onNavigate('cart')}>Modify cart</button>
-          <button type="button" className="customer-primary-button" disabled={!lines.length || !customerName.trim() || !customerPhone.trim() || paymentMethod !== 'mpesa' || submitting || (deliveryMethod === 'home' && (!deliveryCounty || !deliverySubCounty.trim() || !deliveryEstate.trim() || !deliveryAddress.trim())) || (deliveryMethod === 'pickup' && !pickupStation.trim())} onClick={placeOrder}>{submitting ? 'Starting M-PESA…' : 'Confirm & pay with M-PESA'} <ArrowRight size={17} /></button>
-        </div>
-      </section>
-    );
-  }
-
-  function renderSuccess() {
-    if (!activeOrder) {
-      return <div className="customer-flow"><FlowHeading title="Order confirmation" onBack={() => onNavigate('store')} /><div className="customer-empty-state"><h2>No preview order yet</h2><button type="button" className="customer-primary-button" onClick={() => onNavigate('store')}>Continue shopping</button></div></div>;
-    }
-    return (
-      <section className="customer-flow customer-success-page">
-        <div className="customer-success-banner"><span className="customer-success-check"><Check size={39} /></span><div><h1>Thank you for your order</h1><p>Order number <strong>{activeOrder.orderNumber}</strong></p></div></div>
-        <div className="customer-preview-alert"><ShieldCheck size={17} /><span>{activeOrder.paymentStatus === 'succeeded' ? `Payment confirmed${activeOrder.receipt ? ` · M-PESA receipt ${activeOrder.receipt}` : ''}.` : activeOrder.paymentStatus === 'failed' || activeOrder.paymentStatus === 'cancelled' ? 'M-PESA payment was not completed. This order is not paid.' : 'Your order has been created. Payment is pending Safaricom confirmation; do not retry unless the payment prompt has failed or expired.'}</span></div>
-        <div className="customer-panel customer-success-delivery">
-          <MapPin size={22} />
-          <div><strong>Delivery coordination</strong><p>Contact the seller through your private order conversation to agree on collection or delivery.</p><small>{activeOrder.deliveryMethod === 'pickup' ? 'Your preferred pickup station is saved with this order.' : 'Your delivery address is saved with this order.'} The seller can coordinate collection or delivery in your private order conversation.</small></div>
-        </div>
-        <div className="customer-panel customer-success-payment">
-          <WalletCards size={22} />
-          <div><strong>{paymentLabels[activeOrder.paymentMethod]}</strong><p>{activeOrder.paymentStatus === 'succeeded' ? 'Payment successful.' : activeOrder.paymentStatus === 'failed' ? 'Payment failed.' : activeOrder.paymentStatus === 'cancelled' ? 'Payment cancelled.' : 'Awaiting M-PESA confirmation.'}</p></div>
-        </div>
-        <div className="customer-flow-actions customer-success-actions">
-          <button type="button" className="customer-secondary-button" onClick={() => openOrder(activeOrder, 'orders')}>My orders</button>
-          <button type="button" className="customer-primary-button" onClick={() => openOrder(activeOrder, 'order-detail')}>See order details <ArrowRight size={17} /></button>
-        </div>
-        <section className="customer-recommendations">
-          <div className="customer-section-title"><h2>Top picks from {shopName}</h2><button type="button" onClick={() => onNavigate('store')}>See all <ArrowRight size={14} /></button></div>
-          <div className="customer-recommendation-row">
-            {products.slice(0, 5).map((product) => <article className="customer-recommendation-card" key={product.id}><ProductThumb product={product} /><strong>{product.name}</strong><b>{formatKes(product.price)}</b></article>)}
-          </div>
-        </section>
-      </section>
-    );
-  }
-
-  function renderOrders() {
-    const stateOf = (order: BuyerOrder) => ({ order: String(order.orderStatus || '').toLowerCase(), delivery: String(order.deliveryStatus || '').toLowerCase(), payment: String(order.paymentStatus || '').toLowerCase() });
-    const isCancelled = (order: BuyerOrder) => { const s=stateOf(order); return ['cancelled','returned','refunded'].includes(s.order)||['cancelled','returned'].includes(s.delivery)||s.payment==='cancelled'; };
-    const isDelivered = (order: BuyerOrder) => { const s=stateOf(order); return s.delivery==='delivered'||['fulfilled','delivered'].includes(s.order); };
-    const tabOrders = orders.filter(order => order.orderNumber && (orderTab==='ongoing' ? !isCancelled(order)&&!isDelivered(order) : orderTab==='delivered' ? isDelivered(order) : isCancelled(order)));
-    const suggestions = products.filter(product => product.stockQuantity !== 0).slice(0,12);
-    return (
-      <section className="customer-flow">
-        <FlowHeading title="My orders" onBack={() => onNavigate('account')} backLabel="My account" />
-        {ordersLoading&&<p className="customer-preview-note">Refreshing your order history…</p>}{ordersError&&<p className="customer-preview-alert" role="alert">{ordersError}</p>}
-         <div className="customer-order-tabs"><button type="button" className={orderTab === 'ongoing' ? 'is-active' : ''} onClick={() => setOrderTab('ongoing')}>ONGOING ({orders.filter(o=>!isCancelled(o)&&!isDelivered(o)).length})</button><button type="button" className={orderTab === 'delivered' ? 'is-active' : ''} onClick={() => setOrderTab('delivered')}>DELIVERED ({orders.filter(isDelivered).length})</button><button type="button" className={orderTab === 'cancelled' ? 'is-active' : ''} onClick={() => setOrderTab('cancelled')}>CANCELLED / RETURNED ({orders.filter(isCancelled).length})</button></div>
-        {tabOrders.length ? <div className="customer-order-list">{tabOrders.map((order) => (
-          <article className="customer-order-card" key={order.orderNumber}>
-            <div className="customer-order-card-heading"><div><small>ORDER {order.orderNumber}</small><strong>{new Date(order.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })}</strong></div><span className="customer-order-status">{stateOf(order).delivery==='delivered'?'Delivered':stateOf(order).delivery==='in_transit'?'In transit':stateOf(order).order==='processing'?'Processing':stateOf(order).payment==='failed'?'Payment failed':stateOf(order).payment==='succeeded'?'Paid':'Order placed'}</span></div>
-            {order.lines.slice(0, 2).map(({ product, quantity }) => <div className="customer-order-product" key={product.id}><ProductThumb product={product} /><span><strong>{product.name}</strong><small>Qty {quantity}</small></span><b>{formatKes(product.price * quantity)}</b></div>)}
-            <div className="customer-order-card-footer"><span>Total <strong>{formatKes(order.total)}</strong></span><div><button type="button" className="customer-secondary-button" onClick={() => openOrder(order, 'order-detail')}>Order details</button>{isDelivered(order)?<button type="button" className="customer-primary-button" onClick={() => onNavigate('store')}>Shop again <ArrowRight size={16}/></button>:<button type="button" className="customer-primary-button" onClick={() => openOrder(order, 'order-tracking')}>Track my item</button>}</div></div>
-          </article>
-        ))}</div> : <div className="customer-empty-state"><span><Package size={28} /></span><h2>{orderTab === 'ongoing' ? 'You have placed no orders yet!' : `No ${orderTab === 'delivered' ? 'delivered' : 'cancelled / returned'} orders`}</h2><p>{orderTab === 'ongoing' ? 'All your orders will be saved here so you can access their status anytime.' : 'Orders in this section will appear here when their status is updated by the shop.'}</p><button type="button" className="customer-primary-button" onClick={() => onNavigate('store')}>Continue shopping <ArrowRight size={17} /></button></div>}
-        {suggestions.length>0&&<section className="customer-recommendations customer-orders-recommendations"><div className="customer-section-title"><h2>Top selling items</h2><button type="button" onClick={() => onNavigate('store')}>See all <ArrowRight size={14}/></button></div><div className="customer-recommendation-row">{suggestions.map(product=><button type="button" className="customer-recommendation-card" key={product.id} onClick={()=>onNavigate('store')}><ProductThumb product={product}/><strong>{product.name}</strong><b>{formatKes(product.price)}</b></button>)}</div></section>}
-      </section>
-    );
-  }
-
-  function renderOrderDetail() {
-    const celebration=paymentCelebration?<div className="buyer-payment-celebration" role="status" aria-live="polite"><div className="buyer-confetti-burst">{Array.from({length:36},(_,i)=><i key={i} style={{'--confetti-angle':(i*10)+'deg','--confetti-delay':((i%7)*0.035)+'s'} as any}>{['✦','✧','●','◆','🎉'][i%5]}</i>)}</div><div className="buyer-celebration-message"><strong>Payment successful!</strong><span>Your order is confirmed. Thank you for shopping.</span></div></div>:null;
-    if (!activeOrder) return <div className="customer-flow"><FlowHeading title="Order details" onBack={() => onNavigate('orders')} backLabel="My orders" /><div className="customer-empty-state"><h2>No order selected</h2><button type="button" className="customer-primary-button" onClick={() => onNavigate('orders')}>View my orders</button></div></div>;
-    return (
-      <section className="customer-flow">
-        {celebration}
-        <FlowHeading title="Order details" onBack={() => onNavigate('orders')} backLabel="My orders" />
-        <div className="customer-order-detail-heading"><div><small>ORDER NUMBER</small><h2>{activeOrder.orderNumber}</h2><span>Placed {new Date(activeOrder.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })}</span></div><span className="customer-order-status">Order placed</span></div>
-        <div className="customer-checkout-grid">
-          <div className="customer-review-stack">
             <div className="customer-panel">
               <div className="customer-panel-heading"><h2>Items in this order</h2><span>{activeOrder.lines.length} items</span></div>
               {activeOrder.lines.map(({ product, quantity }) => <div className="customer-review-product" key={product.id}><ProductThumb product={product} /><div><strong>{product.name}</strong><small>Qty {quantity}</small><small>{formatKes(product.price)} each</small>{String(activeOrder.deliveryStatus||'').toLowerCase()==='delivered'&&activeOrder.paymentStatus==='succeeded'&&<button type="button" className="customer-order-review-link" onClick={()=>onOpenProduct?.(product)}>★ Review product</button>}</div><b>{formatKes(product.price * quantity)}</b></div>)}
@@ -890,7 +819,7 @@ export function StorefrontFlow({
   );
 
   if (view === 'store') return null;
-  const pageContent = view === 'cart' ? renderCart() : view === 'checkout/payment' ? (lines.length ? renderCheckoutPayment() : renderCart()) : view === 'checkout/review' ? (lines.length ? renderReview() : renderCart()) : view === 'checkout/complete' ? renderSuccess() : view === 'orders' ? renderOrders() : view === 'order-detail' ? renderOrderDetail() : view === 'order-tracking' ? renderTracking() : view === 'account' ? renderAccount() : view === 'profile' ? renderProfile() : renderAccountSection() || (<section className="customer-flow"><FlowHeading title="Shopping assistant" onBack={() => onNavigate('store')} /><div className="customer-panel customer-account-detail"><Search size={24} /><p>{accountSectionCopy.assistant.description}</p><button type="button" className="customer-secondary-button" onClick={() => onNavigate('store')}>Back to the store</button></div></section>);
+  const pageContent = view === 'cart' ? renderCart() : view === 'checkout/delivery' ? (lines.length ? renderCheckoutDelivery() : renderCart()) : view === 'checkout/payment' ? (lines.length ? renderCheckoutPayment() : renderCart()) : view === 'checkout/review' ? (lines.length ? renderReview() : renderCart()) : view === 'checkout/complete' ? renderSuccess() : view === 'orders' ? renderOrders() : view === 'order-detail' ? renderOrderDetail() : view === 'order-tracking' ? renderTracking() : view === 'account' ? renderAccount() : view === 'profile' ? renderProfile() : renderAccountSection() || (<section className="customer-flow"><FlowHeading title="Shopping assistant" onBack={() => onNavigate('store')} /><div className="customer-panel customer-account-detail"><Search size={24} /><p>{accountSectionCopy.assistant.description}</p><button type="button" className="customer-secondary-button" onClick={() => onNavigate('store')}>Back to the store</button></div></section>);
   // The storefront-level marketplace header is the single buyer navigation surface for every route.
   // Do not mount a second sticky nav here: nested sticky bars overlapped the account/cart content
   // and intercepted taps on mobile.
