@@ -152,7 +152,7 @@ export default async function handler(req:any,res:any){
    }
    if(req.method==='POST'&&action==='buyer-newsletter'){
     const enabled=b.enabled===true,email=String(b.email||buyer.email||'').trim().toLowerCase();
-    if(enabled&&!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))return send(res,400,{error:'Add a valid email address before subscribing.'});
+    if(enabled&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return send(res,400,{error:'Add a valid email address before subscribing.'});
     if(enabled){await sql`INSERT INTO public.buyer_newsletter_subscriptions(buyer_user_id,tenant_id,email,consented_at,revoked_at,updated_at) VALUES(${userId},${shops[0].id},${email},now(),NULL,now()) ON CONFLICT(buyer_user_id,tenant_id) DO UPDATE SET email=EXCLUDED.email,consented_at=now(),revoked_at=NULL,updated_at=now()`;}
     else await sql`UPDATE public.buyer_newsletter_subscriptions SET revoked_at=COALESCE(revoked_at,now()),updated_at=now() WHERE buyer_user_id=${userId} AND tenant_id=${shops[0].id}`;
     return send(res,200,{ok:true,subscribed:enabled});
