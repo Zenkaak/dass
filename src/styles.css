@@ -4841,3 +4841,10 @@ body:has(.ds-store) .market-sidebar-links>button:hover{background:#f6f8fa;color:
 .store-page .market-detail-quantity small{flex-basis:100%;margin-left:auto;margin-top:-8px;text-align:right;color:#64748b;font-size:11px}
 @media(min-width:761px){.store-page .market-detail-quantity{max-width:100%}}
 @media(max-width:760px){.store-page .market-detail-quantity{margin-top:13px;padding:11px 12px}.store-page .market-detail-quantity-control button{width:46px;height:44px}.store-page .market-detail-quantity-control output{min-width:44px;height:44px}}
+
+
+/* Stage 7 — cart stock clarity and accessible quantity limits */
+.customer-cart-stock{display:block;margin-top:5px;color:#64748b;font-size:12px;font-weight:600}
+.customer-cart-controls .customer-quantity button:disabled,.customer-mobile-quantity button:disabled{opacity:.35;cursor:not-allowed}
+.customer-cart-line{align-items:center}
+@media(max-width:760px){.customer-cart-stock{font-size:11px;margin-top:4px}.customer-cart-line{align-items:flex-start}}
