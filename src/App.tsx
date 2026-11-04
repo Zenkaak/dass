@@ -219,7 +219,13 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
   {mobileSidebarOpen&&<button type="button" className="market-sidebar-scrim market-global-drawer-scrim" aria-label="Close navigation menu" onClick={()=>setMobileSidebarOpen(false)}/>}
   <aside className={"market-sidebar market-global-drawer"+(mobileSidebarOpen?" is-mobile-open":"")} aria-label="Shop navigation">
     <div className="market-sidebar-shop"><a href={buyerPath('store')} onClick={e=>{e.preventDefault();navigateBuyerPage('store')}}><Store size={18}/><span><b>{shop?.name||'Shop categories'}</b><small>Browse this shop</small></span></a><button type="button" className="market-sidebar-close" aria-label="Close navigation" onClick={()=>setMobileSidebarOpen(false)}><X size={16}/></button></div>
-    <div className="market-sidebar-title">SHOP</div>
+    <div className="market-sidebar-title">DISCOVER</div>
+    <nav className="market-sidebar-links" aria-label="Shop destinations">
+      <button type="button" onClick={()=>navigateBuyerPage('collection/all-products')}><ShoppingBag size={16}/> All products</button>
+      <button type="button" onClick={()=>navigateBuyerPage('collection/top-picks')}><Star size={16}/> Top picks</button>
+      <button type="button" onClick={()=>navigateBuyerPage('collection/featured-products')}><TicketPercent size={16}/> Featured products</button>
+      <button type="button" onClick={()=>navigateBuyerPage('faqs')}><HelpCircle size={16}/> Shopping help</button>
+    </nav>
     <div className="market-sidebar-title">SHOP BY CATEGORY</div>
     <button type="button" className="market-sidebar-category-button" onClick={()=>selectStoreCategory('All products')}><span className="market-sidebar-category-icon" aria-hidden="true">▦</span><span>All categories</span></button>
     {storefrontCategories.map(category=><div className="market-sidebar-category" key={category.name}>
@@ -237,22 +243,22 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
      <div className="store-shop-promo-banner" aria-label="Store promotion"><span>SHOP THE COLLECTION</span></div>
      <section className="market-reference-shortcuts" aria-label="Shop highlights">
        {[
-         {icon:'✨',label:'New Finds',target:'market-spotlight'},
-         {icon:'★',label:'Top Sellers',target:'market-top-selling'},
-         {icon:'🏷️',label:'Banger Deals',target:'market-sponsored'},
-         {icon:'🔴',label:'Clearance Sale',target:'market-campaigns'},
-         {icon:'🔴',label:'Live Now',target:'market-flash-sales'},
-         {icon:'💸',label:'Earn Now',target:'store-trust'}
-       ].map(item=><button type="button" key={item.label} onClick={()=>document.getElementById(item.target)?.scrollIntoView({behavior:'smooth',block:'start'})}><span>{item.icon}</span><strong>{item.label}</strong></button>)}
+         {icon:'✨',label:'New Finds',page:'collection/new-finds'},
+         {icon:'★',label:'Top Picks',page:'collection/top-picks'},
+         {icon:'🏷️',label:'Featured',page:'collection/featured-products'},
+         {icon:'🔴',label:'All Products',page:'collection/all-products'},
+         {icon:'🔴',label:'Categories',page:'collection/categories'},
+         {icon:'💸',label:'Shopping Help',page:'faqs'}
+       ].map(item=><button type="button" key={item.label} onClick={()=>navigateBuyerPage(item.page)}><span>{item.icon}</span><strong>{item.label}</strong></button>)}
      </section>
      <section className="market-category-quicklinks" aria-label="Shop by category">
-       <div className="market-home-section-heading"><div><span>FIND WHAT YOU NEED</span><h2>Shop by category</h2></div><button type="button" onClick={()=>selectStoreCategory('All products')}>View all <ArrowRight size={14}/></button></div>
+       <div className="market-home-section-heading"><div><span>FIND WHAT YOU NEED</span><h2>Shop by category</h2></div><button type="button" onClick={()=>navigateBuyerPage('collection/all-products')}>View all <ArrowRight size={14}/></button></div>
        <div className="market-category-tiles">
          {storefrontCategories.filter(category=>products.some(p=>p.category===category.name||category.subcategories.includes(p.category))).slice(0,12).map(category=><button type="button" className="market-category-tile" key={category.name} onClick={()=>selectStoreCategory(category.name)}><span>{category.icon}</span><strong>{category.name}</strong><small>{products.filter(p=>p.category===category.name||category.subcategories.includes(p.category)).length} items</small></button>)}
        </div>
      </section>
      <section className="market-product-section market-top-selling" id="market-top-selling">
-       <div className="market-home-section-heading"><div><span>POPULAR IN THIS SHOP</span><h2>Top selling items</h2></div><button type="button" onClick={()=>selectStoreCategory('All products')}>See all <ArrowRight size={14}/></button></div>
+       <div className="market-home-section-heading"><div><span>POPULAR IN THIS SHOP</span><h2>Top selling items</h2></div><button type="button" onClick={()=>navigateBuyerPage('collection/top-picks')}>See all <ArrowRight size={14}/></button></div>
        <div className="market-home-product-rail">{storePreviewProducts.map(p=><article className="market-home-product-card" key={p.id}>
          <button type="button" className="market-home-product-open" onClick={()=>openProduct(p)}>
            <span className="market-home-product-image">{(p.images?.[0]||p.imageUrl)?<img src={p.images?.[0]||p.imageUrl} alt={p.name} loading="lazy" onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src=fallbackProductImage(p.name)}}/>:<img src={fallbackProductImage(p.name)} alt={p.name}/>}</span>
