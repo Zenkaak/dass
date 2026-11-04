@@ -144,7 +144,7 @@ export default async function handler(req:any,res:any){
    if(req.method==='POST'&&action==='buyer-wishlist'){
     const productId=String(b.productId||'').trim(),enabled=b.enabled!==false;
     if(!/^[0-9a-f-]{36}$/i.test(productId))return send(res,400,{error:'Choose a valid product.'});
-    const product=await sql`SELECT id FROM public.products WHERE id=${productId} AND tenant_id=${shops[0].id} AND status='active' LIMIT 1`;
+    const product=await sql`SELECT id FROM public.products WHERE id=${productId} AND tenant_id=${shops[0].id} AND is_active=true LIMIT 1`;
     if(!product.length)return send(res,404,{error:'Product not found in this shop.'});
     if(enabled)await sql`INSERT INTO public.buyer_wishlist_items(buyer_user_id,tenant_id,product_id) VALUES(${userId},${shops[0].id},${productId}) ON CONFLICT DO NOTHING`;
     else await sql`DELETE FROM public.buyer_wishlist_items WHERE buyer_user_id=${userId} AND tenant_id=${shops[0].id} AND product_id=${productId}`;
