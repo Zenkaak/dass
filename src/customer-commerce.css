@@ -3500,3 +3500,9 @@
  .customer-payment-method-tab small{font-size:9px}
  .customer-payment-modal{padding:22px 18px}
 }
+
+
+/* Cart clarity: distinguish unit price, quantity and extended line total */
+.customer-cart-line-total{display:block;margin-top:3px;color:#253044;font-size:12px;font-weight:800}
+.customer-cart-stock{display:block;margin-top:3px}
+@media(max-width:640px){.customer-cart-line-total{font-size:11px}.customer-cart-line{align-items:flex-start}}
