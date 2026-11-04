@@ -269,6 +269,14 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
         <div><Truck/><span><b>Delivery options</b><small>Choose what works for you</small></span></div>
         <div><Headphones/><span><b>Buyer support</b><small>Help when you need it</small></span></div>
       </section>
+      <section className="ds-store-section ds-store-category-section">
+        <div className="ds-store-section-title"><div><span className="ds-eyebrow">FIND YOUR NEXT FAVOURITE</span><h2>Shop by category</h2><p>Explore products by the things you need.</p></div><button type="button" onClick={()=>selectStoreCategory('All products')}>All products <ArrowRight size={15}/></button></div>
+        <div className="ds-store-category-grid">
+          {storefrontCategories.filter(category=>products.some(p=>p.category===category.name||category.subcategories.includes(p.category))).slice(0,12).map(category=><button type="button" className="ds-store-category-tile" key={category.name} onClick={()=>selectStoreCategory(category.name)}>
+            <span className="ds-store-category-icon">{category.icon}</span><strong>{category.name}</strong><small>{products.filter(p=>p.category===category.name||category.subcategories.includes(p.category)).length} products</small><ArrowRight size={14}/>
+          </button>)}
+        </div>
+      </section>
       <section className="ds-store-section">
         <div className="ds-store-section-title"><div><span className="ds-eyebrow">HANDPICKED FOR YOU</span><h2>Popular in this store</h2></div><button type="button" onClick={()=>navigateBuyerPage('collection/top-picks')}>View all <ArrowRight size={15}/></button></div>
         <div className="ds-store-rail">{storePreviewProducts.slice(0,10).map(p=><article className="ds-store-card" key={p.id}>
