@@ -3603,3 +3603,74 @@ html,body,#root{
  .customer-flow-actions{display:grid;grid-template-columns:1fr 1.5fr;gap:8px}
  .customer-flow-actions button{padding:0 9px;font-size:11px}
 }
+
+
+/* Storefront navigation drawer and dedicated collection pages */
+.market-global-drawer {
+  position: fixed !important;
+  z-index: 121 !important;
+  inset: 0 auto 0 0;
+  width: min(320px, 88vw);
+  max-height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 4px !important;
+  margin: 0 !important;
+  padding: 14px 13px 28px !important;
+  border: 0 !important;
+  border-right: 1px solid #e6ebef !important;
+  border-radius: 0 16px 16px 0 !important;
+  background: #fff !important;
+  box-shadow: 12px 0 38px rgba(18,35,48,.18) !important;
+  transform: translateX(-105%);
+  visibility: hidden;
+  transition: transform .22s ease, visibility .22s ease;
+}
+.market-global-drawer.is-mobile-open {
+  transform: translateX(0);
+  visibility: visible;
+}
+.market-global-drawer-scrim {
+  position: fixed !important;
+  z-index: 120 !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: rgba(13,27,38,.42) !important;
+}
+.market-sidebar-shop { display:flex !important; align-items:center; justify-content:space-between; }
+.market-sidebar-shop > a { display:flex; align-items:center; gap:10px; min-width:0; color:inherit; text-decoration:none; }
+.market-sidebar-close { display:grid; place-items:center; width:36px; height:36px; flex:0 0 auto; border:0; border-radius:9px; background:#f3f5f6; color:#344653; }
+.market-sidebar-links { display:grid; gap:4px; }
+.market-sidebar-links > button {
+  display:flex; align-items:center; gap:10px; min-height:44px; width:100%;
+  padding:10px 11px; border:0; border-radius:9px; background:#f7f9f8;
+  color:#334653; text-align:left; font-size:13px; font-weight:650; cursor:pointer;
+}
+.market-sidebar-links > button svg { color:#16803d; }
+.market-sidebar-category-button { display:flex; align-items:center; gap:10px; width:100%; min-height:43px; padding:9px 10px; border:0; border-radius:9px; background:transparent; color:#344653; text-align:left; font-size:12px; cursor:pointer; }
+.market-sidebar-category-button > span:nth-child(2) { flex:1; }
+.market-sidebar-category-button.active, .market-sidebar-category-button:hover,
+.market-sidebar-subcategories button.active { background:#edf7ef; color:#176b32; }
+.market-sidebar-category-chevron { transition:transform .18s ease; }
+.market-sidebar-category-button[aria-expanded="true"] .market-sidebar-category-chevron { transform:rotate(90deg); }
+.market-sidebar-subcategories { display:grid; gap:2px; padding:3px 0 6px 37px; }
+.market-sidebar-subcategories > button { min-height:36px; padding:7px 9px; border:0; border-radius:7px; background:transparent; color:#64727c; text-align:left; font-size:11px; }
+.customer-collection-page { width:min(100% - 28px, 1180px); margin:18px auto 70px; }
+.customer-collection-grid { gap:12px; }
+.customer-collection-grid .market-home-product-open { display:flex; flex-direction:column; align-items:stretch; gap:7px; width:100%; padding:10px; border:0; background:#fff; text-align:left; cursor:pointer; }
+.customer-collection-grid .customer-product-thumb { width:100%; height:150px; object-fit:contain; background:#f7f8f9; border-radius:8px; }
+.customer-collection-grid .market-product-add { margin:0 10px 10px; width:calc(100% - 20px); }
+.customer-collection-categories .customer-account-links { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+@media(max-width:760px) {
+ .market-global-drawer { width:min(320px,88vw); }
+ .customer-collection-page { width:calc(100% - 20px); margin:12px auto 84px; }
+ .customer-collection-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+ .customer-collection-grid .customer-product-thumb { height:132px; }
+ .customer-collection-categories .customer-account-links { grid-template-columns:1fr; }
+}
