@@ -125,7 +125,6 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
   },[slug,buyerCustomer?.phone,buyerAuthChecked]);
 
  const [buyerNotifications,setBuyerNotifications]=useState<any[]>([]),[buyerNotificationsOpen,setBuyerNotificationsOpen]=useState(false),[buyerInitialReportId,setBuyerInitialReportId]=useState('');
- const [storePreviewIndex,setStorePreviewIndex]=useState(0);
  const [recentlyViewed,setRecentlyViewed]=useState<string[]>(()=>{try{const saved=JSON.parse(localStorage.getItem('dasnet-recently-viewed-'+slug)||'[]');return Array.isArray(saved)?saved:[]}catch{return[]}});
  const isTenantSubdomain=window.location.hostname.toLowerCase().endsWith('.dasmarket.co.ke')&&!['www','app'].includes(window.location.hostname.toLowerCase().split('.')[0]);
  const storeBasePath=isTenantSubdomain?'':`/${slug}`;
