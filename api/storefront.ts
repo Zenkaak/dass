@@ -39,10 +39,15 @@ export default async function handler(req:any,res:any){
   if(!slug)return send(res,400,{error:'Shop slug is required'});
   // One read-only query: avoid a serial UPDATE before every storefront request.
   // Product review aggregates are scoped to this tenant before joining the catalogue.
-  const rows=await sql`WITH target_tenant AS (
+  const rows=await sql`WITH expired_ban AS (
+    UPDATE public.tenants
+    SET status=COALESCE(NULLIF(status_before_ban,'banned'),'active'),status_before_ban=NULL,ban_reason=NULL,ban_expires_at=NULL,updated_at=now()
+    WHERE slug=${slug} AND status='banned' AND ban_expires_at IS NOT NULL AND ban_expires_at<=now()
+    RETURNING id
+  ), target_tenant AS (
     SELECT t.id,t.name,t.slug
     FROM public.tenants t
-    WHERE t.slug=${slug} AND t.status IN ('trial','active')
+    WHERE t.slug=${slug} AND (t.status IN ('trial','active') OR t.id IN (SELECT id FROM expired_ban))
     LIMIT 1
   ), review_stats AS (
     SELECT r.product_id,AVG(r.rating)::numeric(3,2) AS rating_average,COUNT(*)::int AS rating_count
