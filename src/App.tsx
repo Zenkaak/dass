@@ -214,7 +214,7 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
     <div className="market-sidebar-title">SHOP BY CATEGORY</div>
     <button type="button" className="market-sidebar-category-button" onClick={()=>{selectStoreCategory('All products');setMobileSidebarOpen(false)}}><span className="market-sidebar-category-icon" aria-hidden="true">▦</span><span>All categories</span></button>
     {storefrontCategories.map(category=><div className="market-sidebar-category" key={category.name}>
-      <button type="button" className={"market-sidebar-category-button"+(filter===category.name?' active':'')} aria-expanded={expandedCategory===category.name} onClick={()=>{selectStoreCategory(category.name);setExpandedCategory(current=>current===category.name?'':category.name);setMobileSidebarOpen(false)}}><span className="market-sidebar-category-icon" aria-hidden="true">{category.icon}</span><span>{category.name}</span><ChevronRight size={14} className="market-sidebar-category-chevron"/></button>
+      <button type="button" className={"market-sidebar-category-button"+(filter===category.name?' active':'')} aria-expanded={expandedCategory===category.name} onClick={()=>setExpandedCategory(current=>current===category.name?'':category.name)}><span className="market-sidebar-category-icon" aria-hidden="true">{category.icon}</span><span>{category.name}</span><ChevronRight size={14} className="market-sidebar-category-chevron"/></button>
       {expandedCategory===category.name&&<div className="market-sidebar-subcategories">{category.subcategories.map(child=><button type="button" key={child} className={filter===child?'active':''} onClick={()=>{selectStoreCategory(child);setMobileSidebarOpen(false)}}>{child}</button>)}</div>}
     </div>)}
   </aside>}
