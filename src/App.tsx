@@ -237,7 +237,7 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
     <main className="ds-store">
       <section className="ds-store-head">
         <div className="ds-store-brand">
-          <span className="ds-store-mark"><Store size={21}/></span>
+          <span className="ds-store-mark">{shop?.logoUrl?<img src={shop.logoUrl} alt=""/>:<Store size={21}/>}</span>
           <div><strong>{shop?.name||'DASMARKET STORE'}</strong><small>Shop direct · Trusted marketplace</small></div>
         </div>
         <div className="ds-store-search">
