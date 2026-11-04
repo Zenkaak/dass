@@ -11,12 +11,12 @@ async function buyerSession(sql:any,req:any,tenantId:string){
  await sql`UPDATE public.store_customers SET is_banned=false,ban_reason=NULL,banned_until=NULL,updated_at=now() WHERE tenant_id=${tenantId} AND is_banned=true AND banned_until IS NOT NULL AND banned_until<=now()`;
  const global=token(req);
  if(global){
-  const rows=await sql`SELECT c.id,c.full_name,c.phone,c.email,c.address FROM public.auth_sessions s JOIN public.store_customers c ON c.user_id=s.user_id AND c.tenant_id=${tenantId} WHERE s.token_hash=${hash(global)} AND s.expires_at>now() AND c.is_banned=false AND (c.banned_until IS NULL OR c.banned_until<=now()) LIMIT 1`;
+  const rows=await sql`SELECT c.id,c.user_id,c.full_name,c.phone,c.email,c.address FROM public.auth_sessions s JOIN public.store_customers c ON c.user_id=s.user_id AND c.tenant_id=${tenantId} WHERE s.token_hash=${hash(global)} AND s.expires_at>now() AND c.is_banned=false AND (c.banned_until IS NULL OR c.banned_until<=now()) LIMIT 1`;
   return rows[0]||null;
  }
  const raw=String(req.headers.cookie||'').split(';').map((x:string)=>x.trim()).find((x:string)=>x.startsWith('das_buyer_session='));let legacy='';try{legacy=raw?decodeURIComponent(raw.slice('das_buyer_session='.length)):''}catch{}
  if(!legacy)return null;
- const rows=await sql`SELECT c.id,c.full_name,c.phone,c.email,c.address FROM public.store_customer_sessions s JOIN public.store_customers c ON c.id=s.customer_id AND c.tenant_id=s.tenant_id WHERE s.tenant_id=${tenantId} AND s.token_hash=${hash(legacy)} AND s.expires_at>now() AND c.user_id IS NOT NULL AND c.is_banned=false AND (c.banned_until IS NULL OR c.banned_until<=now()) LIMIT 1`;
+ const rows=await sql`SELECT c.id,c.user_id,c.full_name,c.phone,c.email,c.address FROM public.store_customer_sessions s JOIN public.store_customers c ON c.id=s.customer_id AND c.tenant_id=s.tenant_id WHERE s.tenant_id=${tenantId} AND s.token_hash=${hash(legacy)} AND s.expires_at>now() AND c.user_id IS NOT NULL AND c.is_banned=false AND (c.banned_until IS NULL OR c.banned_until<=now()) LIMIT 1`;
  return rows[0]||null;
 }
 async function seller(sql:any,req:any){
@@ -27,6 +27,16 @@ async function seller(sql:any,req:any){
 async function audit(sql:any,tenantId:string,actorId:string,action:string,type:string,id:string|null,metadata:any={}){await sql`INSERT INTO public.audit_logs(tenant_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${tenantId},${actorId},${action},${type},${id},${JSON.stringify(metadata)}::jsonb)`}
 async function notifyBuyer(sql:any,tenantId:string,buyerPhone:string,orderId:string|null,type:string,title:string,detail:string,complaintId:string|null=null){if(!buyerPhone)return;await sql`INSERT INTO public.buyer_notifications(tenant_id,buyer_phone,order_id,complaint_id,notification_type,title,detail) VALUES(${tenantId},${buyerPhone},${orderId},${complaintId},${type},${title},${detail})`;}
 async function notifyOrderBuyer(sql:any,tenantId:string,orderId:string,type:string,title:string,detail:string){const rows=await sql`SELECT customer_phone FROM public.orders WHERE id=${orderId} AND tenant_id=${tenantId} LIMIT 1`;if(rows.length)await notifyBuyer(sql,tenantId,rows[0].customer_phone,orderId,type,title,detail);}
+async function reconcilePaymentJob(sql:any,jobId:string){
+ try{
+  const result=await sql`WITH claimed AS (UPDATE public.payment_reconciliation_jobs SET status='completed',attempts=attempts+1,processed_at=now(),updated_at=now(),last_error=NULL WHERE id=${jobId} AND status='pending' RETURNING id,tenant_id,order_id), order_update AS (UPDATE public.orders o SET status='confirmed',updated_at=now() FROM claimed j WHERE o.id=j.order_id AND o.tenant_id=j.tenant_id AND o.status='pending' RETURNING o.id), payment_notice AS (INSERT INTO public.buyer_notifications(tenant_id,buyer_phone,order_id,notification_type,title,detail) SELECT j.tenant_id,o.customer_phone,j.order_id,'payment_update','Payment confirmed','Your M-PESA payment was confirmed.' FROM claimed j JOIN public.orders o ON o.id=j.order_id AND o.tenant_id=j.tenant_id WHERE NULLIF(o.customer_phone,'') IS NOT NULL RETURNING id), order_notice AS (INSERT INTO public.buyer_notifications(tenant_id,buyer_phone,order_id,notification_type,title,detail) SELECT j.tenant_id,o.customer_phone,j.order_id,'order_update','Order confirmed','Your order has been confirmed by the shop.' FROM claimed j JOIN public.orders o ON o.id=j.order_id AND o.tenant_id=j.tenant_id WHERE NULLIF(o.customer_phone,'') IS NOT NULL RETURNING id), coupon_update AS (UPDATE public.store_coupons c SET used_count=c.used_count+1,updated_at=now() FROM claimed j JOIN public.orders o ON o.id=j.order_id AND o.tenant_id=j.tenant_id WHERE o.coupon_code IS NOT NULL AND c.tenant_id=j.tenant_id AND c.code=o.coupon_code RETURNING c.id), callback_update AS (UPDATE public.payment_configs pc SET callback_verified_at=now() FROM claimed j WHERE pc.tenant_id=j.tenant_id RETURNING pc.tenant_id) SELECT (SELECT COUNT(*) FROM claimed)::integer AS claimed,(SELECT COUNT(*) FROM order_update)::integer AS orders_updated,(SELECT COUNT(*) FROM payment_notice)::integer AS payment_notifications,(SELECT COUNT(*) FROM order_notice)::integer AS order_notifications,(SELECT COUNT(*) FROM coupon_update)::integer AS coupons_updated,(SELECT COUNT(*) FROM callback_update)::integer AS configs_updated`;
+  return Number(result[0]?.claimed||0)>0;
+ }catch(error:any){
+  const message=String(error?.message||'Reconciliation failed').slice(0,1000);
+  await sql`UPDATE public.payment_reconciliation_jobs SET attempts=attempts+1,last_error=${message},updated_at=now() WHERE id=${jobId} AND status='pending'`;
+  throw error;
+ }
+}
 const slugify=(s:string)=>s.toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,70);
 function normalizePhone(value:any){
  let p=String(value||'').trim().replace(/[\s().-]/g,'');
@@ -118,6 +128,51 @@ export default async function handler(req:any,res:any){
  try{
   const sql=db();
   action=String(req.query?.action||req.body?.action||'');
+  if(['buyer-account-data','buyer-follow-shop','buyer-wishlist','buyer-newsletter','buyer-close-account'].includes(action)){
+   const b=req.body||{},slug=String(req.method==='GET'?req.query?.slug:b.slug||'').toLowerCase().trim();
+   const shops=await sql`SELECT id,slug,name FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
+   if(!shops.length)return send(res,404,{error:'Shop not found.'});
+   const buyer=await buyerSession(sql,req,shops[0].id);if(!buyer)return send(res,401,{error:'Sign in to manage your buyer account.'});
+   const userId=buyer.user_id;if(!userId)return send(res,403,{error:'This legacy buyer session must be refreshed. Sign in again to continue.'});
+   if(req.method==='GET'&&action==='buyer-account-data'){
+    const [follows,wishlist,newsletter,closure]=await Promise.all([
+     sql`SELECT t.id,t.slug,t.name FROM public.buyer_shop_follows f JOIN public.tenants t ON t.id=f.followed_tenant_id WHERE f.buyer_user_id=${userId} AND t.status IN ('trial','active') ORDER BY f.created_at DESC LIMIT 100`,
+     sql`SELECT p.id,p.name,p.price_minor,p.images,p.stock_quantity FROM public.buyer_wishlist_items w JOIN public.products p ON p.id=w.product_id AND p.tenant_id=w.tenant_id WHERE w.buyer_user_id=${userId} AND w.tenant_id=${shops[0].id} ORDER BY w.created_at DESC LIMIT 200`,
+     sql`SELECT email,consented_at FROM public.buyer_newsletter_subscriptions WHERE buyer_user_id=${userId} AND tenant_id=${shops[0].id} AND revoked_at IS NULL LIMIT 1`,
+     sql`SELECT id,status,reason,created_at,updated_at FROM public.buyer_account_closure_requests WHERE buyer_user_id=${userId} LIMIT 1`
+    ]);
+    return send(res,200,{followedShops:follows,wishlist:wishlist.map((p:any)=>({id:p.id,name:p.name,price:Number(p.price_minor||0)/100,image:Array.isArray(p.images)?p.images[0]||'':'',stockQuantity:p.stock_quantity})),newsletter:newsletter[0]||null,closureRequest:closure[0]||null});
+   }
+   if(req.method==='POST'&&action==='buyer-follow-shop'){
+    const targetSlug=String(b.targetSlug||slug).toLowerCase().trim(),target=await sql`SELECT id FROM public.tenants WHERE slug=${targetSlug} AND status IN ('trial','active') LIMIT 1`;
+    if(!target.length)return send(res,404,{error:'The shop could not be found.'});
+    if(target[0].id===shops[0].id&&b.follow===false){await sql`DELETE FROM public.buyer_shop_follows WHERE buyer_user_id=${userId} AND followed_tenant_id=${target[0].id}`;return send(res,200,{ok:true,following:false});}
+    if(b.follow===false){await sql`DELETE FROM public.buyer_shop_follows WHERE buyer_user_id=${userId} AND followed_tenant_id=${target[0].id}`;return send(res,200,{ok:true,following:false});}
+    await sql`INSERT INTO public.buyer_shop_follows(buyer_user_id,followed_tenant_id) VALUES(${userId},${target[0].id}) ON CONFLICT DO NOTHING`;
+    return send(res,200,{ok:true,following:true});
+   }
+   if(req.method==='POST'&&action==='buyer-wishlist'){
+    const productId=String(b.productId||'').trim(),enabled=b.enabled!==false;
+    if(!/^[0-9a-f-]{36}$/i.test(productId))return send(res,400,{error:'Choose a valid product.'});
+    const product=await sql`SELECT id FROM public.products WHERE id=${productId} AND tenant_id=${shops[0].id} AND is_active=true LIMIT 1`;
+    if(!product.length)return send(res,404,{error:'Product not found in this shop.'});
+    if(enabled)await sql`INSERT INTO public.buyer_wishlist_items(buyer_user_id,tenant_id,product_id) VALUES(${userId},${shops[0].id},${productId}) ON CONFLICT DO NOTHING`;
+    else await sql`DELETE FROM public.buyer_wishlist_items WHERE buyer_user_id=${userId} AND tenant_id=${shops[0].id} AND product_id=${productId}`;
+    return send(res,200,{ok:true,saved:enabled});
+   }
+   if(req.method==='POST'&&action==='buyer-newsletter'){
+    const enabled=b.enabled===true,email=String(b.email||buyer.email||'').trim().toLowerCase();
+    if(enabled&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return send(res,400,{error:'Add a valid email address before subscribing.'});
+    if(enabled){await sql`INSERT INTO public.buyer_newsletter_subscriptions(buyer_user_id,tenant_id,email,consented_at,revoked_at,updated_at) VALUES(${userId},${shops[0].id},${email},now(),NULL,now()) ON CONFLICT(buyer_user_id,tenant_id) DO UPDATE SET email=EXCLUDED.email,consented_at=now(),revoked_at=NULL,updated_at=now()`;}
+    else await sql`UPDATE public.buyer_newsletter_subscriptions SET revoked_at=COALESCE(revoked_at,now()),updated_at=now() WHERE buyer_user_id=${userId} AND tenant_id=${shops[0].id}`;
+    return send(res,200,{ok:true,subscribed:enabled});
+   }
+   if(req.method==='POST'&&action==='buyer-close-account'){
+    const reason=String(b.reason||'').trim().slice(0,1000);
+    const rows=await sql`INSERT INTO public.buyer_account_closure_requests(buyer_user_id,requested_from_tenant_id,reason,status) VALUES(${userId},${shops[0].id},${reason||null},'pending') ON CONFLICT(buyer_user_id) DO UPDATE SET requested_from_tenant_id=EXCLUDED.requested_from_tenant_id,reason=EXCLUDED.reason,status=CASE WHEN public.buyer_account_closure_requests.status IN ('completed','rejected') THEN public.buyer_account_closure_requests.status ELSE 'pending' END,updated_at=now() RETURNING id,status,created_at`;
+    return send(res,201,{ok:true,request:rows[0],message:'Your account-closure request has been recorded for identity verification. Your account remains active until the request is reviewed.'});
+   }
+  }
   if(req.method==='POST'&&action==='coupon-validate'){
    const b=req.body||{},slug=String(b.slug||'').toLowerCase().trim(),code=String(b.code||'').trim().toUpperCase(),subtotal=Number(b.subtotal||0),shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
    if(!shops.length)return send(res,404,{error:'Shop not found.'});
@@ -206,7 +261,7 @@ export default async function handler(req:any,res:any){
    // when credential decryption or a verification API is unavailable.
    if(resultCode!==0){
     const terminalStatus=resultCode===1032?'cancelled':'failed';
-    await sql`UPDATE public.payments SET status=${terminalStatus},provider_result=${JSON.stringify({callback:cb,resultCode,resultDescription:String(cb.ResultDesc||'')})}::jsonb,updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
+    await sql`UPDATE public.payments SET status=${terminalStatus},provider_result=${JSON.stringify({...((p.provider_result&&typeof p.provider_result==='object')?p.provider_result:{}),callback:cb,resultCode,resultDescription:String(cb.ResultDesc||'')})}::jsonb,updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
     await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'payment_update',terminalStatus==='cancelled'?'Payment cancelled':'Payment failed','Payment for your order was '+terminalStatus+'.');
     return send(res,200,{ResultCode:0,ResultDesc:terminalStatus==='cancelled'?'Customer cancelled payment':'Payment failure recorded'});
    }
@@ -223,14 +278,23 @@ export default async function handler(req:any,res:any){
     const meta=cb.CallbackMetadata?.Item||[],val=(n:string)=>meta.find((x:any)=>x.Name===n)?.Value;
     const amount=Number(val('Amount')??checked.Amount),receipt=String(val('MpesaReceiptNumber')??checked.MpesaReceiptNumber??''),phone=String(val('PhoneNumber')??checked.PhoneNumber??'');
     if(!receipt||Math.round(amount*100)!==Number(p.amount_minor)||phone.replace(/^\+/, '')!==String(p.phone).replace(/^\+/,''))throw Error('Callback details do not match the pending order.');
-    await sql`UPDATE public.payments SET status='succeeded',provider_receipt=${receipt},provider_result=${JSON.stringify({callback:cb,query:checked})}::jsonb,verified_at=now(),updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
-    await sql`UPDATE public.orders SET status='confirmed',updated_at=now() WHERE id=${p.order_id} AND status='pending'`;
-    await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'payment_update','Payment confirmed','Your M-PESA payment was confirmed.');
-    await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'order_update','Order confirmed','Your order has been confirmed by the shop.');
-    await sql`UPDATE public.store_coupons SET used_count=used_count+1,updated_at=now() WHERE tenant_id=${p.tenant_id} AND code=(SELECT coupon_code FROM public.orders WHERE id=${p.order_id} AND tenant_id=${p.tenant_id}) AND coupon_code IS NOT NULL`;
-    await sql`UPDATE public.payment_configs SET callback_verified_at=now() WHERE tenant_id=${p.tenant_id}`;
-   }catch(err:any){console.error('Daraja callback verification failed',err?.message||err);}
+    const settlement=await sql`WITH wanted AS (SELECT product_id,SUM(quantity)::integer AS quantity FROM public.order_items WHERE tenant_id=${p.tenant_id} AND order_id=${p.order_id} AND product_id IS NOT NULL GROUP BY product_id), eligible AS (SELECT COUNT(*)::integer AS count FROM wanted w JOIN public.products pr ON pr.id=w.product_id AND pr.tenant_id=${p.tenant_id} WHERE pr.stock_quantity IS NULL OR pr.stock_quantity>=w.quantity), payment_mark AS (UPDATE public.payments SET status='succeeded',provider_receipt=${receipt},provider_result=(${JSON.stringify({...((p.provider_result&&typeof p.provider_result==='object')?p.provider_result:{}),callback:cb,query:checked})}::jsonb || jsonb_build_object('inventoryApplied',(SELECT COUNT(*) FROM wanted)=0 OR (SELECT count FROM eligible)=(SELECT COUNT(*) FROM wanted),'inventoryIssue',CASE WHEN (SELECT COUNT(*) FROM wanted)=0 OR (SELECT count FROM eligible)=(SELECT COUNT(*) FROM wanted) THEN NULL ELSE 'Payment confirmed, but stock changed during checkout. Seller review required.' END)),verified_at=now(),updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending') RETURNING id,tenant_id,order_id), stock_update AS (UPDATE public.products pr SET stock_quantity=CASE WHEN pr.stock_quantity IS NULL THEN NULL ELSE pr.stock_quantity-w.quantity END,updated_at=now() FROM wanted w,payment_mark pm,eligible e WHERE pr.id=w.product_id AND pr.tenant_id=${p.tenant_id} AND (SELECT COUNT(*) FROM wanted)>0 AND e.count=(SELECT COUNT(*) FROM wanted) AND (pr.stock_quantity IS NULL OR pr.stock_quantity>=w.quantity) RETURNING pr.id), queued AS (INSERT INTO public.payment_reconciliation_jobs(payment_id,tenant_id,order_id,status) SELECT id,tenant_id,order_id,'pending' FROM payment_mark ON CONFLICT(payment_id) DO NOTHING RETURNING id) SELECT (SELECT COUNT(*) FROM wanted)::integer AS wanted_count,(SELECT count FROM eligible)::integer AS eligible_count,(SELECT COUNT(*) FROM payment_mark)::integer AS payment_count,(SELECT COUNT(*) FROM stock_update)::integer AS stock_count,(SELECT COUNT(*) FROM queued)::integer AS queued_count`;
+    if(Number(settlement[0]?.payment_count||0)===0)return send(res,200,{ResultCode:0,ResultDesc:'Already processed'});if(Number(settlement[0]?.stock_count||0)!==Number(settlement[0]?.wanted_count||0))console.error('Verified payment needs seller inventory review',{orderId:p.order_id,tenantId:p.tenant_id});
+    const jobRows=await sql`SELECT id FROM public.payment_reconciliation_jobs WHERE payment_id=${p.id} LIMIT 1`;if(jobRows.length){try{await reconcilePaymentJob(sql,String(jobRows[0].id));}catch(reconcileError:any){console.error('Verified payment queued for later reconciliation',{paymentId:p.id,error:String(reconcileError?.message||reconcileError)});}}
+   }catch(err:any){console.error('Daraja callback verification failed',err?.message||err);return send(res,503,{ResultCode:1,ResultDesc:'Payment verification is temporarily unavailable. Retry required.'});}
    return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
+  }
+  if(req.method==='GET'&&action==='reconcile-payments'){
+   const secret=env('CRON_SECRET')||env('DASNET_RECONCILIATION_SECRET');
+   if(!secret)return send(res,503,{error:'Payment reconciliation is not configured.'});
+   if(String(req.headers.authorization||'')!=='Bearer '+secret)return send(res,401,{error:'Unauthorized.'});
+   const jobs=await sql`SELECT id FROM public.payment_reconciliation_jobs WHERE status='pending' ORDER BY created_at ASC LIMIT 25`;
+   let processed=0,failed=0;
+   for(const job of jobs){
+    try{if(await reconcilePaymentJob(sql,String(job.id)))processed++;}
+    catch(error:any){failed++;console.error('Payment reconciliation job failed',{jobId:job.id,error:String(error?.message||error)});}
+   }
+   return send(res,200,{ok:true,found:jobs.length,processed,failed});
   }
   const me=await seller(sql,req);
   if(req.method==='POST'&&action==='products-test-seed'){
@@ -468,10 +532,10 @@ export default async function handler(req:any,res:any){
    try{
     const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dass-gamma.vercel.app'))).replace(/\/$/,'')+'/api/payments?action=daraja-callback';
     const stk=await startStk(payment,o[0],paymentPhone,payableTotal/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):orderNo.slice(-12),callbackUrl);
-    await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
+    await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({paymentMethod:method,source:'buyer_checkout',merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
     return send(res,201,{ok:true,orderId:o[0].id,orderNumber:o[0].order_number,paymentStatus:'pending',checkoutRequestId:stk.checkoutId,chatToken:customerChatToken,subtotal:total/100,discount:discountMinor/100,total:(total-discountMinor)/100,couponCode:couponCode||null,message:'M-PESA prompt sent. Enter your PIN on your phone to complete payment.'});
    }catch(e:any){
-    await sql`UPDATE public.payments SET status='failed',provider_result=${JSON.stringify({error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
+    await sql`UPDATE public.payments SET status='failed',provider_result=${JSON.stringify({paymentMethod:method,source:'buyer_checkout',error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
     console.error('Daraja STK initiation failed',e?.message||e);
     return send(res,502,{error:e?.message||'Could not start M-PESA payment. No payment was confirmed.',orderNumber:o[0].order_number,chatToken:customerChatToken});
    }
@@ -620,7 +684,7 @@ export default async function handler(req:any,res:any){
    return send(res,200,{shop:{name:me.shop_name,slug:me.slug,description:me.shop_description||'',logoUrl:site[0]?.logo_url||'',whatsappNumber:site[0]?.whatsapp_number||'',theme:/^#[0-9a-f]{6}$/i.test(String(site[0]?.storefront_theme||''))?site[0].storefront_theme:'#e47a13'},products:ps.map((p:any)=>productOut(p,true))});
   }
   if(req.method==='GET'&&action==='orders'){
-   const os=await sql`SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.total_minor,o.currency,o.status,o.delivery_method,o.delivery_county,o.delivery_sub_county,o.delivery_estate,o.delivery_address,o.delivery_directions,o.pickup_station,o.delivery_status,o.delivery_updated_at,o.created_at,pay.status AS payment_status,pay.provider_receipt,pay.payment_message,COALESCE(json_agg(json_build_object('name',i.product_name,'quantity',i.quantity,'unitPrice',i.unit_price_minor,'lineTotal',i.line_total_minor)) FILTER (WHERE i.id IS NOT NULL),'[]'::json) AS items FROM public.orders o LEFT JOIN public.order_items i ON i.tenant_id=o.tenant_id AND i.order_id=o.id LEFT JOIN LATERAL (SELECT p.status,p.provider_receipt,COALESCE(p.provider_result->>'error',p.provider_result->'callback'->'ResultDesc'->>0,p.provider_result->'callback'->'Body'->'stkCallback'->>'ResultDesc') AS payment_message FROM public.payments p WHERE p.tenant_id=o.tenant_id AND p.order_id=o.id ORDER BY p.created_at DESC LIMIT 1) pay ON true WHERE o.tenant_id=${me.tenant_id} GROUP BY o.id,pay.status,pay.provider_receipt,pay.payment_message ORDER BY o.created_at DESC LIMIT 100`;
+   const os=await sql`SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.total_minor,o.currency,o.status,o.delivery_method,o.delivery_county,o.delivery_sub_county,o.delivery_estate,o.delivery_address,o.delivery_directions,o.pickup_station,o.delivery_status,o.delivery_updated_at,o.created_at,pay.status AS payment_status,pay.provider_receipt,pay.payment_message,COALESCE(json_agg(json_build_object('name',i.product_name,'quantity',i.quantity,'unitPrice',i.unit_price_minor,'lineTotal',i.line_total_minor)) FILTER (WHERE i.id IS NOT NULL),'[]'::json) AS items FROM public.orders o LEFT JOIN public.order_items i ON i.tenant_id=o.tenant_id AND i.order_id=o.id LEFT JOIN LATERAL (SELECT p.status,p.provider_receipt,COALESCE(p.provider_result->>'inventoryIssue',p.provider_result->>'error',p.provider_result->'callback'->'ResultDesc'->>0,p.provider_result->'callback'->'Body'->'stkCallback'->>'ResultDesc') AS payment_message FROM public.payments p WHERE p.tenant_id=o.tenant_id AND p.order_id=o.id ORDER BY p.created_at DESC LIMIT 1) pay ON true WHERE o.tenant_id=${me.tenant_id} GROUP BY o.id,pay.status,pay.provider_receipt,pay.payment_message ORDER BY o.created_at DESC LIMIT 100`;
    return send(res,200,{orders:os.map((o:any)=>({...o,total:Number(o.total_minor)/100,items:o.items}))});
   }
   if(req.method==='POST'&&action==='product-image-upload'){
@@ -682,7 +746,7 @@ export default async function handler(req:any,res:any){
    if(['cancelled','refunded'].includes(String(order.status)))return send(res,409,{error:'A payment prompt cannot be sent for a cancelled or refunded order.'});
    const prior=await sql`SELECT status FROM public.payments WHERE tenant_id=${me.tenant_id} AND order_id=${order.id} ORDER BY created_at DESC LIMIT 1`;
    if(prior[0]?.status==='succeeded')return send(res,409,{error:'This order is already paid. No new prompt was sent.'});if(['initiated','pending'].includes(String(prior[0]?.status||'')))return send(res,409,{error:'A payment request is already awaiting a result for this order. Wait for it to complete or fail before sending another prompt.'});
-   const configs=await sql`SELECT pc.*,pp.shortcode AS central_shortcode,pp.party_b AS central_party_b,pp.environment AS central_environment,pp.encrypted_credentials AS central_credentials FROM public.tenants t LEFT JOIN public.payment_configs pc ON pc.tenant_id=t.id LEFT JOIN public.platform_payment_config pp ON pp.id=1 WHERE t.id=${me.tenant_id} LIMIT 1`;
+   const configs=await sql`SELECT pc.*,pt.shortcode AS central_till_shortcode,pt.environment AS central_till_environment,pt.encrypted_credentials AS central_till_credentials,pb.shortcode AS central_paybill_shortcode,pb.environment AS central_paybill_environment,pb.encrypted_credentials AS central_paybill_credentials FROM public.tenants t LEFT JOIN public.payment_configs pc ON pc.tenant_id=t.id LEFT JOIN public.platform_payment_methods pt ON pt.method='till' LEFT JOIN public.platform_payment_methods pb ON pb.method='paybill' WHERE t.id=${me.tenant_id} LIMIT 1`;
    const cfg=configs[0]||{},key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');let payment:any=null;
    const method=requestedMethod==='paybill'?'paybill':requestedMethod==='till'?'till':((cfg.default_payout_method||cfg.payout_method||'till')==='paybill'?'paybill':'till');
    if(method==='till'&&!((cfg.till_party_b)||(cfg.payout_method==='till'&&cfg.party_b)))return send(res,409,{error:'A Till / Buy Goods destination is not configured for this seller.'});
@@ -690,7 +754,7 @@ export default async function handler(req:any,res:any){
    if(method==='paybill'&&!cfg.account_reference)return send(res,409,{error:'A PayBill account/reference is required before requesting payment.'});
    try{
     if(cfg.encrypted_credentials?.ciphertext){const bundle=decryptBundle(cfg.encrypted_credentials,key,'seller'),sec=bundle.credentialsByType?.[method]||{...bundle,shortcode:cfg.shortcode,environment:cfg.environment};payment={...sec,partyB:method==='paybill'?(cfg.paybill_party_b||((cfg.payout_method||cfg.default_payout_method)==='paybill'?cfg.party_b:'')):(cfg.till_party_b||((cfg.payout_method||cfg.default_payout_method)==='till'?cfg.party_b:'')),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
-    else if((cfg.central_credentials?.data||cfg.central_credentials?.ciphertext)){const sec=decryptBundle(cfg.central_credentials,key,'platform');payment={...sec,shortcode:cfg.central_shortcode,partyB:method==='paybill'?(cfg.paybill_party_b||cfg.central_party_b):(cfg.till_party_b||cfg.central_party_b),environment:cfg.central_environment,accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
+    else {const centralBlob=method==='paybill'?cfg.central_paybill_credentials:cfg.central_till_credentials;if(centralBlob?.data){const sec=decryptBundle(centralBlob,key,'platform');payment={...sec,shortcode:method==='paybill'?cfg.central_paybill_shortcode:cfg.central_till_shortcode,partyB:method==='paybill'?cfg.paybill_party_b:cfg.till_party_b,environment:method==='paybill'?cfg.central_paybill_environment:cfg.central_till_environment,accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}}
    }catch(e:any){console.error('Order payment prompt credentials failed',e?.message||e);return send(res,503,{error:'Payment credentials could not be loaded securely.'});}
    if(!payment?.consumerKey||!payment?.consumerSecret||!payment?.passkey||!payment?.shortcode||!payment?.partyB)return send(res,503,{error:'Complete the matching Daraja credentials and payout destination before requesting payment.'});
    if(payment.environment!=='production')return send(res,503,{error:'The selected Daraja credentials are in sandbox. Live payment prompts are disabled.'});
