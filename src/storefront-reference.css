@@ -612,3 +612,14 @@
 .market-products-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 .market-product-art{height:125px}
 }
+/* Match the reference's compact marketplace rhythm on mobile. */
+.store-shop-promo-banner{display:none}
+.market-top-selling{margin-top:0}
+.market-home-product-rail{grid-auto-columns:145px}
+.market-home-product-image{height:118px}
+.marketplace-campaign-banners{margin-top:0}
+@media(max-width:600px){
+ .market-home-product-rail{grid-auto-columns:142px}
+ .market-home-product-image{height:112px}
+ .market-top-selling{padding:10px 8px}
+}
