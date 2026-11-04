@@ -221,16 +221,16 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
     <div className="market-sidebar-shop"><a href={buyerPath('store')} onClick={e=>{e.preventDefault();navigateBuyerPage('store')}}><Store size={18}/><span><b>{shop?.name||'Shop categories'}</b><small>Browse this shop</small></span></a><button type="button" className="market-sidebar-close" aria-label="Close navigation" onClick={()=>setMobileSidebarOpen(false)}><X size={16}/></button></div>
     <div className="market-sidebar-title">DISCOVER</div>
     <nav className="market-sidebar-links" aria-label="Shop destinations">
-      <button type="button" onClick={()=>navigateBuyerPage('collection/all-products')}><ShoppingBag size={16}/> All products</button>
-      <button type="button" onClick={()=>navigateBuyerPage('collection/top-picks')}><Star size={16}/> Top picks</button>
-      <button type="button" onClick={()=>navigateBuyerPage('collection/featured-products')}><TicketPercent size={16}/> Featured products</button>
-      <button type="button" onClick={()=>navigateBuyerPage('faqs')}><HelpCircle size={16}/> Shopping help</button>
+      <button type="button" onClick={()=>{navigateBuyerPage('collection/all-products');setMobileSidebarOpen(false)}}><ShoppingBag size={16}/> All products</button>
+      <button type="button" onClick={()=>{navigateBuyerPage('collection/top-picks');setMobileSidebarOpen(false)}}><Star size={16}/> Top picks</button>
+      <button type="button" onClick={()=>{navigateBuyerPage('collection/featured-products');setMobileSidebarOpen(false)}}><TicketPercent size={16}/> Featured products</button>
+      <button type="button" onClick={()=>{navigateBuyerPage('faqs');setMobileSidebarOpen(false)}}><HelpCircle size={16}/> Shopping help</button>
     </nav>
     <div className="market-sidebar-title">SHOP BY CATEGORY</div>
-    <button type="button" className="market-sidebar-category-button" onClick={()=>selectStoreCategory('All products')}><span className="market-sidebar-category-icon" aria-hidden="true">▦</span><span>All categories</span></button>
+    <button type="button" className="market-sidebar-category-button" onClick={()=>{selectStoreCategory('All products');setMobileSidebarOpen(false)}}><span className="market-sidebar-category-icon" aria-hidden="true">▦</span><span>All categories</span></button>
     {storefrontCategories.map(category=><div className="market-sidebar-category" key={category.name}>
-      <button type="button" className={"market-sidebar-category-button"+(filter===category.name?' active':'')} aria-expanded={expandedCategory===category.name} onClick={()=>{selectStoreCategory(category.name);setExpandedCategory(current=>current===category.name?'':category.name)}}><span className="market-sidebar-category-icon" aria-hidden="true">{category.icon}</span><span>{category.name}</span><ChevronRight size={14} className="market-sidebar-category-chevron"/></button>
-      {expandedCategory===category.name&&<div className="market-sidebar-subcategories">{category.subcategories.map(child=><button type="button" key={child} className={filter===child?'active':''} onClick={()=>selectStoreCategory(child)}>{child}</button>)}</div>}
+      <button type="button" className={"market-sidebar-category-button"+(filter===category.name?' active':'')} aria-expanded={expandedCategory===category.name} onClick={()=>{selectStoreCategory(category.name);setExpandedCategory(current=>current===category.name?'':category.name);setMobileSidebarOpen(false)}}><span className="market-sidebar-category-icon" aria-hidden="true">{category.icon}</span><span>{category.name}</span><ChevronRight size={14} className="market-sidebar-category-chevron"/></button>
+      {expandedCategory===category.name&&<div className="market-sidebar-subcategories">{category.subcategories.map(child=><button type="button" key={child} className={filter===child?'active':''} onClick={()=>{selectStoreCategory(child);setMobileSidebarOpen(false)}}>{child}</button>)}</div>}
     </div>)}
   </aside>
   {buyerPage==='store'?<>
