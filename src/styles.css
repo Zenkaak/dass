@@ -4753,3 +4753,29 @@ body:has(.ds-store) .store-market-header{display:none!important}
 .ds-store-fav.active{color:#e14a55}
 @media(min-width:761px){.ds-store-rail{grid-auto-columns:clamp(170px,18%,220px)}.ds-store-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.ds-store-grid .ds-store-product-image{height:190px}}
 @media(max-width:760px){.ds-store-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px}.ds-store-brand{grid-column:1;grid-row:1}.ds-store-cart{grid-column:2;grid-row:1}.ds-store-search{grid-column:1/-1;grid-row:2}.ds-store-hero{margin-bottom:11px}.ds-store-rail{grid-auto-columns:48%}.ds-store-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.ds-store-grid .ds-store-product-image{height:150px}}
+
+
+/* Stage 3 correction — compact, bright and fully interactive category sidebar */
+body:has(.ds-store) .market-store-layout{grid-template-columns:205px minmax(0,1fr)!important;gap:15px!important}
+body:has(.ds-store) .market-sidebar{width:205px!important;min-width:0!important;z-index:40!important;pointer-events:auto!important;opacity:1!important;background:#fff!important;border:1px solid #e9edf0!important;border-radius:10px!important;padding:12px!important;box-shadow:0 2px 12px rgba(20,30,40,.045)!important;color:#263746!important}
+body:has(.ds-store) .market-sidebar *{pointer-events:auto}
+body:has(.ds-store) .market-sidebar-title{padding:12px 8px 6px!important;color:#7b8791!important;font-size:9px!important;font-weight:800!important;letter-spacing:.09em}
+body:has(.ds-store) .market-sidebar-category-button{min-height:36px!important;padding:7px 8px!important;border-radius:6px!important;background:#fff!important;color:#354654!important;font-size:12px!important;font-weight:600!important;opacity:1!important;cursor:pointer!important}
+body:has(.ds-store) .market-sidebar-category-button:hover,body:has(.ds-store) .market-sidebar-category-button.active{background:#fff0df!important;color:#b95e08!important}
+body:has(.ds-store) .market-sidebar-category-icon{display:inline-grid;place-items:center;flex:0 0 23px;width:23px;height:23px;border-radius:6px;background:#f4f6f8!important;color:#566879!important;font-size:12px!important}
+body:has(.ds-store) .market-sidebar-category-button:hover .market-sidebar-category-icon,body:has(.ds-store) .market-sidebar-category-button.active .market-sidebar-category-icon{background:#ffe4c7!important;color:#b95e08!important}
+body:has(.ds-store) .market-sidebar-subcategories{padding:2px 0 5px 30px!important}
+body:has(.ds-store) .market-sidebar-subcategories button{min-height:30px!important;padding:6px 8px!important;color:#52616d!important;font-size:11px!important;opacity:1!important;cursor:pointer!important}
+body:has(.ds-store) .market-sidebar-subcategories button:hover,body:has(.ds-store) .market-sidebar-subcategories button.active{background:#fff5eb!important;color:#ad5700!important}
+body:has(.ds-store) .market-sidebar-links>button{display:flex;align-items:center;gap:8px;width:100%;min-height:34px;padding:7px 8px;border:0;border-radius:6px;background:#fff;color:#354654;text-align:left;font-size:11px;font-weight:600;cursor:pointer}
+body:has(.ds-store) .market-sidebar-links>button:hover{background:#f6f8fa;color:#b95e08}
+.ds-store-filter-row{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}
+.ds-store-filter-row label{flex:1 1 220px;width:auto;max-width:360px}
+.ds-store-filter-row select{height:40px;min-width:174px;padding:0 30px 0 11px;border:1px solid #dedede;border-radius:5px;background:#fff;color:#343a40;font:inherit;font-size:12px;cursor:pointer}
+@media(max-width:760px){
+ body:has(.ds-store) .market-store-layout{display:block!important}
+ body:has(.ds-store) .market-sidebar{width:min(285px,86vw)!important;min-width:0!important;max-width:86vw!important;z-index:1002!important;padding:14px!important;border:0!important;border-radius:0 14px 14px 0!important;box-shadow:12px 0 35px rgba(0,0,0,.16)!important}
+ .ds-store-filter-row{justify-content:stretch}
+ .ds-store-filter-row label{max-width:none;flex:1 1 100%}
+ .ds-store-filter-row select{width:100%;height:38px}
+}
