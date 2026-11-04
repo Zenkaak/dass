@@ -11,12 +11,12 @@ async function buyerSession(sql:any,req:any,tenantId:string){
  await sql`UPDATE public.store_customers SET is_banned=false,ban_reason=NULL,banned_until=NULL,updated_at=now() WHERE tenant_id=${tenantId} AND is_banned=true AND banned_until IS NOT NULL AND banned_until<=now()`;
  const global=token(req);
  if(global){
-  const rows=await sql`SELECT c.id,c.full_name,c.phone,c.email,c.address FROM public.auth_sessions s JOIN public.store_customers c ON c.user_id=s.user_id AND c.tenant_id=${tenantId} WHERE s.token_hash=${hash(global)} AND s.expires_at>now() AND c.is_banned=false AND (c.banned_until IS NULL OR c.banned_until<=now()) LIMIT 1`;
+  const rows=await sql`SELECT c.id,c.user_id,c.full_name,c.phone,c.email,c.address FROM public.auth_sessions s JOIN public.store_customers c ON c.user_id=s.user_id AND c.tenant_id=${tenantId} WHERE s.token_hash=${hash(global)} AND s.expires_at>now() AND c.is_banned=false AND (c.banned_until IS NULL OR c.banned_until<=now()) LIMIT 1`;
   return rows[0]||null;
  }
  const raw=String(req.headers.cookie||'').split(';').map((x:string)=>x.trim()).find((x:string)=>x.startsWith('das_buyer_session='));let legacy='';try{legacy=raw?decodeURIComponent(raw.slice('das_buyer_session='.length)):''}catch{}
  if(!legacy)return null;
- const rows=await sql`SELECT c.id,c.full_name,c.phone,c.email,c.address FROM public.store_customer_sessions s JOIN public.store_customers c ON c.id=s.customer_id AND c.tenant_id=s.tenant_id WHERE s.tenant_id=${tenantId} AND s.token_hash=${hash(legacy)} AND s.expires_at>now() AND c.user_id IS NOT NULL AND c.is_banned=false AND (c.banned_until IS NULL OR c.banned_until<=now()) LIMIT 1`;
+ const rows=await sql`SELECT c.id,c.user_id,c.full_name,c.phone,c.email,c.address FROM public.store_customer_sessions s JOIN public.store_customers c ON c.id=s.customer_id AND c.tenant_id=s.tenant_id WHERE s.tenant_id=${tenantId} AND s.token_hash=${hash(legacy)} AND s.expires_at>now() AND c.user_id IS NOT NULL AND c.is_banned=false AND (c.banned_until IS NULL OR c.banned_until<=now()) LIMIT 1`;
  return rows[0]||null;
 }
 async function seller(sql:any,req:any){
@@ -118,6 +118,51 @@ export default async function handler(req:any,res:any){
  try{
   const sql=db();
   action=String(req.query?.action||req.body?.action||'');
+  if(['buyer-account-data','buyer-follow-shop','buyer-wishlist','buyer-newsletter','buyer-close-account'].includes(action)){
+   const b=req.body||{},slug=String(req.method==='GET'?req.query?.slug:b.slug||'').toLowerCase().trim();
+   const shops=await sql`SELECT id,slug,name FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
+   if(!shops.length)return send(res,404,{error:'Shop not found.'});
+   const buyer=await buyerSession(sql,req,shops[0].id);if(!buyer)return send(res,401,{error:'Sign in to manage your buyer account.'});
+   const userId=buyer.user_id;if(!userId)return send(res,403,{error:'This legacy buyer session must be refreshed. Sign in again to continue.'});
+   if(req.method==='GET'&&action==='buyer-account-data'){
+    const [follows,wishlist,newsletter,closure]=await Promise.all([
+     sql`SELECT t.id,t.slug,t.name FROM public.buyer_shop_follows f JOIN public.tenants t ON t.id=f.followed_tenant_id WHERE f.buyer_user_id=${userId} AND t.status IN ('trial','active') ORDER BY f.created_at DESC LIMIT 100`,
+     sql`SELECT p.id,p.name,p.price_minor,p.images,p.stock_quantity FROM public.buyer_wishlist_items w JOIN public.products p ON p.id=w.product_id AND p.tenant_id=w.tenant_id WHERE w.buyer_user_id=${userId} AND w.tenant_id=${shops[0].id} ORDER BY w.created_at DESC LIMIT 200`,
+     sql`SELECT email,consented_at FROM public.buyer_newsletter_subscriptions WHERE buyer_user_id=${userId} AND tenant_id=${shops[0].id} AND revoked_at IS NULL LIMIT 1`,
+     sql`SELECT id,status,reason,created_at,updated_at FROM public.buyer_account_closure_requests WHERE buyer_user_id=${userId} LIMIT 1`
+    ]);
+    return send(res,200,{followedShops:follows,wishlist:wishlist.map((p:any)=>({id:p.id,name:p.name,price:Number(p.price_minor||0)/100,image:Array.isArray(p.images)?p.images[0]||'':'',stockQuantity:p.stock_quantity})),newsletter:newsletter[0]||null,closureRequest:closure[0]||null});
+   }
+   if(req.method==='POST'&&action==='buyer-follow-shop'){
+    const targetSlug=String(b.targetSlug||slug).toLowerCase().trim(),target=await sql`SELECT id FROM public.tenants WHERE slug=${targetSlug} AND status IN ('trial','active') LIMIT 1`;
+    if(!target.length)return send(res,404,{error:'The shop could not be found.'});
+    if(target[0].id===shops[0].id&&b.follow===false){await sql`DELETE FROM public.buyer_shop_follows WHERE buyer_user_id=${userId} AND followed_tenant_id=${target[0].id}`;return send(res,200,{ok:true,following:false});}
+    if(b.follow===false){await sql`DELETE FROM public.buyer_shop_follows WHERE buyer_user_id=${userId} AND followed_tenant_id=${target[0].id}`;return send(res,200,{ok:true,following:false});}
+    await sql`INSERT INTO public.buyer_shop_follows(buyer_user_id,followed_tenant_id) VALUES(${userId},${target[0].id}) ON CONFLICT DO NOTHING`;
+    return send(res,200,{ok:true,following:true});
+   }
+   if(req.method==='POST'&&action==='buyer-wishlist'){
+    const productId=String(b.productId||'').trim(),enabled=b.enabled!==false;
+    if(!/^[0-9a-f-]{36}$/i.test(productId))return send(res,400,{error:'Choose a valid product.'});
+    const product=await sql`SELECT id FROM public.products WHERE id=${productId} AND tenant_id=${shops[0].id} AND status='active' LIMIT 1`;
+    if(!product.length)return send(res,404,{error:'Product not found in this shop.'});
+    if(enabled)await sql`INSERT INTO public.buyer_wishlist_items(buyer_user_id,tenant_id,product_id) VALUES(${userId},${shops[0].id},${productId}) ON CONFLICT DO NOTHING`;
+    else await sql`DELETE FROM public.buyer_wishlist_items WHERE buyer_user_id=${userId} AND tenant_id=${shops[0].id} AND product_id=${productId}`;
+    return send(res,200,{ok:true,saved:enabled});
+   }
+   if(req.method==='POST'&&action==='buyer-newsletter'){
+    const enabled=b.enabled===true,email=String(b.email||buyer.email||'').trim().toLowerCase();
+    if(enabled&&!/^\\S+@\\S+\\.\\S+$/.test(email))return send(res,400,{error:'Add a valid email address before subscribing.'});
+    if(enabled){await sql`INSERT INTO public.buyer_newsletter_subscriptions(buyer_user_id,tenant_id,email,consented_at,revoked_at,updated_at) VALUES(${userId},${shops[0].id},${email},now(),NULL,now()) ON CONFLICT(buyer_user_id,tenant_id) DO UPDATE SET email=EXCLUDED.email,consented_at=now(),revoked_at=NULL,updated_at=now()`;}
+    else await sql`UPDATE public.buyer_newsletter_subscriptions SET revoked_at=COALESCE(revoked_at,now()),updated_at=now() WHERE buyer_user_id=${userId} AND tenant_id=${shops[0].id}`;
+    return send(res,200,{ok:true,subscribed:enabled});
+   }
+   if(req.method==='POST'&&action==='buyer-close-account'){
+    const reason=String(b.reason||'').trim().slice(0,1000);
+    const rows=await sql`INSERT INTO public.buyer_account_closure_requests(buyer_user_id,requested_from_tenant_id,reason,status) VALUES(${userId},${shops[0].id},${reason||null},'pending') ON CONFLICT(buyer_user_id) DO UPDATE SET requested_from_tenant_id=EXCLUDED.requested_from_tenant_id,reason=EXCLUDED.reason,status=CASE WHEN public.buyer_account_closure_requests.status IN ('completed','rejected') THEN public.buyer_account_closure_requests.status ELSE 'pending' END,updated_at=now() RETURNING id,status,created_at`;
+    return send(res,201,{ok:true,request:rows[0],message:'Your account-closure request has been recorded for identity verification. Your account remains active until the request is reviewed.'});
+   }
+  }
   if(req.method==='POST'&&action==='coupon-validate'){
    const b=req.body||{},slug=String(b.slug||'').toLowerCase().trim(),code=String(b.code||'').trim().toUpperCase(),subtotal=Number(b.subtotal||0),shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
    if(!shops.length)return send(res,404,{error:'Shop not found.'});
