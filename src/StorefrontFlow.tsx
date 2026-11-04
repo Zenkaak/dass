@@ -262,7 +262,6 @@ export function StorefrontFlow({
   const [isShopFollowed, setIsShopFollowed] = useState(() => { try { return localStorage.getItem('dasnet-followed-shop-'+slug) === 'true'; } catch { return false; } });
   useEffect(() => { try { localStorage.setItem('dasnet-shop-updates-'+slug, String(newsletterEnabled)); } catch {} }, [slug, newsletterEnabled]);
   useEffect(() => { try { localStorage.setItem('dasnet-followed-shop-'+slug, String(isShopFollowed)); } catch {} }, [slug, isShopFollowed]);
-  const [orderTab, setOrderTab] = useState<'ongoing' | 'delivered' | 'cancelled'>('ongoing');
   const [buyerFeatureMessage,setBuyerFeatureMessage]=useState('');
   const [buyerFeatureBusy,setBuyerFeatureBusy]=useState(false);
   const [closureRequest,setClosureRequest]=useState<any>(null);
