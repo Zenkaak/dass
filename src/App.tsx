@@ -106,8 +106,24 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
  const [buyerPage,setBuyerPage]=useState(initialBuyerPage||'store'),[expandedCategory,setExpandedCategory]=useState(''),[,setAccountMenuOpen]=useState(false);
   const [wishlistIds,setWishlistIds]=useState<string[]>(()=>{try{const saved=JSON.parse(localStorage.getItem('dasnet-wishlist-'+slug)||'[]');return Array.isArray(saved)?saved.filter((id:any)=>typeof id==='string'):[]}catch{return[]}});
   useEffect(()=>{try{localStorage.setItem('dasnet-wishlist-'+slug,JSON.stringify(wishlistIds))}catch{}},[wishlistIds,slug]);
-  function toggleWishlist(id:string){setWishlistIds(current=>current.includes(id)?current.filter(value=>value!==id):[...current,id])}
+  function toggleWishlist(id:string){
+  setWishlistIds(current=>{
+    const enabled=!current.includes(id);
+    if(buyerCustomer?.phone)fetch('/api/buyer?action=buyer-wishlist',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug,productId:id,enabled})}).then(async response=>{if(!response.ok){const data=await response.json().catch(()=>({}));throw Error(data.error||'Wishlist could not be synced.');}}).catch(error=>console.warn('Buyer wishlist sync failed:',error));
+    return enabled?[...current,id]:current.filter(value=>value!==id);
+  });
+}
  const [buyerCustomer,setBuyerCustomer]=useState<any>(null),[buyerAuthChecked,setBuyerAuthChecked]=useState(false),[buyerReturnPage,setBuyerReturnPage]=useState('account');
+  useEffect(()=>{
+    let live=true;
+    if(!buyerCustomer?.phone||!buyerAuthChecked)return;
+    fetch('/api/buyer?action=buyer-account-data&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'})
+      .then(async response=>{const data=await response.json().catch(()=>({}));if(!response.ok)throw Error(data.error||'Could not load buyer account data.');return data;})
+      .then(data=>{if(live&&Array.isArray(data.wishlist))setWishlistIds(data.wishlist.map((item:any)=>String(item.id)));})
+      .catch(error=>console.warn('Buyer account sync unavailable:',error));
+    return()=>{live=false;};
+  },[slug,buyerCustomer?.phone,buyerAuthChecked]);
+
  const [buyerNotifications,setBuyerNotifications]=useState<any[]>([]),[buyerNotificationsOpen,setBuyerNotificationsOpen]=useState(false),[buyerInitialReportId,setBuyerInitialReportId]=useState('');
  const [storePreviewIndex,setStorePreviewIndex]=useState(0);
  const [recentlyViewed,setRecentlyViewed]=useState<string[]>(()=>{try{const saved=JSON.parse(localStorage.getItem('dasnet-recently-viewed-'+slug)||'[]');return Array.isArray(saved)?saved:[]}catch{return[]}});
