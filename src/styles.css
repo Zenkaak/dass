@@ -4779,3 +4779,24 @@ body:has(.ds-store) .market-sidebar-links>button:hover{background:#f6f8fa;color:
  .ds-store-filter-row label{max-width:none;flex:1 1 100%}
  .ds-store-filter-row select{width:100%;height:38px}
 }
+
+
+/* Sidebar interaction fix: the shared buyer drawer defaults to hidden and pointer-events:none.
+   Keep it in the desktop grid and interactive; mobile still opens as a drawer. */
+@media(min-width:761px){
+ body:has(.ds-store) .market-global-drawer{
+  position:sticky!important;top:14px!important;left:auto!important;bottom:auto!important;
+  width:205px!important;height:auto!important;max-height:calc(100vh - 28px)!important;
+  margin:0!important;transform:none!important;pointer-events:auto!important;
+  overflow-y:auto!important;z-index:5!important;display:flex!important;
+ }
+ body:has(.ds-store) .market-global-drawer-scrim{display:none!important;pointer-events:none!important}
+ body:has(.ds-store) .market-sidebar button,
+ body:has(.ds-store) .market-sidebar a{pointer-events:auto!important;cursor:pointer!important}
+}
+@media(max-width:760px){
+ body:has(.ds-store) .market-global-drawer{pointer-events:none!important;transform:translateX(-110%)!important}
+ body:has(.ds-store) .market-global-drawer.is-mobile-open{pointer-events:auto!important;transform:translateX(0)!important}
+ body:has(.ds-store) .market-global-drawer.is-mobile-open button,
+ body:has(.ds-store) .market-global-drawer.is-mobile-open a{pointer-events:auto!important;cursor:pointer!important}
+}
