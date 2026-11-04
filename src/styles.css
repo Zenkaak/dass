@@ -4829,3 +4829,15 @@ body:has(.ds-store) .market-sidebar-links>button:hover{background:#f6f8fa;color:
   pointer-events:auto!important;
  }
 }
+
+
+/* Stage 6 — clear, touch-friendly product quantity selector */
+.store-page .market-detail-quantity{display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;margin:16px 0 2px;padding:13px 14px;border:1px solid #e4e9ed;border-radius:12px;background:#fff}
+.store-page .market-detail-quantity>span{font-size:14px;font-weight:800;color:#263442}
+.store-page .market-detail-quantity-control{display:flex;align-items:center;gap:0;border:1px solid #d8e0e6;border-radius:9px;overflow:hidden}
+.store-page .market-detail-quantity-control button{width:42px;height:42px;border:0;background:#f5f7f9;color:#1e3446;font-size:22px;font-weight:700;cursor:pointer;touch-action:manipulation}
+.store-page .market-detail-quantity-control button:disabled{opacity:.35;cursor:not-allowed}
+.store-page .market-detail-quantity-control output{display:grid;place-items:center;min-width:42px;height:42px;font-size:15px;font-weight:850;color:#1e3446}
+.store-page .market-detail-quantity small{flex-basis:100%;margin-left:auto;margin-top:-8px;text-align:right;color:#64748b;font-size:11px}
+@media(min-width:761px){.store-page .market-detail-quantity{max-width:100%}}
+@media(max-width:760px){.store-page .market-detail-quantity{margin-top:13px;padding:11px 12px}.store-page .market-detail-quantity-control button{width:46px;height:44px}.store-page .market-detail-quantity-control output{min-width:44px;height:44px}}
