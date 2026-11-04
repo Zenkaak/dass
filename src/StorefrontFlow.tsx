@@ -420,7 +420,12 @@ export function StorefrontFlow({
   function updateQuantity(id: string, quantity: number) {
     const next = { ...cart };
     if (quantity <= 0) delete next[id];
-    else next[id] = Math.min(99, quantity);
+    else {
+      const product = products.find((item) => item.id === id);
+      const available = product?.stockQuantity == null ? 99 : Math.max(0, product.stockQuantity);
+      next[id] = Math.min(99, available, quantity);
+      if (next[id] <= 0) delete next[id];
+    }
     onCartChange(next);
   }
 
@@ -549,7 +554,7 @@ export function StorefrontFlow({
           <>
             <div className="customer-checkout-grid customer-cart-grid">
               <div className="customer-panel">
-                <div className="customer-panel-heading"><h2>Cart ({lines.length})</h2><span>{lines.reduce((count, line) => count + line.quantity, 0)} items</span></div>
+                <div className="customer-panel-heading"><h2>Your items</h2><span>{lines.length} {lines.length===1?"product":"products"} · {lines.reduce((count, line) => count + line.quantity, 0)} units</span></div>
                 <div className="customer-cart-lines">
                   {lines.map(({ product, quantity }) => (
                     <article className="customer-cart-line" key={product.id}>
@@ -558,10 +563,11 @@ export function StorefrontFlow({
                         <h3>{product.name}</h3>
                         <p>{product.category || 'Product'} · Sold by {shopName}</p>
                         <strong>{formatKes(product.price)}</strong>
+                        <small className="customer-cart-stock">{product.stockQuantity===0?'Currently out of stock':product.stockQuantity==null?'Stock confirmed at checkout':`${Math.max(0,product.stockQuantity)} available`}</small>
                         <div className="customer-mobile-quantity">
                           <button type="button" aria-label={`Decrease ${product.name} quantity`} onClick={() => updateQuantity(product.id, quantity - 1)}>−</button>
                           <span>{quantity}</span>
-                          <button type="button" aria-label={`Increase ${product.name} quantity`} onClick={() => updateQuantity(product.id, quantity + 1)}><Plus size={15} /></button>
+                          <button type="button" aria-label={`Increase ${product.name} quantity`} disabled={product.stockQuantity!==null&&product.stockQuantity!==undefined&&quantity>=product.stockQuantity} onClick={() => updateQuantity(product.id, quantity + 1)}><Plus size={15} /></button>
                         </div>
                         <button type="button" className="customer-mobile-remove" onClick={() => updateQuantity(product.id, 0)}>Remove</button>
                       </div>
@@ -570,7 +576,7 @@ export function StorefrontFlow({
                         <div className="customer-quantity">
                           <button type="button" aria-label={`Decrease ${product.name} quantity`} onClick={() => updateQuantity(product.id, quantity - 1)}>−</button>
                           <span>{quantity}</span>
-                          <button type="button" aria-label={`Increase ${product.name} quantity`} onClick={() => updateQuantity(product.id, quantity + 1)}><Plus size={15} /></button>
+                          <button type="button" aria-label={`Increase ${product.name} quantity`} disabled={product.stockQuantity!==null&&product.stockQuantity!==undefined&&quantity>=product.stockQuantity} onClick={() => updateQuantity(product.id, quantity + 1)}><Plus size={15} /></button>
                         </div>
                       </div>
                     </article>
