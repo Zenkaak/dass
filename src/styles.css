@@ -3562,3 +3562,44 @@ html,body,#root{
 @media(max-width:850px){
  .seller-whatsapp-float{right:14px!important;bottom:calc(66px + env(safe-area-inset-bottom) + 14px)!important;width:46px!important;height:46px!important;z-index:24!important}
 }
+
+/* Reference checkout journey: delivery selection, pickup station and review panels. */
+.customer-delivery-flow{max-width:1120px;margin:0 auto}
+.customer-delivery-tabs{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:0 0 14px;border-bottom:1px solid #e6e8eb;background:#fff}
+.customer-delivery-tabs button{min-height:54px;display:flex;align-items:center;justify-content:center;gap:9px;border:0;border-bottom:3px solid transparent;background:#fff;color:#626b73;font-size:12px;font-weight:850;cursor:pointer}
+.customer-delivery-tabs button.active{border-bottom-color:#f68b1e;color:#f07812}
+.customer-pickup-panel,.customer-door-delivery-panel,.customer-delivery-contact-panel{margin-bottom:14px;padding:20px;background:#fff;border:1px solid #e8eaed;border-radius:5px}
+.customer-pickup-empty{min-height:210px;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center}
+.customer-pickup-empty>svg{color:#f68b1e}
+.customer-pickup-empty h2{margin:12px 0 4px;font-size:17px;color:#29323a}
+.customer-pickup-empty p{max-width:430px;margin:0 0 16px;color:#707a82;font-size:12px;line-height:1.55}
+.customer-pickup-selected{display:flex;align-items:center;gap:12px;padding:16px;border:1px solid #f4d9bd;border-radius:4px;background:#fffaf4;color:#e97810}
+.customer-pickup-selected div{display:flex;flex-direction:column;gap:4px}
+.customer-pickup-selected strong{color:#303a42;font-size:14px}
+.customer-pickup-selected small{color:#75808a;font-size:11px}
+.customer-pickup-form{max-width:580px;margin:14px auto 0;padding:18px;border:1px solid #e8eaed;border-radius:5px;background:#fafafa}
+.customer-pickup-form .customer-form-label{display:flex;flex-direction:column;gap:6px;margin:12px 0;color:#47515a;font-size:12px;font-weight:700}
+.customer-pickup-form input{min-height:42px;padding:9px 11px;border:1px solid #d9dee3;border-radius:4px;background:#fff}
+.customer-pickup-map{position:relative;min-height:180px;margin:0 0 14px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:16px;overflow:hidden;border-radius:5px;background:#e9eee9}
+.customer-pickup-map-grid{position:absolute;inset:0;opacity:.5;background-image:linear-gradient(30deg,transparent 46%,#c5d2c5 47%,#c5d2c5 49%,transparent 50%),linear-gradient(120deg,transparent 46%,#c5d2c5 47%,#c5d2c5 49%,transparent 50%);background-size:68px 68px}
+.customer-map-pin{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);color:#e77c17;filter:drop-shadow(0 2px 2px #999)}
+.customer-pickup-map>div:last-child{position:relative;z-index:1;display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:4px;background:#fff}
+.customer-pickup-map>div:last-child strong{font-size:12px;color:#303a42}
+.customer-pickup-map>div:last-child small{font-size:10px;color:#6f7982}
+.customer-door-delivery-panel .customer-contact-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.customer-delivery-contact-panel .customer-contact-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.customer-review-contact{margin:8px 0 0 29px;color:#6f7982;font-size:11px}
+.customer-flow-actions{display:flex;justify-content:flex-end;gap:10px;margin:12px 0 26px}
+.customer-flow-actions button{min-height:42px;padding:0 18px}
+.customer-review-summary{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.customer-review-summary>svg{color:#f68b1e;flex:0 0 auto}
+.customer-review-summary>span{flex-basis:100%;margin-left:28px}
+@media(max-width:640px){
+ .customer-delivery-tabs button{min-height:48px;font-size:10px}
+ .customer-pickup-panel,.customer-door-delivery-panel,.customer-delivery-contact-panel{padding:13px;margin-bottom:9px}
+ .customer-pickup-empty{min-height:185px}
+ .customer-door-delivery-panel .customer-contact-fields,.customer-delivery-contact-panel .customer-contact-fields{grid-template-columns:1fr}
+ .customer-pickup-map{min-height:145px}
+ .customer-flow-actions{display:grid;grid-template-columns:1fr 1.5fr;gap:8px}
+ .customer-flow-actions button{padding:0 9px;font-size:11px}
+}
