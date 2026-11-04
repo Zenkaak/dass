@@ -247,10 +247,7 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
         </div>
         <button type="button" className="ds-store-cart" onClick={()=>navigateBuyerPage('cart')}><ShoppingCart size={19}/><span>Cart</span>{cartItems.length>0&&<b>{cartItems.reduce((n,[,q])=>n+q,0)}</b>}</button>
       </section>
-      <nav className="ds-store-categories" aria-label="Store categories">
-        <button type="button" className={!filter||filter==='All products'?'active':''} onClick={()=>selectStoreCategory('All products')}>All products</button>
-        {storefrontCategories.filter(category=>products.some(p=>p.category===category.name||category.subcategories.includes(p.category))).slice(0,10).map(category=><button type="button" key={category.name} className={filter===category.name?'active':''} onClick={()=>selectStoreCategory(category.name)}>{category.name}</button>)}
-      </nav>
+      <button type="button" className="ds-store-mobile-categories" onClick={()=>setMobileSidebarOpen(true)}><Menu size={16}/> Browse categories <ChevronRight size={15}/></button>
       <section className="ds-store-hero">
         <div className="ds-store-hero-copy">
           <span className="ds-eyebrow">WELCOME TO {String(shop?.name||'OUR STORE').toUpperCase()}</span>
@@ -268,14 +265,6 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
         <div><ShieldCheck/><span><b>Shop with confidence</b><small>Clear product and seller details</small></span></div>
         <div><Truck/><span><b>Delivery options</b><small>Choose what works for you</small></span></div>
         <div><Headphones/><span><b>Buyer support</b><small>Help when you need it</small></span></div>
-      </section>
-      <section className="ds-store-section ds-store-category-section">
-        <div className="ds-store-section-title"><div><span className="ds-eyebrow">FIND YOUR NEXT FAVOURITE</span><h2>Shop by category</h2><p>Explore products by the things you need.</p></div><button type="button" onClick={()=>selectStoreCategory('All products')}>All products <ArrowRight size={15}/></button></div>
-        <div className="ds-store-category-grid">
-          {storefrontCategories.filter(category=>products.some(p=>p.category===category.name||category.subcategories.includes(p.category))).slice(0,12).map(category=><button type="button" className="ds-store-category-tile" key={category.name} onClick={()=>selectStoreCategory(category.name)}>
-            <span className="ds-store-category-icon">{category.icon}</span><strong>{category.name}</strong><small>{products.filter(p=>p.category===category.name||category.subcategories.includes(p.category)).length} products</small><ArrowRight size={14}/>
-          </button>)}
-        </div>
       </section>
       <section className="ds-store-section">
         <div className="ds-store-section-title"><div><span className="ds-eyebrow">HANDPICKED FOR YOU</span><h2>Popular in this store</h2></div><button type="button" onClick={()=>navigateBuyerPage('collection/top-picks')}>View all <ArrowRight size={15}/></button></div>
