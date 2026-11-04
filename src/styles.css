@@ -4665,3 +4665,6 @@ body:has(.ds-store) .market-buyer-content,
 body:has(.ds-store) .market-main-content{margin-left:0!important;width:100%!important;max-width:none!important}
 body:has(.ds-store) .market-store-layout{display:block!important;grid-template-columns:minmax(0,1fr)!important;margin:0!important;padding:0!important}
 body:has(.ds-store) .market-main{width:100%!important;max-width:none!important;margin:0!important}
+
+/* Stage 1 storefront: remove the legacy global marketplace top bar; the new ds-store header replaces it. */
+body:has(.ds-store) .store-market-header{display:none!important}
