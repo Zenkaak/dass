@@ -14,4 +14,4 @@ CREATE TABLE IF NOT EXISTS public.payment_reconciliation_jobs (
 );
 CREATE INDEX IF NOT EXISTS payment_reconciliation_pending_idx
   ON public.payment_reconciliation_jobs(status, created_at)
-  WHERE status IN ('pending','processing');
+  WHERE status='pending';
