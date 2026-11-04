@@ -4668,3 +4668,54 @@ body:has(.ds-store) .market-main{width:100%!important;max-width:none!important;m
 
 /* Stage 1 storefront: remove the legacy global marketplace top bar; the new ds-store header replaces it. */
 body:has(.ds-store) .store-market-header{display:none!important}
+
+
+/* Stage 2 — refined storefront header and featured-product presentation */
+.ds-store-head{position:relative;gap:clamp(14px,2vw,28px);padding:16px clamp(16px,2vw,26px);border-radius:12px;box-shadow:0 2px 12px rgba(20,30,40,.035)}
+.ds-store-brand{gap:13px}
+.ds-store-mark{width:46px;height:46px;border-radius:11px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(232,117,8,.08)}
+.ds-store-mark img{width:100%;height:100%;object-fit:cover}
+.ds-store-brand strong{font-size:16px;font-weight:800;letter-spacing:-.02em}
+.ds-store-brand small{font-size:11px;letter-spacing:.01em}
+.ds-store-search{height:48px;border-radius:8px;background:#fafafa;transition:border-color .18s,box-shadow .18s,background .18s}
+.ds-store-search:focus-within{background:#fff;border-color:#ed9a42;box-shadow:0 0 0 3px rgba(246,139,30,.12)}
+.ds-store-search button{height:38px;padding:0 20px;border-radius:6px;transition:background .18s,transform .18s}
+.ds-store-search button:hover,.ds-store-hero-copy>button:hover{background:#df7410;transform:translateY(-1px)}
+.ds-store-cart{height:46px;border-radius:8px;transition:background .18s,transform .18s}
+.ds-store-cart:hover{background:#303030;transform:translateY(-1px)}
+.ds-store-categories{padding-top:15px;padding-bottom:19px}
+.ds-store-categories button{transition:background .16s,color .16s,border-color .16s}
+.ds-store-hero{min-height:326px;grid-template-columns:minmax(0,1.08fr) minmax(260px,.92fr);border:1px solid #f2d8bd;border-radius:14px;background:radial-gradient(ellipse at 83% 45%,rgba(255,255,255,.75) 0%,rgba(255,255,255,0) 36%),linear-gradient(112deg,#fff7ee 0%,#ffead6 54%,#fbd5ae 100%);padding:38px clamp(26px,5vw,76px);margin-bottom:20px}
+.ds-store-hero-copy{max-width:590px}
+.ds-store-hero h1{font-size:clamp(30px,4.1vw,50px);line-height:1.04;letter-spacing:-.045em;margin:13px 0 14px}
+.ds-store-hero p{font-size:14px;line-height:1.7;color:#625142;max-width:490px}
+.ds-store-hero-copy>strong{font-size:23px;letter-spacing:-.025em}
+.ds-store-hero-copy>button{min-height:46px;padding:0 21px;border-radius:7px;box-shadow:0 5px 14px rgba(213,105,11,.18);transition:background .18s,transform .18s}
+.ds-store-hero-image{width:min(100%,390px);height:264px;border:1px solid rgba(255,255,255,.8);border-radius:14px;background:rgba(255,255,255,.68);box-shadow:0 12px 32px rgba(115,71,31,.09);transition:transform .25s,box-shadow .25s}
+.ds-store-hero-image:hover{transform:translateY(-3px);box-shadow:0 16px 36px rgba(115,71,31,.14)}
+.ds-store-hero-image img{mix-blend-mode:multiply}
+.ds-store-hero-dots{bottom:17px}
+.ds-store-hero-dots button{width:9px;height:9px;cursor:pointer;transition:width .2s,background .2s}
+.ds-store-hero-dots button.active{width:25px}
+@media(max-width:900px){.ds-store-head{gap:14px}.ds-store-hero{min-height:290px;padding:30px 26px}.ds-store-hero-image{height:230px}}
+@media(max-width:600px){
+ .ds-store{padding:9px 9px 90px}
+ .ds-store-head{gap:10px;padding:11px;border-radius:10px}
+ .ds-store-mark{width:40px;height:40px;border-radius:9px}
+ .ds-store-brand strong{font-size:14px}
+ .ds-store-brand small{font-size:10px}
+ .ds-store-search{height:43px;border-radius:7px}
+ .ds-store-search button{height:33px;padding:0 13px;font-size:12px}
+ .ds-store-cart{height:41px;padding:0 12px;border-radius:7px;font-size:12px}
+ .ds-store-categories{padding:10px 0 13px}
+ .ds-store-hero{grid-template-columns:minmax(0,1fr) 112px;min-height:214px;padding:19px 13px 22px;gap:8px;border-radius:11px;margin-bottom:13px}
+ .ds-store-hero h1{font-size:clamp(21px,6vw,26px);line-height:1.08;letter-spacing:-.035em;margin:8px 0}
+ .ds-store-hero p{font-size:10.5px;line-height:1.48;margin-bottom:9px}
+ .ds-store-hero-copy>strong{font-size:16px;margin-bottom:9px}
+ .ds-store-hero-copy>button{min-height:36px;padding:0 11px;font-size:10px;gap:6px;border-radius:6px}
+ .ds-store-hero-image{width:112px;height:132px;padding:6px;border-radius:9px}
+ .ds-store-hero-dots{left:13px;bottom:7px}
+ .ds-store-hero-dots button{width:7px;height:7px}
+ .ds-store-hero-dots button.active{width:19px}
+}
+@media(prefers-reduced-motion:reduce){.ds-store *{scroll-behavior:auto!important;transition:none!important}}
