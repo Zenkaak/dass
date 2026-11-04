@@ -167,6 +167,7 @@ function ProductThumb({ product }: { product: StoreProduct }) {
     : <div className="customer-product-thumb customer-product-placeholder" aria-hidden="true"><ShoppingBag size={22} /></div>;
 }
 
+function CheckoutProgress({step}:{step:1|2|3}){const items=[{n:1,label:'Delivery'},{n:2,label:'Payment'},{n:3,label:'Review & place order'}];return <nav className="market-checkout-progress" aria-label="Checkout progress">{items.map(item=><div key={item.n} className={'market-checkout-progress-step '+(item.n===step?'current':item.n<step?'complete':'')}><span>{item.n<step?'✓':String(item.n).padStart(2,'0')}</span><div><strong>{item.label}</strong><small>{item.n<step?'Completed':item.n===step?'Current step':'Next step'}</small></div></div>)}</nav>}
 function FlowHeading({
   title,
   onBack,
@@ -612,7 +613,7 @@ export function StorefrontFlow({
   function renderCheckoutDelivery() {
     const savePickupStation=(event:any)=>{event.preventDefault();const value=pickupStationDraft.trim();if(!value)return;setPickupStation(value);try{localStorage.setItem('dasnet-pickup-station-'+slug,value)}catch{}setPickupStationEditor(false);};
     return (
-      <section className="customer-flow customer-delivery-flow">
+      <section className="customer-flow customer-delivery-flow market-checkout-page"><CheckoutProgress step={1}/>
         <FlowHeading title="Delivery" onBack={() => onNavigate('cart')} backLabel="Back to cart" />
         <div className="customer-delivery-tabs" role="tablist" aria-label="Delivery method">
           <button type="button" role="tab" aria-selected={deliveryMethod==='pickup'} className={deliveryMethod==='pickup'?'active':''} onClick={()=>setDeliveryMethod('pickup')}><MapPin size={16}/> PICKUP STATIONS</button>
@@ -652,7 +653,8 @@ export function StorefrontFlow({
       setPaymentModal(choice.id);
     };
     return (
-      <section className="customer-flow">
+      <section className="customer-flow market-checkout-page market-checkout-payment">
+        <CheckoutProgress step={2}/>
         <FlowHeading title="Select payment" onBack={() => onNavigate('checkout/delivery')} backLabel="Delivery" />
         <div className="customer-checkout-grid">
           <div className="customer-checkout-stack">
@@ -687,7 +689,8 @@ export function StorefrontFlow({
 
   function renderReview() {
     return (
-      <section className="customer-flow">
+      <section className="customer-flow market-checkout-page market-checkout-review">
+        <CheckoutProgress step={3}/>
         <FlowHeading title="Place your order" onBack={() => onNavigate('checkout/payment')} backLabel="Payment method" />
         <p className="customer-terms-copy">By continuing, you agree to the store’s <button type="button" onClick={()=>onNavigate('shop-terms')}>Terms &amp; Conditions</button>.</p>
         <div className="customer-checkout-grid">
