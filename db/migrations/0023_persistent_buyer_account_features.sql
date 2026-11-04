@@ -35,6 +35,6 @@ CREATE TABLE IF NOT EXISTS public.buyer_account_closure_requests (
   reason text,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (buyer_user_id) DEFERRABLE INITIALLY IMMEDIATE
+  UNIQUE (buyer_user_id)
 );
 CREATE INDEX IF NOT EXISTS buyer_account_closure_status_idx ON public.buyer_account_closure_requests(status, created_at DESC);
