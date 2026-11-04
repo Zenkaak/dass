@@ -1,0 +1,348 @@
+/* DASNET storefront refresh — based on the supplied mobile marketplace walkthrough.
+   This layer restyles the existing live storefront without removing any existing routes,
+   buyer features, merchant configuration, payment options, policies or safety content. */
+.store-page {
+  --store-accent: var(--store-accent, #e47a13);
+  background: #f5f6f8;
+  color: #202b36;
+}
+.store-market-header {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  background: #fff;
+  border-bottom: 1px solid #e8ebef;
+  box-shadow: 0 2px 10px rgba(25,35,45,.045);
+}
+.store-market-header-inner {
+  width: min(100% - 28px, 1440px);
+  min-height: 68px;
+  margin: 0 auto;
+  gap: 12px;
+}
+.store-market-brand { flex: 0 0 auto; }
+.store-market-brand-mark {
+  background: var(--store-accent, #e47a13);
+  color: #fff;
+  border-radius: 9px;
+}
+.store-market-search {
+  min-height: 43px;
+  border: 1px solid #dfe4e9;
+  border-radius: 7px;
+  background: #f7f8fa;
+}
+.store-market-search:focus-within {
+  border-color: var(--store-accent, #e47a13);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--store-accent, #e47a13) 12%, transparent);
+}
+.store-market-search input { background: transparent; }
+.store-market-search-button {
+  min-height: 43px;
+  border-radius: 7px;
+  background: var(--store-accent, #e47a13);
+  font-weight: 750;
+}
+.store-market-actions { gap: 8px; }
+.store-market-account, .store-market-cart, .store-market-home-button {
+  border-radius: 9px;
+}
+.store-shop-promo-banner {
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #182b3a;
+  color: #fff;
+  letter-spacing: .12em;
+  font-size: 10px;
+  font-weight: 800;
+}
+.store-shop-promo-banner span::after {
+  content: "  ·  DISCOVER THE SHOP  ·  SHOP WITH CONFIDENCE";
+  opacity: .78;
+}
+.market-store-layout {
+  width: min(100% - 32px, 1440px);
+  margin: 18px auto 0;
+  display: block;
+}
+.market-main { min-width: 0; width: 100%; }
+.store-product-marketing {
+  min-height: 270px;
+  margin: 0 0 20px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 3px 14px rgba(25,35,45,.055);
+}
+.store-product-marketing-card {
+  min-height: 270px;
+  padding: 28px clamp(20px, 4vw, 54px);
+  background: linear-gradient(105deg, #fff8ed 0%, #fff 56%, #f3f6f8 100%);
+}
+.store-preview-card-copy { max-width: 740px; }
+.store-preview-card-copy > span {
+  color: var(--store-accent, #e47a13);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .13em;
+}
+.store-preview-card-copy h2 {
+  max-width: 520px;
+  margin: 9px 0 7px;
+  color: #1d2d3b;
+  font-size: clamp(22px, 3vw, 34px);
+  line-height: 1.12;
+  letter-spacing: -.035em;
+}
+.store-preview-card-copy > p {
+  margin: 0 0 16px;
+  color: #687784;
+  font-size: 13px;
+}
+.store-preview-product-details {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.store-preview-product-image {
+  width: 106px;
+  height: 106px;
+  flex: 0 0 auto;
+  border-radius: 10px;
+  background: #fff;
+}
+.store-preview-product-image img {
+  width: 100%; height: 100%; object-fit: contain;
+}
+.store-preview-product-copy {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 5px;
+}
+.store-preview-product-copy > small {
+  color: #7b8994;
+  font-size: 10px;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+.store-preview-product-name {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #243746;
+  font-weight: 750;
+  text-align: left;
+}
+.store-preview-product-copy > strong {
+  color: #182b3a;
+  font-size: 19px;
+}
+.store-preview-product-copy > span { color: #71808b; font-size: 11px; }
+.store-product-marketing-dots { margin-top: -5px; }
+.store-product-marketing-controls { display: none; }
+.market-product-section {
+  margin: 0 0 22px;
+  padding: 18px;
+  border: 1px solid #edf0f2;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(25,35,45,.035);
+}
+.market-section-heading {
+  align-items: flex-end;
+  margin-bottom: 14px;
+}
+.market-section-heading h2 {
+  color: #1f2e3a;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -.025em;
+}
+.market-section-heading p { color: #7a8791; font-size: 12px; }
+.market-catalogue-count {
+  color: #74818c;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.market-search-results-count {
+  margin-bottom: 12px;
+  color: #87929b;
+  font-size: 11px;
+}
+.market-products-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+.market-product-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #e9edf0;
+  border-radius: 9px;
+  background: #fff;
+  transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
+}
+.market-product-card:hover {
+  transform: translateY(-2px);
+  border-color: #d9e0e5;
+  box-shadow: 0 7px 20px rgba(20,35,48,.08);
+}
+.market-product-art {
+  height: 172px;
+  padding: 12px;
+  background: #fafbfc;
+}
+.market-product-art img { object-fit: contain; }
+.market-product-art > small {
+  padding: 4px 6px;
+  border-radius: 4px;
+  background: #fff;
+  color: #697985;
+  font-size: 9px;
+}
+.market-product-info { padding: 11px 11px 4px; }
+.market-product-info h3 {
+  min-height: 34px;
+  color: #354653;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.market-product-info > strong {
+  color: #172b3b;
+  font-size: 15px;
+  font-weight: 850;
+}
+.market-product-info > small { color: #7b8993; font-size: 10px; }
+.market-product-rating { font-size: 10px; }
+.market-product-favorite {
+  top: 9px; right: 9px;
+  width: 30px; height: 30px;
+  border: 1px solid #e8ecef;
+  border-radius: 50%;
+  background: rgba(255,255,255,.94);
+}
+.market-product-add {
+  min-height: 37px;
+  margin: 7px 10px 10px;
+  width: calc(100% - 20px);
+  border-radius: 6px;
+  background: var(--store-accent, #e47a13);
+  font-size: 11px;
+  font-weight: 800;
+}
+.market-cart-bar {
+  z-index: 75;
+  border-radius: 10px 10px 0 0;
+  box-shadow: 0 -4px 20px rgba(20,35,48,.12);
+}
+.market-sidebar { border-radius: 10px; }
+.store-trust-section, .store-faq-section {
+  width: min(100% - 32px, 1440px);
+  margin: 24px auto;
+  border-radius: 12px;
+}
+.storefront-platform-footer { margin-top: 28px; }
+.product-detail-page {
+  border-radius: 14px;
+  box-shadow: 0 18px 65px rgba(12,25,38,.25);
+}
+.product-detail-gallery img {
+  border-radius: 10px;
+  background: #f8f9fa;
+}
+.product-detail-price { color: #172b3b; }
+.product-detail-add {
+  border-radius: 8px;
+  background: var(--store-accent, #e47a13);
+  font-weight: 800;
+}
+.related-product-card { border-radius: 9px; }
+@media (min-width: 1200px) {
+  .store-product-marketing-card { min-height: 300px; }
+  .market-products-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .store-market-header-inner { flex-wrap: wrap; padding: 9px 0; }
+  .store-market-search { order: 5; flex: 1 0 100%; }
+  .store-market-search-button { order: 6; }
+  .store-market-category-select { max-width: 170px; }
+  .store-market-shop-name { display: none; }
+  .market-products-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .store-shop-promo-banner { min-height: 24px; font-size: 9px; }
+  .store-shop-promo-banner span::after { content: "  ·  SHOP WITH CONFIDENCE"; }
+  .store-market-header-inner {
+    width: calc(100% - 20px);
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 34px minmax(0,1fr) auto auto;
+    gap: 8px;
+    padding: 9px 0 10px;
+  }
+  .store-market-menu { width: 34px; height: 38px; }
+  .store-market-brand { grid-column: 2; grid-row: 1; }
+  .store-market-category-select, .store-market-home-button { display: none; }
+  .store-market-actions { grid-column: 3 / 5; grid-row: 1; gap: 3px; }
+  .store-market-account, .store-market-cart { width: 37px; height: 38px; }
+  .store-market-search { grid-column: 1 / 4; grid-row: 2; min-height: 40px; }
+  .store-market-search-button { grid-column: 4; grid-row: 2; min-height: 40px; padding: 0 10px; }
+  .market-store-layout { width: calc(100% - 16px); margin-top: 10px; }
+  .store-product-marketing { min-height: 0; margin-bottom: 12px; border-radius: 9px; }
+  .store-product-marketing-card { min-height: 224px; padding: 17px 14px 22px; }
+  .store-preview-card-copy h2 { font-size: 22px; }
+  .store-preview-card-copy > p { font-size: 11px; margin-bottom: 11px; }
+  .store-preview-product-image { width: 82px; height: 82px; }
+  .store-preview-product-copy > strong { font-size: 16px; }
+  .store-product-marketing-dots { margin: -9px 0 8px; }
+  .market-product-section {
+    margin-bottom: 12px;
+    padding: 13px 10px;
+    border-radius: 9px;
+  }
+  .market-section-heading { align-items: flex-start; gap: 8px; }
+  .market-section-heading h2 { font-size: 16px; }
+  .market-section-heading p { font-size: 10px; }
+  .market-catalogue-count { font-size: 9px; }
+  .market-products-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .market-product-card { border-radius: 7px; }
+  .market-product-art { height: 142px; padding: 8px; }
+  .market-product-info { padding: 8px 8px 3px; }
+  .market-product-info h3 { min-height: 32px; font-size: 11px; }
+  .market-product-info > strong { font-size: 14px; }
+  .market-product-add { min-height: 35px; margin: 6px 7px 8px; width: calc(100% - 14px); font-size: 10px; }
+  .market-product-favorite { width: 27px; height: 27px; }
+  .market-cart-bar {
+    left: 8px; right: 8px; bottom: 8px;
+    border-radius: 9px;
+  }
+  .store-trust-section, .store-faq-section {
+    width: calc(100% - 16px);
+    margin: 14px auto;
+    padding: 16px 12px;
+  }
+  .storefront-platform-footer { padding-bottom: 82px; }
+  .product-detail-backdrop { align-items: flex-end; padding: 0; }
+  .product-detail-page {
+    width: 100%;
+    max-height: 94dvh;
+    overflow-y: auto;
+    border-radius: 16px 16px 0 0;
+    padding-bottom: 86px;
+  }
+  .product-detail-layout { grid-template-columns: 1fr; }
+  .product-detail-gallery { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; }
+  .product-detail-gallery img { width: 100%; min-width: 100%; height: 270px; object-fit: contain; scroll-snap-align: center; }
+  .product-detail-copy { padding: 16px; }
+  .product-detail-add {
+    position: sticky;
+    bottom: 8px;
+    width: 100%;
+    min-height: 48px;
+    z-index: 5;
+    box-shadow: 0 4px 18px rgba(20,35,48,.18);
+  }
+}
