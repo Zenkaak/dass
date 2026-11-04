@@ -4800,3 +4800,32 @@ body:has(.ds-store) .market-sidebar-links>button:hover{background:#f6f8fa;color:
  body:has(.ds-store) .market-global-drawer.is-mobile-open button,
  body:has(.ds-store) .market-global-drawer.is-mobile-open a{pointer-events:auto!important;cursor:pointer!important}
 }
+
+
+/* Hotfix: the mobile dimmer was intercepting storefront drawer taps on some
+   stacking-context combinations. Keep the drawer above it and never let the
+   decorative dimmer capture pointer events; drawer items remain interactive. */
+@media(max-width:760px){
+ body:has(.store-page) .market-global-drawer{
+  z-index:1400!important;
+  background:#fff!important;
+  visibility:visible;
+ }
+ body:has(.store-page) .market-global-drawer.is-mobile-open{
+  z-index:1400!important;
+  transform:translateX(0)!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+ }
+ body:has(.store-page) .market-global-drawer-scrim{
+  z-index:1300!important;
+  pointer-events:none!important;
+ }
+ body:has(.store-page) .market-global-drawer.is-mobile-open button,
+ body:has(.store-page) .market-global-drawer.is-mobile-open a,
+ body:has(.store-page) .market-global-drawer.is-mobile-open nav{
+  position:relative;
+  z-index:1401!important;
+  pointer-events:auto!important;
+ }
+}
