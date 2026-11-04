@@ -765,7 +765,7 @@ export function StorefrontFlow({
     const stateOf = (order: BuyerOrder) => ({ order: String(order.orderStatus || '').toLowerCase(), delivery: String(order.deliveryStatus || '').toLowerCase(), payment: String(order.paymentStatus || '').toLowerCase() });
     const isCancelled = (order: BuyerOrder) => { const s=stateOf(order); return ['cancelled','returned','refunded'].includes(s.order)||['cancelled','returned'].includes(s.delivery)||s.payment==='cancelled'; };
     const isDelivered = (order: BuyerOrder) => { const s=stateOf(order); return s.delivery==='delivered'||['fulfilled','delivered'].includes(s.order); };
-    const activeOrderTab = view.startsWith('orders/') ? (view.split('/')[1] as 'ongoing'|'delivered'|'cancelled') : orderTab;
+    const activeOrderTab = view.startsWith('orders/') ? (view.split('/')[1] as 'ongoing'|'delivered'|'cancelled') : 'ongoing';
     const tabOrders = orders.filter(order => order.orderNumber && (activeOrderTab==='ongoing' ? !isCancelled(order)&&!isDelivered(order) : activeOrderTab==='delivered' ? isDelivered(order) : isCancelled(order)));
     const suggestions = products.filter(product => product.stockQuantity !== 0).slice(0,12);
     return (
