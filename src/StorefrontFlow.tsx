@@ -709,7 +709,7 @@ export function StorefrontFlow({
           {renderSummary()}
         </div>
         {checkoutError&&<p className="customer-preview-alert" role="alert">{checkoutError}</p>}
-        <div className="market-checkout-bottom-action"><div><small>TOTAL TO PAY</small><strong>{formatKes(subtotal)}</strong></div><button type="button" className="customer-primary-button" disabled={!lines.length||!customerName.trim()||!customerPhone.trim()||paymentMethod!=='mpesa'||submitting||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))||(deliveryMethod==='pickup'&&!pickupStation.trim())}>{/* keep order creation and M-PESA initiation in the existing placeOrder handler */}<span onClick={placeOrder}>{submitting?'Starting M-PESA…':'Confirm & pay with M-PESA'} <ArrowRight size={18}/></span></button></div>
+        <div className="market-checkout-bottom-action"><div><small>TOTAL TO PAY</small><strong>{formatKes(subtotal)}</strong></div><button type="button" className="customer-primary-button" disabled={!lines.length||!customerName.trim()||!customerPhone.trim()||paymentMethod!=='mpesa'||submitting||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))||(deliveryMethod==='pickup'&&!pickupStation.trim())} onClick={placeOrder}>{submitting?'Starting M-PESA…':'Confirm & pay with M-PESA'} <ArrowRight size={18}/></button></div>
       </section>
     );
   }
