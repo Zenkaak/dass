@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750;800;850;900&display=swap');
 .customer-flow {
   width: min(100% - 40px, 1180px);
   margin: 24px auto 64px;
@@ -3834,4 +3835,41 @@
  .market-checkout-product-row>div strong{font-size:11px}
  .market-checkout-product-row>b{font-size:11px}
  .market-checkout-redesign .customer-summary-card{padding:16px}
+}
+
+
+/* Checkout refinement: compact spacing, clear hierarchy, and distinct order confirmation/payment actions. */
+.market-checkout-redesign,.market-checkout-redesign button,.market-checkout-redesign input,.market-checkout-redesign select,.market-checkout-redesign textarea{font-family:'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.market-checkout-redesign{font-size:13px}
+.market-checkout-redesign .market-checkout-intro{margin-bottom:14px}
+.market-checkout-redesign .market-checkout-intro h2{margin:4px 0;font-size:21px}
+.market-checkout-redesign .market-checkout-delivery-choice{gap:9px;margin-bottom:11px}
+.market-checkout-redesign .market-checkout-delivery-choice>button{min-height:70px;padding:11px 14px;border-radius:11px}
+.market-checkout-redesign .market-checkout-delivery-choice>button.active{padding:10px 13px}
+.market-checkout-redesign .market-checkout-card{padding:15px 17px;margin-bottom:10px;border-radius:12px}
+.market-checkout-redesign .market-checkout-card-heading{margin-bottom:12px}
+.market-checkout-redesign .market-checkout-fields{grid-template-columns:repeat(3,minmax(0,1fr));gap:11px 13px}
+.market-checkout-redesign .market-checkout-form-label,.market-checkout-redesign .customer-form-label{gap:5px;font-size:11px}
+.market-checkout-redesign .customer-form-label input,.market-checkout-redesign .customer-form-label select,.market-checkout-redesign .customer-form-label textarea{min-height:42px;padding:9px 11px;font-size:12px}
+.market-checkout-redesign .customer-form-label textarea{min-height:65px}
+.market-checkout-redesign .market-checkout-full{grid-column:1/-1}
+.market-checkout-redesign .market-checkout-location-form{gap:11px}
+.market-checkout-redesign .market-checkout-inline-actions button{min-height:38px}
+.market-checkout-redesign .market-checkout-bottom-action{margin-top:12px;padding:10px 14px}
+.market-checkout-redesign .market-checkout-bottom-action>button{min-height:44px}
+.market-checkout-confirmed{display:flex;align-items:center;gap:11px;margin:14px 0 0;padding:12px 14px;border:1px solid #cce8d5;border-radius:11px;background:#f4fbf6;color:#167443}
+.market-checkout-confirmed>div{display:grid;gap:3px}
+.market-checkout-confirmed strong{font-size:12px}
+.market-checkout-confirmed small{font-size:11px;line-height:1.45;color:#5f7969}
+@media(max-width:850px){.market-checkout-redesign .market-checkout-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){
+ .market-checkout-redesign .market-checkout-card{padding:13px;margin-bottom:9px}
+ .market-checkout-redesign .market-checkout-card-heading{margin-bottom:10px}
+ .market-checkout-redesign .market-checkout-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+ .market-checkout-redesign .customer-form-label{font-size:10px}
+ .market-checkout-redesign .customer-form-label input,.market-checkout-redesign .customer-form-label select,.market-checkout-redesign .customer-form-label textarea{min-height:41px;font-size:12px}
+ .market-checkout-redesign .market-checkout-full{grid-column:1/-1}
+ .market-checkout-redesign .market-checkout-delivery-choice>button{min-height:92px;padding:10px}
+ .market-checkout-redesign .market-checkout-delivery-choice>button.active{padding:9px}
+ .market-checkout-confirmed{margin-top:10px;padding:10px 12px}
 }
