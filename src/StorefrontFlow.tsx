@@ -151,7 +151,6 @@ function formatKes(amount: number) {
 }
 
 
-function readSavedDelivery(slug:string,phone:string){try{const key='dasnet-delivery-preference-'+slug+'-'+String(phone||'').replace(/\D/g,'').slice(-9);const raw=localStorage.getItem(key);return raw?JSON.parse(raw):null}catch{return null}}
 
 function storedOrders(key: string): BuyerOrder[] {
   try {
@@ -223,7 +222,6 @@ export function StorefrontFlow({
 }: StorefrontFlowProps) {
   const legacyOrderStorageKey = `dasnet-storefront-orders-${slug}-${String(initialCustomerPhone||'').replace(/\D/g,'') || 'signed-out'}`;
   const orderStorageKey = `dasnet-storefront-orders-${slug}-${String(initialCustomerPhone||'').replace(/\D/g,'').slice(-9) || 'signed-out'}`;
-  const savedDelivery = readSavedDelivery(slug, initialCustomerPhone);
   const lines = useMemo(() => Object.entries(cart)
     .map(([id, quantity]) => {
       const product = products.find((entry) => entry.id === id);
@@ -245,18 +243,19 @@ export function StorefrontFlow({
   const [paymentModal,setPaymentModal]=useState<PaymentMethod|null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
-  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>(savedDelivery?.deliveryMethod==='home'?'home':'pickup');
-  const [deliveryCounty, setDeliveryCounty] = useState(savedDelivery?.deliveryCounty||'');
-  const [deliverySubCounty, setDeliverySubCounty] = useState(savedDelivery?.deliverySubCounty||'');
-  const [deliveryEstate, setDeliveryEstate] = useState(savedDelivery?.deliveryEstate||'');
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('pickup');
+  const [deliveryCounty, setDeliveryCounty] = useState('');
+  const [deliverySubCounty, setDeliverySubCounty] = useState('');
+  const [deliveryEstate, setDeliveryEstate] = useState('');
   const [deliveryDirections, setDeliveryDirections] = useState(savedDelivery?.deliveryDirections||'');
   const [orderConfirmed,setOrderConfirmed]=useState(false);
   const [customerName, setCustomerName] = useState(initialCustomerName);
   const [customerPhone, setCustomerPhone] = useState(initialCustomerPhone);
   const [paymentPhone, setPaymentPhone] = useState(initialCustomerPhone);
   const [customerEmail, setCustomerEmail] = useState(initialCustomerEmail);
-  const [deliveryAddress, setDeliveryAddress] = useState(savedDelivery?.deliveryAddress||initialCustomerAddress);
-  const [pickupStation, setPickupStation] = useState(savedDelivery?.pickupStation||(()=>{try{return localStorage.getItem('dasnet-pickup-station-'+slug)||''}catch{return ''}})());
+  const [deliveryAddress, setDeliveryAddress] = useState(initialCustomerAddress);
+  const [pickupStation, setPickupStation] = useState('');
+  const [deliveryPreferenceLoading,setDeliveryPreferenceLoading]=useState(false);
   const [pickupStationEditor,setPickupStationEditor]=useState(false);
   const [pickupStationDraft,setPickupStationDraft]=useState('');
   const [voucherCode, setVoucherCode] = useState('');
@@ -284,6 +283,17 @@ export function StorefrontFlow({
     if(!response.ok)throw Error(data.error||'Could not save your account preference.');
     return data;
   };
+  useEffect(()=>{
+    let live=true;
+    if(!initialCustomerPhone){setDeliveryPreferenceLoading(false);return()=>{live=false};}
+    setDeliveryPreferenceLoading(true);
+    fetch('/api/buyer?action=buyer-delivery-preference&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'})
+      .then(async response=>{const data=await response.json().catch(()=>({}));if(!response.ok)throw Error(data.error||'Could not load your saved delivery details.');return data;})
+      .then(data=>{if(!live||!data.preference)return;const p=data.preference;setDeliveryMethod(p.deliveryMethod==='home'?'home':'pickup');setDeliveryCounty(p.deliveryCounty||'');setDeliverySubCounty(p.deliverySubCounty||'');setDeliveryEstate(p.deliveryEstate||'');setDeliveryAddress(p.deliveryAddress||initialCustomerAddress);setDeliveryDirections(p.deliveryDirections||'');setPickupStation(p.pickupStation||'');})
+      .catch(error=>{if(live)setCheckoutError(error.message||'Could not load your saved delivery details.');})
+      .finally(()=>{if(live)setDeliveryPreferenceLoading(false);});
+    return()=>{live=false;};
+  },[slug,initialCustomerPhone,initialCustomerAddress]);
   useEffect(()=>{
     let live=true;
     if(!initialCustomerPhone)return;
@@ -617,8 +627,8 @@ export function StorefrontFlow({
   }
 
   function renderCheckoutDelivery() {
-    const savePickupStation=(event:any)=>{event.preventDefault();const value=pickupStationDraft.trim();if(!value)return;setPickupStation(value);try{localStorage.setItem('dasnet-pickup-station-'+slug,value)}catch{}setPickupStationEditor(false);};
-    const saveDeliveryPreference=()=>{try{const key='dasnet-delivery-preference-'+slug+'-'+String(customerPhone||initialCustomerPhone||'').replace(/\D/g,'').slice(-9);localStorage.setItem(key,JSON.stringify({deliveryMethod,deliveryCounty,deliverySubCounty,deliveryEstate,deliveryAddress,deliveryDirections,pickupStation}))}catch{}};
+    const savePickupStation=(event:any)=>{event.preventDefault();const value=pickupStationDraft.trim();if(!value)return;setPickupStation(value);setPickupStationEditor(false);};
+    const saveDeliveryPreference=async()=>buyerFeatureRequest('buyer-delivery-preference',{deliveryMethod,deliveryCounty,deliverySubCounty,deliveryEstate,deliveryAddress,deliveryDirections,pickupStation});
     return (
       <section className="customer-flow market-checkout-page market-checkout-redesign">
         <CheckoutProgress step={1}/>
@@ -660,7 +670,7 @@ export function StorefrontFlow({
             <label className="customer-form-label market-checkout-full">Email address <small>(optional)</small><input type="email" value={customerEmail} onChange={e=>setCustomerEmail(e.target.value)} autoComplete="email" placeholder="you@example.com"/></label>
           </div>
         </div>
-        <div className="market-checkout-bottom-action"><div><small>ORDER TOTAL</small><strong>{formatKes(subtotal)}</strong></div><button type="button" className="customer-primary-button" disabled={!customerName.trim()||!customerPhone.trim()||(deliveryMethod==='pickup'&&(!pickupStation.trim()||!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))} onClick={()=>{saveDeliveryPreference();setOrderConfirmed(false);onNavigate('checkout/payment')}}>Continue to payment <ArrowRight size={18}/></button></div>
+        <div className="market-checkout-bottom-action"><div><small>ORDER TOTAL</small><strong>{formatKes(subtotal)}</strong></div><button type="button" className="customer-primary-button" disabled={!customerName.trim()||!customerPhone.trim()||(deliveryMethod==='pickup'&&(!pickupStation.trim()||!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))} onClick={async()=>{setCheckoutError('');try{await saveDeliveryPreference();setOrderConfirmed(false);onNavigate('checkout/payment')}catch(error:any){setCheckoutError(error.message||'Could not save your delivery details. Please try again.')}}}>Continue to payment <ArrowRight size={18}/></button></div>
       </section>
     );
   }
