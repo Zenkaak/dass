@@ -3726,3 +3726,112 @@
  .market-checkout-page .customer-summary-total strong{font-size:20px}
  .market-checkout-page .customer-pickup-map{min-height:170px}
 }
+
+/* Fresh, structured checkout layout: delivery, M-PESA, and final review. */
+.market-checkout-redesign{max-width:1180px!important;width:calc(100% - 40px);margin:28px auto 90px!important;color:#172b3b}
+.market-checkout-redesign .customer-flow-heading{display:flex;align-items:center;gap:18px;margin:0 0 24px}
+.market-checkout-redesign .customer-flow-heading h1{font-size:clamp(25px,3vw,34px);font-weight:850;letter-spacing:-.04em;color:#142a3a}
+.market-checkout-intro{margin:0 0 22px}
+.market-checkout-intro>span{font-size:10px;font-weight:900;letter-spacing:.13em;color:var(--store-accent,#e47a13)}
+.market-checkout-intro h2{margin:7px 0 5px;font-size:clamp(19px,2.2vw,25px);font-weight:850;letter-spacing:-.025em;color:#1a3040}
+.market-checkout-intro p{margin:0;color:#73818d;font-size:13px;line-height:1.55}
+.market-checkout-delivery-choice{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:0 0 17px}
+.market-checkout-delivery-choice>button{display:flex;align-items:center;gap:13px;min-height:88px;padding:17px;border:1px solid #e1e7ec;border-radius:14px;background:#fff;text-align:left;cursor:pointer;transition:.16s ease}
+.market-checkout-delivery-choice>button.active{border:2px solid var(--store-accent,#e47a13);padding:16px;background:#fffaf5;box-shadow:0 5px 18px rgba(26,48,64,.06)}
+.market-checkout-choice-icon,.market-checkout-step-icon{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:12px;background:#f4f7f9;color:#516777}
+.market-checkout-delivery-choice button.active .market-checkout-choice-icon{background:#fff0df;color:var(--store-accent,#e47a13)}
+.market-checkout-delivery-choice button>span:nth-child(2){display:grid;gap:5px;min-width:0;flex:1}
+.market-checkout-delivery-choice strong{font-size:14px;color:#1b3040}
+.market-checkout-delivery-choice small{font-size:11px;line-height:1.4;color:#778692}
+.market-checkout-delivery-choice i{display:grid;place-items:center;width:23px;height:23px;border:1px solid #dce4e9;border-radius:50%;font-style:normal;font-size:12px;color:#fff}
+.market-checkout-delivery-choice button.active i{border-color:var(--store-accent,#e47a13);background:var(--store-accent,#e47a13)}
+.market-checkout-card{margin:0 0 16px;padding:22px;border:1px solid #e5eaee;border-radius:15px;background:#fff;box-shadow:0 5px 18px rgba(20,42,58,.035)}
+.market-checkout-card-heading{display:flex;align-items:center;gap:12px;margin:0 0 20px}
+.market-checkout-card-heading>div{flex:1;min-width:0}
+.market-checkout-card-heading h2{margin:0 0 4px;font-size:15px;font-weight:850;color:#1a3040}
+.market-checkout-card-heading p{margin:0;font-size:11px;line-height:1.45;color:#7a8994}
+.market-checkout-redesign .customer-form-label{display:grid;gap:8px;color:#354b5b;font-size:12px;font-weight:750}
+.market-checkout-redesign .customer-form-label input,.market-checkout-redesign .customer-form-label select,.market-checkout-redesign .customer-form-label textarea{width:100%;min-height:48px;padding:12px 13px;border:1px solid #dce4e9;border-radius:9px;background:#fff;color:#1c3343;font:inherit;font-size:13px;outline:none}
+.market-checkout-redesign .customer-form-label textarea{min-height:88px;resize:vertical}
+.market-checkout-redesign .customer-form-label input:focus,.market-checkout-redesign .customer-form-label select:focus,.market-checkout-redesign .customer-form-label textarea:focus{border-color:var(--store-accent,#e47a13);box-shadow:0 0 0 3px color-mix(in srgb,var(--store-accent,#e47a13) 12%,transparent)}
+.market-checkout-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}
+.market-checkout-full{grid-column:1/-1}
+.market-checkout-location-form{display:grid;gap:16px}
+.market-checkout-inline-actions{display:flex;gap:9px;flex-wrap:wrap}
+.market-checkout-inline-actions button{min-height:43px;padding:0 17px;border-radius:9px}
+.market-checkout-saved-location{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:15px 16px;border:1px solid #dcefe4;border-radius:11px;background:#f5fbf7}
+.market-checkout-saved-location>div{display:grid;gap:5px;min-width:0}
+.market-checkout-saved-location strong{font-size:14px;color:#1b3a2b;overflow-wrap:anywhere}
+.market-checkout-saved-location small{font-size:11px;color:#688272}
+.market-checkout-saved-location button,.market-checkout-edit{border:0;background:transparent;color:var(--store-accent,#e47a13);font-size:12px;font-weight:850;cursor:pointer}
+.market-checkout-bottom-action{position:sticky;bottom:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:18px;margin:20px -1px 0;padding:14px 17px calc(14px + env(safe-area-inset-bottom));border:1px solid #e5eaee;border-radius:13px;background:rgba(255,255,255,.97);box-shadow:0 -5px 24px rgba(19,39,54,.07);backdrop-filter:blur(12px)}
+.market-checkout-bottom-action>div{display:grid;gap:4px}
+.market-checkout-bottom-action small{font-size:9px;font-weight:850;letter-spacing:.12em;color:#84919b}
+.market-checkout-bottom-action strong{font-size:21px;font-weight:900;color:#172e3e}
+.market-checkout-bottom-action>button{display:flex;align-items:center;justify-content:center;gap:9px;min-height:48px;padding:0 23px;border:0;border-radius:10px;background:var(--store-accent,#e47a13);color:#fff;font-size:13px;font-weight:850;cursor:pointer}
+.market-checkout-bottom-action>button:disabled{opacity:.45;cursor:not-allowed}
+.market-checkout-payment-layout,.market-checkout-review-layout{display:grid;grid-template-columns:minmax(0,1fr) 350px;align-items:start;gap:20px}
+.market-checkout-main-column{min-width:0}
+.market-checkout-mpesa-card{border-color:#dcebe2}
+.market-checkout-mpesa-mark{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:12px;background:#e7f7ed;color:#138342;font-size:21px;font-weight:950}
+.market-checkout-selected-pill{display:inline-flex;align-items:center;gap:5px;padding:6px 9px;border-radius:99px;background:#eaf8ef;color:#16834a;font-size:10px;font-weight:850}
+.market-checkout-mpesa-select{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;padding:17px;border:1px solid #dce8e0;border-radius:12px;background:#fbfefc;text-align:left;cursor:pointer}
+.market-checkout-mpesa-select>span:first-child{display:grid;gap:6px}
+.market-checkout-mpesa-select strong{font-size:14px;color:#1c3528}
+.market-checkout-mpesa-select small{font-size:11px;line-height:1.5;color:#6c7f73}
+.market-checkout-radio{width:21px;height:21px;flex:0 0 21px;border:1.5px solid #b8c9bf;border-radius:50%}
+.market-checkout-radio.checked{border:6px solid #15934c}
+.market-checkout-secure-note{display:flex;gap:9px;align-items:flex-start;margin:14px 0 0;padding:12px 13px;border-radius:9px;background:#f4faf6;color:#557263;font-size:10px;line-height:1.55}
+.market-checkout-secure-note svg{flex:0 0 auto;color:#16834a}
+.market-checkout-change-phone{margin-top:13px;padding:0;border:0;background:none;color:var(--store-accent,#e47a13);font-size:11px;font-weight:800;cursor:pointer}
+.market-checkout-voucher-card .customer-voucher{display:grid;gap:9px;color:#354b5b;font-size:12px;font-weight:750}
+.market-checkout-voucher-card .customer-voucher-controls{display:flex;gap:8px}
+.market-checkout-voucher-card .customer-voucher-controls input{flex:1;min-width:0;min-height:46px;padding:10px 12px;border:1px solid #dce4e9;border-radius:9px;font:inherit;font-size:13px}
+.market-checkout-voucher-card .customer-voucher-controls button{min-width:82px;border:0;border-radius:9px;background:#203b4e;color:#fff;font-size:12px;font-weight:850}
+.market-checkout-redesign .customer-summary-card{position:sticky;top:90px;padding:21px;border:1px solid #e5eaee;border-radius:15px;background:#fff;box-shadow:0 5px 18px rgba(20,42,58,.04)}
+.market-checkout-review-details{display:grid;gap:9px;padding:0 2px 3px 54px}
+.market-checkout-review-details>strong{font-size:13px;line-height:1.5;color:#243a49;overflow-wrap:anywhere}
+.market-checkout-review-details>small{font-size:11px;line-height:1.55;color:#75838d}
+.market-checkout-review-details>div{display:flex;gap:8px 18px;flex-wrap:wrap;margin-top:3px}
+.market-checkout-review-details>div span{font-size:11px;color:#61717c}
+.market-checkout-product-row{display:flex;align-items:center;gap:13px}
+.market-checkout-product-row>div{flex:1;min-width:0}
+.market-checkout-product-row>div strong{display:block;font-size:12px;line-height:1.4;color:#253b4a}
+.market-checkout-product-row>div small{display:block;margin-top:5px;font-size:10px;color:#7a8994}
+.market-checkout-product-row>b{font-size:12px;color:#1d3444;white-space:nowrap}
+.market-checkout-redesign .customer-review-product .customer-product-thumb{width:62px;height:62px;flex:0 0 62px;object-fit:contain;border:1px solid #edf0f2;border-radius:9px;background:#fff}
+.market-checkout-redesign .customer-terms-copy{font-size:11px;line-height:1.6;color:#74818b}
+.market-checkout-redesign .customer-terms-copy button{border:0;background:none;color:var(--store-accent,#e47a13);font:inherit;font-weight:850;cursor:pointer}
+.market-checkout-payment-dialog{border-radius:18px}
+@media(max-width:850px){.market-checkout-payment-layout,.market-checkout-review-layout{grid-template-columns:minmax(0,1fr)}.market-checkout-redesign .customer-summary-card{position:static;order:2}}
+@media(max-width:600px){
+ .market-checkout-redesign{width:calc(100% - 22px);margin:12px auto 86px!important}
+ .market-checkout-redesign .market-checkout-progress{margin-bottom:16px;padding:10px 5px}
+ .market-checkout-redesign .customer-flow-heading{display:grid;gap:9px;margin-bottom:17px}
+ .market-checkout-redesign .customer-flow-heading h1{font-size:25px}
+ .market-checkout-intro{margin-bottom:16px}
+ .market-checkout-intro h2{font-size:19px}
+ .market-checkout-delivery-choice{gap:8px}
+ .market-checkout-delivery-choice>button{min-height:112px;align-items:flex-start;flex-wrap:wrap;gap:8px;padding:12px}
+ .market-checkout-delivery-choice>button.active{padding:11px}
+ .market-checkout-choice-icon{width:34px;height:34px;flex-basis:34px;border-radius:9px}
+ .market-checkout-delivery-choice button>span:nth-child(2){flex-basis:calc(100% - 46px)}
+ .market-checkout-delivery-choice strong{font-size:12px}
+ .market-checkout-delivery-choice small{font-size:10px}
+ .market-checkout-delivery-choice i{width:19px;height:19px;margin-left:auto}
+ .market-checkout-card{padding:16px;margin-bottom:12px;border-radius:12px}
+ .market-checkout-card-heading{gap:10px;margin-bottom:16px}
+ .market-checkout-card-heading h2{font-size:14px}
+ .market-checkout-step-icon,.market-checkout-mpesa-mark{width:37px;height:37px;flex-basis:37px}
+ .market-checkout-fields{grid-template-columns:1fr;gap:13px}
+ .market-checkout-full{grid-column:auto}
+ .market-checkout-bottom-action{position:fixed;left:0;right:0;bottom:0;z-index:80;margin:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));border:0;border-top:1px solid #e5eaee;border-radius:0;background:#fff;box-shadow:0 -5px 20px rgba(19,39,54,.09)}
+ .market-checkout-bottom-action strong{font-size:18px}
+ .market-checkout-bottom-action>button{min-height:46px;padding:0 14px;font-size:11px}
+ .market-checkout-review-details{padding-left:0}
+ .market-checkout-review-details>div{gap:7px 12px}
+ .market-checkout-product-row{gap:9px}
+ .market-checkout-product-row>div strong{font-size:11px}
+ .market-checkout-product-row>b{font-size:11px}
+ .market-checkout-redesign .customer-summary-card{padding:16px}
+}
