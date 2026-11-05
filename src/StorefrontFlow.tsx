@@ -538,6 +538,10 @@ export function StorefrontFlow({
     return (
       <section className="customer-flow">
         <FlowHeading title="Your cart" onBack={() => onNavigate('store')} />
+        <div className="buyer-cart-intro">
+          <div><span className="buyer-section-kicker">SHOPPING BAG</span><h2>Review your selection</h2><p>Check quantities and item details before continuing to secure checkout.</p></div>
+          <span className="buyer-cart-count">{lines.reduce((count, line) => count + line.quantity, 0)} {lines.reduce((count, line) => count + line.quantity, 0)===1?'item':'items'}</span>
+        </div>
         {lines.length ? (
           <>
             <div className="customer-checkout-grid customer-cart-grid">
@@ -750,6 +754,7 @@ export function StorefrontFlow({
     return (
       <section className="customer-flow">
         <FlowHeading title="My orders" onBack={() => onNavigate('account')} backLabel="My account" />
+        <div className="buyer-orders-intro"><div><span className="buyer-section-kicker">YOUR SHOPPING ACTIVITY</span><h2>Order history</h2><p>Follow each purchase, review payment and delivery updates, and open the full order record whenever you need it.</p></div><span className="buyer-orders-total">{orders.length} {orders.length===1?'order':'orders'}</span></div>
         {ordersLoading&&<p className="customer-preview-note">Refreshing your order history…</p>}{ordersError&&<p className="customer-preview-alert" role="alert">{ordersError}</p>}
          <div className="customer-order-tabs"><button type="button" className={activeOrderTab === 'ongoing' ? 'is-active' : ''} onClick={() => onNavigate('orders/ongoing')}>ONGOING ({orders.filter(o=>!isCancelled(o)&&!isDelivered(o)).length})</button><button type="button" className={activeOrderTab === 'delivered' ? 'is-active' : ''} onClick={() => onNavigate('orders/delivered')}>DELIVERED ({orders.filter(isDelivered).length})</button><button type="button" className={activeOrderTab === 'cancelled' ? 'is-active' : ''} onClick={() => onNavigate('orders/cancelled')}>CANCELLED / RETURNED ({orders.filter(isCancelled).length})</button></div>
         {tabOrders.length ? <div className="customer-order-list">{tabOrders.map((order) => (
@@ -771,7 +776,7 @@ export function StorefrontFlow({
       <section className="customer-flow">
         {celebration}
         <FlowHeading title="Order details" onBack={() => onNavigate('orders')} backLabel="My orders" />
-        <div className="customer-order-detail-heading"><div><small>ORDER NUMBER</small><h2>{activeOrder.orderNumber}</h2><span>Placed {new Date(activeOrder.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })}</span></div><span className="customer-order-status">Order placed</span></div>
+        <div className="customer-order-detail-heading"><div><small>ORDER NUMBER</small><h2>{activeOrder.orderNumber}</h2><span>Placed {new Date(activeOrder.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })}</span></div><span className={"customer-order-status "+(String(activeOrder.deliveryStatus||'').toLowerCase()==='delivered'?'is-success':['failed','cancelled'].includes(String(activeOrder.paymentStatus||'').toLowerCase())?'is-danger':'')}>{String(activeOrder.deliveryStatus||'').toLowerCase()==='delivered'?'Delivered':String(activeOrder.deliveryStatus||'').toLowerCase()==='in_transit'?'In transit':String(activeOrder.orderStatus||'').toLowerCase()==='processing'?'Processing':String(activeOrder.paymentStatus||'').toLowerCase()==='failed'?'Payment failed':String(activeOrder.paymentStatus||'').toLowerCase()==='succeeded'?'Payment confirmed':String(activeOrder.orderStatus||'').toLowerCase()==='cancelled'?'Cancelled':'Order placed'}</span></div>
         <div className="customer-checkout-grid">
           <div className="customer-review-stack">
             <div className="customer-panel">
