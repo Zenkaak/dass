@@ -3635,3 +3635,94 @@
  .market-detail-related{padding:14px;margin-top:16px}
  .market-related-heading{align-items:flex-start}
 }
+
+
+/* Checkout refresh: clean, guided Jumia-style stages with mobile-first controls. */
+.market-checkout-page{max-width:1120px;margin:26px auto 76px;padding:0 2px}
+.market-checkout-page .market-checkout-progress{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin:0 0 25px;padding:13px 18px;border:1px solid #e7edf2;border-radius:15px;background:#fff;box-shadow:0 5px 20px rgba(24,43,59,.045)}
+.market-checkout-progress-step{position:relative;display:flex;align-items:center;gap:11px;min-width:0;padding:3px 14px;color:#8b98a3}
+.market-checkout-progress-step:not(:last-child):after{content:"";position:absolute;right:-1px;top:50%;width:1px;height:30px;transform:translateY(-50%);background:#e8edf1}
+.market-checkout-progress-step>span{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;border:1px solid #dce4ea;border-radius:50%;background:#f7f9fb;color:#788895;font-size:11px;font-weight:850}
+.market-checkout-progress-step>div{display:grid;gap:3px;min-width:0}
+.market-checkout-progress-step strong{overflow:hidden;color:#657482;font-size:12px;text-overflow:ellipsis;white-space:nowrap}
+.market-checkout-progress-step small{color:#9aa5ae;font-size:10px}
+.market-checkout-progress-step.current>span{border-color:var(--store-accent,#e47a13);background:var(--store-accent,#e47a13);color:#fff;box-shadow:0 0 0 4px color-mix(in srgb,var(--store-accent,#e47a13) 12%,transparent)}
+.market-checkout-progress-step.current strong{color:#1c3040;font-weight:850}
+.market-checkout-progress-step.complete>span{border-color:#d7f0e1;background:#eaf8f0;color:#16834b}
+.market-checkout-progress-step.complete strong{color:#3d6654}
+.market-checkout-page .customer-flow-heading{margin:0 0 22px;align-items:center;gap:16px}
+.market-checkout-page .customer-flow-heading h1{font-size:clamp(23px,3vw,30px);font-weight:850;letter-spacing:-.035em}
+.market-checkout-page .customer-back-button{padding:9px 12px;border:1px solid #e5ebf0;border-radius:9px;background:#fff;color:#596b79;font-size:12px}
+.market-checkout-page .customer-checkout-grid{grid-template-columns:minmax(0,1fr) 350px;gap:20px}
+.market-checkout-page .customer-panel,.market-checkout-page .customer-summary-card{border:1px solid #e6ebef;border-radius:15px;box-shadow:0 5px 20px rgba(24,43,59,.045)}
+.market-checkout-page .customer-panel-heading{min-height:62px;padding:17px 20px}
+.market-checkout-page .customer-panel-heading h2,.market-checkout-page .customer-summary-card h2{font-size:15px;font-weight:850;color:#1e3445}
+.market-checkout-page .customer-panel-heading>span{font-size:11px}
+.market-checkout-page .customer-summary-card{padding:21px;top:92px}
+.market-checkout-page .customer-summary-card h2{margin-bottom:13px}
+.market-checkout-page .customer-summary-row{padding:12px 0;font-size:12px}
+.market-checkout-page .customer-summary-total{padding:17px 0}
+.market-checkout-page .customer-summary-total strong{font-size:21px;color:#182e3f}
+.market-checkout-page .customer-flow-actions{margin-top:23px;padding-top:17px;border-top:1px solid #edf1f4}
+.market-checkout-page .customer-flow-actions button{min-height:48px;border-radius:10px;font-size:13px;font-weight:800}
+.market-checkout-page .customer-flow-actions .customer-primary-button{min-width:220px;box-shadow:0 5px 13px color-mix(in srgb,var(--store-accent,#e47a13) 20%,transparent)}
+.market-checkout-page .customer-form-label{display:grid;gap:8px;color:#33495a;font-size:12px;font-weight:750}
+.market-checkout-page .customer-form-label input,.market-checkout-page .customer-form-label select,.market-checkout-page .customer-form-label textarea{min-height:48px;padding:12px 13px;border:1px solid #dce4ea;border-radius:10px;background:#fff;color:#263b4b;font-size:14px;outline:none;transition:border-color .15s,box-shadow .15s}
+.market-checkout-page .customer-form-label input:focus,.market-checkout-page .customer-form-label select:focus,.market-checkout-page .customer-form-label textarea:focus{border-color:var(--store-accent,#e47a13);box-shadow:0 0 0 3px color-mix(in srgb,var(--store-accent,#e47a13) 12%,transparent)}
+.market-checkout-page .customer-contact-fields{gap:16px;padding:20px}
+.market-checkout-page .customer-delivery-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 16px;padding:7px;border:1px solid #e7edf2;border-radius:13px;background:#f5f8fa}
+.market-checkout-page .customer-delivery-tabs button{min-height:52px;border:1px solid transparent;border-radius:9px;background:transparent;color:#627381;font-size:12px;font-weight:850;letter-spacing:.015em}
+.market-checkout-page .customer-delivery-tabs button.active{border-color:#e4eaf0;background:#fff;color:var(--store-accent,#e47a13);box-shadow:0 2px 8px rgba(20,40,55,.07)}
+.market-checkout-page .customer-door-delivery-panel .customer-contact-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.market-checkout-page .customer-delivery-contact-panel{margin-top:15px}
+.market-checkout-page .customer-pickup-empty{padding:30px 22px}
+.market-checkout-page .customer-pickup-empty h2{font-size:18px;color:#1e3445}
+.market-checkout-page .customer-pickup-map{border-radius:15px;min-height:220px}
+.market-checkout-page .customer-voucher-panel{padding:18px 20px}
+.market-checkout-page .customer-voucher{display:grid;gap:9px;color:#33495a;font-size:12px;font-weight:800}
+.market-checkout-page .customer-voucher-controls input{min-height:46px;border-radius:9px}
+.market-checkout-page .customer-voucher-controls button{min-width:84px;border-radius:9px;font-weight:800}
+.market-checkout-page .customer-payment-method-tabs{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:17px 20px}
+.market-checkout-page .customer-payment-method-tab{min-height:76px;align-items:flex-start;padding:14px 16px;border-radius:11px}
+.market-checkout-page .customer-payment-method-tab strong{font-size:13px}
+.market-checkout-page .customer-payment-method-tab small{font-size:11px}
+.market-checkout-page .customer-payment-config-note{margin:0;padding:0 20px 18px;font-size:11px}
+.market-checkout-page .customer-review-stack{gap:15px}
+.market-checkout-page .customer-review-product{padding:14px 18px}
+.market-checkout-page .customer-terms-copy{margin:0 0 17px;padding:12px 15px;border:1px solid #e8edf2;border-radius:10px;background:#f8fafb;line-height:1.6}
+.market-checkout-page .customer-review-summary{padding:17px 20px;flex-wrap:wrap}
+.market-checkout-page .customer-review-summary span{flex-basis:100%;padding-left:30px;color:#748390;font-size:11px;line-height:1.5}
+.market-checkout-page .customer-delivery-options{padding:8px 18px}
+.market-checkout-page .customer-delivery-option{padding:15px 10px;border:1px solid #e7edf2;border-radius:10px;margin:8px 0}
+.market-checkout-page .customer-delivery-option.is-selected{border-color:color-mix(in srgb,var(--store-accent,#e47a13) 55%,white);background:color-mix(in srgb,var(--store-accent,#e47a13) 5%,white)}
+.market-checkout-page .customer-checkout-error,.market-checkout-page .customer-preview-alert{padding:13px 15px;border:1px solid #f4c9c5;border-radius:10px;background:#fff5f4;color:#a3342b;font-size:12px}
+@media(max-width:820px){
+ .market-checkout-page{width:min(100% - 28px,680px);margin:18px auto 54px}
+ .market-checkout-page .customer-checkout-grid{grid-template-columns:minmax(0,1fr)}
+ .market-checkout-page .customer-summary-card{position:static;order:2}
+}
+@media(max-width:560px){
+ .market-checkout-page{width:calc(100% - 22px);margin:12px auto 42px}
+ .market-checkout-page .market-checkout-progress{gap:0;margin-bottom:18px;padding:10px 5px;border-radius:12px}
+ .market-checkout-progress-step{justify-content:center;gap:6px;padding:2px 4px}
+ .market-checkout-progress-step:not(:last-child):after{height:25px}
+ .market-checkout-progress-step>span{width:29px;height:29px;flex-basis:29px;font-size:10px}
+ .market-checkout-progress-step>div{gap:2px}
+ .market-checkout-progress-step strong{font-size:10px;max-width:76px}
+ .market-checkout-progress-step small{font-size:9px}
+ .market-checkout-page .customer-flow-heading{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:16px}
+ .market-checkout-page .customer-flow-heading h1{font-size:24px}
+ .market-checkout-page .customer-panel-heading{padding:14px 15px;min-height:56px}
+ .market-checkout-page .customer-panel{border-radius:12px}
+ .market-checkout-page .customer-door-delivery-panel .customer-contact-fields{grid-template-columns:1fr;padding:16px}
+ .market-checkout-page .customer-contact-fields{padding:16px;gap:13px}
+ .market-checkout-page .customer-delivery-tabs{gap:6px;padding:5px}
+ .market-checkout-page .customer-delivery-tabs button{min-height:49px;font-size:10px;gap:5px}
+ .market-checkout-page .customer-payment-method-tabs{padding:13px;gap:8px}
+ .market-checkout-page .customer-payment-method-tab{min-height:68px;padding:12px}
+ .market-checkout-page .customer-flow-actions{display:grid;grid-template-columns:1fr;gap:9px}
+ .market-checkout-page .customer-flow-actions button,.market-checkout-page .customer-flow-actions .customer-primary-button{width:100%;min-width:0;min-height:50px}
+ .market-checkout-page .customer-summary-card{padding:17px}
+ .market-checkout-page .customer-summary-total strong{font-size:20px}
+ .market-checkout-page .customer-pickup-map{min-height:170px}
+}
