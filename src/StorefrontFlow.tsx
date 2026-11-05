@@ -660,7 +660,7 @@ export function StorefrontFlow({
             <label className="customer-form-label market-checkout-full">Email address <small>(optional)</small><input type="email" value={customerEmail} onChange={e=>setCustomerEmail(e.target.value)} autoComplete="email" placeholder="you@example.com"/></label>
           </div>
         </div>
-        <div className="market-checkout-bottom-action"><div><small>ORDER TOTAL</small><strong>{formatKes(subtotal)}</strong></div><button type="button" className="customer-primary-button" disabled={!customerName.trim()||!customerPhone.trim()||(deliveryMethod==='pickup'&&!pickupStation.trim())||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))} onClick={()=>{saveDeliveryPreference();setOrderConfirmed(false);onNavigate('checkout/payment')}}>Continue to payment <ArrowRight size={18}/></button></div>
+        <div className="market-checkout-bottom-action"><div><small>ORDER TOTAL</small><strong>{formatKes(subtotal)}</strong></div><button type="button" className="customer-primary-button" disabled={!customerName.trim()||!customerPhone.trim()||(deliveryMethod==='pickup'&&(!pickupStation.trim()||!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))} onClick={()=>{saveDeliveryPreference();setOrderConfirmed(false);onNavigate('checkout/payment')}}>Continue to payment <ArrowRight size={18}/></button></div>
       </section>
     );
   }
