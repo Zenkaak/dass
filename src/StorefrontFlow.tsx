@@ -150,6 +150,9 @@ function formatKes(amount: number) {
   return `KES ${Math.max(0, Math.round(amount)).toLocaleString('en-KE')}`;
 }
 
+
+function readSavedDelivery(slug:string,phone:string){try{const key='dasnet-delivery-preference-'+slug+'-'+String(phone||'').replace(/\\D/g,'').slice(-9);const raw=localStorage.getItem(key);return raw?JSON.parse(raw):null}catch{return null}}
+
 function storedOrders(key: string): BuyerOrder[] {
   try {
     const saved = localStorage.getItem(key);
@@ -220,6 +223,7 @@ export function StorefrontFlow({
 }: StorefrontFlowProps) {
   const legacyOrderStorageKey = `dasnet-storefront-orders-${slug}-${String(initialCustomerPhone||'').replace(/\D/g,'') || 'signed-out'}`;
   const orderStorageKey = `dasnet-storefront-orders-${slug}-${String(initialCustomerPhone||'').replace(/\D/g,'').slice(-9) || 'signed-out'}`;
+  const savedDelivery = readSavedDelivery(slug, initialCustomerPhone);
   const lines = useMemo(() => Object.entries(cart)
     .map(([id, quantity]) => {
       const product = products.find((entry) => entry.id === id);
@@ -241,17 +245,18 @@ export function StorefrontFlow({
   const [paymentModal,setPaymentModal]=useState<PaymentMethod|null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
-  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('pickup');
-  const [deliveryCounty, setDeliveryCounty] = useState('');
-  const [deliverySubCounty, setDeliverySubCounty] = useState('');
-  const [deliveryEstate, setDeliveryEstate] = useState('');
-  const [deliveryDirections, setDeliveryDirections] = useState('');
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>(savedDelivery?.deliveryMethod==='home'?'home':'pickup');
+  const [deliveryCounty, setDeliveryCounty] = useState(savedDelivery?.deliveryCounty||'');
+  const [deliverySubCounty, setDeliverySubCounty] = useState(savedDelivery?.deliverySubCounty||'');
+  const [deliveryEstate, setDeliveryEstate] = useState(savedDelivery?.deliveryEstate||'');
+  const [deliveryDirections, setDeliveryDirections] = useState(savedDelivery?.deliveryDirections||'');
+  const [orderConfirmed,setOrderConfirmed]=useState(false);
   const [customerName, setCustomerName] = useState(initialCustomerName);
   const [customerPhone, setCustomerPhone] = useState(initialCustomerPhone);
   const [paymentPhone, setPaymentPhone] = useState(initialCustomerPhone);
   const [customerEmail, setCustomerEmail] = useState(initialCustomerEmail);
-  const [deliveryAddress, setDeliveryAddress] = useState(initialCustomerAddress);
-  const [pickupStation, setPickupStation] = useState(()=>{try{return localStorage.getItem('dasnet-pickup-station-'+slug)||''}catch{return ''}});
+  const [deliveryAddress, setDeliveryAddress] = useState(savedDelivery?.deliveryAddress||initialCustomerAddress);
+  const [pickupStation, setPickupStation] = useState(savedDelivery?.pickupStation||(()=>{try{return localStorage.getItem('dasnet-pickup-station-'+slug)||''}catch{return ''}})());
   const [pickupStationEditor,setPickupStationEditor]=useState(false);
   const [pickupStationDraft,setPickupStationDraft]=useState('');
   const [voucherCode, setVoucherCode] = useState('');
@@ -613,6 +618,7 @@ export function StorefrontFlow({
 
   function renderCheckoutDelivery() {
     const savePickupStation=(event:any)=>{event.preventDefault();const value=pickupStationDraft.trim();if(!value)return;setPickupStation(value);try{localStorage.setItem('dasnet-pickup-station-'+slug,value)}catch{}setPickupStationEditor(false);};
+    const saveDeliveryPreference=()=>{try{const key='dasnet-delivery-preference-'+slug+'-'+String(customerPhone||initialCustomerPhone||'').replace(/\\D/g,'').slice(-9);localStorage.setItem(key,JSON.stringify({deliveryMethod,deliveryCounty,deliverySubCounty,deliveryEstate,deliveryAddress,deliveryDirections,pickupStation}))}catch{}};
     return (
       <section className="customer-flow market-checkout-page market-checkout-redesign">
         <CheckoutProgress step={1}/>
@@ -624,10 +630,16 @@ export function StorefrontFlow({
         </div>
         {deliveryMethod==='pickup' ? <div className="market-checkout-card">
           <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><MapPin size={18}/></span><div><h2>Pickup location</h2><p>Enter the collection station or preferred meeting point</p></div></div>
-          {pickupStation&&!pickupStationEditor ? <div className="market-checkout-saved-location"><div><strong>{pickupStation}</strong><small>Saved pickup location for this order</small></div><button type="button" onClick={()=>{setPickupStationDraft(pickupStation);setPickupStationEditor(true)}}>Change</button></div> : null}
+          {pickupStation&&!pickupStationEditor ? <div className="market-checkout-saved-location"><div><strong>{pickupStation}</strong><small>{[deliveryAddress,deliveryEstate,deliverySubCounty,deliveryCounty].filter(Boolean).join(', ')||'Saved pickup location'} · Saved for future orders</small></div><button type="button" onClick={()=>{setPickupStationDraft(pickupStation);setPickupStationEditor(true)}}>Change location</button></div> : null}
           {(!pickupStation||pickupStationEditor) && <form className="market-checkout-location-form" onSubmit={savePickupStation}>
-            <label className="customer-form-label">Pickup station / collection point<input required value={pickupStationDraft} onChange={e=>setPickupStationDraft(e.target.value)} placeholder="Enter station, mall, town or collection point"/></label>
-            <label className="customer-form-label">Town, estate or street (optional)<input value={deliveryAddress} onChange={e=>setDeliveryAddress(e.target.value)} placeholder="Add a nearby area to help identify the location"/></label>
+            <div className="market-checkout-fields">
+              <label className="customer-form-label">County<select required value={deliveryCounty} onChange={e=>{setDeliveryCounty(e.target.value);setDeliverySubCounty('')}}><option value="">Select county</option>{['Baringo','Bomet','Bungoma','Busia','Elgeyo-Marakwet','Embu','Garissa','Homa Bay','Isiolo','Kajiado','Kakamega','Kericho','Kiambu','Kilifi','Kirinyaga','Kisii','Kisumu','Kitui','Kwale','Laikipia','Lamu','Machakos','Makueni','Mandera','Marsabit','Meru','Migori','Mombasa','Murang’a','Nairobi','Nakuru','Nandi','Narok','Nyamira','Nyandarua','Nyeri','Samburu','Siaya','Taita-Taveta','Tana River','Tharaka-Nithi','Trans Nzoia','Turkana','Uasin Gishu','Vihiga','Wajir','West Pokot'].map(county=><option key={county} value={county}>{county}</option>)}</select></label>
+              <label className="customer-form-label">Sub-county<input required list="market-checkout-subcounty-options" value={deliverySubCounty} onChange={e=>setDeliverySubCounty(e.target.value)} placeholder="Select or type sub-county"/><datalist id="market-checkout-subcounty-options">{(deliveryCounty==='Nairobi'?['Westlands','Dagoretti North','Dagoretti South','Lang’ata','Kibra','Roysambu','Kasarani','Ruaraka','Embakasi South','Embakasi North','Embakasi Central','Embakasi East','Embakasi West','Makadara','Kamukunji','Starehe','Mathare']:deliveryCounty==='Kiambu'?['Thika Town','Ruiru','Juja','Kiambu','Kabete','Kikuyu','Limuru','Githunguri','Gatundu North','Gatundu South','Lari','Kiambaa']:deliveryCounty==='Mombasa'?['Mvita','Nyali','Kisauni','Likoni','Changamwe','Jomvu']:[]).map(item=><option key={item} value={item}/>)}</datalist></label>
+              <label className="customer-form-label market-checkout-full">Pickup address / collection point<input required value={pickupStationDraft} onChange={e=>setPickupStationDraft(e.target.value)} placeholder="Pickup station, building, shop or collection point"/></label>
+              <label className="customer-form-label">Estate / area<input required value={deliveryEstate} onChange={e=>setDeliveryEstate(e.target.value)} placeholder="Estate, town or neighbourhood"/></label>
+              <label className="customer-form-label">Street / physical address<input required value={deliveryAddress} onChange={e=>setDeliveryAddress(e.target.value)} placeholder="Street, building or nearby address"/></label>
+              <label className="customer-form-label market-checkout-full">Directions / landmark <small>(optional)</small><textarea value={deliveryDirections} onChange={e=>setDeliveryDirections(e.target.value)} placeholder="Add directions or a nearby landmark"/></label>
+            </div>
             <div className="market-checkout-inline-actions"><button type="submit" className="customer-primary-button">Save pickup location</button>{pickupStationEditor&&<button type="button" className="customer-secondary-button" onClick={()=>setPickupStationEditor(false)}>Cancel</button>}</div>
           </form>}
         </div> : <div className="market-checkout-card">
@@ -648,7 +660,7 @@ export function StorefrontFlow({
             <label className="customer-form-label market-checkout-full">Email address <small>(optional)</small><input type="email" value={customerEmail} onChange={e=>setCustomerEmail(e.target.value)} autoComplete="email" placeholder="you@example.com"/></label>
           </div>
         </div>
-        <div className="market-checkout-bottom-action"><div><small>ORDER TOTAL</small><strong>{formatKes(subtotal)}</strong></div><button type="button" className="customer-primary-button" disabled={!customerName.trim()||!customerPhone.trim()||(deliveryMethod==='pickup'&&!pickupStation.trim())||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))} onClick={()=>onNavigate('checkout/payment')}>Continue to payment <ArrowRight size={18}/></button></div>
+        <div className="market-checkout-bottom-action"><div><small>ORDER TOTAL</small><strong>{formatKes(subtotal)}</strong></div><button type="button" className="customer-primary-button" disabled={!customerName.trim()||!customerPhone.trim()||(deliveryMethod==='pickup'&&!pickupStation.trim())||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))} onClick={()=>{saveDeliveryPreference();setOrderConfirmed(false);onNavigate('checkout/payment')}}>Continue to payment <ArrowRight size={18}/></button></div>
       </section>
     );
   }
@@ -693,11 +705,11 @@ export function StorefrontFlow({
         <div className="market-checkout-review-layout">
           <div className="market-checkout-main-column">
             <div className="market-checkout-card">
-              <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><MapPin size={18}/></span><div><h2>Delivery information</h2><p>{deliveryMethod==='pickup'?'Pickup station':'Door delivery'}</p></div><button type="button" className="market-checkout-edit" onClick={()=>onNavigate('checkout/delivery')}>Edit</button></div>
+              <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><MapPin size={18}/></span><div><h2>Delivery information</h2><p>{deliveryMethod==='pickup'?'Pickup station':'Door delivery'}</p></div><button type="button" className="market-checkout-edit" onClick={()=>{setOrderConfirmed(false);onNavigate('checkout/delivery')}}>Edit</button></div>
               <div className="market-checkout-review-details"><strong>{deliveryMethod==='pickup'?pickupStation:addressSummary}</strong>{deliveryMethod==='home'&&deliveryDirections&&<small>Directions: {deliveryDirections}</small>}<div><span>{customerName}</span><span>{customerPhone}</span>{customerEmail&&<span>{customerEmail}</span>}</div></div>
             </div>
             <div className="market-checkout-card">
-              <div className="market-checkout-card-heading"><span className="market-checkout-mpesa-mark">M</span><div><h2>Payment method</h2><p>M-PESA · STK push</p></div><button type="button" className="market-checkout-edit" onClick={()=>onNavigate('checkout/payment')}>Edit</button></div>
+              <div className="market-checkout-card-heading"><span className="market-checkout-mpesa-mark">M</span><div><h2>Payment method</h2><p>M-PESA · STK push</p></div><button type="button" className="market-checkout-edit" onClick={()=>{setOrderConfirmed(false);onNavigate('checkout/payment')}}>Edit</button></div>
               <div className="market-checkout-review-details"><strong>{paymentLabels[paymentMethod]}</strong><small>Payment prompt will be sent to {paymentPhone||customerPhone}. Payment is only complete after Safaricom confirmation.</small></div>
             </div>
             <div className="market-checkout-card">
@@ -709,7 +721,8 @@ export function StorefrontFlow({
           {renderSummary()}
         </div>
         {checkoutError&&<p className="customer-preview-alert" role="alert">{checkoutError}</p>}
-        <div className="market-checkout-bottom-action"><div><small>TOTAL TO PAY</small><strong>{formatKes(subtotal)}</strong></div><button type="button" className="customer-primary-button" disabled={!lines.length||!customerName.trim()||!customerPhone.trim()||paymentMethod!=='mpesa'||submitting||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))||(deliveryMethod==='pickup'&&!pickupStation.trim())} onClick={placeOrder}>{submitting?'Starting M-PESA…':'Confirm & pay with M-PESA'} <ArrowRight size={18}/></button></div>
+        {orderConfirmed&&<div className="market-checkout-confirmed" role="status"><Check size={18}/><div><strong>Order details confirmed</strong><small>Your delivery, items and payment number are ready. Continue when you are ready to request the M-PESA prompt.</small></div></div>}
+        <div className="market-checkout-bottom-action"><div><small>{orderConfirmed?'READY TO PAY':'ORDER TOTAL'}</small><strong>{formatKes(subtotal)}</strong></div><button type="button" className="customer-primary-button" disabled={!lines.length||!customerName.trim()||!customerPhone.trim()||paymentMethod!=='mpesa'||submitting||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))||(deliveryMethod==='pickup'&&(!pickupStation.trim()||!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))} onClick={orderConfirmed?placeOrder:()=>setOrderConfirmed(true)}>{submitting?'Requesting M-PESA…':orderConfirmed?'Pay with M-PESA':'Confirm order'} <ArrowRight size={18}/></button></div>
       </section>
     );
   }
