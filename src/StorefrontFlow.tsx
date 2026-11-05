@@ -151,7 +151,7 @@ function formatKes(amount: number) {
 }
 
 
-function readSavedDelivery(slug:string,phone:string){try{const key='dasnet-delivery-preference-'+slug+'-'+String(phone||'').replace(/\\D/g,'').slice(-9);const raw=localStorage.getItem(key);return raw?JSON.parse(raw):null}catch{return null}}
+function readSavedDelivery(slug:string,phone:string){try{const key='dasnet-delivery-preference-'+slug+'-'+String(phone||'').replace(/\D/g,'').slice(-9);const raw=localStorage.getItem(key);return raw?JSON.parse(raw):null}catch{return null}}
 
 function storedOrders(key: string): BuyerOrder[] {
   try {
@@ -618,7 +618,7 @@ export function StorefrontFlow({
 
   function renderCheckoutDelivery() {
     const savePickupStation=(event:any)=>{event.preventDefault();const value=pickupStationDraft.trim();if(!value)return;setPickupStation(value);try{localStorage.setItem('dasnet-pickup-station-'+slug,value)}catch{}setPickupStationEditor(false);};
-    const saveDeliveryPreference=()=>{try{const key='dasnet-delivery-preference-'+slug+'-'+String(customerPhone||initialCustomerPhone||'').replace(/\\D/g,'').slice(-9);localStorage.setItem(key,JSON.stringify({deliveryMethod,deliveryCounty,deliverySubCounty,deliveryEstate,deliveryAddress,deliveryDirections,pickupStation}))}catch{}};
+    const saveDeliveryPreference=()=>{try{const key='dasnet-delivery-preference-'+slug+'-'+String(customerPhone||initialCustomerPhone||'').replace(/\D/g,'').slice(-9);localStorage.setItem(key,JSON.stringify({deliveryMethod,deliveryCounty,deliverySubCounty,deliveryEstate,deliveryAddress,deliveryDirections,pickupStation}))}catch{}};
     return (
       <section className="customer-flow market-checkout-page market-checkout-redesign">
         <CheckoutProgress step={1}/>
