@@ -152,15 +152,6 @@ function formatKes(amount: number) {
 
 
 
-function storedOrders(key: string): BuyerOrder[] {
-  try {
-    const saved = localStorage.getItem(key);
-    const parsed = saved ? JSON.parse(saved) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
 
 function ProductThumb({ product }: { product: StoreProduct }) {
   const image = product.images?.[0] || product.imageUrl;
@@ -220,9 +211,7 @@ export function StorefrontFlow({
   onOpenChat,
   onProfileUpdated,
 }: StorefrontFlowProps) {
-  const legacyOrderStorageKey = `dasnet-storefront-orders-${slug}-${String(initialCustomerPhone||'').replace(/\D/g,'') || 'signed-out'}`;
-  const orderStorageKey = `dasnet-storefront-orders-${slug}-${String(initialCustomerPhone||'').replace(/\D/g,'').slice(-9) || 'signed-out'}`;
-  const lines = useMemo(() => Object.entries(cart)
+    const lines = useMemo(() => Object.entries(cart)
     .map(([id, quantity]) => {
       const product = products.find((entry) => entry.id === id);
       return product && quantity > 0 ? { product, quantity } : null;
@@ -232,12 +221,11 @@ export function StorefrontFlow({
     () => lines.reduce((sum, line) => sum + line.product.price * line.quantity, 0),
     [lines],
   );
-  const [orders, setOrders] = useState<BuyerOrder[]>(() => {const current=storedOrders(orderStorageKey);return current.length?current:storedOrders(legacyOrderStorageKey)});
+  const [orders, setOrders] = useState<BuyerOrder[]>([]);
   const [retryingOrder,setRetryingOrder]=useState(false);const [retryPaymentPhone,setRetryPaymentPhone]=useState('');const [retryMessage,setRetryMessage]=useState('');const [paymentCelebration,setPaymentCelebration]=useState(false);const lastPaymentStatus=useRef<string|null>(null);
   const [ordersLoading,setOrdersLoading]=useState(false),[ordersError,setOrdersError]=useState('');
   const [currentPassword,setCurrentPassword]=useState(''),[newPassword,setNewPassword]=useState(''),[confirmPassword,setConfirmPassword]=useState(''),[passwordSaving,setPasswordSaving]=useState(false),[passwordMessage,setPasswordMessage]=useState('');
-  const [inAppNotificationsEnabled,setInAppNotificationsEnabled]=useState(()=>{try{return localStorage.getItem('dasnet-buyer-notifications-'+slug)!=='false'}catch{return true}});
-  useEffect(()=>{try{localStorage.setItem('dasnet-buyer-notifications-'+slug,String(inAppNotificationsEnabled))}catch{}},[slug,inAppNotificationsEnabled]);
+  const [inAppNotificationsEnabled,setInAppNotificationsEnabled]=useState(true);
   const [profileName,setProfileName]=useState(initialCustomerName),[profileEmail,setProfileEmail]=useState(initialCustomerEmail),[profilePhoneAlt,setProfilePhoneAlt]=useState(''),[profileAddress,setProfileAddress]=useState(initialCustomerAddress),[profileSaving,setProfileSaving]=useState(false),[profileMessage,setProfileMessage]=useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mpesa');
   const [paymentModal,setPaymentModal]=useState<PaymentMethod|null>(null);
@@ -247,7 +235,7 @@ export function StorefrontFlow({
   const [deliveryCounty, setDeliveryCounty] = useState('');
   const [deliverySubCounty, setDeliverySubCounty] = useState('');
   const [deliveryEstate, setDeliveryEstate] = useState('');
-  const [deliveryDirections, setDeliveryDirections] = useState(savedDelivery?.deliveryDirections||'');
+  const [deliveryDirections, setDeliveryDirections] = useState('');
   const [orderConfirmed,setOrderConfirmed]=useState(false);
   const [customerName, setCustomerName] = useState(initialCustomerName);
   const [customerPhone, setCustomerPhone] = useState(initialCustomerPhone);
@@ -263,10 +251,8 @@ export function StorefrontFlow({
   const [appliedCoupon,setAppliedCoupon]=useState<any>(null),[shopCoupons,setShopCoupons]=useState<any[]>([]);
   const [reportShop,setReportShop]=useState(shopName),[reportOrderId,setReportOrderId]=useState(''),[reportProductId,setReportProductId]=useState(''),[reportIssue,setReportIssue]=useState('payment'),[reportPaymentMade,setReportPaymentMade]=useState(false),[reportPaymentAmount,setReportPaymentAmount]=useState(''),[reportPaymentReference,setReportPaymentReference]=useState(''),[reportDetails,setReportDetails]=useState(''),[reportFiles,setReportFiles]=useState<File[]>([]),[reportBusy,setReportBusy]=useState(false),[reportMessage,setReportMessage]=useState('');
   const [activeOrderNumber, setActiveOrderNumber] = useState('');
-  const [newsletterEnabled, setNewsletterEnabled] = useState(() => { try { return localStorage.getItem('dasnet-shop-updates-'+slug) === 'true'; } catch { return false; } });
-  const [isShopFollowed, setIsShopFollowed] = useState(() => { try { return localStorage.getItem('dasnet-followed-shop-'+slug) === 'true'; } catch { return false; } });
-  useEffect(() => { try { localStorage.setItem('dasnet-shop-updates-'+slug, String(newsletterEnabled)); } catch {} }, [slug, newsletterEnabled]);
-  useEffect(() => { try { localStorage.setItem('dasnet-followed-shop-'+slug, String(isShopFollowed)); } catch {} }, [slug, isShopFollowed]);
+  const [newsletterEnabled, setNewsletterEnabled] = useState(false);
+  const [isShopFollowed, setIsShopFollowed] = useState(false);
   const [buyerFeatureMessage,setBuyerFeatureMessage]=useState('');
   const [buyerFeatureBusy,setBuyerFeatureBusy]=useState(false);
   const [closureRequest,setClosureRequest]=useState<any>(null);
@@ -312,12 +298,7 @@ export function StorefrontFlow({
   useEffect(() => {
     let live = true;
     let requestInFlight = false;
-    const cached = initialCustomerPhone
-      ? [...storedOrders(orderStorageKey), ...storedOrders(legacyOrderStorageKey)]
-      : [];
-    setOrders(cached.filter((order, index, all) =>
-      all.findIndex((item) => (item.orderId && item.orderId === order.orderId) || item.orderNumber === order.orderNumber) === index
-    ));
+    setOrders([]);
     setOrdersError('');
 
     if (!initialCustomerPhone) {
@@ -412,15 +393,7 @@ export function StorefrontFlow({
       live = false;
       window.clearInterval(timer);
     };
-  }, [slug, initialCustomerPhone, orderStorageKey, legacyOrderStorageKey]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(orderStorageKey, JSON.stringify(orders));
-    } catch {
-      // The UI remains usable when browser storage is unavailable.
-    }
-  }, [orderStorageKey, orders]);
+  }, [slug, initialCustomerPhone]);
 
   const deliveryFee = 0;
   const total = Math.max(0, subtotal - Number(appliedCoupon?.discount||0));
@@ -526,7 +499,6 @@ export function StorefrontFlow({
       setOrders(updatedOrders);
       setActiveOrderNumber(order.orderNumber);
       onOrderCreated?.(data.chatToken, data.orderNumber);
-      try { localStorage.setItem(orderStorageKey, JSON.stringify(updatedOrders)); } catch { /* Backend order remains valid. */ }
       onCartChange({});
       onNavigate('checkout/complete');
     } catch (error) {
