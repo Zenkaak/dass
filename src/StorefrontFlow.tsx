@@ -614,129 +614,102 @@ export function StorefrontFlow({
   function renderCheckoutDelivery() {
     const savePickupStation=(event:any)=>{event.preventDefault();const value=pickupStationDraft.trim();if(!value)return;setPickupStation(value);try{localStorage.setItem('dasnet-pickup-station-'+slug,value)}catch{}setPickupStationEditor(false);};
     return (
-      <section className="customer-flow customer-delivery-flow market-checkout-page"><CheckoutProgress step={1}/>
-        <FlowHeading title="Delivery" onBack={() => onNavigate('cart')} backLabel="Back to cart" />
-        <div className="customer-delivery-tabs" role="tablist" aria-label="Delivery method">
-          <button type="button" role="tab" aria-selected={deliveryMethod==='pickup'} className={deliveryMethod==='pickup'?'active':''} onClick={()=>setDeliveryMethod('pickup')}><MapPin size={16}/> PICKUP STATIONS</button>
-          <button type="button" role="tab" aria-selected={deliveryMethod==='home'} className={deliveryMethod==='home'?'active':''} onClick={()=>setDeliveryMethod('home')}><Package size={16}/> DOOR DELIVERY</button>
+      <section className="customer-flow market-checkout-page market-checkout-redesign">
+        <CheckoutProgress step={1}/>
+        <FlowHeading title="Delivery details" onBack={() => onNavigate('cart')} backLabel="Back to cart" />
+        <div className="market-checkout-intro"><span>STEP 1 OF 3</span><h2>Where should we deliver your order?</h2><p>Choose how you would like to receive your items from {shopName}.</p></div>
+        <div className="market-checkout-delivery-choice" role="tablist" aria-label="Delivery method">
+          <button type="button" role="tab" aria-selected={deliveryMethod==='pickup'} className={deliveryMethod==='pickup'?'active':''} onClick={()=>setDeliveryMethod('pickup')}><span className="market-checkout-choice-icon"><MapPin size={21}/></span><span><strong>Pickup station</strong><small>Collect your order from your preferred point</small></span><i>{deliveryMethod==='pickup'?'✓':''}</i></button>
+          <button type="button" role="tab" aria-selected={deliveryMethod==='home'} className={deliveryMethod==='home'?'active':''} onClick={()=>setDeliveryMethod('home')}><span className="market-checkout-choice-icon"><Package size={21}/></span><span><strong>Door delivery</strong><small>Have your order brought to your address</small></span><i>{deliveryMethod==='home'?'✓':''}</i></button>
         </div>
-        {deliveryMethod==='pickup'?<div className="customer-delivery-pickup-layout">
-          <div className="customer-panel customer-pickup-panel">
-            {pickupStation&&!pickupStationEditor?<><div className="customer-panel-heading"><h2>Selected pickup station</h2><button type="button" className="customer-text-button" onClick={()=>{setPickupStationDraft(pickupStation);setPickupStationEditor(true)}}>Change</button></div><div className="customer-pickup-selected"><MapPin size={22}/><div><strong>{pickupStation}</strong><small>Pickup location selected for this order</small></div></div></>:<><div className="customer-pickup-empty"><MapPin size={30}/><h2>No saved pickup station yet!</h2><p>Add a pickup station to continue. Save your preferred collection point for this shop.</p><button type="button" className="customer-primary-button" onClick={()=>{setPickupStationDraft(pickupStation);setPickupStationEditor(true)}}>Add new pickup station</button></div></>}
-            {pickupStationEditor&&<form className="customer-pickup-form" onSubmit={savePickupStation}><div className="customer-panel-heading"><h2>Add new pickup station</h2><button type="button" className="customer-text-button" onClick={()=>setPickupStationEditor(false)}>Cancel</button></div><label className="customer-form-label">Pickup station / collection point<input required value={pickupStationDraft} onChange={e=>setPickupStationDraft(e.target.value)} placeholder="Enter station, mall or collection point"/></label><label className="customer-form-label">Billing address<input value={deliveryAddress} onChange={e=>setDeliveryAddress(e.target.value)} placeholder="Town, estate or street"/></label><button type="submit" className="customer-primary-button">Save pickup station</button></form>}
+        {deliveryMethod==='pickup' ? <div className="market-checkout-card">
+          <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><MapPin size={18}/></span><div><h2>Pickup location</h2><p>Enter the collection station or preferred meeting point</p></div></div>
+          {pickupStation&&!pickupStationEditor ? <div className="market-checkout-saved-location"><div><strong>{pickupStation}</strong><small>Saved pickup location for this order</small></div><button type="button" onClick={()=>{setPickupStationDraft(pickupStation);setPickupStationEditor(true)}}>Change</button></div> : null}
+          {(!pickupStation||pickupStationEditor) && <form className="market-checkout-location-form" onSubmit={savePickupStation}>
+            <label className="customer-form-label">Pickup station / collection point<input required value={pickupStationDraft} onChange={e=>setPickupStationDraft(e.target.value)} placeholder="Enter station, mall, town or collection point"/></label>
+            <label className="customer-form-label">Town, estate or street (optional)<input value={deliveryAddress} onChange={e=>setDeliveryAddress(e.target.value)} placeholder="Add a nearby area to help identify the location"/></label>
+            <div className="market-checkout-inline-actions"><button type="submit" className="customer-primary-button">Save pickup location</button>{pickupStationEditor&&<button type="button" className="customer-secondary-button" onClick={()=>setPickupStationEditor(false)}>Cancel</button>}</div>
+          </form>}
+        </div> : <div className="market-checkout-card">
+          <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><MapPin size={18}/></span><div><h2>Delivery address</h2><p>Provide the location where the seller should deliver</p></div></div>
+          <div className="market-checkout-fields">
+            <label className="customer-form-label">County<select required value={deliveryCounty} onChange={event=>{setDeliveryCounty(event.target.value);setDeliverySubCounty('')}}><option value="">Select county</option>{['Baringo','Bomet','Bungoma','Busia','Elgeyo-Marakwet','Embu','Garissa','Homa Bay','Isiolo','Kajiado','Kakamega','Kericho','Kiambu','Kilifi','Kirinyaga','Kisii','Kisumu','Kitui','Kwale','Laikipia','Lamu','Machakos','Makueni','Mandera','Marsabit','Meru','Migori','Mombasa','Murang’a','Nairobi','Nakuru','Nandi','Narok','Nyamira','Nyandarua','Nyeri','Samburu','Siaya','Taita-Taveta','Tana River','Tharaka-Nithi','Trans Nzoia','Turkana','Uasin Gishu','Vihiga','Wajir','West Pokot'].map(county=><option key={county} value={county}>{county}</option>)}</select></label>
+            <label className="customer-form-label">Sub-county<input required value={deliverySubCounty} onChange={e=>setDeliverySubCounty(e.target.value)} placeholder="e.g. Westlands"/></label>
+            <label className="customer-form-label">Estate / area<input required value={deliveryEstate} onChange={e=>setDeliveryEstate(e.target.value)} placeholder="e.g. Kilimani"/></label>
+            <label className="customer-form-label">Physical address<input required value={deliveryAddress} onChange={e=>setDeliveryAddress(e.target.value)} placeholder="Building, street, plot or house number"/></label>
+            <label className="customer-form-label market-checkout-full">Directions / landmark <small>(optional)</small><textarea value={deliveryDirections} onChange={e=>setDeliveryDirections(e.target.value)} placeholder="Nearby landmark, gate details or directions"/></label>
           </div>
-          <div className="customer-pickup-map"><div className="customer-pickup-map-grid"/><span className="customer-map-pin"><MapPin size={24}/></span><div><strong>Pickup station location</strong><small>Enter the collection point name to save your preferred location.</small></div></div>
-        </div>:<div className="customer-panel customer-door-delivery-panel"><div className="customer-panel-heading"><h2>Door delivery address</h2><span>Where should the seller deliver?</span></div><div className="customer-contact-fields customer-delivery-fields">
-          <label className="customer-form-label">County<select required value={deliveryCounty} onChange={event=>{setDeliveryCounty(event.target.value);setDeliverySubCounty('')}}><option value="">Select county</option>{['Baringo','Bomet','Bungoma','Busia','Elgeyo-Marakwet','Embu','Garissa','Homa Bay','Isiolo','Kajiado','Kakamega','Kericho','Kiambu','Kilifi','Kirinyaga','Kisii','Kisumu','Kitui','Kwale','Laikipia','Lamu','Machakos','Makueni','Mandera','Marsabit','Meru','Migori','Mombasa','Murang’a','Nairobi','Nakuru','Nandi','Narok','Nyamira','Nyandarua','Nyeri','Samburu','Siaya','Taita-Taveta','Tana River','Tharaka-Nithi','Trans Nzoia','Turkana','Uasin Gishu','Vihiga','Wajir','West Pokot'].map(county=><option key={county} value={county}>{county}</option>)}</select></label>
-          <label className="customer-form-label">Sub-county<input required value={deliverySubCounty} onChange={e=>setDeliverySubCounty(e.target.value)} placeholder="e.g. Westlands"/></label>
-          <label className="customer-form-label">Estate / area<input required value={deliveryEstate} onChange={e=>setDeliveryEstate(e.target.value)} placeholder="e.g. Kilimani"/></label>
-          <label className="customer-form-label">Physical address<input required value={deliveryAddress} onChange={e=>setDeliveryAddress(e.target.value)} placeholder="Building, street, plot or house number"/></label>
-          <label className="customer-form-label">Directions / landmark (optional)<textarea value={deliveryDirections} onChange={e=>setDeliveryDirections(e.target.value)} placeholder="Nearby landmark or directions"/></label>
-        </div></div>}
-        <div className="customer-panel customer-delivery-contact-panel"><div className="customer-panel-heading"><h2>Contact details</h2><span>Used for order updates</span></div><div className="customer-contact-fields"><label className="customer-form-label">Full name<input required value={customerName} onChange={e=>setCustomerName(e.target.value)} autoComplete="name" placeholder="Your name"/></label><label className="customer-form-label">Phone number<input required type="tel" value={customerPhone} onChange={e=>setCustomerPhone(e.target.value)} autoComplete="tel" placeholder="07… or +254…"/></label><label className="customer-form-label">Email <small>(optional)</small><input type="email" value={customerEmail} onChange={e=>setCustomerEmail(e.target.value)} autoComplete="email" placeholder="you@example.com"/></label></div></div>
-        <div className="customer-flow-actions"><button type="button" className="customer-secondary-button" onClick={()=>onNavigate('cart')}>Back to cart</button><button type="button" className="customer-primary-button" disabled={!customerName.trim()||!customerPhone.trim()||(deliveryMethod==='pickup'&&!pickupStation.trim())||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))} onClick={()=>onNavigate('checkout/payment')}>Continue to payment <ArrowRight size={17}/></button></div>
+        </div>}
+        <div className="market-checkout-card">
+          <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><UserRound size={18}/></span><div><h2>Contact information</h2><p>We will use these details for order updates</p></div></div>
+          <div className="market-checkout-fields">
+            <label className="customer-form-label">Full name<input required value={customerName} onChange={e=>setCustomerName(e.target.value)} autoComplete="name" placeholder="Your full name"/></label>
+            <label className="customer-form-label">Phone number<input required type="tel" value={customerPhone} onChange={e=>setCustomerPhone(e.target.value)} autoComplete="tel" placeholder="07… or +254…"/></label>
+            <label className="customer-form-label market-checkout-full">Email address <small>(optional)</small><input type="email" value={customerEmail} onChange={e=>setCustomerEmail(e.target.value)} autoComplete="email" placeholder="you@example.com"/></label>
+          </div>
+        </div>
+        <div className="market-checkout-bottom-action"><div><small>ORDER TOTAL</small><strong>{formatKes(subtotal)}</strong></div><button type="button" className="customer-primary-button" disabled={!customerName.trim()||!customerPhone.trim()||(deliveryMethod==='pickup'&&!pickupStation.trim())||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))} onClick={()=>onNavigate('checkout/payment')}>Continue to payment <ArrowRight size={18}/></button></div>
       </section>
     );
   }
 
   function renderCheckoutPayment() {
-    const choices: { id: PaymentMethod; label: string; configured: boolean; hint: string }[] = [
-      { id: 'mpesa', label: 'MPESA', configured: true, hint: 'Safaricom M-PESA' },
-      { id: 'airtel', label: 'AIRTEL', configured: false, hint: 'Airtel Money is not configured for this shop' },
-      { id: 'card', label: 'CARD', configured: false, hint: 'Card payments are not configured for this shop' },
-      { id: 'delivery', label: 'PAY ON DELIVERY', configured: false, hint: 'Pay on delivery is not enabled for this shop' },
-    ];
-    const confirmMpesa=()=>{if(!/^\+?254[17]\d{8}$|^0[17]\d{8}$/.test(paymentPhone.trim().replace(/[\s().-]/g,''))){setCheckoutError('Enter a valid Kenyan M-PESA phone number to receive the payment prompt.');return;}setCheckoutError('');setPaymentModal(null);};
-    const choosePayment=(choice:typeof choices[number])=>{
-      if(!choice.configured){setCheckoutError(choice.hint+'.');return;}
-      setCheckoutError('');
-      setPaymentMethod(choice.id);
-      setPaymentModal(choice.id);
-    };
+    const confirmMpesa=()=>{if(!/^\\+?254[17]\\d{8}$|^0[17]\\d{8}$/.test(paymentPhone.trim().replace(/[\\s().-]/g,''))){setCheckoutError('Enter a valid Kenyan M-PESA phone number to receive the payment prompt.');return;}setCheckoutError('');setPaymentModal(null);};
+    const choosePayment=()=>{setCheckoutError('');setPaymentMethod('mpesa');setPaymentModal('mpesa');};
     return (
-      <section className="customer-flow market-checkout-page market-checkout-payment">
+      <section className="customer-flow market-checkout-page market-checkout-redesign market-checkout-payment">
         <CheckoutProgress step={2}/>
-        <FlowHeading title="Select payment" onBack={() => onNavigate('checkout/delivery')} backLabel="Delivery" />
-        <div className="customer-checkout-grid">
-          <div className="customer-checkout-stack">
-            <div className="customer-panel customer-voucher-panel">
-              <label className="customer-voucher">
-                <span>Voucher code</span>
-                <span className="customer-voucher-controls"><input value={voucherCode} onChange={(event) => setVoucherCode(event.target.value)} placeholder="Enter voucher code" /><button type="button" onClick={applyVoucher}>Apply</button></span>
-                {voucherMessage && <small role="status">{voucherMessage}</small>}
-              </label>
+        <FlowHeading title="Payment" onBack={() => onNavigate('checkout/delivery')} backLabel="Delivery details" />
+        <div className="market-checkout-intro"><span>STEP 2 OF 3</span><h2>Choose how to pay</h2><p>Your payment is securely processed through M-PESA.</p></div>
+        <div className="market-checkout-payment-layout">
+          <div className="market-checkout-main-column">
+            <div className="market-checkout-card market-checkout-mpesa-card">
+              <div className="market-checkout-card-heading"><span className="market-checkout-mpesa-mark">M</span><div><h2>M-PESA</h2><p>Safaricom mobile money</p></div><span className="market-checkout-selected-pill"><Check size={14}/> Available</span></div>
+              <button type="button" className="market-checkout-mpesa-select" onClick={choosePayment}><span><strong>Pay with M-PESA</strong><small>Receive an STK prompt on your phone and enter your M-PESA PIN</small></span><span className="market-checkout-radio checked"/></button>
+              <div className="market-checkout-secure-note"><ShieldCheck size={17}/><span>Your order remains pending until Safaricom confirms the payment. Do not share your M-PESA PIN with anyone.</span></div>
+              <button type="button" className="market-checkout-change-phone" onClick={choosePayment}>Pay with a different phone number</button>
             </div>
-            <div className="customer-panel">
-              <div className="customer-panel-heading"><h2>Payment method</h2><span>Choose one</span></div>
-              <div className="customer-payment-method-tabs" role="group" aria-label="Choose payment method">
-                {choices.map(choice=><button type="button" key={choice.id} className={'customer-payment-method-tab '+choice.id+(paymentMethod===choice.id?' is-selected':'')+(!choice.configured?' is-unavailable':'')} onClick={()=>choosePayment(choice)} aria-pressed={paymentMethod===choice.id} aria-disabled={!choice.configured} title={choice.configured?choice.hint:choice.hint}>
-                  <strong>{choice.label}</strong><small>{choice.configured?'Select':'Not configured'}</small>
-                </button>)}
-              </div>
-              <p className="customer-payment-config-note">Only payment methods configured by this shop can be selected. Choose a method to open its secure payment window.</p>
+            <div className="market-checkout-card market-checkout-voucher-card">
+              <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><TicketPercent size={18}/></span><div><h2>Have a voucher?</h2><p>Apply a discount code to this order</p></div></div>
+              <label className="customer-voucher"><span>Voucher code</span><span className="customer-voucher-controls"><input value={voucherCode} onChange={event=>setVoucherCode(event.target.value)} placeholder="Enter voucher code"/><button type="button" onClick={applyVoucher}>Apply</button></span>{voucherMessage&&<small role="status">{voucherMessage}</small>}</label>
             </div>
           </div>
           {renderSummary()}
         </div>
         {checkoutError&&<p className="customer-checkout-error" role="alert">{checkoutError}</p>}
-        <div className="customer-flow-actions">
-          <button type="button" className="customer-secondary-button" onClick={() => onNavigate('checkout/delivery')}>Change delivery</button>
-          <button type="button" className="customer-primary-button" disabled={!lines.length || paymentMethod !== 'mpesa'} onClick={() => onNavigate('checkout/review')}>Continue <ArrowRight size={17} /></button>
-        </div>
-        {paymentModal==='mpesa'&&<div className="customer-payment-modal-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setPaymentModal(null)}}><section className="customer-payment-modal" role="dialog" aria-modal="true" aria-labelledby="customer-payment-modal-title"><button type="button" className="customer-payment-modal-close" aria-label="Close payment window" onClick={()=>setPaymentModal(null)}>×</button><span className="customer-payment-modal-mark">M</span><h2 id="customer-payment-modal-title">Pay with M-PESA</h2><p>Enter the Kenyan mobile number that should receive the STK payment prompt. It can be different from your buyer account number.</p><label className="customer-form-label">Phone number to pay with<input type="tel" inputMode="tel" autoComplete="tel" placeholder="07XX XXX XXX or 2547XXXXXXXX" value={paymentPhone} onChange={e=>setPaymentPhone(e.target.value)} required maxLength={16}/></label><small className="customer-payment-modal-note">Your order remains pending until Safaricom confirms payment.</small><div className="customer-payment-modal-actions"><button type="button" className="customer-secondary-button" onClick={()=>setPaymentModal(null)}>Cancel</button><button type="button" className="customer-primary-button" onClick={confirmMpesa}>Use M-PESA <ArrowRight size={16}/></button></div></section></div>}
+        <div className="market-checkout-bottom-action"><div><small>AMOUNT TO PAY</small><strong>{formatKes(subtotal)}</strong></div><button type="button" className="customer-primary-button" disabled={!lines.length||paymentMethod!=='mpesa'} onClick={()=>onNavigate('checkout/review')}>Review your order <ArrowRight size={18}/></button></div>
+        {paymentModal==='mpesa'&&<div className="customer-payment-modal-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setPaymentModal(null)}}><section className="customer-payment-modal market-checkout-payment-dialog" role="dialog" aria-modal="true" aria-labelledby="customer-payment-modal-title"><button type="button" className="customer-payment-modal-close" aria-label="Close payment window" onClick={()=>setPaymentModal(null)}>×</button><span className="customer-payment-modal-mark">M</span><h2 id="customer-payment-modal-title">M-PESA payment number</h2><p>Enter the Kenyan mobile number that should receive the STK payment prompt. It can be different from your buyer account number.</p><label className="customer-form-label">Phone number to pay with<input type="tel" inputMode="tel" autoComplete="tel" placeholder="07XX XXX XXX or 2547XXXXXXXX" value={paymentPhone} onChange={e=>setPaymentPhone(e.target.value)} required maxLength={16}/></label><small className="customer-payment-modal-note">Your order remains pending until Safaricom confirms payment.</small><div className="customer-payment-modal-actions"><button type="button" className="customer-secondary-button" onClick={()=>setPaymentModal(null)}>Cancel</button><button type="button" className="customer-primary-button" onClick={confirmMpesa}>Use this number <ArrowRight size={16}/></button></div></section></div>}
       </section>
     );
   }
 
   function renderReview() {
+    const addressSummary=deliveryMethod==='home'?[deliveryAddress,deliveryEstate,deliverySubCounty,deliveryCounty].filter(Boolean).join(', '):pickupStation;
     return (
-      <section className="customer-flow market-checkout-page market-checkout-review">
+      <section className="customer-flow market-checkout-page market-checkout-redesign market-checkout-review">
         <CheckoutProgress step={3}/>
-        <FlowHeading title="Place your order" onBack={() => onNavigate('checkout/payment')} backLabel="Payment method" />
-        <p className="customer-terms-copy">By continuing, you agree to the store’s <button type="button" onClick={()=>onNavigate('shop-terms')}>Terms &amp; Conditions</button>.</p>
-        <div className="customer-checkout-grid">
-          <div className="customer-review-stack">
-            <div className="customer-panel">
-              <div className="customer-panel-heading"><h2>Payment method</h2><button type="button" className="customer-text-button" onClick={() => onNavigate('checkout/payment')}>Change</button></div>
-              <div className="customer-review-summary"><WalletCards size={19} /><strong>{paymentLabels[paymentMethod]}</strong><span>STK prompt sent after you confirm. Payment is pending until verified.</span></div>
+        <FlowHeading title="Review your order" onBack={() => onNavigate('checkout/payment')} backLabel="Payment" />
+        <div className="market-checkout-intro"><span>STEP 3 OF 3</span><h2>Check everything before placing your order</h2><p>Review your delivery and payment details, then confirm your order.</p></div>
+        <div className="market-checkout-review-layout">
+          <div className="market-checkout-main-column">
+            <div className="market-checkout-card">
+              <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><MapPin size={18}/></span><div><h2>Delivery information</h2><p>{deliveryMethod==='pickup'?'Pickup station':'Door delivery'}</p></div><button type="button" className="market-checkout-edit" onClick={()=>onNavigate('checkout/delivery')}>Edit</button></div>
+              <div className="market-checkout-review-details"><strong>{deliveryMethod==='pickup'?pickupStation:addressSummary}</strong>{deliveryMethod==='home'&&deliveryDirections&&<small>Directions: {deliveryDirections}</small>}<div><span>{customerName}</span><span>{customerPhone}</span>{customerEmail&&<span>{customerEmail}</span>}</div></div>
             </div>
-            <div className="customer-panel">
-              <div className="customer-panel-heading"><h2>Delivery details</h2><button type="button" className="customer-text-button" onClick={() => document.getElementById('customer-delivery-options')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>Change</button></div>
-              <div className="customer-delivery-options" id="customer-delivery-options">
-                <label className={`customer-delivery-option${deliveryMethod === 'home' ? ' is-selected' : ''}`}><input type="radio" name="deliveryMethod" checked={deliveryMethod === 'home'} onChange={() => setDeliveryMethod('home')} /><span><strong>Home / business delivery</strong><small>Provide the location where the seller should deliver.</small></span></label>
-                <label className={`customer-delivery-option${deliveryMethod === 'pickup' ? ' is-selected' : ''}`}><input type="radio" name="deliveryMethod" checked={deliveryMethod === 'pickup'} onChange={() => setDeliveryMethod('pickup')} /><span><strong>Collect / meet-up</strong><small>Enter your preferred collection area; the seller will confirm the exact point.</small></span></label>
-              </div>
-              {deliveryMethod === 'home' ? <div className="customer-contact-fields customer-delivery-fields">
-                <label className="customer-form-label">County<select required value={deliveryCounty} onChange={(event) => { setDeliveryCounty(event.target.value); setDeliverySubCounty(''); }}><option value="">Select county</option>{['Baringo','Bomet','Bungoma','Busia','Elgeyo-Marakwet','Embu','Garissa','Homa Bay','Isiolo','Kajiado','Kakamega','Kericho','Kiambu','Kilifi','Kirinyaga','Kisii','Kisumu','Kitui','Kwale','Laikipia','Lamu','Machakos','Makueni','Mandera','Marsabit','Meru','Migori','Mombasa','Murang’a','Nairobi','Nakuru','Nandi','Narok','Nyamira','Nyandarua','Nyeri','Samburu','Siaya','Taita-Taveta','Tana River','Tharaka-Nithi','Trans Nzoia','Turkana','Uasin Gishu','Vihiga','Wajir','West Pokot'].map((county) => <option key={county} value={county}>{county}</option>)}</select></label>
-                <label className="customer-form-label">Sub-county<input required value={deliverySubCounty} onChange={(event) => setDeliverySubCounty(event.target.value)} placeholder="e.g. Westlands" /></label>
-                <label className="customer-form-label">Estate / area<input required value={deliveryEstate} onChange={(event) => setDeliveryEstate(event.target.value)} placeholder="e.g. Kilimani, near Yaya Centre" /></label>
-                <label className="customer-form-label">Physical address<input required value={deliveryAddress} onChange={(event) => setDeliveryAddress(event.target.value)} placeholder="Building, street, plot or house number" /></label>
-                <label className="customer-form-label">Directions / landmark (optional)<textarea value={deliveryDirections} onChange={(event) => setDeliveryDirections(event.target.value)} placeholder="Nearby landmark, gate details or directions" /></label>
-              </div> : <div className="customer-contact-fields"><label className="customer-form-label">Preferred pickup area / station<input required value={pickupStation} onChange={(event) => setPickupStation(event.target.value)} placeholder="Town, mall or preferred meeting area" /></label></div>}
-              <div className="customer-contact-fields">
-                <label className="customer-form-label">Full name<input required value={customerName} onChange={(event) => setCustomerName(event.target.value)} autoComplete="name" placeholder="Your name" /></label>
-                <label className="customer-form-label">Phone number<input required type="tel" value={customerPhone} onChange={(event) => setCustomerPhone(event.target.value)} autoComplete="tel" placeholder="07… or +254…" /></label>
-                <label className="customer-form-label">Email <small>(optional)</small><input type="email" value={customerEmail} onChange={(event) => setCustomerEmail(event.target.value)} autoComplete="email" placeholder="you@example.com" /></label>
-              </div>
+            <div className="market-checkout-card">
+              <div className="market-checkout-card-heading"><span className="market-checkout-mpesa-mark">M</span><div><h2>Payment method</h2><p>M-PESA · STK push</p></div><button type="button" className="market-checkout-edit" onClick={()=>onNavigate('checkout/payment')}>Edit</button></div>
+              <div className="market-checkout-review-details"><strong>{paymentLabels[paymentMethod]}</strong><small>Payment prompt will be sent to {paymentPhone||customerPhone}. Payment is only complete after Safaricom confirmation.</small></div>
             </div>
-            <div className="customer-panel">
-              <div className="customer-panel-heading"><h2>Shipment 1 / 1</h2><span>Fulfilled by {shopName}</span></div>
-              {lines.map(({ product, quantity }) => (
-                <article className="customer-review-product" key={product.id}>
-                  <ProductThumb product={product} />
-                  <div><strong>{product.name}</strong><small>Qty {quantity} · {formatKes(product.price)}</small></div>
-                  <b>{formatKes(product.price * quantity)}</b>
-                </article>
-              ))}
+            <div className="market-checkout-card">
+              <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><ShoppingBag size={18}/></span><div><h2>Items in your order</h2><p>{lines.length} {lines.length===1?'product':'products'} · Fulfilled by {shopName}</p></div><button type="button" className="market-checkout-edit" onClick={()=>onNavigate('cart')}>Edit cart</button></div>
+              {lines.map(({product,quantity})=><article className="customer-review-product market-checkout-product-row" key={product.id}><ProductThumb product={product}/><div><strong>{product.name}</strong><small>Quantity: {quantity} · {formatKes(product.price)} each</small></div><b>{formatKes(product.price*quantity)}</b></article>)}
             </div>
+            <p className="customer-terms-copy">By placing your order, you agree to the store’s <button type="button" onClick={()=>onNavigate('shop-terms')}>Terms &amp; Conditions</button>.</p>
           </div>
           {renderSummary()}
         </div>
-        {checkoutError && <p className="customer-preview-alert" role="alert">{checkoutError}</p>}
-        <div className="customer-flow-actions">
-          <button type="button" className="customer-secondary-button" onClick={() => onNavigate('cart')}>Modify cart</button>
-          <button type="button" className="customer-primary-button" disabled={!lines.length || !customerName.trim() || !customerPhone.trim() || paymentMethod !== 'mpesa' || submitting || (deliveryMethod === 'home' && (!deliveryCounty || !deliverySubCounty.trim() || !deliveryEstate.trim() || !deliveryAddress.trim())) || (deliveryMethod === 'pickup' && !pickupStation.trim())} onClick={placeOrder}>{submitting ? 'Starting M-PESA…' : 'Confirm & pay with M-PESA'} <ArrowRight size={17} /></button>
-        </div>
+        {checkoutError&&<p className="customer-preview-alert" role="alert">{checkoutError}</p>}
+        <div className="market-checkout-bottom-action"><div><small>TOTAL TO PAY</small><strong>{formatKes(subtotal)}</strong></div><button type="button" className="customer-primary-button" disabled={!lines.length||!customerName.trim()||!customerPhone.trim()||paymentMethod!=='mpesa'||submitting||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))||(deliveryMethod==='pickup'&&!pickupStation.trim())}>{/* keep order creation and M-PESA initiation in the existing placeOrder handler */}<span onClick={placeOrder}>{submitting?'Starting M-PESA…':'Confirm & pay with M-PESA'} <ArrowRight size={18}/></span></button></div>
       </section>
     );
   }
