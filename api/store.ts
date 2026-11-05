@@ -128,12 +128,23 @@ export default async function handler(req:any,res:any){
  try{
   const sql=db();
   action=String(req.query?.action||req.body?.action||'');
-  if(['buyer-account-data','buyer-follow-shop','buyer-wishlist','buyer-newsletter','buyer-close-account'].includes(action)){
+  if(['buyer-account-data','buyer-delivery-preference','buyer-follow-shop','buyer-wishlist','buyer-newsletter','buyer-close-account'].includes(action)){
    const b=req.body||{},slug=String(req.method==='GET'?req.query?.slug:b.slug||'').toLowerCase().trim();
    const shops=await sql`SELECT id,slug,name FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
    if(!shops.length)return send(res,404,{error:'Shop not found.'});
    const buyer=await buyerSession(sql,req,shops[0].id);if(!buyer)return send(res,401,{error:'Sign in to manage your buyer account.'});
    const userId=buyer.user_id;if(!userId)return send(res,403,{error:'This legacy buyer session must be refreshed. Sign in again to continue.'});
+   if(action==='buyer-delivery-preference'&&req.method==='GET'){
+    const rows=await sql`SELECT delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,updated_at FROM public.buyer_delivery_preferences WHERE buyer_user_id=${userId} LIMIT 1`;
+    const r=rows[0];return send(res,200,{preference:r?{deliveryMethod:r.delivery_method,deliveryCounty:r.delivery_county||'',deliverySubCounty:r.delivery_sub_county||'',deliveryEstate:r.delivery_estate||'',deliveryAddress:r.delivery_address||'',deliveryDirections:r.delivery_directions||'',pickupStation:r.pickup_station||'',updatedAt:r.updated_at}:null});
+   }
+   if(action==='buyer-delivery-preference'&&req.method==='POST'){
+    const method=String(b.deliveryMethod||'').trim(),county=String(b.deliveryCounty||'').trim().slice(0,80),subCounty=String(b.deliverySubCounty||'').trim().slice(0,100),estate=String(b.deliveryEstate||'').trim().slice(0,160),address=String(b.deliveryAddress||'').trim().slice(0,300),directions=String(b.deliveryDirections||'').trim().slice(0,500),pickup=String(b.pickupStation||'').trim().slice(0,200);
+    if(!['home','pickup'].includes(method))return send(res,400,{error:'Choose a valid delivery method.'});
+    if(!county||!subCounty||!estate||!address||(method==='pickup'&&!pickup))return send(res,400,{error:'Complete the county, sub-county, estate, physical address and pickup point where required.'});
+    const rows=await sql`INSERT INTO public.buyer_delivery_preferences(buyer_user_id,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,updated_at) VALUES(${userId},${method},${county},${subCounty},${estate},${address},${directions||null},${pickup||null},now()) ON CONFLICT(buyer_user_id) DO UPDATE SET delivery_method=EXCLUDED.delivery_method,delivery_county=EXCLUDED.delivery_county,delivery_sub_county=EXCLUDED.delivery_sub_county,delivery_estate=EXCLUDED.delivery_estate,delivery_address=EXCLUDED.delivery_address,delivery_directions=EXCLUDED.delivery_directions,pickup_station=EXCLUDED.pickup_station,updated_at=now() RETURNING delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,updated_at`;
+    const r=rows[0];return send(res,200,{ok:true,preference:{deliveryMethod:r.delivery_method,deliveryCounty:r.delivery_county,deliverySubCounty:r.delivery_sub_county,deliveryEstate:r.delivery_estate,deliveryAddress:r.delivery_address,deliveryDirections:r.delivery_directions||'',pickupStation:r.pickup_station||'',updatedAt:r.updated_at}});
+   }
    if(req.method==='GET'&&action==='buyer-account-data'){
     const [follows,wishlist,newsletter,closure]=await Promise.all([
      sql`SELECT t.id,t.slug,t.name FROM public.buyer_shop_follows f JOIN public.tenants t ON t.id=f.followed_tenant_id WHERE f.buyer_user_id=${userId} AND t.status IN ('trial','active') ORDER BY f.created_at DESC LIMIT 100`,
@@ -495,7 +506,7 @@ export default async function handler(req:any,res:any){
    if(!name||!phone||!paymentPhone||!items.length||items.length>30)return send(res,400,{error:'Your buyer account or payment phone is invalid, or the cart is empty.'});
    if(!['home','pickup'].includes(deliveryMethod))return send(res,400,{error:'Choose a valid delivery method.'});
    if(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty||!deliveryEstate||!deliveryAddress))return send(res,400,{error:'Complete county, sub-county, estate/area and physical delivery address.'});
-   if(deliveryMethod==='pickup'&&!pickupStation)return send(res,400,{error:'Enter your preferred pickup area or station.'});
+   if(deliveryMethod==='pickup'&&(!pickupStation||!deliveryCounty||!deliverySubCounty||!deliveryEstate||!deliveryAddress))return send(res,400,{error:'Complete the pickup county, sub-county, estate, collection point and physical address.'});
    const tenantId=shops[0].id,ids=items.map((x:any)=>String(x.id||'')).filter(Boolean);
    const ps=await sql`SELECT id,name,price_minor,stock_quantity FROM public.products WHERE tenant_id=${tenantId} AND is_active=true AND id=ANY(${ids}::uuid[])`;
    if(ps.length!==new Set(ids).size)return send(res,400,{error:'One or more products are no longer available.'});
