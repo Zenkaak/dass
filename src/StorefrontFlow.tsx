@@ -776,35 +776,55 @@ export function StorefrontFlow({
   }
 
   function renderOrderDetail() {
+    const paymentState=String(activeOrder?.paymentStatus||'unpaid').toLowerCase();
+    const orderState=String(activeOrder?.orderStatus||'').toLowerCase();
+    const paid=['succeeded','success','paid'].includes(paymentState);
+    const orderClosed=['cancelled','returned','refunded'].includes(orderState);
+    const canRetryPayment=Boolean(activeOrder?.orderId&&!paid&&!orderClosed);
+    const paymentLabel=paid?'Paid':paymentState==='failed'?'Payment failed':paymentState==='cancelled'?'Payment cancelled':paymentState==='pending'?'Awaiting payment':'Payment not completed';
+    const deliveryLabel=String(activeOrder?.deliveryStatus||'').toLowerCase()==='delivered'?'Delivered':String(activeOrder?.deliveryStatus||'').toLowerCase()==='in_transit'?'In transit':orderState==='processing'?'Processing':'Preparing order';
     const celebration=paymentCelebration?<div className="buyer-payment-celebration" role="status" aria-live="polite"><div className="buyer-confetti-burst">{Array.from({length:36},(_,i)=><i key={i} style={{'--confetti-angle':(i*10)+'deg','--confetti-delay':((i%7)*0.035)+'s'} as any}>{['✦','✧','●','◆','🎉'][i%5]}</i>)}</div><div className="buyer-celebration-message"><strong>Payment successful!</strong><span>Your order is confirmed. Thank you for shopping.</span></div></div>:null;
     if (!activeOrder) return <div className="customer-flow"><FlowHeading title="Order details" onBack={() => onNavigate('orders')} backLabel="My orders" /><div className="customer-empty-state"><h2>No order selected</h2><button type="button" className="customer-primary-button" onClick={() => onNavigate('orders')}>View my orders</button></div></div>;
     return (
-      <section className="customer-flow">
+      <section className="customer-flow market-order-detail-page">
         {celebration}
         <FlowHeading title="Order details" onBack={() => onNavigate('orders')} backLabel="My orders" />
-        <div className="customer-order-detail-heading"><div><small>ORDER NUMBER</small><h2>{activeOrder.orderNumber}</h2><span>Placed {new Date(activeOrder.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })}</span></div><span className={"customer-order-status "+(String(activeOrder.deliveryStatus||'').toLowerCase()==='delivered'?'is-success':['failed','cancelled'].includes(String(activeOrder.paymentStatus||'').toLowerCase())?'is-danger':'')}>{String(activeOrder.deliveryStatus||'').toLowerCase()==='delivered'?'Delivered':String(activeOrder.deliveryStatus||'').toLowerCase()==='in_transit'?'In transit':String(activeOrder.orderStatus||'').toLowerCase()==='processing'?'Processing':String(activeOrder.paymentStatus||'').toLowerCase()==='failed'?'Payment failed':String(activeOrder.paymentStatus||'').toLowerCase()==='succeeded'?'Payment confirmed':String(activeOrder.orderStatus||'').toLowerCase()==='cancelled'?'Cancelled':'Order placed'}</span></div>
-        <div className="customer-checkout-grid">
-          <div className="customer-review-stack">
-            <div className="customer-panel">
-              <div className="customer-panel-heading"><h2>Items in this order</h2><span>{activeOrder.lines.length} items</span></div>
-              {activeOrder.lines.map(({ product, quantity }) => <div className="customer-review-product" key={product.id}><ProductThumb product={product} /><div><strong>{product.name}</strong><small>Qty {quantity}</small><small>{formatKes(product.price)} each</small>{String(activeOrder.deliveryStatus||'').toLowerCase()==='delivered'&&activeOrder.paymentStatus==='succeeded'&&<button type="button" className="customer-order-review-link" onClick={()=>onOpenProduct?.(product)}>★ Review product</button>}</div><b>{formatKes(product.price * quantity)}</b></div>)}
-              {String(activeOrder.deliveryStatus||'').toLowerCase()==='delivered'?<div className="customer-delivered-review-prompt" role="status"><strong>How did we serve you?</strong><span>Your order has been delivered. Share a review of the products you purchased.</span></div>:null}
-              <div className="customer-flow-actions">{String(activeOrder.deliveryStatus||'').toLowerCase()==='delivered'?<button type="button" className="customer-primary-button" onClick={()=>onNavigate('store')}>Shop again <ArrowRight size={17}/></button>:<button type="button" className="customer-primary-button" onClick={() => openOrder(activeOrder, 'order-tracking')}>Track my item <ArrowRight size={17} /></button>}</div>
-            </div>
-            <div className="customer-panel">
-              <div className="customer-panel-heading"><h2>Delivery details</h2></div>
-              <p className="customer-order-address"><MapPin size={18} />{activeOrder.deliveryMethod === 'pickup' ? `Preferred collection: ${activeOrder.pickupStation || 'To be confirmed with seller'}` : [activeOrder.deliveryCounty, activeOrder.deliverySubCounty, activeOrder.deliveryEstate, activeOrder.deliveryAddress].filter(Boolean).join(', ') || 'Delivery destination not recorded'}{activeOrder.deliveryDirections ? ` · Directions: ${activeOrder.deliveryDirections}` : ''}</p>
-              <p className="customer-order-address"><UserRound size={18} />{activeOrder.customerName} · {activeOrder.customerPhone}</p>
-            </div>
+        <header className="market-order-hero">
+          <div className="market-order-hero-copy"><span>ORDER SUMMARY</span><h2>{activeOrder.orderNumber}</h2><p>Placed {new Date(activeOrder.createdAt).toLocaleDateString('en-KE',{day:'numeric',month:'long',year:'numeric'})}</p></div>
+          <div className="market-order-statuses"><span className={paid?'is-paid':canRetryPayment?'is-attention':'is-neutral'}>{paymentLabel}</span><span>{deliveryLabel}</span></div>
+          <strong className="market-order-total">{formatKes(activeOrder.total)}<small>Order total</small></strong>
+        </header>
+        <div className="market-order-detail-grid">
+          <div className="market-order-detail-main">
+            <section className="market-order-section">
+              <div className="market-order-section-heading"><div><span>YOUR PURCHASE</span><h3>Items in this order</h3></div><small>{activeOrder.lines.reduce((n,line)=>n+line.quantity,0)} items</small></div>
+              <div className="market-order-items">{activeOrder.lines.map(({product,quantity})=><article className="market-order-item" key={product.id}><ProductThumb product={product}/><div><strong>{product.name}</strong><small>Quantity: {quantity}</small><small>{formatKes(product.price)} each</small>{String(activeOrder.deliveryStatus||'').toLowerCase()==='delivered'&&paid&&<button type="button" className="customer-order-review-link" onClick={()=>onOpenProduct?.(product)}>★ Review product</button>}</div><b>{formatKes(product.price*quantity)}</b></article>)}</div>
+              {String(activeOrder.deliveryStatus||'').toLowerCase()==='delivered'&&<div className="market-order-delivered-note"><strong>Order delivered</strong><span>We hope everything arrived safely. You can review the products you purchased.</span></div>}
+              <div className="market-order-section-actions">{String(activeOrder.deliveryStatus||'').toLowerCase()==='delivered'?<button type="button" className="customer-primary-button" onClick={()=>onNavigate('store')}>Shop again <ArrowRight size={16}/></button>:<button type="button" className="customer-secondary-button" onClick={()=>openOrder(activeOrder,'order-tracking')}>Track order <ArrowRight size={16}/></button>}</div>
+            </section>
+            <section className="market-order-section">
+              <div className="market-order-section-heading"><div><span>FULFILMENT</span><h3>Delivery details</h3></div></div>
+              <div className="market-order-info-row"><MapPin size={19}/><div><strong>{activeOrder.deliveryMethod==='pickup'?'Pickup / collection point':'Delivery address'}</strong><p>{activeOrder.deliveryMethod==='pickup'?activeOrder.pickupStation||'To be confirmed with seller':[activeOrder.deliveryCounty,activeOrder.deliverySubCounty,activeOrder.deliveryEstate,activeOrder.deliveryAddress].filter(Boolean).join(', ')||'Destination not recorded'}{activeOrder.deliveryDirections?' · '+activeOrder.deliveryDirections:''}</p></div></div>
+              <div className="market-order-info-row"><UserRound size={19}/><div><strong>Contact details</strong><p>{activeOrder.customerName} · {activeOrder.customerPhone}{activeOrder.customerEmail?' · '+activeOrder.customerEmail:''}</p></div></div>
+            </section>
             {chatPanel}
           </div>
-          <aside className="customer-summary-card">
-            <h2>Payment summary</h2>
-            <div className="customer-summary-row"><span>Items</span><strong>{formatKes(activeOrder.subtotal)}</strong></div>
-            <div className="customer-summary-row"><span>Delivery</span><strong>{formatKes(activeOrder.deliveryFee)}</strong></div>
-            <div className="customer-summary-row customer-summary-total"><span>Total</span><strong>{formatKes(activeOrder.total)}</strong></div>
-            <p className="customer-preview-note"><WalletCards size={15} /> {paymentLabels[activeOrder.paymentMethod]}</p>
-            {['failed','cancelled'].includes(String(activeOrder.paymentStatus).toLowerCase())&&<div className="customer-summary-retry"><label className="customer-form-label">M-PESA number to pay with<input type="tel" inputMode="tel" autoComplete="tel" value={retryPaymentPhone} onChange={e=>setRetryPaymentPhone(e.target.value)} placeholder="07XX XXX XXX or 2547XXXXXXXX" maxLength={16}/></label><button type="button" className="buyer-retry-payment" onClick={retryActiveOrderPayment} disabled={retryingOrder}>{retryingOrder?'Sending M-PESA prompt…':'↻ Retry payment'}</button>{retryMessage&&<small role="status">{retryMessage}</small>}</div>}
+          <aside className="market-order-detail-aside">
+            <section className="market-order-section market-order-payment-card">
+              <div className="market-order-section-heading"><div><span>PAYMENT</span><h3>Payment summary</h3></div><span className={'market-order-payment-state '+(paid?'is-paid':canRetryPayment?'is-attention':'')}>{paymentLabel}</span></div>
+              <div className="market-order-money-row"><span>Items subtotal</span><strong>{formatKes(activeOrder.subtotal)}</strong></div>
+              <div className="market-order-money-row"><span>Delivery</span><strong>{formatKes(activeOrder.deliveryFee)}</strong></div>
+              {activeOrder.discount? <div className="market-order-money-row"><span>Discount</span><strong>−{formatKes(activeOrder.discount)}</strong></div>:null}
+              <div className="market-order-money-total"><span>Total paid / due</span><strong>{formatKes(activeOrder.total)}</strong></div>
+              <p className="market-order-payment-method"><WalletCards size={16}/>{paymentLabels[activeOrder.paymentMethod]}{activeOrder.receipt?' · Receipt '+activeOrder.receipt:''}</p>
+              {canRetryPayment&&<div className="market-order-retry">
+                <div><strong>{paymentState==='pending'?'Payment still pending?':'Complete your payment'}</strong><p>{paymentState==='pending'?'If the M-PESA prompt expired or did not arrive, you can send it again.':'Your order is saved. Retry M-PESA securely to complete payment.'}</p></div>
+                <label className="customer-form-label">M-PESA number<input type="tel" inputMode="tel" autoComplete="tel" value={retryPaymentPhone} onChange={e=>setRetryPaymentPhone(e.target.value)} placeholder="07XX XXX XXX or 2547XXXXXXXX" maxLength={16}/></label>
+                <button type="button" className="buyer-retry-payment" onClick={retryActiveOrderPayment} disabled={retryingOrder}>{retryingOrder?'Sending payment prompt…':'Retry payment'}</button>
+                {retryMessage&&<small className="market-order-retry-message" role="status">{retryMessage}</small>}
+              </div>}
+            </section>
+            <div className="market-order-help-note"><ShieldCheck size={17}/><span>Keep your order number and payment receipt for reference. Never share your M-PESA PIN or one-time codes.</span></div>
           </aside>
         </div>
       </section>
