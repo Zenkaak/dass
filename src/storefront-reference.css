@@ -1373,6 +1373,25 @@
   gap: 16px;
   min-width: 0;
 }
+.store-page .ds-store-featured-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(var(--featured-rows, 1), auto);
+  grid-auto-columns: calc((100% - 36px) / 4);
+  align-content: start;
+  justify-content: start;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.store-page .ds-store-featured-grid > .ds-store-card {
+  width: 100%;
+  min-width: 0;
+}
+@media (max-width: 760px) {
+  .store-page .ds-store-featured-grid {
+    grid-auto-columns: calc((100% - 16px) / 3);
+  }
+}
 .store-page .ds-store-collection-row {
   display: flex;
   flex-flow: row nowrap;
