@@ -4544,3 +4544,128 @@
   .market-order-item .customer-product-thumb { width:52px; height:52px; }
   .market-order-item>b { font-size:11px; }
 }
+
+
+/* Storefront checkout and order screens: compact, legible and never clipped. */
+.customer-flow-heading { gap:12px; flex-wrap:wrap; }
+.customer-flow-heading h1 { min-width:0; flex:1 1 auto; }
+.customer-back-button { flex:0 0 auto; min-width:max-content; }
+.customer-primary-button,.customer-secondary-button,.customer-flow-actions button,
+.market-order-section-actions button,.market-checkout-bottom-action button {
+  flex-shrink:0; white-space:nowrap; max-width:100%; text-overflow:clip;
+}
+.customer-flow-actions { display:flex; flex-wrap:wrap; gap:10px; }
+.customer-flow-actions>button { min-width:max-content; }
+.market-checkout-redesign { margin-top:18px!important; margin-bottom:42px!important; }
+.market-checkout-redesign .customer-flow-heading { margin-bottom:15px; gap:12px; }
+.market-checkout-redesign .market-checkout-intro { margin-bottom:14px; }
+.market-checkout-redesign .market-checkout-card { margin-bottom:11px; padding:16px 18px; border-radius:12px; }
+.market-checkout-redesign .market-checkout-card-heading { margin-bottom:12px; }
+.market-checkout-redesign .market-checkout-delivery-choice { gap:10px; margin-bottom:12px; }
+.market-checkout-redesign .market-checkout-delivery-choice>button { min-height:72px; padding:12px; border-radius:11px; }
+.market-checkout-redesign .market-checkout-delivery-choice button.active { padding:11px; }
+.market-checkout-redesign .market-checkout-progress { margin-bottom:16px; padding:10px 12px; border-radius:12px; }
+.market-checkout-redesign .market-checkout-bottom-action { margin-top:14px!important; padding:11px 14px!important; border-radius:11px!important; }
+.market-order-detail-page { max-width:1080px; margin-top:14px!important; margin-bottom:28px!important; }
+.market-order-hero { gap:14px; margin-bottom:12px; padding:14px 17px; border-radius:12px; }
+.market-order-hero-copy h2 { font-size:17px; }
+.market-order-total { font-size:19px; }
+.market-order-detail-grid { gap:12px; grid-template-columns:minmax(0,1fr) 310px; }
+.market-order-detail-main,.market-order-detail-aside { gap:11px; }
+.market-order-section { padding:14px 16px; border-radius:12px; }
+.market-order-section-heading { margin-bottom:8px; }
+.market-order-section-heading h3 { font-size:14px; }
+.market-order-item { grid-template-columns:54px minmax(0,1fr) auto; gap:10px; padding:8px 0; }
+.market-order-item .customer-product-thumb { width:52px; height:52px; }
+.market-order-info-row { padding:8px 0; gap:9px; }
+.market-order-money-row { padding:7px 0; }
+.market-order-money-total { padding-top:10px; }
+.market-order-retry { gap:8px; margin-top:10px; padding:11px; }
+.market-order-retry .customer-form-label { gap:5px; }
+.market-order-retry input { min-height:39px; }
+.market-order-retry .buyer-retry-payment { min-height:40px; }
+@media(max-width:760px) {
+ .market-order-detail-grid { grid-template-columns:minmax(0,1fr); }
+ .market-order-detail-aside { order:0; }
+ .market-order-hero { grid-template-columns:minmax(0,1fr) auto; }
+}
+@media(max-width:600px) {
+ .customer-flow { width:calc(100% - 24px); margin-top:14px; margin-bottom:26px; }
+ .customer-flow-heading { align-items:flex-start; gap:9px; margin-bottom:14px; }
+ .customer-flow-heading h1 { flex:1 1 100%; font-size:22px; }
+ .customer-back-button { min-height:34px; padding:6px 9px; font-size:12px; }
+ .customer-flow-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); width:100%; }
+ .customer-flow-actions>button { width:100%; min-width:0; padding:10px 8px; font-size:12px; }
+ .market-checkout-redesign { width:calc(100% - 22px)!important; margin:12px auto 24px!important; }
+ .market-checkout-redesign .customer-flow-heading { display:flex; flex-wrap:wrap; margin-bottom:12px; }
+ .market-checkout-redesign .customer-flow-heading h1 { flex:1 1 100%; font-size:22px; }
+ .market-checkout-redesign .market-checkout-progress { margin-bottom:12px; padding:8px 5px; }
+ .market-checkout-progress-step { gap:6px; padding:3px 5px; }
+ .market-checkout-progress-step>span { width:27px; height:27px; flex-basis:27px; font-size:9px; }
+ .market-checkout-progress-step strong { font-size:10px; }
+ .market-checkout-progress-step small { font-size:8px; }
+ .market-checkout-redesign .market-checkout-card { padding:13px; margin-bottom:9px; }
+ .market-checkout-redesign .market-checkout-delivery-choice>button { min-height:68px; gap:8px; padding:10px; }
+ .market-checkout-redesign .market-checkout-bottom-action { display:flex!important; flex-wrap:wrap; gap:10px; margin:12px 0 8px!important; padding:11px!important; }
+ .market-checkout-redesign .market-checkout-bottom-action>div { flex:1; }
+ .market-checkout-redesign .market-checkout-bottom-action>button { min-width:100%; width:100%; min-height:44px; }
+ .market-order-detail-page { width:calc(100% - 20px); margin:10px auto 20px!important; }
+ .market-order-hero { grid-template-columns:minmax(0,1fr) auto; padding:12px; gap:9px; }
+ .market-order-hero-copy h2 { font-size:15px; }
+ .market-order-hero-copy p { font-size:10px; }
+ .market-order-statuses { grid-column:1/-1; grid-row:auto; }
+ .market-order-total { font-size:17px; }
+ .market-order-section { padding:12px; }
+ .market-order-section-actions { justify-content:stretch; }
+ .market-order-section-actions button { width:100%; }
+ .market-order-item>div strong { font-size:11px; }
+ .market-order-item>div small { font-size:9px; }
+ .market-order-item>b { font-size:10px; }
+}
+
+/* A refined, full-width conversation surface with clear hierarchy and a
+   usable composer on narrow screens. */
+.store-chat-panel {
+  min-width:0; padding:18px; border:1px solid #e6ebf0; border-radius:14px;
+  background:#fff; box-shadow:0 4px 16px rgba(22,42,58,.045);
+}
+.store-chat-heading {
+  display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+  padding-bottom:13px; margin-bottom:12px; border-bottom:1px solid #edf1f4;
+}
+.store-chat-heading h2 { margin:4px 0 3px; color:#1c3344; font-size:17px; font-weight:800; letter-spacing:-.025em; }
+.store-chat-heading p { margin:0; color:#778692; font-size:11px; }
+.store-chat-live { flex:0 0 auto; padding:6px 9px; border-radius:99px; background:#eef7f1; color:#26734a; font-size:10px; font-weight:750; }
+.store-chat-messages {
+  display:flex; flex-direction:column; gap:10px; min-height:150px; max-height:340px;
+  overflow-y:auto; padding:5px 2px 13px; overscroll-behavior:contain;
+}
+.store-chat-message { width:min(86%,520px); padding:10px 12px; border:1px solid #e8edf1; border-radius:12px; background:#f7f9fb; }
+.store-chat-message.mine { align-self:flex-end; border-color:#f2dfc9; background:#fff8f0; }
+.store-chat-message>span { display:block; margin-bottom:4px; color:#526576; font-size:10px; font-weight:800; }
+.store-chat-message p { margin:0; color:#293e4e; font-size:12px; line-height:1.5; overflow-wrap:anywhere; }
+.store-chat-message small { display:block; margin-top:6px; color:#8b98a3; font-size:9px; }
+.store-chat-compose { display:flex; align-items:center; gap:8px; padding:9px; border:1px solid #e1e8ed; border-radius:11px; background:#fbfcfd; }
+.store-chat-compose input { min-width:0; flex:1; min-height:42px; padding:9px 11px; border:0; outline:0; background:transparent; color:#263b4a; font:inherit; font-size:12px; }
+.store-chat-compose button { min-height:40px; padding:0 16px; border:0; border-radius:8px; white-space:nowrap; }
+.chat-file-upload { display:flex; align-items:center; flex-wrap:wrap; gap:7px; margin-top:10px; color:#526879; font-size:11px; font-weight:750; cursor:pointer; }
+.chat-file-upload small { flex-basis:100%; margin-left:22px; color:#8a97a2; font-size:9px; font-weight:500; }
+.chat-attachments { display:grid; gap:7px; margin:8px 0 12px; padding:10px; border-radius:10px; background:#f6f8fa; }
+.chat-attachments>strong { color:#526576; font-size:10px; }
+.chat-attachments button { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:7px 0; border:0; background:transparent; color:#405666; font-size:10px; text-align:left; overflow-wrap:anywhere; }
+.storefront-platform-footer { background:#fff!important; color:#34495a!important; border-top:1px solid #e7edf1!important; }
+.storefront-platform-footer .storefront-footer-logo strong { color:#1c3445!important; }
+.storefront-platform-footer .storefront-footer-grid>div>b { color:#243b4b!important; }
+.storefront-platform-footer .storefront-footer-grid a,.storefront-platform-footer .storefront-footer-grid button { color:#617282!important; }
+.storefront-platform-footer .storefront-footer-bottom { color:#7b8995!important; border-top:1px solid #edf1f4!important; }
+.ds-store-product-footer { margin-top:28px!important; }
+@media(max-width:600px) {
+ .store-chat-panel { padding:13px; border-radius:12px; }
+ .store-chat-heading { gap:8px; }
+ .store-chat-heading h2 { font-size:15px!important; }
+ .store-chat-messages { max-height:48vh; min-height:120px; }
+ .store-chat-message { width:92%; }
+ .store-chat-compose { gap:5px; padding:6px; }
+ .store-chat-compose button { min-height:39px; padding:0 11px; }
+ .chat-file-upload small { margin-left:0; }
+}
