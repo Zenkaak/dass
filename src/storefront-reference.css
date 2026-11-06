@@ -996,3 +996,48 @@
   .store-page .campaign-copy em{font-size:8px!important}
   .store-page .campaign-art{font-size:30px!important}
 }
+
+
+/* Reference storefront home: compact category discovery and horizontal spotlight rails. */
+.store-page .ds-store-category-showcase,
+.store-page .ds-store-spotlight-section,
+.store-page .ds-store-budget-section { margin:22px 0 26px; }
+.store-page .ds-store-category-showcase { padding:20px; border:1px solid #e8edf3; border-radius:16px; background:#fff; }
+.store-page .ds-store-category-showcase .ds-store-section-title,
+.store-page .ds-store-spotlight-section .ds-store-section-title,
+.store-page .ds-store-budget-section .ds-store-section-title { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 15px; }
+.store-page .ds-store-category-showcase .ds-store-section-title h2,
+.store-page .ds-store-spotlight-section .ds-store-section-title h2,
+.store-page .ds-store-budget-section .ds-store-section-title h2 { margin:2px 0 0; color:#172033; font-size:20px; font-weight:780; letter-spacing:-.035em; }
+.store-page .ds-store-category-showcase .ds-store-section-title button,
+.store-page .ds-store-spotlight-section .ds-store-section-title button,
+.store-page .ds-store-budget-section .ds-store-section-title button { display:inline-flex; align-items:center; gap:7px; min-height:36px; padding:7px 10px; border:1px solid #e4eaf1; border-radius:8px; background:#fff; color:#225b9b; font-size:11px; font-weight:750; white-space:nowrap; }
+.store-page .ds-store-category-grid { display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:10px; }
+.store-page .ds-store-category-tile { display:flex; min-width:0; min-height:116px; flex-direction:column; align-items:center; justify-content:center; gap:7px; padding:12px 8px; border:1px solid #edf0f4; border-radius:12px; background:#fff; color:#273448; text-align:center; transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease; }
+.store-page .ds-store-category-tile:hover { transform:translateY(-2px); border-color:#cbd8e7; box-shadow:0 5px 15px rgba(20,32,51,.06); }
+.store-page .ds-store-category-tile>span { display:grid; width:48px; height:48px; place-items:center; border-radius:50%; background:#f2f6fa; font-size:25px; }
+.store-page .ds-store-category-tile b { max-width:100%; color:#263449; font-size:11px; line-height:1.35; font-weight:700; }
+.store-page .ds-store-category-tile small { color:#8793a3; font-size:9px; }
+.store-page .ds-store-spotlight-section .ds-store-rail,
+.store-page .ds-store-budget-section .ds-store-rail { display:grid; grid-auto-columns:minmax(190px,1fr); grid-auto-flow:column; gap:13px; overflow-x:auto; overscroll-behavior-inline:contain; padding:2px 1px 10px; scroll-snap-type:x mandatory; scrollbar-width:thin; }
+.store-page .ds-store-spotlight-card,
+.store-page .ds-store-budget-section .ds-store-card { position:relative; min-width:0; scroll-snap-align:start; overflow:hidden; border:1px solid #e6ebf1; border-radius:13px; background:#fff; }
+.store-page .ds-store-spotlight-card .ds-store-fav { position:absolute; z-index:2; top:10px; right:10px; display:grid; width:34px; height:34px; place-items:center; border:1px solid #e8edf3; border-radius:50%; background:#fff; color:#46566c; }
+.store-page .ds-store-spotlight-card .ds-store-product-image { position:relative; }
+.store-page .ds-store-spotlight-card .ds-store-product-image>i { position:absolute; top:9px; left:9px; padding:5px 8px; border-radius:5px; background:#ffbf36; color:#382600; font-size:9px; font-style:normal; font-weight:800; }
+.store-page .ds-store-budget-section .ds-store-card .ds-store-product { width:100%; }
+.store-page .ds-store-spotlight-section .ds-store-add,
+.store-page .ds-store-budget-section .ds-store-add { margin:0 11px 11px; width:calc(100% - 22px); }
+@media(max-width:1100px){.store-page .ds-store-category-grid{grid-template-columns:repeat(6,minmax(0,1fr));}}
+@media(max-width:760px){
+ .store-page .ds-store-category-showcase{margin:15px 0 19px;padding:13px 11px;border-radius:12px;}
+ .store-page .ds-store-category-showcase .ds-store-section-title h2,.store-page .ds-store-spotlight-section .ds-store-section-title h2,.store-page .ds-store-budget-section .ds-store-section-title h2{font-size:16px;}
+ .store-page .ds-store-category-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}
+ .store-page .ds-store-category-tile{min-height:105px;padding:9px 5px;gap:6px;border-radius:10px;}
+ .store-page .ds-store-category-tile>span{width:42px;height:42px;font-size:22px;}
+ .store-page .ds-store-category-tile b{font-size:10px;}
+ .store-page .ds-store-category-tile small{font-size:8px;}
+ .store-page .ds-store-spotlight-section .ds-store-rail,.store-page .ds-store-budget-section .ds-store-rail{grid-auto-columns: minmax(155px,46%);gap:10px;}
+ .store-page .ds-store-spotlight-section,.store-page .ds-store-budget-section{margin:17px 0 20px;}
+}
+@media(max-width:360px){.store-page .ds-store-category-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
