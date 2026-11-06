@@ -1069,3 +1069,65 @@
 .store-page .ds-store-head .ds-store-menu-trigger { display:grid; flex:0 0 40px; width:40px; height:40px; place-items:center; border:1px solid #e6ebf1; border-radius:9px; background:#fff; color:#26364b; }
 .store-page .ds-store-head .ds-store-menu-trigger:hover { border-color:#cbd7e5; background:#f8fafc; }
 @media(max-width:760px){.store-page .ds-store-head .ds-store-menu-trigger{width:36px;height:36px;flex-basis:36px;}}
+
+
+/* Match the reference recording: primary shop bar, separate full-width search row. */
+.store-page .ds-store-navigation { position:sticky; top:0; z-index:45; display:flex; flex-direction:column; gap:0; margin:0 -1px 16px; background:#fff; border-bottom:1px solid #e8edf2; box-shadow:0 2px 9px rgba(24,39,58,.045); }
+.store-page .ds-store-navigation-main { display:flex; align-items:center; gap:15px; min-height:66px; padding:8px clamp(12px,2.4vw,30px); }
+.store-page .ds-store-navigation .ds-store-menu-trigger { flex:0 0 40px; width:40px; height:40px; display:grid; place-items:center; border:0; border-radius:8px; background:#f4f6f8; color:#27374a; }
+.store-page .ds-store-navigation .ds-store-brand { display:flex; flex:0 0 auto; align-items:center; gap:9px; text-decoration:none; color:#1e2b3d; }
+.store-page .ds-store-navigation .ds-store-mark { display:grid; width:38px; height:38px; place-items:center; overflow:hidden; border-radius:8px; background:#f5f7fa; }
+.store-page .ds-store-navigation .ds-store-mark img { width:100%; height:100%; object-fit:contain; }
+.store-page .ds-store-navigation .ds-store-brand-word { font-size:17px; font-weight:900; letter-spacing:-.045em; }
+.store-page .ds-store-navigation .ds-store-shop-name { min-width:0; margin-left:8px; overflow:hidden; color:#e5a900; font-size:17px; font-weight:850; text-overflow:ellipsis; white-space:nowrap; }
+.store-page .ds-store-navigation .ds-store-header-actions { display:flex; align-items:center; gap:8px; margin-left:auto; }
+.store-page .ds-store-navigation .ds-store-header-actions button { position:relative; display:grid; width:40px; height:40px; place-items:center; border:0; border-radius:9px; background:#f6f7f9; color:#26364b; }
+.store-page .ds-store-navigation .ds-store-header-actions button b { position:absolute; top:-4px; right:-4px; display:grid; min-width:17px; height:17px; place-items:center; padding:0 4px; border-radius:99px; background:#f4b400; color:#241b00; font-size:10px; }
+.store-page .ds-store-navigation .ds-store-search { display:flex; align-items:center; gap:10px; min-height:48px; margin:0; padding:6px clamp(12px,2.4vw,30px); border-top:1px solid #f0f2f5; background:#fafbfc; color:#7d8998; }
+.store-page .ds-store-navigation .ds-store-search input { flex:1; min-width:0; height:36px; border:0; outline:0; background:transparent; color:#26364b; font-size:13px; }
+.store-page .ds-store-navigation .ds-store-search button { min-width:82px; height:34px; border:0; border-radius:7px; background:#f4b400; color:#241b00; font-size:12px; font-weight:800; }
+.store-page .ds-store .ds-store-hero { margin-top:0; }
+
+/* The recording shows two product rows inside a horizontal browsing track. */
+.store-page .ds-store-rail,
+.store-page .ds-store-catalogue .ds-store-grid {
+ display:grid;
+ grid-auto-flow:column;
+ grid-template-rows:repeat(2,minmax(0,1fr));
+ grid-auto-columns:clamp(138px,15.2vw,166px);
+ gap:12px;
+ overflow-x:auto;
+ overflow-y:hidden;
+ overscroll-behavior-inline:contain;
+ padding:3px 2px 12px;
+ scroll-snap-type:x mandatory;
+ scrollbar-width:thin;
+}
+.store-page .ds-store-rail>.ds-store-card,
+.store-page .ds-store-catalogue .ds-store-grid>.ds-store-card { min-width:0; width:100%; scroll-snap-align:start; }
+.store-page .ds-store-catalogue .ds-store-grid { margin-top:12px; }
+.store-page .market-detail-related .market-related-grid { display:grid; grid-auto-flow:column; grid-auto-columns:clamp(145px,16vw,180px); grid-template-rows:repeat(2,minmax(0,1fr)); gap:12px; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; }
+.store-page .market-detail-related .market-related-card { min-width:0; scroll-snap-align:start; }
+@media(min-width:1200px){
+ .store-page .ds-store-rail,.store-page .ds-store-catalogue .ds-store-grid{grid-auto-columns:155px;gap:14px;}
+}
+@media(max-width:760px){
+ .store-page .ds-store-navigation{margin:0 -10px 12px;}
+ .store-page .ds-store-navigation-main{min-height:57px;gap:8px;padding:7px 10px;}
+ .store-page .ds-store-navigation .ds-store-menu-trigger{width:35px;height:35px;flex-basis:35px;}
+ .store-page .ds-store-navigation .ds-store-mark{width:31px;height:31px;}
+ .store-page .ds-store-navigation .ds-store-brand-word{font-size:13px;}
+ .store-page .ds-store-navigation .ds-store-shop-name{margin-left:1px;font-size:14px;}
+ .store-page .ds-store-navigation .ds-store-header-actions{gap:5px;}
+ .store-page .ds-store-navigation .ds-store-header-actions button{width:34px;height:34px;}
+ .store-page .ds-store-navigation .ds-store-search{min-height:43px;padding:4px 10px;}
+ .store-page .ds-store-navigation .ds-store-search input{font-size:12px;}
+ .store-page .ds-store-navigation .ds-store-search button{min-width:62px;height:32px;font-size:11px;}
+ .store-page .ds-store-rail,.store-page .ds-store-catalogue .ds-store-grid{grid-auto-columns:clamp(136px,42vw,158px);gap:9px;}
+ .store-page .market-detail-related .market-related-grid{grid-auto-columns:clamp(140px,43vw,165px);gap:9px;}
+}
+@media(max-width:360px){
+ .store-page .ds-store-navigation .ds-store-brand-word{display:none;}
+ .store-page .ds-store-navigation .ds-store-shop-name{font-size:12px;}
+ .store-page .ds-store-navigation .ds-store-header-actions button{width:31px;height:32px;}
+}
