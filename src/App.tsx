@@ -221,24 +221,23 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
     <main className="ds-store">
       <header className="ds-store-navigation">
         <div className="ds-store-navigation-main">
-          <button type="button" className="ds-store-menu-trigger" aria-label="Open shop categories" onClick={()=>setMobileSidebarOpen(true)}><Menu size={25}/></button>
-          <a className="ds-store-brand" href={buyerPath('store')} onClick={e=>{e.preventDefault();navigateBuyerPage('store')}} aria-label={(shop?.name||'Shop')+' home'}>
-            <span className="ds-store-mark">{shop?.logoUrl?<img src={shop.logoUrl} alt=""/>:<Store size={27}/>}</span>
-            <span className="ds-store-brand-copy"><strong>{shop?.name||'OUR STORE'}</strong><small>MARKET</small></span>
+          <button type="button" className="ds-store-menu-trigger" aria-label="Open shop categories" onClick={()=>setMobileSidebarOpen(true)}><Menu size={21}/></button>
+          <a className="ds-store-brand" href={buyerPath('store')} onClick={e=>{e.preventDefault();navigateBuyerPage('store')}}>
+            <span className="ds-store-mark">{shop?.logoUrl?<img src={shop.logoUrl} alt=""/>:<Store size={21}/>}</span>
+            <strong className="ds-store-brand-word">DASMARKET</strong>
           </a>
+          <div className="ds-store-shop-name">{shop?.name||'OUR STORE'}</div>
           <div className="ds-store-header-actions">
-            <button type="button" className="ds-store-account" onClick={()=>{if(!buyerCustomer){setBuyerReturnPage('account');navigateBuyerPage('buyer-login')}else navigateBuyerPage('account')}} aria-label="My account" title="My account"><UserRound size={25}/></button>
-            <button type="button" className="ds-store-create" onClick={()=>window.location.assign('/signup')} aria-label="Start selling" title="Start selling"><Plus size={30}/></button>
+            <button type="button" className="ds-store-notification" aria-label="Notifications" title="Notifications" onClick={()=>{if(!buyerCustomer){setBuyerReturnPage('account');navigateBuyerPage('buyer-login')}else navigateBuyerPage('account')}}><Bell size={19}/></button>
+            <button type="button" className="ds-store-account" onClick={()=>{if(!buyerCustomer){setBuyerReturnPage('account');navigateBuyerPage('buyer-login')}else navigateBuyerPage('account')}} aria-label="My account" title="My account"><UserRound size={19}/></button>
+            <button type="button" className="ds-store-cart" onClick={()=>navigateBuyerPage('cart')} aria-label="Cart"><ShoppingCart size={19}/>{cartItems.length>0&&<b>{cartItems.reduce((n,[,q])=>n+q,0)}</b>}</button>
           </div>
         </div>
-        <div className="ds-store-search-row">
-          <div className="ds-store-location"><MapPin size={22}/><span>All Kenya</span><span className="ds-store-location-chevron">⌄</span></div>
-          <label className="ds-store-search">
-            <Search size={22}/>
-            <input aria-label="Search this store" value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){setFilter('All products');navigateBuyerPage('store')}}} placeholder="Search products in this store"/>
-            <button type="button" aria-label="Search by image" title="Search by image"><Camera size={24}/></button>
-          </label>
-        </div>
+        <label className="ds-store-search">
+          <Search size={18}/>
+          <input aria-label="Search this store" value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){setFilter('All products');navigateBuyerPage('store')}}} placeholder="Search products in this store"/>
+          <button type="button" onClick={()=>{setFilter('All products');navigateBuyerPage('store');document.getElementById('market-products-grid')?.scrollIntoView({behavior:'smooth',block:'start'})}}>Search</button>
+        </label>
       </header>
       <section className="ds-store-hero">
         <div className="ds-store-hero-copy">
