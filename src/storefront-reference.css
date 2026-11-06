@@ -1539,3 +1539,56 @@
     gap: 8px !important;
   }
 }
+
+
+/* Catalogue: six products per independently scrolling row.
+   The number of rows is ceil(product count / 6); mobile shows 3 of each row
+   at a time and swipes that row alone to reveal its remaining 3 products. */
+.store-page .ds-store-catalogue-rows {
+  display:flex !important;
+  flex-direction:column !important;
+  gap:14px !important;
+  width:100% !important;
+  min-width:0 !important;
+}
+.store-page .ds-store-catalogue-row,
+.store-page .ds-store-collection-row {
+  display:flex !important;
+  flex-flow:row nowrap !important;
+  align-items:stretch !important;
+  gap:10px !important;
+  width:100% !important;
+  min-width:0 !important;
+  overflow-x:auto !important;
+  overflow-y:hidden !important;
+  overscroll-behavior-x:contain !important;
+  -webkit-overflow-scrolling:touch !important;
+  scroll-snap-type:x mandatory !important;
+  scroll-padding-inline:2px !important;
+  padding:2px 2px 10px !important;
+  scrollbar-width:thin;
+}
+.store-page .ds-store-catalogue-row > .ds-store-card,
+.store-page .ds-store-collection-row > .ds-store-card {
+  flex:0 0 calc((100% - 50px) / 6) !important;
+  width:calc((100% - 50px) / 6) !important;
+  min-width:0 !important;
+  max-width:calc((100% - 50px) / 6) !important;
+  height:auto !important;
+  scroll-snap-align:start !important;
+  scroll-snap-stop:always !important;
+}
+@media(max-width:760px) {
+  .store-page .ds-store-catalogue-rows { gap:10px !important; }
+  .store-page .ds-store-catalogue-row,
+  .store-page .ds-store-collection-row {
+    gap:8px !important;
+    scroll-snap-type:x mandatory !important;
+  }
+  .store-page .ds-store-catalogue-row > .ds-store-card,
+  .store-page .ds-store-collection-row > .ds-store-card {
+    flex-basis:calc((100% - 16px) / 3) !important;
+    width:calc((100% - 16px) / 3) !important;
+    max-width:calc((100% - 16px) / 3) !important;
+  }
+}
