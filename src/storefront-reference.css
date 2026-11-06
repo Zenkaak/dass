@@ -1041,3 +1041,26 @@
  .store-page .ds-store-spotlight-section,.store-page .ds-store-budget-section{margin:17px 0 20px;}
 }
 @media(max-width:360px){.store-page .ds-store-category-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+
+
+/* Product details follow the reference marketplace's clean stacked information panels. */
+.store-page .market-detail-description-panel,
+.store-page .market-detail-specifications,
+.store-page .market-detail-delivery,
+.store-page .market-detail-safety { margin-top:14px; padding:16px 18px; border:1px solid #e7ecf2; border-radius:13px; background:#fff; }
+.store-page .market-detail-description-panel h2,
+.store-page .market-detail-specifications h2,
+.store-page .market-detail-safety h2 { margin:0 0 10px; color:#1c293b; font-size:15px; font-weight:750; }
+.store-page .market-detail-description-panel p,
+.store-page .market-detail-delivery p { margin:0; color:#68778c; font-size:12px; line-height:1.7; }
+.store-page .market-detail-specifications>div { display:flex; justify-content:space-between; gap:14px; padding:10px 0; border-top:1px solid #edf1f5; color:#718096; font-size:11px; }
+.store-page .market-detail-specifications>div strong { color:#344256; font-weight:650; text-align:right; }
+.store-page .market-detail-safety h2 { display:flex; align-items:center; gap:8px; }
+.store-page .market-detail-safety h2 svg { color:#246caa; }
+.store-page .market-detail-safety ul { margin:0; padding-left:18px; color:#647287; font-size:11px; line-height:1.8; }
+.store-page .market-detail-add-desktop,.store-page .market-detail-mobile-bar button { min-height:48px; border-radius:9px; font-size:13px; font-weight:800; letter-spacing:0; }
+@media(max-width:760px){
+ .store-page .market-detail-description-panel,.store-page .market-detail-specifications,.store-page .market-detail-delivery,.store-page .market-detail-safety{padding:13px;margin-top:10px;border-radius:11px;}
+ .store-page .market-detail-description-panel h2,.store-page .market-detail-specifications h2,.store-page .market-detail-safety h2{font-size:14px;}
+ .store-page .market-detail-specifications>div{font-size:10px;padding:9px 0;}
+}
