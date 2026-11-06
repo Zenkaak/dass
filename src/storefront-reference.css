@@ -1621,3 +1621,21 @@
     gap:9px !important;
   }
 }
+
+
+/* Featured hero: transition the complete product card as one sliding panel. */
+.store-page .ds-store-hero {
+  overflow: hidden !important;
+  isolation: isolate;
+}
+.store-page .ds-store-hero.ds-store-hero-enter,
+.store-page .ds-store-hero {
+  animation: ds-store-featured-card-slide 720ms cubic-bezier(.22,.75,.25,1) both;
+}
+@keyframes ds-store-featured-card-slide {
+  from { opacity: .72; transform: translateX(8%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .store-page .ds-store-hero { animation: none !important; }
+}
