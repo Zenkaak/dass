@@ -614,6 +614,7 @@ export function StorefrontFlow({
           <button type="button" role="tab" aria-selected={deliveryMethod==='pickup'} className={deliveryMethod==='pickup'?'active':''} onClick={()=>setDeliveryMethod('pickup')}><span className="market-checkout-choice-icon"><MapPin size={21}/></span><span><strong>Pickup station</strong><small>Collect your order from your preferred point</small></span><i>{deliveryMethod==='pickup'?'✓':''}</i></button>
           <button type="button" role="tab" aria-selected={deliveryMethod==='home'} className={deliveryMethod==='home'?'active':''} onClick={()=>setDeliveryMethod('home')}><span className="market-checkout-choice-icon"><Package size={21}/></span><span><strong>Door delivery</strong><small>Have your order brought to your address</small></span><i>{deliveryMethod==='home'?'✓':''}</i></button>
         </div>
+        <div className="market-checkout-delivery-layout"><div className="market-checkout-delivery-main">
         {deliveryMethod==='pickup' ? <div className="market-checkout-card">
           <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><MapPin size={18}/></span><div><h2>Pickup location</h2><p>Enter the collection station or preferred meeting point</p></div></div>
           {pickupStation&&!pickupStationEditor ? <div className="market-checkout-saved-location"><div><strong>{pickupStation}</strong><small>{[deliveryAddress,deliveryEstate,deliverySubCounty,deliveryCounty].filter(Boolean).join(', ')||'Saved pickup location'} · Saved for future orders</small></div><button type="button" onClick={()=>{setPickupStationDraft(pickupStation);setPickupStationEditor(true)}}>Change location</button></div> : null}
@@ -646,6 +647,15 @@ export function StorefrontFlow({
             <label className="customer-form-label market-checkout-full">Email address <small>(optional)</small><input type="email" value={customerEmail} onChange={e=>setCustomerEmail(e.target.value)} autoComplete="email" placeholder="you@example.com"/></label>
           </div>
         </div>
+        </div>
+        <aside className="market-checkout-order-card">
+          <div className="market-checkout-order-card-head"><span>YOUR ORDER</span><strong>{lines.reduce((count,line)=>count+line.quantity,0)} {lines.reduce((count,line)=>count+line.quantity,0)===1?'item':'items'}</strong></div>
+          <div className="market-checkout-order-items">{lines.map(({product,quantity})=><div className="market-checkout-order-item" key={product.id}><ProductThumb product={product}/><div><strong>{product.name}</strong><small>Qty {quantity} · {formatKes(product.price)} each</small></div><b>{formatKes(product.price*quantity)}</b></div>)}</div>
+          <div className="market-checkout-order-total"><span>Items subtotal</span><strong>{formatKes(subtotal)}</strong></div>
+          <div className="market-checkout-order-total"><span>Delivery fee</span><strong>Confirmed by shop</strong></div>
+          <div className="market-checkout-order-grand"><span>Order total</span><strong>{formatKes(subtotal)}</strong></div>
+          <p className="market-checkout-order-secure"><ShieldCheck size={16}/> Your order details are protected. You will review the final amount before payment.</p>
+        </aside></div>
         {checkoutError&&<p className="customer-checkout-error" role="alert">{checkoutError}</p>}
         <div className="market-checkout-bottom-action"><div><small>ORDER TOTAL</small><strong>{formatKes(subtotal)}</strong></div><button type="button" className="customer-primary-button" disabled={deliveryPreferenceLoading||!customerName.trim()||!customerPhone.trim()||(deliveryMethod==='pickup'&&(!pickupStation.trim()||!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))} onClick={async()=>{setCheckoutError('');try{await saveDeliveryPreference();setOrderConfirmed(false);onNavigate('checkout/payment')}catch(error:any){setCheckoutError(error.message||'Could not save your delivery details. Please try again.')}}}>{deliveryPreferenceLoading?'Loading saved delivery…':'Continue to payment'} <ArrowRight size={18}/></button></div>
       </section>
