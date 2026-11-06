@@ -55,6 +55,7 @@ type BuyerOrder = {
   lines: CartLine[];
   chatToken: string;
   paymentStatus: string;
+  paymentIssue?: string | null;
   receipt?: string | null;
   orderStatus?: string | null;
   discount?: number;
@@ -350,6 +351,7 @@ export function StorefrontFlow({
           })),
           chatToken: '',
           paymentStatus: order.paymentStatus || 'unpaid',
+          paymentIssue: order.paymentIssue || null,
           receipt: order.receipt || null,
           orderStatus: order.orderStatus || null,
           deliveryStatus: order.deliveryStatus || null,
@@ -837,6 +839,7 @@ export function StorefrontFlow({
             <div className="buyer-order-grand-total"><span>{paid?'Amount paid':'Amount due'}</span><strong>{formatKes(activeOrder.total)}</strong></div>
           </div>
           <div className="buyer-order-payment-method"><WalletCards size={17}/><span><strong>Payment method</strong><small>{paymentLabels[activeOrder.paymentMethod]}{activeOrder.receipt?' · Receipt '+activeOrder.receipt:''}</small></span></div>
+          {activeOrder.paymentIssue&&<div className="buyer-order-inventory-alert" role="status"><strong>Payment received — shop confirmation needed</strong><p>{activeOrder.paymentIssue} The shop needs to contact you before this order can be prepared or dispatched.</p></div>}
           {canRetryPayment&&<div className="buyer-order-retry">
             <div><strong>{paymentState==='pending'?'Payment is awaiting confirmation':'Finish paying for this order'}</strong><p>{paymentState==='pending'?'If the prompt expired or was not received, wait for its result before retrying.':'Your order is saved. You can request a new M-PESA prompt.'}</p></div>
             <label className="customer-form-label">M-PESA number<input type="tel" inputMode="tel" autoComplete="tel" value={retryPaymentPhone} onChange={e=>setRetryPaymentPhone(e.target.value)} placeholder="07XX XXX XXX or 2547XXXXXXXX" maxLength={16}/></label>
