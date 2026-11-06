@@ -73,6 +73,8 @@ type StorefrontFlowProps = {
   shopPrivacyPolicy?: string;
   shopReturnPolicy?: string;
   shopDeliveryPolicy?: string;
+  shopDeliveryHomeFee?: number;
+  shopDeliveryPickupFee?: number;
   shopFaqs?: Array<{question:string;answer:string}>;
   products: StoreProduct[];
   recentlyViewed?: string[];
@@ -189,6 +191,8 @@ export function StorefrontFlow({
   shopPrivacyPolicy = '',
   shopReturnPolicy = '',
   shopDeliveryPolicy = '',
+  shopDeliveryHomeFee = 0,
+  shopDeliveryPickupFee = 0,
   shopFaqs = [],
   products,
   recentlyViewed: recentlyViewedIds = [],
@@ -222,6 +226,7 @@ export function StorefrontFlow({
     [lines],
   );
   const [orders, setOrders] = useState<BuyerOrder[]>([]);
+  const checkoutIdempotency=useRef<{fingerprint:string;key:string}|null>(null);
   const [retryingOrder,setRetryingOrder]=useState(false);const [retryPaymentPhone,setRetryPaymentPhone]=useState('');const [retryMessage,setRetryMessage]=useState('');const [paymentCelebration,setPaymentCelebration]=useState(false);const lastPaymentStatus=useRef<string|null>(null);
   const [ordersLoading,setOrdersLoading]=useState(false),[ordersError,setOrdersError]=useState('');
   const [currentPassword,setCurrentPassword]=useState(''),[newPassword,setNewPassword]=useState(''),[confirmPassword,setConfirmPassword]=useState(''),[passwordSaving,setPasswordSaving]=useState(false),[passwordMessage,setPasswordMessage]=useState('');
@@ -397,8 +402,8 @@ export function StorefrontFlow({
     };
   }, [slug, initialCustomerPhone]);
 
-  const deliveryFee = 0;
-  const total = Math.max(0, subtotal - Number(appliedCoupon?.discount||0));
+  const deliveryFee = Math.max(0,Number(deliveryMethod==='pickup'?shopDeliveryPickupFee:shopDeliveryHomeFee)||0);
+  const total = Math.max(0, subtotal - Number(appliedCoupon?.discount||0) + deliveryFee);
   const activeOrder = orders.find((order) => order.orderNumber === activeOrderNumber) || (!activeOrderNumber ? orders[0] : undefined);
   useEffect(()=>{if(activeOrder?.orderId)setRetryPaymentPhone(activeOrder.customerPhone||initialCustomerPhone);if(activeOrder?.orderId&&['order-detail','order-tracking'].includes(view))onOpenChat?.('',activeOrder.orderNumber,activeOrder.orderId)},[view,activeOrder?.orderId,initialCustomerPhone]);
 
@@ -445,6 +450,8 @@ export function StorefrontFlow({
     }
     setSubmitting(true);
     setCheckoutError('');
+    const fingerprint=JSON.stringify({slug,items:lines.map(({product,quantity})=>[product.id,quantity]).sort((a,b)=>String(a[0]).localeCompare(String(b[0]))),coupon:appliedCoupon?.code||'',paymentPhone:paymentPhone.trim(),deliveryMethod,deliveryCounty,deliverySubCounty,deliveryEstate:deliveryEstate.trim(),deliveryAddress:deliveryAddress.trim(),deliveryDirections:deliveryDirections.trim(),pickupStation:pickupStation.trim()});
+    if(!checkoutIdempotency.current||checkoutIdempotency.current.fingerprint!==fingerprint){const key=window.crypto?.randomUUID?.()||('buyer-'+Date.now()+'-'+Math.random().toString(36).slice(2,14));checkoutIdempotency.current={fingerprint,key};}
     try {
       const response = await fetch('/api/buyer?action=order', {
         method: 'POST',
@@ -465,11 +472,11 @@ export function StorefrontFlow({
           pickupStation: pickupStation.trim(),
           paymentMethod: 'till',
           items: lines.map(({ product, quantity }) => ({ id: product.id, quantity })),
-          idempotencyKey: `buyer-${slug}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+          idempotencyKey: checkoutIdempotency.current.key,
         }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data.orderNumber || !data.chatToken) {
+      if (!response.ok || !data.orderNumber || !data.orderId) {
         throw new Error(data.error || 'We could not create your order or start M-PESA. Please review your details and try again.');
       }
       const createdAt = new Date().toISOString();
@@ -489,10 +496,10 @@ export function StorefrontFlow({
         deliveryEstate: deliveryEstate.trim(),
         deliveryDirections: deliveryDirections.trim(),
         subtotal: Number(data.subtotal??subtotal),
-        deliveryFee: 0,
+        deliveryFee: Number(data.deliveryFee??deliveryFee),
         total: Number(data.total??total),
         lines: lines.map((line) => ({ ...line })),
-        chatToken: data.chatToken,
+        chatToken: data.chatToken||'',
         paymentStatus: data.paymentStatus || 'pending',
         discount: Number(data.discount||0),
         couponCode: data.couponCode||null,
@@ -500,7 +507,8 @@ export function StorefrontFlow({
       const updatedOrders = [order, ...orders.filter((entry) => entry.orderNumber !== order.orderNumber)];
       setOrders(updatedOrders);
       setActiveOrderNumber(order.orderNumber);
-      onOrderCreated?.(data.chatToken, data.orderNumber);
+      checkoutIdempotency.current=null;
+      onOrderCreated?.(data.chatToken||'', data.orderNumber);
       onCartChange({});
       onNavigate('checkout/complete');
     } catch (error) {
