@@ -8,7 +8,6 @@ import {
   ChevronRight,
   MapPin,
   Package,
-  Plus,
   Search,
   ShieldCheck,
   ShoppingBag,
