@@ -1592,3 +1592,32 @@
     max-width:calc((100% - 16px) / 3) !important;
   }
 }
+
+
+/* Homepage preview: compact mixed-category grid that packs every available card
+   without blank columns or a long horizontal product rail. */
+.store-page .ds-store-home-mix-grid {
+  display:grid !important;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,168px),1fr)) !important;
+  grid-auto-flow:row !important;
+  grid-auto-columns:initial !important;
+  grid-template-rows:none !important;
+  gap:12px !important;
+  width:100%;
+  min-width:0;
+  overflow:visible !important;
+  align-items:stretch;
+}
+.store-page .ds-store-home-mix-grid > .ds-store-card {
+  width:100% !important;
+  min-width:0 !important;
+  max-width:none !important;
+  flex:initial !important;
+  scroll-snap-align:none !important;
+}
+@media(max-width:760px) {
+  .store-page .ds-store-home-mix-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:9px !important;
+  }
+}
