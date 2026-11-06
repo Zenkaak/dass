@@ -549,12 +549,33 @@ export default async function handler(req:any,res:any){
    if(!payment?.consumerKey||!payment?.consumerSecret||!payment?.passkey||!payment?.shortcode||!payment?.partyB)return send(res,503,{error:'This shop has not completed M-PESA payment setup yet.'});
    if(payment.environment!=='production')return send(res,503,{error:'This shop is configured for Daraja sandbox. Live checkout is disabled.'});
    const orderNo='DAS-'+Date.now().toString(36).toUpperCase()+'-'+crypto.randomBytes(2).toString('hex').toUpperCase();
-   const o=await sql`INSERT INTO public.orders(tenant_id,order_number,customer_name,customer_phone,customer_email,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,subtotal_minor,delivery_fee_minor,total_minor,coupon_code,discount_minor,checkout_idempotency_key,checkout_fingerprint,status) VALUES(${tenantId},${orderNo},${name},${phone},${customerEmail||null},${deliveryMethod},${deliveryCounty||null},${deliverySubCounty||null},${deliveryEstate||null},${deliveryAddress||null},${deliveryDirections||null},${pickupStation||null},${total},${deliveryFeeMinor},${payableTotal},${couponCode||null},${discountMinor},${idempotency},${checkoutFingerprint},'pending') ON CONFLICT (tenant_id,checkout_idempotency_key) WHERE checkout_idempotency_key IS NOT NULL DO NOTHING RETURNING id,order_number`;
+   const customerChatToken=crypto.randomBytes(32).toString('hex'),idem='checkout-'+idempotency;
+   const orderLines=lines.map((l:any)=>({product_id:l.p.id,product_name:l.p.name,quantity:l.qty,unit_price_minor:Number(l.p.price_minor),line_total_minor:l.line}));
+   // One PostgreSQL statement commits the order, chat token, line items and
+   // payment intent together. A failure cannot leave a half-created order.
+   const o=await sql`WITH created_order AS (
+     INSERT INTO public.orders(tenant_id,order_number,customer_name,customer_phone,customer_email,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,subtotal_minor,delivery_fee_minor,total_minor,coupon_code,discount_minor,checkout_idempotency_key,checkout_fingerprint,status)
+     VALUES(${tenantId},${orderNo},${name},${phone},${customerEmail||null},${deliveryMethod},${deliveryCounty||null},${deliverySubCounty||null},${deliveryEstate||null},${deliveryAddress||null},${deliveryDirections||null},${pickupStation||null},${total},${deliveryFeeMinor},${payableTotal},${couponCode||null},${discountMinor},${idempotency},${checkoutFingerprint},'pending')
+     ON CONFLICT (tenant_id,checkout_idempotency_key) WHERE checkout_idempotency_key IS NOT NULL DO NOTHING
+     RETURNING id,order_number
+   ), new_chat AS (
+     UPDATE public.orders o SET customer_chat_token_hash=${hash(customerChatToken)}
+     FROM created_order c WHERE o.id=c.id AND o.tenant_id=${tenantId}
+     RETURNING o.id,o.order_number
+   ), new_items AS (
+     INSERT INTO public.order_items(tenant_id,order_id,product_id,product_name,quantity,unit_price_minor,line_total_minor)
+     SELECT ${tenantId},c.id,i.product_id,i.product_name,i.quantity,i.unit_price_minor,i.line_total_minor
+     FROM new_chat c CROSS JOIN jsonb_to_recordset(${JSON.stringify(orderLines)}::jsonb) AS i(product_id uuid,product_name text,quantity integer,unit_price_minor bigint,line_total_minor bigint)
+     RETURNING order_id
+   ), new_payment AS (
+     INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result)
+     SELECT ${tenantId},c.id,'mpesa_daraja',${paymentPhone},${payableTotal},'KES','initiated',${idem},${JSON.stringify({paymentMethod:method,source:'buyer_checkout'})}::jsonb
+     FROM new_chat c CROSS JOIN (SELECT COUNT(*) FROM new_items) AS items_ready
+     RETURNING id,order_id
+   )
+   SELECT c.id,c.order_number,p.id AS payment_id FROM new_chat c JOIN new_payment p ON p.order_id=c.id`;
    if(!o.length){const prior=await sql`SELECT o.id,o.order_number,o.checkout_fingerprint,o.subtotal_minor,o.delivery_fee_minor,o.total_minor,o.discount_minor,o.coupon_code,p.status AS payment_status FROM public.orders o LEFT JOIN LATERAL (SELECT status FROM public.payments WHERE tenant_id=o.tenant_id AND order_id=o.id ORDER BY created_at DESC LIMIT 1) p ON true WHERE o.tenant_id=${tenantId} AND o.checkout_idempotency_key=${idempotency} LIMIT 1`;if(!prior.length)return send(res,409,{error:'Checkout is already being processed. Refresh your orders in a moment.'});if(prior[0].checkout_fingerprint!==checkoutFingerprint)return send(res,409,{error:'Your cart or delivery details changed. Start a fresh checkout to continue.'});return send(res,200,{ok:true,orderId:prior[0].id,orderNumber:prior[0].order_number,paymentStatus:prior[0].payment_status||'pending',subtotal:Number(prior[0].subtotal_minor)/100,deliveryFee:Number(prior[0].delivery_fee_minor||0)/100,discount:Number(prior[0].discount_minor||0)/100,total:Number(prior[0].total_minor)/100,couponCode:prior[0].coupon_code||null,chatToken:''});}
-   const customerChatToken=crypto.randomBytes(32).toString('hex');await sql`UPDATE public.orders SET customer_chat_token_hash=${hash(customerChatToken)} WHERE id=${o[0].id} AND tenant_id=${tenantId}`;
-   for(const l of lines){await sql`INSERT INTO public.order_items(tenant_id,order_id,product_id,product_name,quantity,unit_price_minor,line_total_minor) VALUES(${tenantId},${o[0].id},${l.p.id},${l.p.name},${l.qty},${Number(l.p.price_minor)},${l.line})`;}
-   const idem='checkout-'+idempotency;
-   const p=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result) VALUES(${tenantId},${o[0].id},'mpesa_daraja',${paymentPhone},${payableTotal},'KES','initiated',${idem},${JSON.stringify({paymentMethod:method,source:'buyer_checkout'})}::jsonb) RETURNING id`;
+   const p=[{id:o[0].payment_id}];
    try{
     const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dasmarket.co.ke'))).replace(/\/$/,'')+'/api/payments?action=daraja-callback';
     const stk=await startStk(payment,o[0],paymentPhone,payableTotal/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):orderNo.slice(-12),callbackUrl);
