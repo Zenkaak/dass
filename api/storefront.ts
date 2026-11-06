@@ -72,7 +72,7 @@ export default async function handler(req:any,res:any){
   SELECT t.id AS tenant_id,t.name AS shop_name,t.slug,
     s.description,s.logo_url,s.whatsapp_number,s.contact_phone,s.contact_email,
     s.terms_and_conditions,s.privacy_policy,s.return_policy,s.delivery_policy,
-    s.storefront_faqs,s.storefront_theme,
+    s.delivery_home_fee_minor,s.delivery_pickup_fee_minor,s.storefront_faqs,s.storefront_theme,
     COALESCE(c.products,'[]'::jsonb) AS products
   FROM target_tenant t
   LEFT JOIN public.sites s ON s.tenant_id=t.id
@@ -80,7 +80,7 @@ export default async function handler(req:any,res:any){
   if(!rows.length)return send(res,404,{error:'Shop not found'});
   const row=rows[0];
   res.setHeader('Cache-Control','public, s-maxage=10, stale-while-revalidate=30');
-  return send(res,200,{shop:{name:row.shop_name,slug:row.slug,description:row.description||'',logoUrl:row.logo_url||'',whatsappNumber:row.whatsapp_number||'',contactPhone:row.contact_phone||row.whatsapp_number||'',contactEmail:row.contact_email||'',termsAndConditions:row.terms_and_conditions||'',privacyPolicy:row.privacy_policy||'',returnPolicy:row.return_policy||'',deliveryPolicy:row.delivery_policy||'',faqs:Array.isArray(row.storefront_faqs)?row.storefront_faqs:[],theme:/^#[0-9a-f]{6}$/i.test(String(row.storefront_theme||''))?row.storefront_theme:'#e47a13'},products:(row.products||[]).map((p:any)=>productOut(p,false))});
+  return send(res,200,{shop:{name:row.shop_name,slug:row.slug,description:row.description||'',logoUrl:row.logo_url||'',whatsappNumber:row.whatsapp_number||'',contactPhone:row.contact_phone||row.whatsapp_number||'',contactEmail:row.contact_email||'',termsAndConditions:row.terms_and_conditions||'',privacyPolicy:row.privacy_policy||'',returnPolicy:row.return_policy||'',deliveryPolicy:row.delivery_policy||'',deliveryHomeFee:Number(row.delivery_home_fee_minor||0)/100,deliveryPickupFee:Number(row.delivery_pickup_fee_minor||0)/100,faqs:Array.isArray(row.storefront_faqs)?row.storefront_faqs:[],theme:/^#[0-9a-f]{6}$/i.test(String(row.storefront_theme||''))?row.storefront_theme:'#e47a13'},products:(row.products||[]).map((p:any)=>productOut(p,false))});
 
   return send(res,404,{error:'Shop not found'});
  }catch(error:any){
