@@ -31,7 +31,7 @@ export type StoreProduct = {
   imageUrl?: string;
 };
 
-type CartLine = { product: StoreProduct; quantity: number };
+type CartLine = { product: StoreProduct; quantity: number; lineTotal?: number };
 type PaymentMethod = 'card' | 'airtel' | 'mpesa' | 'delivery';
 type DeliveryMethod = 'pickup' | 'home';
 type BuyerOrder = {
@@ -346,6 +346,7 @@ export function StorefrontFlow({
               images: item.image ? [item.image] : [],
             },
             quantity: Number(item.quantity) || 1,
+            lineTotal: Number(item.lineTotal) / 100,
           })),
           chatToken: '',
           paymentStatus: order.paymentStatus || 'unpaid',
@@ -766,7 +767,7 @@ export function StorefrontFlow({
         {tabOrders.length ? <div className="customer-order-list">{tabOrders.map((order) => (
           <article className="customer-order-card" key={order.orderNumber}>
             <div className="customer-order-card-heading"><div><small>ORDER {order.orderNumber}</small><strong>{new Date(order.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })}</strong></div><span className="customer-order-status">{stateOf(order).delivery==='delivered'?'Delivered':stateOf(order).delivery==='in_transit'?'In transit':stateOf(order).order==='processing'?'Processing':stateOf(order).payment==='failed'?'Payment failed':stateOf(order).payment==='succeeded'?'Paid':'Order placed'}</span></div>
-            {order.lines.slice(0, 2).map(({ product, quantity }) => <div className="customer-order-product" key={product.id}><ProductThumb product={product} /><span><strong>{product.name}</strong><small>Qty {quantity}</small></span><b>{formatKes(product.price * quantity)}</b></div>)}
+            {order.lines.slice(0, 2).map(({ product, quantity, lineTotal }) => <div className="customer-order-product" key={product.id}><ProductThumb product={product} /><span><strong>{product.name}</strong><small>Qty {quantity}</small></span><b>{formatKes(lineTotal ?? product.price * quantity)}</b></div>)}
             <div className="customer-order-card-footer"><span>Total <strong>{formatKes(order.total)}</strong></span><div><button type="button" className="customer-secondary-button" onClick={() => openOrder(order, 'order-detail')}>Order details</button>{isDelivered(order)?<button type="button" className="customer-primary-button" onClick={() => onNavigate('store')}>Shop again <ArrowRight size={16}/></button>:<button type="button" className="customer-primary-button" onClick={() => openOrder(order, 'order-tracking')}>Track my item</button>}</div></div>
           </article>
         ))}</div> : <div className="customer-empty-state"><span><Package size={28} /></span><h2>{activeOrderTab === 'ongoing' ? 'You have placed no orders yet!' : `No ${activeOrderTab === 'delivered' ? 'delivered' : 'cancelled / returned'} orders`}</h2><p>{activeOrderTab === 'ongoing' ? 'All your orders will be saved here so you can access their status anytime.' : 'Orders in this section will appear here when their status is updated by the shop.'}</p><button type="button" className="customer-primary-button" onClick={() => onNavigate('store')}>Continue shopping <ArrowRight size={17} /></button></div>}
@@ -798,7 +799,7 @@ export function StorefrontFlow({
           <div className="market-order-detail-main">
             <section className="market-order-section">
               <div className="market-order-section-heading"><div><span>YOUR PURCHASE</span><h3>Items in this order</h3></div><small>{activeOrder.lines.reduce((n,line)=>n+line.quantity,0)} items</small></div>
-              <div className="market-order-items">{activeOrder.lines.map(({product,quantity})=><article className="market-order-item" key={product.id}><ProductThumb product={product}/><div><strong>{product.name}</strong><small>Quantity: {quantity}</small><small>{formatKes(product.price)} each</small>{String(activeOrder.deliveryStatus||'').toLowerCase()==='delivered'&&paid&&<button type="button" className="customer-order-review-link" onClick={()=>onOpenProduct?.(product)}>★ Review product</button>}</div><b>{formatKes(product.price*quantity)}</b></article>)}</div>
+              <div className="market-order-items">{activeOrder.lines.map(({product,quantity,lineTotal})=><article className="market-order-item" key={product.id}><ProductThumb product={product}/><div><strong>{product.name}</strong><small>Quantity: {quantity}</small><small>{formatKes(product.price)} each</small>{String(activeOrder.deliveryStatus||'').toLowerCase()==='delivered'&&paid&&<button type="button" className="customer-order-review-link" onClick={()=>onOpenProduct?.(product)}>★ Review product</button>}</div><b>{formatKes(lineTotal ?? product.price*quantity)}</b></article>)}</div>
               {String(activeOrder.deliveryStatus||'').toLowerCase()==='delivered'&&<div className="market-order-delivered-note"><strong>Order delivered</strong><span>We hope everything arrived safely. You can review the products you purchased.</span></div>}
               <div className="market-order-section-actions">{String(activeOrder.deliveryStatus||'').toLowerCase()==='delivered'?<button type="button" className="customer-primary-button" onClick={()=>onNavigate('store')}>Shop again <ArrowRight size={16}/></button>:<button type="button" className="customer-secondary-button" onClick={()=>openOrder(activeOrder,'order-tracking')}>Track order <ArrowRight size={16}/></button>}</div>
             </section>
