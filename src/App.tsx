@@ -220,6 +220,7 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
   {buyerPage==='store'?<>
     <main className="ds-store">
       <section className="ds-store-head">
+        <button type="button" className="ds-store-menu-trigger" aria-label="Open shop categories" onClick={()=>setMobileSidebarOpen(true)}><Menu size={20}/></button>
         <div className="ds-store-brand">
           <span className="ds-store-mark">{shop?.logoUrl?<img src={shop.logoUrl} alt=""/>:<Store size={21}/>}</span>
           <div><strong>{shop?.name||'DASMARKET STORE'}</strong><small>Shop direct · Trusted marketplace</small></div>
@@ -234,7 +235,6 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
           <button type="button" className="ds-store-cart" onClick={()=>navigateBuyerPage('cart')}><ShoppingCart size={19}/><span>Cart</span>{cartItems.length>0&&<b>{cartItems.reduce((n,[,q])=>n+q,0)}</b>}</button>
         </div>
       </section>
-      <button type="button" className="ds-store-mobile-categories" onClick={()=>setMobileSidebarOpen(true)}><Menu size={16}/> Browse categories <ChevronRight size={15}/></button>
       <section className="ds-store-hero">
         <div className="ds-store-hero-copy">
           <span className="ds-eyebrow">WELCOME TO {String(shop?.name||'OUR STORE').toUpperCase()}</span>
