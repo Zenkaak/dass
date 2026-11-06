@@ -251,10 +251,6 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
         </button>
         {homeHeroProducts.length>1&&<div className="ds-store-hero-dots">{homeHeroProducts.map((p,index)=><button type="button" key={p.id} aria-label={'Show featured product '+(index+1)} className={index===homeHeroIndex?'active':''} onClick={()=>setHomeHeroIndex(index)}/>)}</div>}
       </section>
-      <section className="ds-store-category-showcase" aria-label="Shop by category">
-        <div className="ds-store-section-title"><div><span className="ds-eyebrow">FIND WHAT YOU NEED</span><h2>Shop by category</h2></div><button type="button" onClick={()=>{selectStoreCategory('All products');navigateBuyerPage('collection/all-products')}}>All categories <ArrowRight size={15}/></button></div>
-        <div className="ds-store-category-grid">{storefrontCategories.slice(0,16).map(category=><button type="button" className="ds-store-category-tile" key={category.name} onClick={()=>{selectStoreCategory(category.name);document.getElementById('market-products-grid')?.scrollIntoView({behavior:'smooth',block:'start'})}}><span aria-hidden="true">{category.icon}</span><b>{category.name}</b><small>{category.subcategories.length} collections</small></button>)}</div>
-      </section>
       <section className="ds-store-section ds-store-spotlight-section">
         <div className="ds-store-section-title"><div><span className="ds-eyebrow">SHOP PICKS</span><h2>In the spotlight</h2></div><button type="button" onClick={()=>navigateBuyerPage('collection/featured-products')}>See all <ArrowRight size={15}/></button></div>
         <div className="ds-store-rail">{(spotlightProducts.length?spotlightProducts:homeHeroProducts).slice(0,5).map(p=><article className="ds-store-card ds-store-spotlight-card" key={p.id}>
