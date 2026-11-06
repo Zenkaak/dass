@@ -238,7 +238,7 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
           <button type="button" onClick={()=>{setFilter('All products');navigateBuyerPage('store');document.getElementById('market-products-grid')?.scrollIntoView({behavior:'smooth',block:'start'})}}>Search</button>
         </label>
       </header>
-      <section className="ds-store-hero">
+      <section className="ds-store-hero" key={homeHeroProduct?.id||"featured-empty"}>
         <div className="ds-store-hero-copy">
           <span className="ds-eyebrow">WELCOME TO {String(shop?.name||'OUR STORE').toUpperCase()}</span>
           <h1>{homeHeroProduct?.name||'Find something you’ll love.'}</h1>
