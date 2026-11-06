@@ -535,67 +535,64 @@ export function StorefrontFlow({
   }
 
   function renderCart() {
+    const itemCount = lines.reduce((count, line) => count + line.quantity, 0);
     return (
-      <section className="customer-flow">
-        <FlowHeading title="Your cart" onBack={() => onNavigate('store')} />
-        <div className="buyer-cart-intro">
-          <div><span className="buyer-section-kicker">SHOPPING BAG</span><h2>Review your selection</h2><p>Check quantities and item details before continuing to secure checkout.</p></div>
-          <span className="buyer-cart-count">{lines.reduce((count, line) => count + line.quantity, 0)} {lines.reduce((count, line) => count + line.quantity, 0)===1?'item':'items'}</span>
+      <section className="customer-flow market-cart-page">
+        <div className="market-cart-heading">
+          <button type="button" className="market-cart-back" onClick={() => onNavigate('store')}><ArrowLeft size={17}/> Continue shopping</button>
+          <div><span>SHOPPING BAG</span><h1>Your cart <small>({itemCount} {itemCount===1?'item':'items'})</small></h1><p>Review your items before moving to delivery.</p></div>
         </div>
         {lines.length ? (
           <>
-            <div className="customer-checkout-grid customer-cart-grid">
-              <div className="customer-panel">
-                <div className="customer-panel-heading"><h2>Your items</h2><span>{lines.length} {lines.length===1?"product":"products"} · {lines.reduce((count, line) => count + line.quantity, 0)} units</span></div>
-                <div className="customer-cart-lines">
-                  {lines.map(({ product, quantity }) => (
-                    <article className="customer-cart-line" key={product.id}>
-                      <ProductThumb product={product} />
-                      <div className="customer-cart-copy">
-                        <h3>{product.name}</h3>
-                        <p>{product.category || 'Product'} · Sold by {shopName}</p>
-                        <strong>{formatKes(product.price)}</strong>
-                        <small className="customer-cart-line-total">Line total · {formatKes(product.price * quantity)}</small>
-                        <small className="customer-cart-stock">{product.stockQuantity===0?'Currently out of stock':product.stockQuantity==null?'Stock confirmed at checkout':`${Math.max(0,product.stockQuantity)} available`}</small>
-                        <div className="customer-mobile-quantity">
+            <div className="market-cart-layout">
+              <div className="market-cart-items">
+                <div className="market-cart-list-head"><strong>Cart items</strong><span>{lines.length} {lines.length===1?'product':'products'}</span></div>
+                {lines.map(({ product, quantity }) => (
+                  <article className="market-cart-item" key={product.id}>
+                    <button type="button" className="market-cart-product-image" onClick={() => onOpenProduct?.(product)} aria-label={`View ${product.name}`}><ProductThumb product={product}/></button>
+                    <div className="market-cart-product-info">
+                      <button type="button" className="market-cart-product-name" onClick={() => onOpenProduct?.(product)}>{product.name}</button>
+                      <span className="market-cart-category">{product.category || 'Product'} <i>·</i> Sold by {shopName}</span>
+                      <strong className="market-cart-unit-price">{formatKes(product.price)}</strong>
+                      <small className={product.stockQuantity===0?'market-cart-stock-out':'market-cart-stock'}>{product.stockQuantity===0?'Currently out of stock':product.stockQuantity==null?'Availability confirmed at checkout':`${Math.max(0,product.stockQuantity)} available`}</small>
+                      <div className="market-cart-mobile-actions">
+                        <div className="market-cart-quantity" aria-label={`Quantity for ${product.name}`}>
                           <button type="button" aria-label={`Decrease ${product.name} quantity`} onClick={() => updateQuantity(product.id, quantity - 1)}>−</button>
                           <span>{quantity}</span>
-                          <button type="button" aria-label={`Increase ${product.name} quantity`} disabled={product.stockQuantity!==null&&product.stockQuantity!==undefined&&quantity>=product.stockQuantity} onClick={() => updateQuantity(product.id, quantity + 1)}><Plus size={15} /></button>
+                          <button type="button" aria-label={`Increase ${product.name} quantity`} disabled={product.stockQuantity!==null&&product.stockQuantity!==undefined&&quantity>=product.stockQuantity} onClick={() => updateQuantity(product.id, quantity + 1)}>＋</button>
                         </div>
-                        <button type="button" className="customer-mobile-remove" onClick={() => updateQuantity(product.id, 0)}>Remove</button>
+                        <button type="button" className="market-cart-remove" onClick={() => updateQuantity(product.id, 0)}>Remove</button>
                       </div>
-                      <div className="customer-cart-controls">
-                        <button type="button" className="customer-remove-button" onClick={() => updateQuantity(product.id, 0)}>Remove</button>
-                        <div className="customer-quantity">
-                          <button type="button" aria-label={`Decrease ${product.name} quantity`} onClick={() => updateQuantity(product.id, quantity - 1)}>−</button>
-                          <span>{quantity}</span>
-                          <button type="button" aria-label={`Increase ${product.name} quantity`} disabled={product.stockQuantity!==null&&product.stockQuantity!==undefined&&quantity>=product.stockQuantity} onClick={() => updateQuantity(product.id, quantity + 1)}><Plus size={15} /></button>
-                        </div>
+                    </div>
+                    <div className="market-cart-item-end">
+                      <strong>{formatKes(product.price * quantity)}</strong>
+                      <div className="market-cart-quantity" aria-label={`Quantity for ${product.name}`}>
+                        <button type="button" aria-label={`Decrease ${product.name} quantity`} onClick={() => updateQuantity(product.id, quantity - 1)}>−</button>
+                        <span>{quantity}</span>
+                        <button type="button" aria-label={`Increase ${product.name} quantity`} disabled={product.stockQuantity!==null&&product.stockQuantity!==undefined&&quantity>=product.stockQuantity} onClick={() => updateQuantity(product.id, quantity + 1)}>＋</button>
                       </div>
-                    </article>
-                  ))}
-                </div>
-              </div>
-              {renderSummary()}
-            </div>
-            <div className="customer-mobile-checkout-bar"><span><small>Subtotal</small><strong>{formatKes(subtotal)}</strong></span><button type="button" className="customer-primary-button" onClick={() => onNavigate('checkout/delivery')}>Checkout <ArrowRight size={17} /></button></div>
-            <section className="customer-recommendations">
-              <div className="customer-section-title"><h2>{recentlyViewedProducts.length ? 'Recently viewed' : 'You may also like'}</h2><button type="button" onClick={() => onNavigate('store')}>See all <ArrowRight size={14} /></button></div>
-              <div className="customer-recommendation-row">
-                {(recentlyViewedProducts.length ? recentlyViewedProducts : products.slice(0, 5)).map((product) => (
-                  <article className="customer-recommendation-card" key={product.id}>
-                    <ProductThumb product={product} />
-                    <strong>{product.name}</strong><b>{formatKes(product.price)}</b>
+                      <button type="button" className="market-cart-remove" onClick={() => updateQuantity(product.id, 0)}>Remove</button>
+                    </div>
                   </article>
                 ))}
+                <div className="market-cart-continue"><ShoppingBag size={16}/><button type="button" onClick={() => onNavigate('store')}>Continue shopping</button></div>
               </div>
-            </section>
+              <aside className="market-cart-summary">
+                <h2>Order summary</h2>
+                <div className="market-cart-summary-line"><span>Items ({itemCount})</span><strong>{formatKes(subtotal)}</strong></div>
+                <div className="market-cart-summary-line"><span>Delivery</span><span>Calculated next</span></div>
+                <div className="market-cart-summary-total"><span>Subtotal</span><strong>{formatKes(subtotal)}</strong></div>
+                <p className="market-cart-delivery-note">Delivery options and any applicable charges are shown on the next step.</p>
+                <button type="button" className="market-cart-checkout" onClick={() => onNavigate('checkout/delivery')}>Proceed to checkout <ArrowRight size={18}/></button>
+                <div className="market-cart-secure"><ShieldCheck size={17}/><span>Secure checkout<br/><small>Your order and payment details are protected.</small></span></div>
+              </aside>
+            </div>
+            <div className="market-cart-mobile-checkout"><div><small>Subtotal</small><strong>{formatKes(subtotal)}</strong></div><button type="button" onClick={() => onNavigate('checkout/delivery')}>Checkout <ArrowRight size={17}/></button></div>
           </>
         ) : (
-          <div className="customer-empty-state">
-            <span><ShoppingBag size={30} /></span><h2>Your cart is empty</h2>
-            <p>Add something from {shopName} and it will appear here.</p>
-            <button type="button" className="customer-primary-button" onClick={() => onNavigate('store')}>Continue shopping <ArrowRight size={17} /></button>
+          <div className="market-cart-empty">
+            <span><ShoppingBag size={34}/></span><h2>Your cart is waiting</h2><p>You haven’t added anything from {shopName} yet.</p>
+            <button type="button" onClick={() => onNavigate('store')}>Explore products <ArrowRight size={17}/></button>
           </div>
         )}
       </section>
