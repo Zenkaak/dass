@@ -265,6 +265,7 @@ export default async function handler(req:any,res:any){
   if(req.method==='POST'&&action==='daraja-callback'){
    const cb=req.body?.Body?.stkCallback||{},checkout=String(cb.CheckoutRequestID||''),resultCode=Number(cb.ResultCode);
    if(!checkout)return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
+   if(!Number.isFinite(resultCode))return send(res,400,{ResultCode:1,ResultDesc:'Invalid callback result code'});
    const rows=await sql`SELECT p.id,p.tenant_id,p.order_id,p.phone,p.amount_minor,p.status,p.provider_result,pc.shortcode,pc.party_b,pc.account_type,pc.environment,pc.encrypted_credentials,pc.payout_method,pc.account_reference,pc.till_party_b,pc.paybill_party_b,pc.default_payout_method,pm.shortcode AS central_shortcode,pm.environment AS central_environment,pm.encrypted_credentials AS central_credentials FROM public.payments p LEFT JOIN public.payment_configs pc ON pc.tenant_id=p.tenant_id LEFT JOIN public.platform_payment_methods pm ON pm.method=CASE WHEN p.provider_result->>'paymentMethod'='paybill' THEN 'paybill' ELSE 'till' END WHERE p.provider_checkout_id=${checkout} LIMIT 1`;
    if(!rows.length)return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
    const p=rows[0];if(p.status==='succeeded')return send(res,200,{ResultCode:0,ResultDesc:'Already processed'});
