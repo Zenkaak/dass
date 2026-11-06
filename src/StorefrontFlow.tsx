@@ -346,7 +346,7 @@ export function StorefrontFlow({
               images: item.image ? [item.image] : [],
             },
             quantity: Number(item.quantity) || 1,
-            lineTotal: Number(item.lineTotal) / 100,
+            lineTotal: Number(item.lineTotal) || 0,
           })),
           chatToken: '',
           paymentStatus: order.paymentStatus || 'unpaid',
