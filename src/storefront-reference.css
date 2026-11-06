@@ -1224,13 +1224,13 @@
 }
 
 
-/* Storefront product browsing: one product card per horizontal swipe. */
+/* Storefront product browsing: show three cards; snap independently per card. */
 .store-page .ds-store-rail,
 .store-page .ds-store-catalogue .ds-store-grid {
   display: grid !important;
   grid-auto-flow: column !important;
   grid-template-rows: minmax(0, 1fr) !important;
-  grid-auto-columns: clamp(136px, 15.2vw, 166px) !important;
+  grid-auto-columns: calc((100% - 2 * 12px) / 3) !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
   scroll-snap-type: x mandatory !important;
@@ -1249,7 +1249,7 @@
 @media (max-width: 760px) {
   .store-page .ds-store-rail,
   .store-page .ds-store-catalogue .ds-store-grid {
-    grid-auto-columns: clamp(136px, 42vw, 158px) !important;
+    grid-auto-columns: calc((100% - 18px) / 3) !important;
     gap: 9px !important;
   }
 }
