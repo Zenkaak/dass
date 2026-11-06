@@ -4197,3 +4197,56 @@
   }
   .store-page .market-detail-main-image { height: 380px; }
 }
+
+
+/* Product details should use the storefront canvas, not sit inside an inset card. */
+.store-page .market-product-detail-route {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 18px clamp(12px, 2vw, 28px) 56px;
+}
+.store-page .market-product-detail-main {
+  width: 100%;
+  max-width: none;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  gap: clamp(22px, 3vw, 44px);
+}
+.store-page .market-detail-main-image {
+  border-radius: 10px;
+}
+@media (max-width: 760px) {
+  .store-page .market-product-detail-route {
+    padding: 8px 0 100px;
+  }
+  .store-page .market-product-detail-breadcrumb {
+    margin: 0 12px 12px;
+  }
+  .store-page .market-product-detail-main {
+    gap: 15px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .store-page .market-detail-gallery,
+  .store-page .market-detail-summary {
+    width: 100%;
+  }
+  .store-page .market-detail-main-image {
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+  }
+  .store-page .market-detail-thumbnails {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+  .store-page .market-detail-summary {
+    padding: 0 14px;
+  }
+}
