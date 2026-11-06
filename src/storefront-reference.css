@@ -1363,3 +1363,40 @@
 .store-page .ds-store-latest-arrivals .ds-store-rail {
   grid-template-rows: repeat(4, minmax(0, auto)) !important;
 }
+
+
+/* Collection pages: each of the four product rows scrolls independently.
+   Swiping one row never drags the other rows with it. */
+.store-page .ds-store-collection-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.store-page .ds-store-collection-row {
+  display: flex;
+  flex-flow: row nowrap;
+  gap: 12px;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  padding: 2px 1px 10px;
+}
+.store-page .ds-store-collection-row > .ds-store-card {
+  flex: 0 0 calc((100% - 36px) / 4);
+  width: calc((100% - 36px) / 4);
+  min-width: 0;
+  scroll-snap-align: start;
+}
+@media (max-width: 760px) {
+  .store-page .ds-store-collection-row {
+    gap: 8px;
+  }
+  .store-page .ds-store-collection-row > .ds-store-card {
+    flex-basis: calc((100% - 16px) / 3);
+    width: calc((100% - 16px) / 3);
+  }
+}
