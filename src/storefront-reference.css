@@ -1313,3 +1313,10 @@
     gap: 8px !important;
   }
 }
+
+
+/* Spotlight is a three-row rail, independent of the four-row catalogue layout.
+   Products fill each column top-to-bottom; a partial final column stays compact. */
+.store-page .ds-store-spotlight-section .ds-store-rail {
+  grid-template-rows: repeat(3, minmax(0, auto)) !important;
+}
