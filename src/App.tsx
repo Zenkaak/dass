@@ -265,7 +265,7 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
       </section>
       <section className="ds-store-section ds-store-latest-arrivals">
         <div className="ds-store-section-title"><div><span className="ds-eyebrow">LATEST ARRIVALS</span><h2>New in this store</h2></div><button type="button" onClick={()=>navigateBuyerPage('collection/top-picks')}>View all <ArrowRight size={15}/></button></div>
-        <div className="ds-store-rail">{storePreviewProducts.slice(0,10).map(p=><article className="ds-store-card" key={p.id}>
+        <div className={"ds-store-rail ds-store-latest-rows-"+([4,3,2,1].find(rows=>storePreviewProducts.slice(0,10).length%rows===0)||1)}>{storePreviewProducts.slice(0,10).map(p=><article className="ds-store-card" key={p.id}>
           <button type="button" className="ds-store-product" onClick={()=>openProduct(p)}><span className="ds-store-product-image">{(p.images?.[0]||p.imageUrl)?<img src={p.images?.[0]||p.imageUrl} alt={p.name} loading="lazy" onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src=fallbackProductImage(p.name)}}/>:<img src={fallbackProductImage(p.name)} alt={p.name}/>}</span><span className="ds-store-product-name">{p.name}</span><b>KES {p.price.toLocaleString('en-KE')}</b><small>{p.stockQuantity===0?'Out of stock':p.stockQuantity===null?'Available':p.stockQuantity+' in stock'}</small></button>
           <button type="button" className="ds-store-add" disabled={p.stockQuantity===0||(p.stockQuantity!==null&&(cart[p.id]||0)>=p.stockQuantity)} onClick={()=>setCart(c=>({...c,[p.id]:Math.min(99,p.stockQuantity??99,(c[p.id]||0)+1)}))}>{p.stockQuantity===0?'Out of stock':cart[p.id]?'Added':'Add to cart'}</button>
         </article>)}</div>
