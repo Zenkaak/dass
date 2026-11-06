@@ -1357,31 +1357,9 @@
 }
 
 
-/* Latest arrivals automatically packs products into complete columns.
-   Use the largest row count (up to four) that divides the item count, so
-   short trailing columns are avoided without changing other product grids. */
+/* Latest Arrivals uses the same four-row grid as other product sections.
+   On mobile, three columns are visible; additional columns scroll horizontally.
+   Showing up to 24 products gives four rows across as many as six columns. */
 .store-page .ds-store-latest-arrivals .ds-store-rail {
-  display: grid !important;
-  grid-auto-flow: column !important;
-  grid-template-columns: none !important;
-  grid-auto-columns: calc((100% - 16px) / 3) !important;
-  grid-template-rows: repeat(1, minmax(0, auto)) !important;
-  align-items: stretch !important;
-  gap: 8px !important;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  scroll-snap-type: x mandatory !important;
-}
-.store-page .ds-store-latest-arrivals .ds-store-rail.ds-store-latest-rows-2 { grid-template-rows: repeat(2, minmax(0, auto)) !important; }
-.store-page .ds-store-latest-arrivals .ds-store-rail.ds-store-latest-rows-3 { grid-template-rows: repeat(3, minmax(0, auto)) !important; }
-.store-page .ds-store-latest-arrivals .ds-store-rail.ds-store-latest-rows-4 { grid-template-rows: repeat(4, minmax(0, auto)) !important; }
-.store-page .ds-store-latest-arrivals .ds-store-rail > .ds-store-card {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: none !important;
-  height: 100% !important;
-  scroll-snap-align: start !important;
-}
-@media (min-width: 761px) {
-  .store-page .ds-store-latest-arrivals .ds-store-rail { grid-auto-columns: calc((100% - 24px) / 4) !important; }
+  grid-template-rows: repeat(4, minmax(0, auto)) !important;
 }
