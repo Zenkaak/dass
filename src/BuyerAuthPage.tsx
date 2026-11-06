@@ -16,7 +16,7 @@ export function BuyerAuthPage({slug,shopName,initial='login',onBack,onAuthentica
      <div className="buyer-auth-mark"><UserRound size={21}/></div>
      <div><small className="buyer-auth-eyebrow">{shopName}</small><h1 id="buyer-auth-title">{mode==='signup'?'Create your account':mode==='reset'?'Reset your password':'Welcome back'}</h1></div>
     </div>
-    <p className="buyer-auth-intro">{mode==='signup'?'Create a buyer profile for this shop. You can use the same DASNET identity in other shops.':mode==='reset'?'Confirm your mobile number and choose a new password.':'Sign in with your DASNET identity to shop in this store and manage your orders.'}</p>
+    <p className="buyer-auth-intro">{mode==='signup'?'Create your buyer account for this shop and keep your orders and details in one place.':mode==='reset'?'Confirm your mobile number and choose a new password.':'Sign in to shop in this store and manage your orders.'}</p>
     {mode==='signup'&&<div className="buyer-auth-progress" aria-label={'Signup step '+step+' of 4'}><div>{[1,2,3,4].map(n=><span key={n} className={n<=step?'done':''}/>)}</div><small><b>STEP 0{step}</b><span>{stepTitle}</span></small></div>}
     <form className="buyer-auth-form" onSubmit={submit}>
      {mode==='signup'&&step===1&&<><label>Full name<input value={name} onChange={e=>setName(e.target.value)} required maxLength={120} autoComplete="name" placeholder="Enter your full name"/></label><label>Email address<input type="email" value={email} onChange={e=>setEmail(e.target.value)} required maxLength={254} autoComplete="email" placeholder="you@example.com"/></label></>}
@@ -28,7 +28,7 @@ export function BuyerAuthPage({slug,shopName,initial='login',onBack,onAuthentica
      <div className="buyer-auth-actions">{mode==='signup'&&step>1&&<button className="buyer-auth-secondary" type="button" onClick={()=>setStep(s=>Math.max(1,s-1))}>Back</button>}<button className="buyer-auth-submit" disabled={busy}>{busy?'Please wait…':mode==='signup'?(step<3?'Continue':step===3?'Send verification code':'Create account'):mode==='login'?'Sign in':sent?'Reset password':'Send reset code'} <ArrowRight size={17}/></button></div>
     </form>
     <div className="buyer-auth-links">{mode==='login'?<><span>New to this shop?</span><button onClick={()=>changeMode('signup')}>Create buyer account</button><button className="buyer-auth-forgot" onClick={()=>changeMode('reset')}>Forgot password?</button></>:<button onClick={()=>changeMode('login')}>Already have an account? <b>Sign in</b></button>}</div>
-    <div className="buyer-auth-secure"><ShieldCheck size={16}/><span><b>Your account stays private</b><small>One DASNET identity. Buyer profiles stay private to each shop; seller access is limited to your own shop.</small></span></div>
+    <div className="buyer-auth-secure"><ShieldCheck size={16}/><span><b>Your account stays private</b><small>Your buyer details stay private to this shop and are not shown to other shops.</small></span></div>
   </section>
  </main>
 }
