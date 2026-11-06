@@ -107,8 +107,16 @@ async function verifyStk(c:any,checkoutId:string){
  const {host,accessToken}=await darajaToken(c),stamp=timestamp(),shortcode=String(c.shortcode);
  const payload={BusinessShortCode:shortcode,Password:darajaPassword(shortcode,c.passkey,stamp),Timestamp:stamp,CheckoutRequestID:checkoutId};
  const r=await fetch(host+'/mpesa/stkpushquery/v1/query',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify(payload)});
- const d:any=await r.json();if(!r.ok)throw Error('Safaricom payment verification query failed.');
+ const d:any=await r.json();if(!r.ok||String(d.ResponseCode)!=='0')throw Error('Safaricom payment verification query failed.');
  return d;
+}
+function paymentDarajaCredentials(p:any,key:string){
+ const method=p.provider_result?.paymentMethod==='paybill'?'paybill':'till';
+ const sellerBundle=p.encrypted_credentials?.ciphertext?decryptBundle(p.encrypted_credentials,key,'seller'):null;
+ const seller=sellerBundle?.credentialsByType?.[method]||(sellerBundle?.consumerKey?{...sellerBundle,shortcode:p.shortcode,environment:p.environment}:null);
+ if(seller?.consumerKey&&seller?.consumerSecret&&seller?.passkey)return {...seller,shortcode:seller.shortcode||p.shortcode,environment:seller.environment||p.environment};
+ if(p.central_credentials?.data){const central=decryptBundle(p.central_credentials,key,'platform');return {...central,shortcode:p.central_shortcode,environment:p.central_environment};}
+ throw Error('Daraja verification credentials are unavailable.');
 }
 function productOut(p:any,includeMetadata=false){
  const raw=Array.isArray(p.images)?p.images:[];
@@ -264,22 +272,25 @@ export default async function handler(req:any,res:any){
   }
   if(req.method==='POST'&&action==='daraja-callback'){
    const cb=req.body?.Body?.stkCallback||{},checkout=String(cb.CheckoutRequestID||''),resultCode=Number(cb.ResultCode);
-   if(!checkout)return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
+   if(!checkout)return send(res,400,{ResultCode:1,ResultDesc:'Missing checkout reference'});
    if(!Number.isFinite(resultCode))return send(res,400,{ResultCode:1,ResultDesc:'Invalid callback result code'});
    const rows=await sql`SELECT p.id,p.tenant_id,p.order_id,p.phone,p.amount_minor,p.status,p.provider_result,pc.shortcode,pc.party_b,pc.account_type,pc.environment,pc.encrypted_credentials,pc.payout_method,pc.account_reference,pc.till_party_b,pc.paybill_party_b,pc.default_payout_method,pm.shortcode AS central_shortcode,pm.environment AS central_environment,pm.encrypted_credentials AS central_credentials FROM public.payments p LEFT JOIN public.payment_configs pc ON pc.tenant_id=p.tenant_id LEFT JOIN public.platform_payment_methods pm ON pm.method=CASE WHEN p.provider_result->>'paymentMethod'='paybill' THEN 'paybill' ELSE 'till' END WHERE p.provider_checkout_id=${checkout} LIMIT 1`;
    if(!rows.length)return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
    const p=rows[0];if(p.status==='succeeded')return send(res,200,{ResultCode:0,ResultDesc:'Already processed'});
-   // Safaricom cancellation/failure callbacks must release the payment lock even
-   // when credential decryption or a verification API is unavailable.
+   // Public callbacks are notifications, not proof. Independently query Daraja
+   // before applying either successful or failed/cancelled payment state.
+   let darajaResult:any;
+   try{const credentials=paymentDarajaCredentials(p,env('DASNET_CREDENTIALS_ENCRYPTION_KEY'));darajaResult=await verifyStk(credentials,checkout);}
+   catch(verificationError:any){console.error('Daraja callback query could not verify payment',{paymentId:p.id,error:String(verificationError?.message||verificationError)});return send(res,503,{ResultCode:1,ResultDesc:'Independent payment verification is temporarily unavailable. Retry callback.'});}
+   if(String(darajaResult.CheckoutRequestID||checkout)!==checkout||Number(darajaResult.ResultCode)!==resultCode){console.error('Daraja callback result did not match STK query',{paymentId:p.id,callbackResultCode:resultCode,queryResultCode:darajaResult.ResultCode});return send(res,503,{ResultCode:1,ResultDesc:'Callback and Safaricom verification results do not match.'});}
    if(resultCode!==0){
     const terminalStatus=resultCode===1032?'cancelled':'failed';
     await sql`UPDATE public.payments SET status=${terminalStatus},provider_result=${JSON.stringify({...((p.provider_result&&typeof p.provider_result==='object')?p.provider_result:{}),callback:cb,resultCode,resultDescription:String(cb.ResultDesc||'')})}::jsonb,updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
     await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'payment_update',terminalStatus==='cancelled'?'Payment cancelled':'Payment failed','Payment for your order was '+terminalStatus+'.');
     return send(res,200,{ResultCode:0,ResultDesc:terminalStatus==='cancelled'?'Customer cancelled payment':'Payment failure recorded'});
    }
-   // Safaricom's STK callback is the final transaction response. Do not block
-   // settlement on a second STK-query request, which can lag or fail after
-   // the successful callback has already arrived.
+   // Daraja's independent STK query confirmed success. Validate callback
+   // metadata against the stored payment before applying settlement.
    try{
     const meta=cb.CallbackMetadata?.Item||[],val=(n:string)=>meta.find((x:any)=>x.Name===n)?.Value;
     const amount=Number(val('Amount'));
@@ -355,13 +366,13 @@ export default async function handler(req:any,res:any){
    const shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
    if(!shops.length)return send(res,404,{error:'Shop not found.'});
    const customer=await buyerSession(sql,req,shops[0].id);if(!customer)return send(res,401,{error:'Sign in to view your orders.'});
-   const rows=await sql`SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.customer_email,o.subtotal_minor,o.total_minor,o.discount_minor,o.coupon_code,o.created_at,o.status,o.delivery_status,o.delivery_updated_at,o.delivery_method,o.delivery_county,o.delivery_sub_county,o.delivery_estate,o.delivery_address,o.delivery_directions,o.pickup_station,
+   const rows=await sql`SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.customer_email,o.subtotal_minor,o.delivery_fee_minor,o.total_minor,o.discount_minor,o.coupon_code,o.created_at,o.status,o.delivery_status,o.delivery_updated_at,o.delivery_method,o.delivery_county,o.delivery_sub_county,o.delivery_estate,o.delivery_address,o.delivery_directions,o.pickup_station,
     COALESCE((SELECT json_agg(json_build_object('id',i.product_id,'name',i.product_name,'quantity',i.quantity,'price',i.unit_price_minor,'lineTotal',i.line_total_minor,'image',(SELECT p.images->>0 FROM public.products p WHERE p.id=i.product_id AND p.tenant_id=o.tenant_id LIMIT 1),'category',(SELECT p.metadata->>'category' FROM public.products p WHERE p.id=i.product_id AND p.tenant_id=o.tenant_id LIMIT 1)) ORDER BY i.created_at) FROM (SELECT product_id,product_name,unit_price_minor,SUM(quantity)::int AS quantity,SUM(line_total_minor)::bigint AS line_total_minor,MIN(created_at) AS created_at FROM public.order_items WHERE tenant_id=o.tenant_id AND order_id=o.id GROUP BY product_id,product_name,unit_price_minor) i),'[]'::json) AS items,
     pay.status AS payment_status,pay.provider_receipt
     FROM public.orders o
     LEFT JOIN LATERAL (SELECT p.status,p.provider_receipt,p.provider_result->>'inventoryIssue' AS inventory_issue FROM public.payments p WHERE p.tenant_id=o.tenant_id AND p.order_id=o.id ORDER BY p.created_at DESC LIMIT 1) pay ON true
     WHERE o.tenant_id=${shops[0].id} AND right(regexp_replace(o.customer_phone,'[^0-9]','','g'),9)=right(regexp_replace(${customer.phone},'[^0-9]','','g'),9) ORDER BY o.created_at DESC LIMIT 100`;
-   return send(res,200,{orders:rows.map((o:any)=>({id:o.id,orderNumber:o.order_number,createdAt:o.created_at,customerName:o.customer_name,customerPhone:o.customer_phone,customerEmail:o.customer_email||'',subtotal:Number(o.subtotal_minor)/100,discount:Number(o.discount_minor||0)/100,couponCode:o.coupon_code||null,total:Number(o.total_minor)/100,orderStatus:o.status,deliveryStatus:o.delivery_status||'pending_delivery',deliveryUpdatedAt:o.delivery_updated_at,deliveryMethod:o.delivery_method||'home',deliveryCounty:o.delivery_county||'',deliverySubCounty:o.delivery_sub_county||'',deliveryEstate:o.delivery_estate||'',deliveryAddress:o.delivery_address||'',deliveryDirections:o.delivery_directions||'',pickupStation:o.pickup_station||'',paymentStatus:o.payment_status||'unpaid',paymentIssue:o.inventory_issue||null,receipt:o.provider_receipt||null,items:(o.items||[]).map((i:any)=>({id:i.id,name:i.name,quantity:Number(i.quantity),price:Number(i.price)/100,lineTotal:Number(i.lineTotal)/100}))}))});
+   return send(res,200,{orders:rows.map((o:any)=>({id:o.id,orderNumber:o.order_number,createdAt:o.created_at,customerName:o.customer_name,customerPhone:o.customer_phone,customerEmail:o.customer_email||'',subtotal:Number(o.subtotal_minor)/100,deliveryFee:Number(o.delivery_fee_minor||0)/100,discount:Number(o.discount_minor||0)/100,couponCode:o.coupon_code||null,total:Number(o.total_minor)/100,orderStatus:o.status,deliveryStatus:o.delivery_status||'pending_delivery',deliveryUpdatedAt:o.delivery_updated_at,deliveryMethod:o.delivery_method||'home',deliveryCounty:o.delivery_county||'',deliverySubCounty:o.delivery_sub_county||'',deliveryEstate:o.delivery_estate||'',deliveryAddress:o.delivery_address||'',deliveryDirections:o.delivery_directions||'',pickupStation:o.pickup_station||'',paymentStatus:o.payment_status||'unpaid',paymentIssue:o.inventory_issue||null,receipt:o.provider_receipt||null,items:(o.items||[]).map((i:any)=>({id:i.id,name:i.name,quantity:Number(i.quantity),price:Number(i.price)/100,lineTotal:Number(i.lineTotal)/100}))}))});
   }
   if(req.method==='POST'&&action==='customer-payment-retry'){
    const b=req.body||{},slug=String(b.slug||'').toLowerCase().trim(),orderId=String(b.orderId||'').trim(),paymentPhone=normalizePhone(b.paymentPhone||'');
@@ -499,12 +510,13 @@ export default async function handler(req:any,res:any){
    }
    if(!me && action!=='order')return send(res,401,{error:'Please sign in to access your seller workspace.'});
   if(req.method==='POST'&&action==='order'){
-   const b=req.body||{},slug=String(b.slug||'').toLowerCase(),items=Array.isArray(b.items)?b.items:[],idempotency=String(b.idempotencyKey||'').slice(0,100),requestedMethod=String(b.paymentMethod||'').toLowerCase(),deliveryMethod=String(b.deliveryMethod||'home'),deliveryCounty=String(b.deliveryCounty||'').trim().slice(0,80),deliverySubCounty=String(b.deliverySubCounty||'').trim().slice(0,100),deliveryEstate=String(b.deliveryEstate||'').trim().slice(0,160),deliveryAddress=String(b.deliveryAddress||'').trim().slice(0,300),deliveryDirections=String(b.deliveryDirections||'').trim().slice(0,500),pickupStation=String(b.pickupStation||'').trim().slice(0,200);
+   const b=req.body||{},slug=String(b.slug||'').toLowerCase(),items=Array.isArray(b.items)?b.items:[],idempotency=String(b.idempotencyKey||'').trim().slice(0,100),requestedMethod=String(b.paymentMethod||'').toLowerCase(),deliveryMethod=String(b.deliveryMethod||'home'),deliveryCounty=String(b.deliveryCounty||'').trim().slice(0,80),deliverySubCounty=String(b.deliverySubCounty||'').trim().slice(0,100),deliveryEstate=String(b.deliveryEstate||'').trim().slice(0,160),deliveryAddress=String(b.deliveryAddress||'').trim().slice(0,300),deliveryDirections=String(b.deliveryDirections||'').trim().slice(0,500),pickupStation=String(b.pickupStation||'').trim().slice(0,200);
    const shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
    if(!shops.length)return send(res,404,{error:'Shop not found.'});
     const buyer=await buyerSession(sql,req,shops[0].id);if(!buyer)return send(res,401,{error:'Sign in to this shop before checkout.'});
    const name=String(buyer.full_name||'').trim().slice(0,120),phone=normalizePhone(buyer.phone),paymentPhone=normalizePhone(b.paymentPhone||buyer.phone),customerEmail=String(buyer.email||'').trim().slice(0,254);
    if(!name||!phone||!paymentPhone||!items.length||items.length>30)return send(res,400,{error:'Your buyer account or payment phone is invalid, or the cart is empty.'});
+   if(!/^[a-zA-Z0-9:_-]{12,100}$/.test(idempotency))return send(res,400,{error:'Checkout session expired. Refresh checkout and try again.'});
    if(!['home','pickup'].includes(deliveryMethod))return send(res,400,{error:'Choose a valid delivery method.'});
    if(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty||!deliveryEstate||!deliveryAddress))return send(res,400,{error:'Complete county, sub-county, estate/area and physical delivery address.'});
    if(deliveryMethod==='pickup'&&(!pickupStation||!deliveryCounty||!deliverySubCounty||!deliveryEstate||!deliveryAddress))return send(res,400,{error:'Complete the pickup county, sub-county, estate, collection point and physical address.'});
@@ -515,10 +527,11 @@ export default async function handler(req:any,res:any){
    if(total<=0)return send(res,400,{error:'Order total must be greater than zero.'});
    const couponCode=String(b.couponCode||'').trim().toUpperCase();let discountMinor=0;
    if(couponCode){const coupons=await sql`SELECT id,discount_type,discount_value,minimum_order_minor,max_uses,used_count FROM public.store_coupons WHERE tenant_id=${tenantId} AND code=${couponCode} AND is_active=true AND (starts_at IS NULL OR starts_at<=now()) AND (expires_at IS NULL OR expires_at>now()) LIMIT 1`;if(!coupons.length)return send(res,400,{error:'This coupon is invalid, expired or inactive.'});const cp=coupons[0];if(Number(cp.max_uses||0)>0&&Number(cp.used_count)>=Number(cp.max_uses))return send(res,400,{error:'This coupon has reached its redemption limit.'});if(total<Number(cp.minimum_order_minor||0))return send(res,400,{error:'Your order does not meet this coupon’s minimum spend.'});discountMinor=cp.discount_type==='percentage'?Math.round(total*Number(cp.discount_value)/100):Math.round(Number(cp.discount_value)*100);discountMinor=Math.max(0,Math.min(total,discountMinor));}
-   const payableTotal=total-discountMinor;
-   const configs=await sql`SELECT pc.*,pt.shortcode AS central_till_shortcode,pt.environment AS central_till_environment,pt.encrypted_credentials AS central_till_credentials,pb.shortcode AS central_paybill_shortcode,pb.environment AS central_paybill_environment,pb.encrypted_credentials AS central_paybill_credentials FROM public.tenants t LEFT JOIN public.payment_configs pc ON pc.tenant_id=t.id LEFT JOIN public.platform_payment_methods pt ON pt.method='till' LEFT JOIN public.platform_payment_methods pb ON pb.method='paybill' WHERE t.id=${tenantId} LIMIT 1`;
+   const configs=await sql`SELECT pc.*,s.delivery_home_fee_minor,s.delivery_pickup_fee_minor,pt.shortcode AS central_till_shortcode,pt.environment AS central_till_environment,pt.encrypted_credentials AS central_till_credentials,pb.shortcode AS central_paybill_shortcode,pb.environment AS central_paybill_environment,pb.encrypted_credentials AS central_paybill_credentials FROM public.tenants t LEFT JOIN public.payment_configs pc ON pc.tenant_id=t.id LEFT JOIN public.sites s ON s.tenant_id=t.id LEFT JOIN public.platform_payment_methods pt ON pt.method='till' LEFT JOIN public.platform_payment_methods pb ON pb.method='paybill' WHERE t.id=${tenantId} LIMIT 1`;
    const cfg=configs[0]||{},key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');let payment:any=null;
    const method=requestedMethod==='paybill'?'paybill':requestedMethod==='till'?'till':((cfg.default_payout_method||cfg.payout_method||'till')==='paybill'?'paybill':'till');
+   const deliveryFeeMinor=Math.max(0,Number(deliveryMethod==='pickup'?cfg.delivery_pickup_fee_minor:cfg.delivery_home_fee_minor)||0),payableTotal=total-discountMinor+deliveryFeeMinor;
+   const checkoutFingerprint=hash(JSON.stringify({buyer:phone,items:lines.map((l:any)=>({id:l.p.id,quantity:l.qty,unitPrice:Number(l.p.price_minor)})).sort((a:any,b:any)=>a.id.localeCompare(b.id)),couponCode,deliveryMethod,deliveryCounty,deliverySubCounty,deliveryEstate,deliveryAddress,deliveryDirections,pickupStation,paymentPhone,method,subtotalMinor:total,discountMinor,deliveryFeeMinor}));
    try{
     if(method==='till'&&!((cfg.till_party_b)||(cfg.payout_method==='till'&&cfg.party_b)))return send(res,409,{error:'A Till / Buy Goods destination is not configured for this seller.'});
     if(method==='paybill'&&!((cfg.paybill_party_b)||(cfg.payout_method==='paybill'&&cfg.party_b)))return send(res,409,{error:'A PayBill destination is not configured for this seller.'});
@@ -536,16 +549,17 @@ export default async function handler(req:any,res:any){
    if(!payment?.consumerKey||!payment?.consumerSecret||!payment?.passkey||!payment?.shortcode||!payment?.partyB)return send(res,503,{error:'This shop has not completed M-PESA payment setup yet.'});
    if(payment.environment!=='production')return send(res,503,{error:'This shop is configured for Daraja sandbox. Live checkout is disabled.'});
    const orderNo='DAS-'+Date.now().toString(36).toUpperCase()+'-'+crypto.randomBytes(2).toString('hex').toUpperCase();
-   const o=await sql`INSERT INTO public.orders(tenant_id,order_number,customer_name,customer_phone,customer_email,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,subtotal_minor,total_minor,coupon_code,discount_minor,status) VALUES(${tenantId},${orderNo},${name},${phone},${customerEmail||null},${deliveryMethod},${deliveryCounty||null},${deliverySubCounty||null},${deliveryEstate||null},${deliveryAddress||null},${deliveryDirections||null},${pickupStation||null},${total},${total-discountMinor},${couponCode||null},${discountMinor},'pending') RETURNING id,order_number`;
+   const o=await sql`INSERT INTO public.orders(tenant_id,order_number,customer_name,customer_phone,customer_email,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,subtotal_minor,delivery_fee_minor,total_minor,coupon_code,discount_minor,checkout_idempotency_key,checkout_fingerprint,status) VALUES(${tenantId},${orderNo},${name},${phone},${customerEmail||null},${deliveryMethod},${deliveryCounty||null},${deliverySubCounty||null},${deliveryEstate||null},${deliveryAddress||null},${deliveryDirections||null},${pickupStation||null},${total},${deliveryFeeMinor},${payableTotal},${couponCode||null},${discountMinor},${idempotency},${checkoutFingerprint},'pending') ON CONFLICT (tenant_id,checkout_idempotency_key) WHERE checkout_idempotency_key IS NOT NULL DO NOTHING RETURNING id,order_number`;
+   if(!o.length){const prior=await sql`SELECT o.id,o.order_number,o.checkout_fingerprint,o.subtotal_minor,o.delivery_fee_minor,o.total_minor,o.discount_minor,o.coupon_code,p.status AS payment_status FROM public.orders o LEFT JOIN LATERAL (SELECT status FROM public.payments WHERE tenant_id=o.tenant_id AND order_id=o.id ORDER BY created_at DESC LIMIT 1) p ON true WHERE o.tenant_id=${tenantId} AND o.checkout_idempotency_key=${idempotency} LIMIT 1`;if(!prior.length)return send(res,409,{error:'Checkout is already being processed. Refresh your orders in a moment.'});if(prior[0].checkout_fingerprint!==checkoutFingerprint)return send(res,409,{error:'Your cart or delivery details changed. Start a fresh checkout to continue.'});return send(res,200,{ok:true,orderId:prior[0].id,orderNumber:prior[0].order_number,paymentStatus:prior[0].payment_status||'pending',subtotal:Number(prior[0].subtotal_minor)/100,deliveryFee:Number(prior[0].delivery_fee_minor||0)/100,discount:Number(prior[0].discount_minor||0)/100,total:Number(prior[0].total_minor)/100,couponCode:prior[0].coupon_code||null,chatToken:''});}
    const customerChatToken=crypto.randomBytes(32).toString('hex');await sql`UPDATE public.orders SET customer_chat_token_hash=${hash(customerChatToken)} WHERE id=${o[0].id} AND tenant_id=${tenantId}`;
    for(const l of lines){await sql`INSERT INTO public.order_items(tenant_id,order_id,product_id,product_name,quantity,unit_price_minor,line_total_minor) VALUES(${tenantId},${o[0].id},${l.p.id},${l.p.name},${l.qty},${Number(l.p.price_minor)},${l.line})`;}
-   const idem=idempotency||crypto.randomUUID();
-   const p=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result) VALUES(${tenantId},${o[0].id},'mpesa_daraja',${paymentPhone},${payableTotal},'KES','initiated',${idem},${JSON.stringify({paymentMethod:method})}::jsonb) RETURNING id`;
+   const idem='checkout-'+idempotency;
+   const p=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result) VALUES(${tenantId},${o[0].id},'mpesa_daraja',${paymentPhone},${payableTotal},'KES','initiated',${idem},${JSON.stringify({paymentMethod:method,source:'buyer_checkout'})}::jsonb) RETURNING id`;
    try{
     const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dasmarket.co.ke'))).replace(/\/$/,'')+'/api/payments?action=daraja-callback';
     const stk=await startStk(payment,o[0],paymentPhone,payableTotal/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):orderNo.slice(-12),callbackUrl);
     await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({paymentMethod:method,source:'buyer_checkout',merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
-    return send(res,201,{ok:true,orderId:o[0].id,orderNumber:o[0].order_number,paymentStatus:'pending',checkoutRequestId:stk.checkoutId,chatToken:customerChatToken,subtotal:total/100,discount:discountMinor/100,total:(total-discountMinor)/100,couponCode:couponCode||null,message:'M-PESA prompt sent. Enter your PIN on your phone to complete payment.'});
+    return send(res,201,{ok:true,orderId:o[0].id,orderNumber:o[0].order_number,paymentStatus:'pending',checkoutRequestId:stk.checkoutId,chatToken:customerChatToken,subtotal:total/100,deliveryFee:deliveryFeeMinor/100,discount:discountMinor/100,total:payableTotal/100,couponCode:couponCode||null,message:'M-PESA prompt sent. Enter your PIN on your phone to complete payment.'});
    }catch(e:any){
     await sql`UPDATE public.payments SET status='failed',provider_result=${JSON.stringify({paymentMethod:method,source:'buyer_checkout',error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
     console.error('Daraja STK initiation failed',e?.message||e);
@@ -555,16 +569,18 @@ export default async function handler(req:any,res:any){
   if(!me)return send(res,401,{error:'Sign in to manage your shop.'});
 
   if(req.method==='GET'&&action==='store-settings'){
-   const rows=await sql`SELECT contact_phone,contact_email,terms_and_conditions,privacy_policy,return_policy,delivery_policy,storefront_faqs FROM public.sites WHERE tenant_id=${me.tenant_id} LIMIT 1`,r=rows[0]||{};
-   return send(res,200,{settings:{contactPhone:r.contact_phone||'',contactEmail:r.contact_email||'',termsAndConditions:r.terms_and_conditions||'',privacyPolicy:r.privacy_policy||'',returnPolicy:r.return_policy||'',deliveryPolicy:r.delivery_policy||'',faqs:Array.isArray(r.storefront_faqs)?r.storefront_faqs:[]}});
+   const rows=await sql`SELECT contact_phone,contact_email,terms_and_conditions,privacy_policy,return_policy,delivery_policy,storefront_faqs,delivery_home_fee_minor,delivery_pickup_fee_minor FROM public.sites WHERE tenant_id=${me.tenant_id} LIMIT 1`,r=rows[0]||{};
+   return send(res,200,{settings:{contactPhone:r.contact_phone||'',contactEmail:r.contact_email||'',termsAndConditions:r.terms_and_conditions||'',privacyPolicy:r.privacy_policy||'',returnPolicy:r.return_policy||'',deliveryPolicy:r.delivery_policy||'',deliveryHomeFee:Number(r.delivery_home_fee_minor||0)/100,deliveryPickupFee:Number(r.delivery_pickup_fee_minor||0)/100,faqs:Array.isArray(r.storefront_faqs)?r.storefront_faqs:[]}});
   }
   if(req.method==='POST'&&action==='store-settings'){
    if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner or admin can update buyer-facing shop policies.'});
    const b=req.body||{},phoneRaw=String(b.contactPhone||'').trim(),contactPhone=phoneRaw?normalizePhone(phoneRaw):'',email=String(b.contactEmail||'').trim().toLowerCase().slice(0,254);
-   const terms=String(b.termsAndConditions||'').trim().slice(0,20000),privacy=String(b.privacyPolicy||'').trim().slice(0,20000),returns=String(b.returnPolicy||'').trim().slice(0,12000),delivery=String(b.deliveryPolicy||'').trim().slice(0,12000),faqs=Array.isArray(b.faqs)?b.faqs.slice(0,30).map((x:any)=>({question:String(x?.question||'').trim().slice(0,240),answer:String(x?.answer||'').trim().slice(0,2000)})).filter((x:any)=>x.question.length>=3&&x.answer.length>=3):[];
+   const terms=String(b.termsAndConditions||'').trim().slice(0,20000),privacy=String(b.privacyPolicy||'').trim().slice(0,20000),returns=String(b.returnPolicy||'').trim().slice(0,12000),delivery=String(b.deliveryPolicy||'').trim().slice(0,12000),homeFee=Number(b.deliveryHomeFee??0),pickupFee=Number(b.deliveryPickupFee??0),faqs=Array.isArray(b.faqs)?b.faqs.slice(0,30).map((x:any)=>({question:String(x?.question||'').trim().slice(0,240),answer:String(x?.answer||'').trim().slice(0,2000)})).filter((x:any)=>x.question.length>=3&&x.answer.length>=3):[];
+   if(!Number.isFinite(homeFee)||!Number.isFinite(pickupFee)||homeFee<0||pickupFee<0||homeFee>1000000||pickupFee>1000000)return send(res,400,{error:'Enter valid delivery fees between KES 0 and KES 1,000,000.'});
+   const homeFeeMinor=Math.round(homeFee*100),pickupFeeMinor=Math.round(pickupFee*100);
    if(phoneRaw&&!contactPhone)return send(res,400,{error:'Enter a valid Kenyan customer support phone number.'});
    if(email&&!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))return send(res,400,{error:'Enter a valid support email address.'});
-   await sql`UPDATE public.sites SET contact_phone=${contactPhone||null},contact_email=${email||null},terms_and_conditions=${terms},privacy_policy=${privacy},return_policy=${returns},delivery_policy=${delivery},storefront_faqs=${JSON.stringify(faqs)}::jsonb,updated_at=now() WHERE tenant_id=${me.tenant_id}`;
+   await sql`UPDATE public.sites SET contact_phone=${contactPhone||null},contact_email=${email||null},terms_and_conditions=${terms},privacy_policy=${privacy},return_policy=${returns},delivery_policy=${delivery},delivery_home_fee_minor=${homeFeeMinor},delivery_pickup_fee_minor=${pickupFeeMinor},storefront_faqs=${JSON.stringify(faqs)}::jsonb,updated_at=now() WHERE tenant_id=${me.tenant_id}`;
    await audit(sql,me.tenant_id,me.user_id,'shop.buyer_policies.updated','shop',me.tenant_id,{termsPublished:!!terms,privacyPublished:!!privacy,returnsPublished:!!returns,deliveryPublished:!!delivery,faqCount:faqs.length});
    return send(res,200,{ok:true});
   }
