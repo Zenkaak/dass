@@ -4440,3 +4440,107 @@
  .market-cart-mobile-checkout>button{display:flex;align-items:center;justify-content:center;gap:9px;min-width:160px;height:44px;padding:0 15px;border:0;border-radius:8px;background:#e8a126;color:#182e3c;font-size:12px;font-weight:900}
  .market-cart-empty{min-height:310px}
 }
+
+
+/* Checkout actions stay in the page flow; they are never docked over the
+   storefront navigation or pinned to the bottom of the viewport. */
+.store-page .market-checkout-bottom-action {
+  position: relative !important;
+  inset: auto !important;
+  z-index: 1 !important;
+  margin: 22px 0 8px !important;
+  padding: 14px 17px !important;
+  border: 1px solid #e5eaee !important;
+  border-radius: 13px !important;
+  background: #fff !important;
+  box-shadow: 0 4px 16px rgba(19,39,54,.045) !important;
+  backdrop-filter: none !important;
+}
+.store-page.is-checkout-route { padding-bottom: 12px !important; }
+.store-page.is-checkout-route .store-whatsapp-float { bottom: 18px !important; }
+@media(max-width:600px) {
+  .store-page .market-checkout-redesign { margin-bottom: 28px !important; }
+  .store-page .market-checkout-bottom-action {
+    position: relative !important;
+    left: auto !important; right: auto !important; bottom: auto !important;
+    display: flex !important;
+    margin: 18px 0 12px !important;
+    padding: 12px !important;
+    border: 1px solid #e5eaee !important;
+    border-radius: 12px !important;
+    box-shadow: 0 3px 14px rgba(19,39,54,.05) !important;
+  }
+  .store-page .market-checkout-bottom-action>button { min-height: 46px; }
+}
+
+/* Order details: clean two-column record with clear payment state and a
+   dedicated retry area inside the payment summary. */
+.market-order-detail-page { max-width: 1120px; }
+.market-order-hero {
+  display:grid; grid-template-columns:minmax(0,1fr) auto auto; align-items:center;
+  gap:22px; margin:0 0 18px; padding:22px 24px;
+  border:1px solid #e6ebef; border-radius:15px; background:#fff;
+}
+.market-order-hero-copy>span,.market-order-section-heading>div>span {
+  color:#8a96a1; font-size:9px; font-weight:850; letter-spacing:.13em;
+}
+.market-order-hero-copy h2 { margin:5px 0; color:#1d3444; font-size:20px; letter-spacing:-.02em; }
+.market-order-hero-copy p { margin:0; color:#788692; font-size:12px; }
+.market-order-statuses { display:flex; flex-wrap:wrap; gap:7px; }
+.market-order-statuses span,.market-order-payment-state {
+  display:inline-flex; align-items:center; padding:7px 10px; border-radius:99px;
+  background:#f1f4f6; color:#536575; font-size:10px; font-weight:800;
+}
+.market-order-statuses .is-paid,.market-order-payment-state.is-paid { background:#eaf7ef; color:#187345; }
+.market-order-statuses .is-attention,.market-order-payment-state.is-attention { background:#fff5df; color:#91610b; }
+.market-order-total { color:#172e3e; font-size:22px; text-align:right; white-space:nowrap; }
+.market-order-total small { display:block; margin-top:3px; color:#8a96a1; font-size:10px; font-weight:650; }
+.market-order-detail-grid { display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:18px; align-items:start; }
+.market-order-detail-main,.market-order-detail-aside { display:grid; gap:15px; min-width:0; }
+.market-order-section { padding:19px; border:1px solid #e7ebef; border-radius:14px; background:#fff; }
+.market-order-section-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:13px; }
+.market-order-section-heading h3 { margin:4px 0 0; color:#243a49; font-size:15px; }
+.market-order-section-heading>small { color:#7d8994; font-size:11px; }
+.market-order-items { display:grid; }
+.market-order-item { display:grid; grid-template-columns:66px minmax(0,1fr) auto; align-items:center; gap:13px; padding:12px 0; border-top:1px solid #eff2f4; }
+.market-order-item:first-child { border-top:0; }
+.market-order-item .customer-product-thumb { width:64px; height:64px; border:1px solid #edf0f2; background:#fff; }
+.market-order-item>div { min-width:0; display:grid; gap:4px; }
+.market-order-item>div strong { color:#253b4a; font-size:12px; }
+.market-order-item>div small { color:#7b8994; font-size:10px; }
+.market-order-item>b { color:#243a49; font-size:12px; white-space:nowrap; }
+.market-order-section-actions { display:flex; justify-content:flex-end; padding-top:12px; border-top:1px solid #eff2f4; }
+.market-order-info-row { display:flex; gap:12px; padding:12px 0; border-top:1px solid #eff2f4; }
+.market-order-info-row>svg { flex:0 0 auto; color:var(--store-accent,#e47a13); }
+.market-order-info-row strong { color:#2b4050; font-size:12px; }
+.market-order-info-row p { margin:4px 0 0; color:#6d7c88; font-size:11px; line-height:1.55; overflow-wrap:anywhere; }
+.market-order-money-row,.market-order-money-total { display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-top:1px solid #eff2f4; color:#687783; font-size:11px; }
+.market-order-money-row strong,.market-order-money-total strong { color:#263b4a; }
+.market-order-money-total { margin-top:3px; padding-top:14px; font-size:12px; font-weight:800; }
+.market-order-money-total strong { font-size:17px; }
+.market-order-payment-method { display:flex; gap:8px; align-items:center; margin:10px 0 0; color:#6d7c88; font-size:10px; }
+.market-order-retry { display:grid; gap:11px; margin-top:15px; padding:14px; border:1px solid #f1dfb7; border-radius:12px; background:#fffaf0; }
+.market-order-retry>div strong { color:#77520b; font-size:12px; }
+.market-order-retry>div p { margin:4px 0 0; color:#816f4a; font-size:10px; line-height:1.5; }
+.market-order-retry .customer-form-label { display:grid; gap:6px; color:#526272; font-size:11px; font-weight:750; }
+.market-order-retry input { min-height:43px; padding:10px 12px; border:1px solid #dce4e9; border-radius:8px; background:#fff; font:inherit; font-size:13px; }
+.market-order-retry .buyer-retry-payment { width:100%; margin:0; min-height:45px; }
+.market-order-retry-message { color:#6b7784; font-size:10px; line-height:1.45; }
+.market-order-help-note,.market-order-delivered-note { display:flex; gap:9px; padding:12px; border-radius:10px; background:#f5f8fa; color:#687986; font-size:10px; line-height:1.5; }
+.market-order-help-note svg { flex:0 0 auto; color:#21804c; }
+.market-order-delivered-note { display:grid; background:#f1faf4; color:#557464; }
+.market-order-delivered-note strong { color:#237448; font-size:11px; }
+@media(max-width:800px) {
+  .market-order-detail-grid { grid-template-columns:minmax(0,1fr); }
+  .market-order-detail-aside { order:-1; }
+}
+@media(max-width:600px) {
+  .market-order-detail-page { width:calc(100% - 22px); margin:12px auto 30px; }
+  .market-order-hero { grid-template-columns:minmax(0,1fr) auto; gap:12px; padding:16px; }
+  .market-order-statuses { grid-column:1/-1; grid-row:2; }
+  .market-order-total { grid-column:2; grid-row:1; font-size:18px; }
+  .market-order-section { padding:15px; border-radius:12px; }
+  .market-order-item { grid-template-columns:54px minmax(0,1fr) auto; gap:9px; }
+  .market-order-item .customer-product-thumb { width:52px; height:52px; }
+  .market-order-item>b { font-size:11px; }
+}
