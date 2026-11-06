@@ -1149,3 +1149,31 @@
 .store-page .ds-store-navigation .ds-store-search button { min-width:82px; height:34px; border:0; border-radius:7px; background:#f4b400; color:#241b00; font-size:12px; font-weight:800; }
 .store-page .ds-store .ds-store-hero { margin-top:0; }
 
+
+
+/* Each horizontal swipe advances complete two-card columns, not individual cards. */
+.store-page .ds-store-rail,
+.store-page .ds-store-catalogue .ds-store-grid {
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 2px;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.store-page .ds-store-rail > .ds-store-card:nth-child(2n + 1),
+.store-page .ds-store-catalogue .ds-store-grid > .ds-store-card:nth-child(2n + 1) {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+.store-page .ds-store-rail > .ds-store-card:nth-child(2n),
+.store-page .ds-store-catalogue .ds-store-grid > .ds-store-card:nth-child(2n) {
+  scroll-snap-align: none;
+}
+@media (max-width: 760px) {
+  .store-page .ds-store-navigation .ds-store-brand-word {
+    max-width: min(34vw, 190px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 14px;
+  }
+}
