@@ -341,7 +341,7 @@ export function StorefrontFlow({
           deliveryEstate: order.deliveryEstate || '',
           deliveryDirections: order.deliveryDirections || '',
           subtotal: Number(order.subtotal) || 0,
-          deliveryFee: 0,
+          deliveryFee: Number(order.deliveryFee) || 0,
           total: Number(order.total) || 0,
           lines: (order.items || []).map((item: any) => ({
             product: {
@@ -450,7 +450,7 @@ export function StorefrontFlow({
     }
     setSubmitting(true);
     setCheckoutError('');
-    const fingerprint=JSON.stringify({slug,items:lines.map(({product,quantity})=>[product.id,quantity]).sort((a,b)=>String(a[0]).localeCompare(String(b[0]))),coupon:appliedCoupon?.code||'',paymentPhone:paymentPhone.trim(),deliveryMethod,deliveryCounty,deliverySubCounty,deliveryEstate:deliveryEstate.trim(),deliveryAddress:deliveryAddress.trim(),deliveryDirections:deliveryDirections.trim(),pickupStation:pickupStation.trim()});
+    const fingerprint=JSON.stringify({slug,items:lines.map(({product,quantity})=>[product.id,quantity]).sort((a,b)=>String(a[0]).localeCompare(String(b[0]))),coupon:appliedCoupon?.code||'',paymentPhone:paymentPhone.trim(),deliveryFee,deliveryMethod,deliveryCounty,deliverySubCounty,deliveryEstate:deliveryEstate.trim(),deliveryAddress:deliveryAddress.trim(),deliveryDirections:deliveryDirections.trim(),pickupStation:pickupStation.trim()});
     if(!checkoutIdempotency.current||checkoutIdempotency.current.fingerprint!==fingerprint){const key=window.crypto?.randomUUID?.()||('buyer-'+Date.now()+'-'+Math.random().toString(36).slice(2,14));checkoutIdempotency.current={fingerprint,key};}
     try {
       const response = await fetch('/api/buyer?action=order', {
