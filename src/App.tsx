@@ -224,9 +224,8 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
           <button type="button" className="ds-store-menu-trigger" aria-label="Open shop categories" onClick={()=>setMobileSidebarOpen(true)}><Menu size={21}/></button>
           <a className="ds-store-brand" href={buyerPath('store')} onClick={e=>{e.preventDefault();navigateBuyerPage('store')}}>
             <span className="ds-store-mark">{shop?.logoUrl?<img src={shop.logoUrl} alt=""/>:<Store size={21}/>}</span>
-            <strong className="ds-store-brand-word">DASMARKET</strong>
+            <strong className="ds-store-brand-word">{shop?.name||'OUR STORE'}</strong>
           </a>
-          <div className="ds-store-shop-name">{shop?.name||'OUR STORE'}</div>
           <div className="ds-store-header-actions">
             <button type="button" className="ds-store-notification" aria-label="Notifications" title="Notifications" onClick={()=>{if(!buyerCustomer){setBuyerReturnPage('account');navigateBuyerPage('buyer-login')}else navigateBuyerPage('account')}}><Bell size={19}/></button>
             <button type="button" className="ds-store-account" onClick={()=>{if(!buyerCustomer){setBuyerReturnPage('account');navigateBuyerPage('buyer-login')}else navigateBuyerPage('account')}} aria-label="My account" title="My account"><UserRound size={19}/></button>
