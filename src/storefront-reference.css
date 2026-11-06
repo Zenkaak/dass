@@ -1639,3 +1639,20 @@
 @media (prefers-reduced-motion: reduce) {
   .store-page .ds-store-hero { animation: none !important; }
 }
+
+
+/* Featured hero advances as a complete sliding card, rather than swapping
+   only the text and image inside a stationary panel. */
+.store-page .ds-store-hero {
+  position:relative;
+  overflow:hidden;
+  animation:ds-store-hero-card-slide 680ms cubic-bezier(.22,.72,.24,1) both;
+  will-change:transform,opacity;
+}
+@keyframes ds-store-hero-card-slide {
+  from { transform:translateX(42px); opacity:.55; }
+  to { transform:translateX(0); opacity:1; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .store-page .ds-store-hero { animation:none !important; }
+}
