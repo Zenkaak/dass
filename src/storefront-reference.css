@@ -1357,31 +1357,31 @@
 }
 
 
-/* Latest arrivals is a horizontal single-row carousel, not a four-row category grid. */
+/* Latest arrivals automatically packs products into complete columns.
+   Use the largest row count (up to four) that divides the item count, so
+   short trailing columns are avoided without changing other product grids. */
 .store-page .ds-store-latest-arrivals .ds-store-rail {
-  display:flex !important;
-  flex-flow:row nowrap !important;
-  grid-template-rows:none !important;
-  grid-auto-flow:initial !important;
-  grid-auto-columns:initial !important;
-  gap:9px !important;
-  overflow-x:auto !important;
-  overflow-y:hidden !important;
-  align-items:stretch !important;
-  scroll-snap-type:x mandatory !important;
-  scroll-padding-inline:1px !important;
+  display: grid !important;
+  grid-auto-flow: column !important;
+  grid-template-columns: none !important;
+  grid-auto-columns: calc((100% - 16px) / 3) !important;
+  grid-template-rows: repeat(1, minmax(0, auto)) !important;
+  align-items: stretch !important;
+  gap: 8px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scroll-snap-type: x mandatory !important;
 }
+.store-page .ds-store-latest-arrivals .ds-store-rail.ds-store-latest-rows-2 { grid-template-rows: repeat(2, minmax(0, auto)) !important; }
+.store-page .ds-store-latest-arrivals .ds-store-rail.ds-store-latest-rows-3 { grid-template-rows: repeat(3, minmax(0, auto)) !important; }
+.store-page .ds-store-latest-arrivals .ds-store-rail.ds-store-latest-rows-4 { grid-template-rows: repeat(4, minmax(0, auto)) !important; }
 .store-page .ds-store-latest-arrivals .ds-store-rail > .ds-store-card {
-  flex:0 0 calc((100% - 27px) / 4) !important;
-  width:calc((100% - 27px) / 4) !important;
-  max-width:calc((100% - 27px) / 4) !important;
-  height:auto !important;
-  scroll-snap-align:start !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 100% !important;
+  scroll-snap-align: start !important;
 }
-@media(max-width:760px) {
-  .store-page .ds-store-latest-arrivals .ds-store-rail > .ds-store-card {
-    flex-basis:calc((100% - 18px) / 3) !important;
-    width:calc((100% - 18px) / 3) !important;
-    max-width:calc((100% - 18px) / 3) !important;
-  }
+@media (min-width: 761px) {
+  .store-page .ds-store-latest-arrivals .ds-store-rail { grid-auto-columns: calc((100% - 24px) / 4) !important; }
 }
