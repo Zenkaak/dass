@@ -359,9 +359,9 @@ export default async function handler(req:any,res:any){
     COALESCE((SELECT json_agg(json_build_object('id',i.product_id,'name',i.product_name,'quantity',i.quantity,'price',i.unit_price_minor,'lineTotal',i.line_total_minor,'image',(SELECT p.images->>0 FROM public.products p WHERE p.id=i.product_id AND p.tenant_id=o.tenant_id LIMIT 1),'category',(SELECT p.metadata->>'category' FROM public.products p WHERE p.id=i.product_id AND p.tenant_id=o.tenant_id LIMIT 1)) ORDER BY i.created_at) FROM (SELECT product_id,product_name,unit_price_minor,SUM(quantity)::int AS quantity,SUM(line_total_minor)::bigint AS line_total_minor,MIN(created_at) AS created_at FROM public.order_items WHERE tenant_id=o.tenant_id AND order_id=o.id GROUP BY product_id,product_name,unit_price_minor) i),'[]'::json) AS items,
     pay.status AS payment_status,pay.provider_receipt
     FROM public.orders o
-    LEFT JOIN LATERAL (SELECT p.status,p.provider_receipt FROM public.payments p WHERE p.tenant_id=o.tenant_id AND p.order_id=o.id ORDER BY p.created_at DESC LIMIT 1) pay ON true
+    LEFT JOIN LATERAL (SELECT p.status,p.provider_receipt,p.provider_result->>'inventoryIssue' AS inventory_issue FROM public.payments p WHERE p.tenant_id=o.tenant_id AND p.order_id=o.id ORDER BY p.created_at DESC LIMIT 1) pay ON true
     WHERE o.tenant_id=${shops[0].id} AND right(regexp_replace(o.customer_phone,'[^0-9]','','g'),9)=right(regexp_replace(${customer.phone},'[^0-9]','','g'),9) ORDER BY o.created_at DESC LIMIT 100`;
-   return send(res,200,{orders:rows.map((o:any)=>({id:o.id,orderNumber:o.order_number,createdAt:o.created_at,customerName:o.customer_name,customerPhone:o.customer_phone,customerEmail:o.customer_email||'',subtotal:Number(o.subtotal_minor)/100,discount:Number(o.discount_minor||0)/100,couponCode:o.coupon_code||null,total:Number(o.total_minor)/100,orderStatus:o.status,deliveryStatus:o.delivery_status||'pending_delivery',deliveryUpdatedAt:o.delivery_updated_at,deliveryMethod:o.delivery_method||'home',deliveryCounty:o.delivery_county||'',deliverySubCounty:o.delivery_sub_county||'',deliveryEstate:o.delivery_estate||'',deliveryAddress:o.delivery_address||'',deliveryDirections:o.delivery_directions||'',pickupStation:o.pickup_station||'',paymentStatus:o.payment_status||'unpaid',receipt:o.provider_receipt||null,items:(o.items||[]).map((i:any)=>({id:i.id,name:i.name,quantity:Number(i.quantity),price:Number(i.price)/100,lineTotal:Number(i.lineTotal)/100}))}))});
+   return send(res,200,{orders:rows.map((o:any)=>({id:o.id,orderNumber:o.order_number,createdAt:o.created_at,customerName:o.customer_name,customerPhone:o.customer_phone,customerEmail:o.customer_email||'',subtotal:Number(o.subtotal_minor)/100,discount:Number(o.discount_minor||0)/100,couponCode:o.coupon_code||null,total:Number(o.total_minor)/100,orderStatus:o.status,deliveryStatus:o.delivery_status||'pending_delivery',deliveryUpdatedAt:o.delivery_updated_at,deliveryMethod:o.delivery_method||'home',deliveryCounty:o.delivery_county||'',deliverySubCounty:o.delivery_sub_county||'',deliveryEstate:o.delivery_estate||'',deliveryAddress:o.delivery_address||'',deliveryDirections:o.delivery_directions||'',pickupStation:o.pickup_station||'',paymentStatus:o.payment_status||'unpaid',paymentIssue:o.inventory_issue||null,receipt:o.provider_receipt||null,items:(o.items||[]).map((i:any)=>({id:i.id,name:i.name,quantity:Number(i.quantity),price:Number(i.price)/100,lineTotal:Number(i.lineTotal)/100}))}))});
   }
   if(req.method==='POST'&&action==='customer-payment-retry'){
    const b=req.body||{},slug=String(b.slug||'').toLowerCase().trim(),orderId=String(b.orderId||'').trim(),paymentPhone=normalizePhone(b.paymentPhone||'');
@@ -807,8 +807,9 @@ export default async function handler(req:any,res:any){
    const id=String(req.body?.id||''),status=String(req.body?.status||'');
    if(!['pending','confirmed','processing','fulfilled','cancelled'].includes(status))return send(res,400,{error:'Invalid order status.'});
    if(['processing','fulfilled'].includes(status)){
-    const payment=await sql`SELECT status FROM public.payments WHERE tenant_id=${me.tenant_id} AND order_id=${id} ORDER BY created_at DESC LIMIT 1`;
+    const payment=await sql`SELECT status,provider_result->>'inventoryIssue' AS inventory_issue FROM public.payments WHERE tenant_id=${me.tenant_id} AND order_id=${id} ORDER BY created_at DESC LIMIT 1`;
     if(payment[0]?.status!=='succeeded')return send(res,409,{error:'Confirm successful payment before processing or fulfilling this order.'});
+    if(payment[0]?.inventory_issue)return send(res,409,{error:'Payment was received, but stock could not be reserved. Resolve the inventory issue with the buyer before fulfilment.'});
    }
    const r=await sql`UPDATE public.orders SET status=${status},updated_at=now() WHERE id=${id} AND tenant_id=${me.tenant_id} RETURNING id`;
    if(r.length){await notifyOrderBuyer(sql,me.tenant_id,id,'order_update','Order status updated','Your order status is now '+status.replaceAll('_',' ')+'.');await audit(sql,me.tenant_id,me.user_id,'order.status.updated','order',id,{status});}
@@ -819,8 +820,9 @@ export default async function handler(req:any,res:any){
    const id=String(req.body?.id||''),deliveryStatus=String(req.body?.deliveryStatus||'');
    if(!['pending_delivery','in_transit','delivered'].includes(deliveryStatus))return send(res,400,{error:'Invalid delivery status.'});
    if(['in_transit','delivered'].includes(deliveryStatus)){
-    const payment=await sql`SELECT status FROM public.payments WHERE tenant_id=${me.tenant_id} AND order_id=${id} ORDER BY created_at DESC LIMIT 1`;
+    const payment=await sql`SELECT status,provider_result->>'inventoryIssue' AS inventory_issue FROM public.payments WHERE tenant_id=${me.tenant_id} AND order_id=${id} ORDER BY created_at DESC LIMIT 1`;
     if(payment[0]?.status!=='succeeded')return send(res,409,{error:'Successful payment is required before an order can be dispatched or marked delivered.'});
+    if(payment[0]?.inventory_issue)return send(res,409,{error:'Payment was received, but stock could not be reserved. Resolve the inventory issue with the buyer before dispatch or delivery.'});
    }
    const r=await sql`UPDATE public.orders SET delivery_status=${deliveryStatus},delivery_updated_at=now(),updated_at=now() WHERE id=${id} AND tenant_id=${me.tenant_id} RETURNING id`;
    if(r.length){const title=deliveryStatus==='delivered'?'Order delivered':deliveryStatus==='in_transit'?'Order in transit':'Delivery status updated';await notifyOrderBuyer(sql,me.tenant_id,id,'delivery_update',title,'Your order delivery status is now '+deliveryStatus.replaceAll('_',' ')+'.');await audit(sql,me.tenant_id,me.user_id,'order.delivery.updated','order',id,{deliveryStatus});}
