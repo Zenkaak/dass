@@ -276,19 +276,19 @@ export default async function handler(req:any,res:any){
     await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'payment_update',terminalStatus==='cancelled'?'Payment cancelled':'Payment failed','Payment for your order was '+terminalStatus+'.');
     return send(res,200,{ResultCode:0,ResultDesc:terminalStatus==='cancelled'?'Customer cancelled payment':'Payment failure recorded'});
    }
-   const key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');let c:any=null;
+   // Safaricom's STK callback is the final transaction response. Do not block
+   // settlement on a second STK-query request, which can lag or fail after
+   // the successful callback has already arrived.
    try{
-    const method=((p.provider_result?.paymentMethod)||(p.default_payout_method||p.payout_method)||'till')==='paybill'?'paybill':'till';
-    const sellerBundle=p.encrypted_credentials?.ciphertext?decryptBundle(p.encrypted_credentials,key,'seller'):null;
-    const sellerCredentials=sellerBundle?.credentialsByType?.[method]||(sellerBundle?.consumerKey?{...sellerBundle,shortcode:p.shortcode,environment:p.environment}:null);
-    if(sellerCredentials?.consumerKey&&sellerCredentials?.consumerSecret&&sellerCredentials?.passkey){c={...sellerCredentials,partyB:method==='paybill'?(p.paybill_party_b||((p.payout_method||p.default_payout_method)==='paybill'?p.party_b:'')):(p.till_party_b||((p.payout_method||p.default_payout_method)==='till'?p.party_b:'')),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
-    else if(p.central_credentials?.data){const sec=decryptBundle(p.central_credentials,key,'platform');c={...sec,shortcode:p.central_shortcode,environment:p.central_environment,partyB:method==='paybill'?(p.paybill_party_b||((p.payout_method||p.default_payout_method)==='paybill'?p.party_b:'')):(p.till_party_b||((p.payout_method||p.default_payout_method)==='till'?p.party_b:'')),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};}
-    if(!c)throw Error('No payment credentials available');
-    const checked=await verifyStk(c,checkout);
-    if(Number(checked.ResultCode)!==0||!checked.ResultCode&&checked.ResultCode!==0)throw Error('Provider has not confirmed successful payment.');
     const meta=cb.CallbackMetadata?.Item||[],val=(n:string)=>meta.find((x:any)=>x.Name===n)?.Value;
-    const amount=Number(val('Amount')??checked.Amount),receipt=String(val('MpesaReceiptNumber')??checked.MpesaReceiptNumber??''),phone=String(val('PhoneNumber')??checked.PhoneNumber??'');
-    if(!receipt||Math.round(amount*100)!==Number(p.amount_minor)||phone.replace(/^\+/, '')!==String(p.phone).replace(/^\+/,''))throw Error('Callback details do not match the pending order.');
+    const amount=Number(val('Amount'));
+    const receipt=String(val('MpesaReceiptNumber')||'').trim().toUpperCase();
+    const phone=String(val('PhoneNumber')||'').replace(/\\D/g,'');
+    const expectedPhone=String(p.phone||'').replace(/\\D/g,'');
+    if(!Number.isFinite(amount)||!receipt||!phone||Math.round(amount*100)!==Number(p.amount_minor)||phone!==expectedPhone){
+     console.error('Daraja successful callback did not match payment record',{paymentId:p.id,checkout,amountMinor:Number.isFinite(amount)?Math.round(amount*100):null,expectedAmountMinor:Number(p.amount_minor),phoneMatched:phone===expectedPhone,hasReceipt:!!receipt});
+     return send(res,200,{ResultCode:0,ResultDesc:'Callback received; payment details require review'});
+    }
     const settlement=await sql`WITH wanted AS (SELECT product_id,SUM(quantity)::integer AS quantity FROM public.order_items WHERE tenant_id=${p.tenant_id} AND order_id=${p.order_id} AND product_id IS NOT NULL GROUP BY product_id), eligible AS (SELECT COUNT(*)::integer AS count FROM wanted w JOIN public.products pr ON pr.id=w.product_id AND pr.tenant_id=${p.tenant_id} WHERE pr.stock_quantity IS NULL OR pr.stock_quantity>=w.quantity), payment_mark AS (UPDATE public.payments SET status='succeeded',provider_receipt=${receipt},provider_result=(${JSON.stringify({...((p.provider_result&&typeof p.provider_result==='object')?p.provider_result:{}),callback:cb,query:checked})}::jsonb || jsonb_build_object('inventoryApplied',(SELECT COUNT(*) FROM wanted)=0 OR (SELECT count FROM eligible)=(SELECT COUNT(*) FROM wanted),'inventoryIssue',CASE WHEN (SELECT COUNT(*) FROM wanted)=0 OR (SELECT count FROM eligible)=(SELECT COUNT(*) FROM wanted) THEN NULL ELSE 'Payment confirmed, but stock changed during checkout. Seller review required.' END)),verified_at=now(),updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending') RETURNING id,tenant_id,order_id), stock_update AS (UPDATE public.products pr SET stock_quantity=CASE WHEN pr.stock_quantity IS NULL THEN NULL ELSE pr.stock_quantity-w.quantity END,updated_at=now() FROM wanted w,payment_mark pm,eligible e WHERE pr.id=w.product_id AND pr.tenant_id=${p.tenant_id} AND (SELECT COUNT(*) FROM wanted)>0 AND e.count=(SELECT COUNT(*) FROM wanted) AND (pr.stock_quantity IS NULL OR pr.stock_quantity>=w.quantity) RETURNING pr.id), queued AS (INSERT INTO public.payment_reconciliation_jobs(payment_id,tenant_id,order_id,status) SELECT id,tenant_id,order_id,'pending' FROM payment_mark ON CONFLICT(payment_id) DO NOTHING RETURNING id) SELECT (SELECT COUNT(*) FROM wanted)::integer AS wanted_count,(SELECT count FROM eligible)::integer AS eligible_count,(SELECT COUNT(*) FROM payment_mark)::integer AS payment_count,(SELECT COUNT(*) FROM stock_update)::integer AS stock_count,(SELECT COUNT(*) FROM queued)::integer AS queued_count`;
     if(Number(settlement[0]?.payment_count||0)===0)return send(res,200,{ResultCode:0,ResultDesc:'Already processed'});if(Number(settlement[0]?.stock_count||0)!==Number(settlement[0]?.wanted_count||0))console.error('Verified payment needs seller inventory review',{orderId:p.order_id,tenantId:p.tenant_id});
     const jobRows=await sql`SELECT id FROM public.payment_reconciliation_jobs WHERE payment_id=${p.id} LIMIT 1`;if(jobRows.length){try{await reconcilePaymentJob(sql,String(jobRows[0].id));}catch(reconcileError:any){console.error('Verified payment queued for later reconciliation',{paymentId:p.id,error:String(reconcileError?.message||reconcileError)});}}
@@ -400,7 +400,7 @@ export default async function handler(req:any,res:any){
    const paymentId=crypto.randomUUID();
    const inserted=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result) VALUES(${tenantId},${order.id},'mpesa_daraja',${paymentPhone},${amount},'KES','initiated',${paymentId},${JSON.stringify({paymentMethod:method,source:'buyer_payment_retry'})}::jsonb) RETURNING id`;
    try{
-    const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dass-gamma.vercel.app'))).replace(/\/$/,'')+'/api/payments?action=daraja-callback';
+    const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dasmarket.co.ke'))).replace(/\/$/,'')+'/api/payments?action=daraja-callback';
     const stk=await startStk(payment,order,paymentPhone,amount/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):order.order_number.slice(-12),callbackUrl);
     await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({paymentMethod:method,source:'buyer_payment_retry',merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${inserted[0].id}`;
     return send(res,200,{ok:true,checkoutRequestId:stk.checkoutId,message:'M-PESA prompt sent. Enter your PIN to complete payment.'});
@@ -541,7 +541,7 @@ export default async function handler(req:any,res:any){
    const idem=idempotency||crypto.randomUUID();
    const p=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result) VALUES(${tenantId},${o[0].id},'mpesa_daraja',${paymentPhone},${payableTotal},'KES','initiated',${idem},${JSON.stringify({paymentMethod:method})}::jsonb) RETURNING id`;
    try{
-    const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dass-gamma.vercel.app'))).replace(/\/$/,'')+'/api/payments?action=daraja-callback';
+    const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dasmarket.co.ke'))).replace(/\/$/,'')+'/api/payments?action=daraja-callback';
     const stk=await startStk(payment,o[0],paymentPhone,payableTotal/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):orderNo.slice(-12),callbackUrl);
     await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({paymentMethod:method,source:'buyer_checkout',merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
     return send(res,201,{ok:true,orderId:o[0].id,orderNumber:o[0].order_number,paymentStatus:'pending',checkoutRequestId:stk.checkoutId,chatToken:customerChatToken,subtotal:total/100,discount:discountMinor/100,total:(total-discountMinor)/100,couponCode:couponCode||null,message:'M-PESA prompt sent. Enter your PIN on your phone to complete payment.'});
@@ -773,7 +773,7 @@ export default async function handler(req:any,res:any){
    const idempotency=crypto.randomUUID();
    const p=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result) VALUES(${me.tenant_id},${order.id},'mpesa_daraja',${phone},${amount},'KES','initiated',${idempotency},${JSON.stringify({paymentMethod:method,source:'merchant_order_prompt'})}::jsonb) RETURNING id`;
    try{
-    const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dass-gamma.vercel.app'))).replace(/\/$/,'')+'/api/payments?action=daraja-callback';
+    const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dasmarket.co.ke'))).replace(/\/$/,'')+'/api/payments?action=daraja-callback';
     const stk=await startStk(payment,order,phone,amount/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):order.order_number.slice(-12),callbackUrl);
     await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({paymentMethod:method,source:'merchant_order_prompt',merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
     await audit(sql,me.tenant_id,me.user_id,'order.payment_prompt.sent','order',order.id,{paymentMethod:method,amountMinor:amount});
