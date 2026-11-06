@@ -1222,3 +1222,34 @@
     font-size:11px !important;
   }
 }
+
+
+/* Storefront product browsing: one product card per horizontal swipe. */
+.store-page .ds-store-rail,
+.store-page .ds-store-catalogue .ds-store-grid {
+  display: grid !important;
+  grid-auto-flow: column !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+  grid-auto-columns: clamp(136px, 15.2vw, 166px) !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scroll-snap-type: x mandatory !important;
+  scroll-padding-inline: 2px;
+  scroll-behavior: smooth;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.store-page .ds-store-rail > .ds-store-card,
+.store-page .ds-store-catalogue .ds-store-grid > .ds-store-card {
+  width: 100% !important;
+  min-width: 0 !important;
+  scroll-snap-align: start !important;
+  scroll-snap-stop: always !important;
+}
+@media (max-width: 760px) {
+  .store-page .ds-store-rail,
+  .store-page .ds-store-catalogue .ds-store-grid {
+    grid-auto-columns: clamp(136px, 42vw, 158px) !important;
+    gap: 9px !important;
+  }
+}
