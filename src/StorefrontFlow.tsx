@@ -783,7 +783,7 @@ export function StorefrontFlow({
     const paid=['succeeded','success','paid'].includes(paymentState);
     const orderClosed=['cancelled','returned','refunded'].includes(orderState);
     const canRetryPayment=Boolean(activeOrder?.orderId&&!paid&&!orderClosed);
-    const paymentLabel=paid?'Paid':paymentState==='failed'?'Payment failed':paymentState==='cancelled'?'Payment cancelled':paymentState==='pending'?'Awaiting confirmation':'Not yet paid';
+    const paymentLabel=orderState==='refunded'||paymentState==='refunded'?'Refunded':paid?'Paid':paymentState==='failed'?'Payment failed':paymentState==='cancelled'?'Payment cancelled':paymentState==='pending'?'Awaiting confirmation':'Not yet paid';
     const deliveryLabel=deliveryState==='delivered'?'Delivered':deliveryState==='in_transit'?'On the way':orderState==='processing'?'Being prepared':orderState==='fulfilled'?'Ready for delivery':orderState==='cancelled'?'Cancelled':'Order received';
     const isDelivered=deliveryState==='delivered';
     const celebration=paymentCelebration?<div className="buyer-payment-celebration" role="status" aria-live="polite"><div className="buyer-confetti-burst">{Array.from({length:36},(_,i)=><i key={i} style={{'--confetti-angle':(i*10)+'deg','--confetti-delay':((i%7)*0.035)+'s'} as any}>{['✦','✧','●','◆','🎉'][i%5]}</i>)}</div><div className="buyer-celebration-message"><strong>Payment successful!</strong><span>Your order is confirmed. Thank you for shopping.</span></div></div>:null;
