@@ -1504,3 +1504,42 @@
     gap:8px;
   }
 }
+
+
+/* Final catalogue override: defeat the legacy flex rail rule. Filtered and
+   unfiltered catalogue results must always flow down four rows, then across
+   columns; horizontal scrolling reveals additional columns, never one long row. */
+.store-page .ds-store-catalogue .ds-store-grid {
+  display: grid !important;
+  flex: initial !important;
+  flex-flow: initial !important;
+  grid-auto-flow: column !important;
+  grid-template-columns: none !important;
+  grid-template-rows: repeat(4, minmax(0, auto)) !important;
+  grid-auto-columns: calc((100% - 36px) / 4) !important;
+  align-items: stretch !important;
+  gap: 12px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  padding: 3px 2px 12px !important;
+  overscroll-behavior-x: contain !important;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory !important;
+}
+.store-page .ds-store-catalogue .ds-store-grid > .ds-store-card {
+  flex: initial !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: auto !important;
+  scroll-snap-align: start !important;
+  scroll-snap-stop: always !important;
+}
+@media (max-width: 760px) {
+  .store-page .ds-store-catalogue .ds-store-grid {
+    grid-auto-columns: calc((100% - 16px) / 3) !important;
+    gap: 8px !important;
+  }
+}
