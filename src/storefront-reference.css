@@ -1320,3 +1320,38 @@
 .store-page .ds-store-spotlight-section .ds-store-rail {
   grid-template-rows: repeat(3, minmax(0, auto)) !important;
 }
+
+
+/* Spotlight is a single horizontal product row: three cards visible on mobile,
+   with remaining products revealed by sideways scrolling. */
+.store-page .ds-store-spotlight-section .ds-store-rail {
+  display: flex !important;
+  flex-flow: row nowrap !important;
+  grid-template-rows: none !important;
+  grid-auto-flow: initial !important;
+  grid-auto-columns: initial !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  gap: 8px !important;
+  scroll-snap-type: x mandatory !important;
+  scroll-padding-inline: 1px !important;
+}
+.store-page .ds-store-spotlight-section .ds-store-rail > * {
+  flex: 0 0 calc((100% - 24px) / 4) !important;
+  width: calc((100% - 24px) / 4) !important;
+  min-width: 0 !important;
+  max-width: calc((100% - 24px) / 4) !important;
+  height: auto !important;
+  scroll-snap-align: start !important;
+  scroll-snap-stop: always !important;
+}
+@media (max-width: 760px) {
+  .store-page .ds-store-spotlight-section .ds-store-rail {
+    gap: 8px !important;
+  }
+  .store-page .ds-store-spotlight-section .ds-store-rail > * {
+    flex-basis: calc((100% - 16px) / 3) !important;
+    width: calc((100% - 16px) / 3) !important;
+    max-width: calc((100% - 16px) / 3) !important;
+  }
+}
