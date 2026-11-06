@@ -4790,3 +4790,8 @@
  .buyer-auth-v2-heading h1{font-size:22px!important}
  .buyer-auth-v2-switch .buyer-auth-v2-forgot{margin-left:0}
 }
+
+
+.buyer-order-inventory-alert{margin-top:12px;padding:12px 13px;border:1px solid #f0d5a8;border-radius:9px;background:#fff8ec}
+.buyer-order-inventory-alert strong{display:block;color:#86570d;font-size:11px}
+.buyer-order-inventory-alert p{margin:5px 0 0;color:#806d4b;font-size:10px;line-height:1.5}
