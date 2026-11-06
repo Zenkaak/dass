@@ -1225,8 +1225,7 @@
 
 
 /* Category rails: up to four visible cards, with each card snapping independently. */
-.store-page .ds-store-rail,
-.store-page .ds-store-catalogue .ds-store-grid {
+.store-page .ds-store-rail {
   display: flex !important;
   flex-flow: row nowrap !important;
   align-items: stretch;
@@ -1243,8 +1242,7 @@
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
 }
-.store-page .ds-store-rail > .ds-store-card,
-.store-page .ds-store-catalogue .ds-store-grid > .ds-store-card {
+.store-page .ds-store-rail > .ds-store-card {
   flex: 0 0 calc((100% - 36px) / 4) !important;
   width: calc((100% - 36px) / 4) !important;
   min-width: 0 !important;
@@ -1254,12 +1252,10 @@
   scroll-snap-stop: always !important;
 }
 @media (max-width: 760px) {
-  .store-page .ds-store-rail,
-  .store-page .ds-store-catalogue .ds-store-grid {
+  .store-page .ds-store-rail {
     gap: 9px !important;
   }
-  .store-page .ds-store-rail > .ds-store-card,
-  .store-page .ds-store-catalogue .ds-store-grid > .ds-store-card {
+  .store-page .ds-store-rail > .ds-store-card {
     flex-basis: calc((100% - 18px) / 3) !important;
     width: calc((100% - 18px) / 3) !important;
     max-width: calc((100% - 18px) / 3) !important;
