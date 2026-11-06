@@ -1617,7 +1617,7 @@
 }
 @media(max-width:760px) {
   .store-page .ds-store-home-mix-grid {
-    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
     gap:9px !important;
   }
 }
