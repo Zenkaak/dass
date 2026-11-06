@@ -1064,3 +1064,8 @@
  .store-page .market-detail-description-panel h2,.store-page .market-detail-specifications h2,.store-page .market-detail-safety h2{font-size:14px;}
  .store-page .market-detail-specifications>div{font-size:10px;padding:9px 0;}
 }
+
+
+.store-page .ds-store-head .ds-store-menu-trigger { display:grid; flex:0 0 40px; width:40px; height:40px; place-items:center; border:1px solid #e6ebf1; border-radius:9px; background:#fff; color:#26364b; }
+.store-page .ds-store-head .ds-store-menu-trigger:hover { border-color:#cbd7e5; background:#f8fafc; }
+@media(max-width:760px){.store-page .ds-store-head .ds-store-menu-trigger{width:36px;height:36px;flex-basis:36px;}}
