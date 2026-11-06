@@ -2163,7 +2163,7 @@
 
 /* Authentication refresh: readable contrast, visible inputs and four-step progress. */
 .account-auth-redesign{position:relative;isolation:isolate;min-height:100vh;overflow:hidden;background:#101d2a!important;padding-bottom:48px}
-.account-auth-redesign .auth-backdrop{position:absolute;inset:0;z-index:-1;background:linear-gradient(115deg,rgba(7,19,32,.94),rgba(11,36,52,.78)),url('/images/dasnet-auth-bg.jpg') center/cover no-repeat}
+.account-auth-redesign .auth-backdrop{position:absolute;inset:0;z-index:-1;background:linear-gradient(115deg,rgba(7,19,32,.94),rgba(11,36,52,.78))}
 .account-auth-redesign .nav{position:relative;z-index:1}
 .account-auth-redesign .account-card{position:relative;z-index:1;width:min(100% - 32px,520px);margin:38px auto;padding:30px;background:#fff;color:#182b3b;border:1px solid rgba(255,255,255,.5);border-radius:20px;box-shadow:0 24px 80px rgba(0,0,0,.3)}
 .account-auth-redesign .account-card h1{color:#14283a;line-height:1.2}
@@ -4795,3 +4795,66 @@
 .buyer-order-inventory-alert{margin-top:12px;padding:12px 13px;border:1px solid #f0d5a8;border-radius:9px;background:#fff8ec}
 .buyer-order-inventory-alert strong{display:block;color:#86570d;font-size:11px}
 .buyer-order-inventory-alert p{margin:5px 0 0;color:#806d4b;font-size:10px;line-height:1.5}
+
+
+/* Mobile-first finishing pass: prevent horizontal page overflow, preserve a
+   readable merchant identity, and keep checkout controls comfortable to tap. */
+.store-page,.store-page * { box-sizing:border-box; }
+.store-page { width:100%; max-width:100%; overflow-x:clip; }
+@media (max-width:760px) {
+  .store-page .ds-store-navigation { width:100%; margin:0 0 12px; }
+  .store-page .ds-store-navigation-main { min-width:0; min-height:56px; gap:7px; padding:7px 10px; }
+  .store-page .ds-store-navigation .ds-store-menu-trigger { flex:0 0 36px; width:36px; height:38px; }
+  .store-page .ds-store-navigation .ds-store-brand { flex:0 0 auto !important; min-width:38px !important; max-width:42px !important; }
+  .store-page .ds-store-navigation .ds-store-brand-word { display:none !important; }
+  .store-page .ds-store-navigation .ds-store-shop-name {
+    flex:1 1 auto; min-width:0; max-width:none; margin:0 2px;
+    display:-webkit-box; overflow:hidden; white-space:normal;
+    -webkit-box-orient:vertical; -webkit-line-clamp:2;
+    overflow-wrap:anywhere; line-height:1.1;
+    font-size:clamp(12px,3.8vw,15px);
+  }
+  .store-page .ds-store-navigation .ds-store-header-actions { flex:0 0 auto; gap:5px; margin-left:auto; }
+  .store-page .ds-store-navigation .ds-store-header-actions button { width:34px; height:36px; border-radius:8px; }
+  .store-page .ds-store-navigation .ds-store-search { min-height:44px; gap:7px; padding:5px 10px; }
+  .store-page .ds-store-navigation .ds-store-search input { min-width:0; min-height:38px; font-size:16px; }
+  .store-page .ds-store-navigation .ds-store-search button { min-width:62px; min-height:36px; }
+  .store-page .ds-store-home-mix-grid { grid-template-columns:repeat(3,minmax(0,1fr)) !important; gap:8px !important; }
+  .store-page .ds-store-home-mix-grid > .ds-store-card { min-width:0; }
+  .customer-flow { width:100%; max-width:100%; margin:0 auto 28px; overflow-x:clip; }
+  .customer-flow-heading { min-width:0; gap:8px; }
+  .customer-flow-heading h1 { min-width:0; font-size:clamp(17px,4.5vw,20px); }
+  .customer-checkout-grid { display:grid; grid-template-columns:minmax(0,1fr); gap:10px; }
+  .customer-panel,.customer-summary-card { min-width:0; max-width:100%; }
+  .customer-panel { padding:14px 12px; }
+  .customer-summary-card { padding:14px 12px; }
+  .customer-summary-row { gap:10px; }
+  .customer-summary-row span { min-width:0; }
+  .customer-summary-row strong { text-align:right; overflow-wrap:anywhere; }
+  .customer-primary-button,.customer-secondary-button,.customer-back-button,
+  .seller-primary-btn,.seller-secondary-btn { min-height:44px; }
+  .customer-panel input,.customer-panel select,.customer-panel textarea,
+  .customer-flow input,.customer-flow select,.customer-flow textarea { max-width:100%; min-width:0; font-size:16px; }
+  .market-checkout-progress { display:flex; gap:8px; width:100%; overflow-x:auto; padding:4px 2px 10px; scroll-snap-type:x proximity; }
+  .market-checkout-progress-step { flex:1 0 0; min-width:105px; scroll-snap-align:start; }
+  .customer-cart-line { grid-template-columns:68px minmax(0,1fr); gap:10px; }
+  .customer-cart-line > :last-child { grid-column:2; justify-self:start; }
+  .customer-cart-copy { min-width:0; overflow-wrap:anywhere; }
+  .customer-cart-copy h3 { overflow-wrap:anywhere; }
+  .buyer-order-inventory-alert { margin-inline:0; overflow-wrap:anywhere; }
+  .seller-delivery-fees { display:grid; grid-template-columns:1fr; gap:10px; margin:16px 0; padding:13px; border:1px solid #e5eaf0; border-radius:10px; background:#f8fafc; }
+  .seller-delivery-fees h3,.seller-delivery-fees p { grid-column:1; margin:0; }
+  .seller-delivery-fees label { min-width:0; }
+  .seller-delivery-fees input { width:100%; min-height:44px; font-size:16px; }
+}
+@media (max-width:380px) {
+  .store-page .ds-store-navigation-main { gap:5px; padding-inline:7px; }
+  .store-page .ds-store-navigation .ds-store-header-actions { gap:3px; }
+  .store-page .ds-store-navigation .ds-store-header-actions button { width:31px; }
+  .store-page .ds-store-navigation .ds-store-shop-name { font-size:11px; }
+  .customer-cart-line { grid-template-columns:58px minmax(0,1fr); gap:8px; }
+  .customer-cart-line .customer-product-thumb { width:56px; height:62px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .store-page *, .customer-flow * { scroll-behavior:auto !important; animation-duration:.01ms !important; transition-duration:.01ms !important; }
+}
