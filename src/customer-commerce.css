@@ -4297,3 +4297,18 @@
   .store-page .market-product-detail-main { padding: 0 !important; }
   .store-page .market-detail-add-desktop { width: 100%; min-height: 48px; }
 }
+
+
+/* Explicitly show the purchase action in the product summary on every screen size. */
+.store-page .market-detail-summary button.market-detail-add-inline {
+  display: flex !important;
+  visibility: visible !important;
+  position: static !important;
+  width: 100% !important;
+  min-height: 50px !important;
+  margin: 12px 0 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
