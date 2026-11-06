@@ -2184,7 +2184,7 @@
 .auth-resend:disabled,.buyer-auth-resend:disabled{opacity:.55;cursor:wait}
 .auth-domain-preview{display:block;margin-top:8px;color:#536879;font-weight:700}
 .buyer-auth-page{position:relative;isolation:isolate;min-height:100vh;background:#101d2a!important;overflow:hidden}
-.buyer-auth-backdrop{position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,rgba(9,22,35,.88),rgba(10,35,52,.72)),url('/images/dasnet-auth-bg.jpg') center/cover no-repeat}
+.buyer-auth-backdrop{position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,rgba(9,22,35,.88),rgba(10,35,52,.72))}
 .buyer-auth-card{position:relative;width:min(100%,500px);max-height:none;overflow:visible;background:#fff;color:#1d3040;border:1px solid rgba(255,255,255,.6);box-shadow:0 24px 80px rgba(0,0,0,.32)}
 .buyer-auth-card h1{color:#172b3c}
 .buyer-auth-card>p{color:#5e6f7d}
@@ -2254,7 +2254,7 @@
 }
 .buyer-auth-backdrop{
   position:fixed!important;inset:0!important;z-index:-1!important;
-  background:linear-gradient(135deg,rgba(7,20,35,.90),rgba(13,48,66,.76)),url('/images/dasnet-auth-bg.jpg') center/cover no-repeat!important;
+  background:linear-gradient(135deg,rgba(7,20,35,.90),rgba(13,48,66,.76));
 }
 .buyer-auth-card{
   width:min(100%,520px)!important;padding:clamp(22px,5vw,34px)!important;
