@@ -5173,7 +5173,6 @@ button,input,select,textarea{font:inherit;}
   .store-page[data-store-theme="marketplace"] .market-checkout-page .customer-payment-modal-actions{flex-wrap:wrap!important;}
 }
 @media(max-width:390px){
-  .store-page .ds-store-home-mix-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
   .store-page .ds-store-product-name{overflow-wrap:anywhere;}
   .store-page[data-store-theme="marketplace"] .market-checkout-page .customer-flow-actions{gap:7px!important;}
   .store-page[data-store-theme="marketplace"] .market-checkout-page .customer-flow-actions button{min-height:42px!important;font-size:10px!important;}
