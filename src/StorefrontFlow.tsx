@@ -791,75 +791,48 @@ export function StorefrontFlow({
     const orderState=String(activeOrder?.orderStatus||'').toLowerCase();
     const deliveryState=String(activeOrder?.deliveryStatus||'pending_delivery').toLowerCase();
     const paid=['succeeded','success','paid'].includes(paymentState);
+    const cancelled=paymentState==='cancelled'||orderState==='cancelled';
+    const failed=paymentState==='failed';
     const orderClosed=['cancelled','returned','refunded'].includes(orderState);
     const canRetryPayment=Boolean(activeOrder?.orderId&&!paid&&!orderClosed&&(activeOrder?.lines?.length||0)>0);
-    const paymentLabel=orderState==='refunded'||paymentState==='refunded'?'Refunded':paid?'Paid':paymentState==='failed'?'Payment failed':paymentState==='cancelled'?'Payment cancelled':paymentState==='pending'?'Awaiting confirmation':'Not yet paid';
-    const deliveryLabel=deliveryState==='delivered'?'Delivered':deliveryState==='in_transit'?'On the way':orderState==='processing'?'Being prepared':orderState==='fulfilled'?'Ready for delivery':orderState==='cancelled'?'Cancelled':'Order received';
+    const paymentLabel=orderState==='refunded'||paymentState==='refunded'?'Refunded':paid?'Paid':cancelled?'Payment cancelled':failed?'Payment failed':paymentState==='pending'?'Awaiting confirmation':'Not yet paid';
+    const deliveryLabel=deliveryState==='delivered'?'Delivered':deliveryState==='in_transit'?'On the way':orderState==='processing'?'Being prepared':orderState==='fulfilled'?'Ready for delivery':cancelled?'Cancelled':'Order received';
     const isDelivered=deliveryState==='delivered';
+    const processing=['processing','fulfilled'].includes(orderState)||['in_transit','delivered'].includes(deliveryState);
+    const inTransit=['in_transit','delivered'].includes(deliveryState);
+    const steps=[{label:'Order placed',done:true},{label:'Payment confirmed',done:paid},{label:'Processing',done:processing},{label:'Out for delivery',done:inTransit},{label:'Delivered',done:isDelivered}];
     const celebration=paymentCelebration?<div className="buyer-payment-celebration" role="status" aria-live="polite"><div className="buyer-confetti-burst">{Array.from({length:36},(_,i)=><i key={i} style={{'--confetti-angle':(i*10)+'deg','--confetti-delay':((i%7)*0.035)+'s'} as any}>{['✦','✧','●','◆','🎉'][i%5]}</i>)}</div><div className="buyer-celebration-message"><strong>Payment successful!</strong><span>Your order is confirmed. Thank you for shopping.</span></div></div>:null;
     if (!activeOrder) return <div className="customer-flow"><FlowHeading title="Order details" onBack={() => onNavigate('orders')} backLabel="My orders" /><div className="customer-empty-state"><h2>No order selected</h2><button type="button" className="customer-primary-button" onClick={() => onNavigate('orders')}>View my orders</button></div></div>;
     return (
-      <section className="customer-flow buyer-order-v2">
+      <section className="customer-flow buyer-order-v2 buyer-order-design">
         {celebration}
         <FlowHeading title="Order details" onBack={() => onNavigate('orders')} backLabel="My orders" />
         <header className="buyer-order-overview">
-          <div className="buyer-order-overview-main">
-            <span className="buyer-order-kicker">ORDER REFERENCE</span>
-            <h2>{activeOrder.orderNumber}</h2>
-            <p>Placed {new Date(activeOrder.createdAt).toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric'})}</p>
-          </div>
+          <div className="buyer-order-overview-main"><span className="buyer-order-kicker">ORDER DETAILS</span><h2>Order #{activeOrder.orderNumber}</h2><p>Placed on {new Date(activeOrder.createdAt).toLocaleString('en-KE',{weekday:'short',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</p></div>
           <div className="buyer-order-total"><small>ORDER TOTAL</small><strong>{formatKes(activeOrder.total)}</strong></div>
-          <div className="buyer-order-status-row">
-            <span className={paid?'is-success':canRetryPayment?'is-pending':'is-muted'}><i/> Payment: {paymentLabel}</span>
-            <span className={isDelivered?'is-success':'is-muted'}><i/> Delivery: {deliveryLabel}</span>
-          </div>
+          <div className="buyer-order-status-row"><span className={paid?'is-success':cancelled||failed?'is-muted':'is-pending'}><i/> Payment: {paymentLabel}</span><span className={isDelivered?'is-success':'is-muted'}><i/> Delivery: {deliveryLabel}</span></div>
+          <div className="buyer-order-progress" aria-label="Order progress">{steps.map((step,index)=><div className={'buyer-order-progress-step '+(step.done?'is-done':index===steps.findIndex(item=>!item.done)?'is-current':'')} key={step.label}><span>{step.done?<Check size={17}/>:index+1}</span><small>{step.label}</small></div>)}</div>
+          {(cancelled||failed)&&<p className="buyer-order-payment-explainer" role="status">{cancelled?'M-PESA prompt cancelled. No payment was collected.':'The payment was not completed. No payment was collected.'} You can retry when ready.</p>}
         </header>
-
-        <section className="buyer-order-panel">
-          <div className="buyer-order-panel-heading"><span className="buyer-order-step">01</span><div><h3>What you ordered</h3><p>{activeOrder.lines.length?`${activeOrder.lines.reduce((n,line)=>n+line.quantity,0)} item(s) in this order`:'Order contents unavailable'}</p></div></div>
-          <div className="buyer-order-products">
-            {activeOrder.lines.length?activeOrder.lines.map(({product,quantity,lineTotal})=><article className="buyer-order-product" key={product.id}>
-              <ProductThumb product={product}/>
-              <div className="buyer-order-product-copy"><strong>{product.name}</strong><span>Quantity: {quantity}</span><small>{formatKes(product.price)} per item</small>
-                {isDelivered&&paid&&<button type="button" className="customer-order-review-link" onClick={()=>onOpenProduct?.(product)}>★ Review product</button>}
-              </div>
-              <b>{formatKes(lineTotal ?? product.price*quantity)}</b>
-            </article>):<div className="buyer-order-missing-items" role="alert"><strong>We could not retrieve the items for this order.</strong><p>Do not make another payment for this order yet. Contact the shop or open a report so the order contents can be checked.</p><button type="button" className="customer-secondary-button" onClick={()=>onNavigate('reports')}>Get help with this order</button></div>}
-          </div>
-          {isDelivered&&<div className="buyer-order-delivered-message"><ShieldCheck size={17}/><span><strong>Marked as delivered</strong><small>If anything is missing or incorrect, contact the shop or open a report.</small></span></div>}
+        <section className="buyer-order-panel buyer-order-summary-panel">
+          <div className="buyer-order-panel-heading"><span className="buyer-order-icon"><Package size={21}/></span><div><h3>Order summary</h3><p>{activeOrder.lines.reduce((n,line)=>n+line.quantity,0)} item(s)</p></div></div>
+          <div className="buyer-order-money"><div><span>Items subtotal</span><strong>{formatKes(activeOrder.subtotal)}</strong></div><div><span>Delivery fee</span><strong>{formatKes(activeOrder.deliveryFee)}</strong></div>{activeOrder.discount?<div><span>Discount</span><strong>−{formatKes(activeOrder.discount)}</strong></div>:null}<div className="buyer-order-grand-total"><span>{paid?'Total paid':'Order total'}</span><strong>{formatKes(activeOrder.total)}</strong></div></div>
         </section>
-
         <section className="buyer-order-panel">
-          <div className="buyer-order-panel-heading"><span className="buyer-order-step">02</span><div><h3>Where it is going</h3><p>Delivery method and recipient details</p></div></div>
-          <div className="buyer-order-detail-list">
-            <div className="buyer-order-detail-row"><MapPin size={18}/><div><strong>{activeOrder.deliveryMethod==='pickup'?'Collection point':'Delivery address'}</strong><p>{activeOrder.deliveryMethod==='pickup'?activeOrder.pickupStation||'Collection point to be confirmed': [activeOrder.deliveryCounty,activeOrder.deliverySubCounty,activeOrder.deliveryEstate,activeOrder.deliveryAddress].filter(Boolean).join(', ')||'Delivery destination not recorded'}{activeOrder.deliveryDirections?' · '+activeOrder.deliveryDirections:''}</p></div></div>
-            <div className="buyer-order-detail-row"><UserRound size={18}/><div><strong>Recipient</strong><p>{activeOrder.customerName} · {activeOrder.customerPhone}{activeOrder.customerEmail?' · '+activeOrder.customerEmail:''}</p></div></div>
-          </div>
-          <div className="buyer-order-panel-actions"><button type="button" className="customer-secondary-button" onClick={()=>openOrder(activeOrder,'order-tracking')}>View delivery updates <ArrowRight size={15}/></button></div>
+          <div className="buyer-order-panel-heading"><span className="buyer-order-icon"><Package size={21}/></span><div><h3>Items in your order</h3><p>{activeOrder.lines.length?activeOrder.lines.reduce((n,line)=>n+line.quantity,0)+' item(s) purchased':'Order contents unavailable'}</p></div></div>
+          <div className="buyer-order-products">{activeOrder.lines.length?activeOrder.lines.map(({product,quantity,lineTotal})=><article className="buyer-order-product" key={product.id}><ProductThumb product={product}/><div className="buyer-order-product-copy"><strong>{product.name}</strong><span>Qty: {quantity}</span><small>{formatKes(product.price)} each</small>{isDelivered&&paid&&<button type="button" className="customer-order-review-link" onClick={()=>onOpenProduct?.(product)}>★ Review product</button>}</div><b>{formatKes(lineTotal ?? product.price*quantity)}</b></article>):<div className="buyer-order-missing-items" role="alert"><strong>Order items are unavailable</strong><p>Do not make another payment for this order. Contact the shop or open a report so the order can be checked.</p><button type="button" className="customer-secondary-button" onClick={()=>onNavigate('reports')}>Get help with this order</button></div>}</div>
         </section>
-
         <section className="buyer-order-panel">
-          <div className="buyer-order-panel-heading"><span className="buyer-order-step">03</span><div><h3>Payment and total</h3><p>How this order was paid for</p></div><span className={'buyer-order-payment-tag '+(paid?'is-success':canRetryPayment?'is-pending':'is-muted')}>{paymentLabel}</span></div>
-          <div className="buyer-order-money">
-            <div><span>Items subtotal</span><strong>{formatKes(activeOrder.subtotal)}</strong></div>
-            <div><span>Delivery fee</span><strong>{formatKes(activeOrder.deliveryFee)}</strong></div>
-            {activeOrder.discount? <div><span>Discount</span><strong>−{formatKes(activeOrder.discount)}</strong></div>:null}
-            <div className="buyer-order-grand-total"><span>{paid?'Amount paid':'Amount due'}</span><strong>{formatKes(activeOrder.total)}</strong></div>
-          </div>
-          <div className="buyer-order-payment-method"><WalletCards size={17}/><span><strong>Payment method</strong><small>{paymentLabels[activeOrder.paymentMethod]}{activeOrder.receipt?' · Receipt '+activeOrder.receipt:''}</small></span></div>
+          <div className="buyer-order-panel-heading"><span className="buyer-order-icon"><MapPin size={21}/></span><div><h3>Delivery information</h3><p>{activeOrder.deliveryMethod==='pickup'?'Collection details':'Delivery destination'}</p></div></div>
+          <div className="buyer-order-detail-list"><div className="buyer-order-detail-row"><MapPin size={18}/><div><strong>{activeOrder.deliveryMethod==='pickup'?'Collection point':'Delivery address'}</strong><p>{activeOrder.deliveryMethod==='pickup'?activeOrder.pickupStation||'Collection point to be confirmed':[activeOrder.deliveryCounty,activeOrder.deliverySubCounty,activeOrder.deliveryEstate,activeOrder.deliveryAddress].filter(Boolean).join(', ')||'Delivery destination not recorded'}{activeOrder.deliveryDirections?' · '+activeOrder.deliveryDirections:''}</p></div></div><div className="buyer-order-detail-row"><UserRound size={18}/><div><strong>{activeOrder.customerName}</strong><p>{activeOrder.customerPhone}{activeOrder.customerEmail?' · '+activeOrder.customerEmail:''}</p></div></div></div>
+        </section>
+        <section className="buyer-order-panel">
+          <div className="buyer-order-panel-heading"><span className="buyer-order-icon"><WalletCards size={21}/></span><div><h3>Payment information</h3><p>{paymentLabels[activeOrder.paymentMethod]}</p></div><span className={'buyer-order-payment-tag '+(paid?'is-success':canRetryPayment?'is-pending':'is-muted')}>{paymentLabel}</span></div>
+          <div className="buyer-order-payment-method"><WalletCards size={22}/><span><strong>{paid?'Paid via '+paymentLabels[activeOrder.paymentMethod]:paymentLabels[activeOrder.paymentMethod]}</strong><small>{activeOrder.receipt?'Receipt: '+activeOrder.receipt:cancelled?'No payment collected':failed?'Payment was not completed':'Payment reference will appear when confirmed'}</small></span></div>
           {activeOrder.paymentIssue&&<div className="buyer-order-inventory-alert" role="status"><strong>Payment received — shop confirmation needed</strong><p>{activeOrder.paymentIssue} The shop needs to contact you before this order can be prepared or dispatched.</p></div>}
-          {canRetryPayment&&<div className="buyer-order-retry">
-            <div><strong>{paymentState==='pending'?'Payment is awaiting confirmation':'Finish paying for this order'}</strong><p>{paymentState==='pending'?'If the prompt expired or was not received, wait for its result before retrying.':'Your order is saved. Check the previous M-PESA request first; a new prompt will be sent only if Safaricom confirms the previous one failed.'}</p></div>
-            <label className="customer-form-label">M-PESA number<input type="tel" inputMode="tel" autoComplete="tel" value={retryPaymentPhone} onChange={e=>setRetryPaymentPhone(e.target.value)} placeholder="07XX XXX XXX or 2547XXXXXXXX" maxLength={16}/></label>
-            <button type="button" className="buyer-retry-payment" onClick={retryActiveOrderPayment} disabled={retryingOrder}>{retryingOrder?'Checking M-PESA…':paymentState==='pending'?'Check payment / retry if failed':'Retry M-PESA payment'}</button>
-            {retryMessage&&<small className="market-order-retry-message" role="status">{retryMessage}</small>}
-          </div>}
+          {canRetryPayment&&<div className="buyer-order-retry"><div><strong>{paymentState==='pending'?'Payment is awaiting confirmation':cancelled?'Payment was cancelled':'Finish paying for this order'}</strong><p>{paymentState==='pending'?'Check the previous M-PESA request first. Do not send another prompt while Safaricom is still processing it.':'No payment was collected. You can request a fresh M-PESA prompt when ready.'}</p></div><label className="customer-form-label">M-PESA number<input type="tel" inputMode="tel" autoComplete="tel" value={retryPaymentPhone} onChange={e=>setRetryPaymentPhone(e.target.value)} placeholder="07XX XXX XXX or 2547XXXXXXXX" maxLength={16}/></label><button type="button" className="buyer-retry-payment" onClick={retryActiveOrderPayment} disabled={retryingOrder}>{retryingOrder?'Checking M-PESA…':paymentState==='pending'?'Check payment / retry if failed':'Retry M-PESA payment'}</button>{retryMessage&&<small className="market-order-retry-message" role="status">{retryMessage}</small>}</div>}
         </section>
-
-        <div className="buyer-order-bottom-actions">
-          <button type="button" className="customer-secondary-button" onClick={()=>onNavigate('orders')}>Back to my orders</button>
-          <button type="button" className="customer-primary-button" onClick={()=>onNavigate('store')}>{isDelivered?'Shop again':'Continue shopping'} <ArrowRight size={16}/></button>
-        </div>
+        <div className="buyer-order-bottom-actions"><button type="button" className="customer-secondary-button" onClick={()=>openOrder(activeOrder,'order-tracking')}>Track order <ArrowRight size={16}/></button><button type="button" className="customer-primary-button" onClick={()=>onNavigate('reports')}>Contact support <Flag size={16}/></button></div>
         <div className="buyer-order-safety-note"><ShieldCheck size={16}/><span>Keep your order number and payment receipt. Never share your M-PESA PIN or verification codes.</span></div>
         {chatPanel}
       </section>
