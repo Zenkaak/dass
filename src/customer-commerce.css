@@ -5140,3 +5140,12 @@
 .buyer-my-orders-empty p{max-width:300px;margin:0 0 16px;color:#78869a;font-size:12px;line-height:1.5}
 @media(max-width:600px){.buyer-account-orders-shortcut{margin-bottom:12px}.buyer-my-orders-heading h2{font-size:19px}.buyer-my-orders-tabs{top:0}.buyer-my-order-card{padding:0 11px}.buyer-my-order-top{align-items:flex-start}.buyer-my-order-status{max-width:48%;white-space:normal;text-align:center;justify-content:center}.buyer-my-order-item{grid-template-columns:52px minmax(0,1fr) auto;gap:8px}.buyer-my-order-item .customer-product-thumb{width:50px;height:50px}.buyer-my-order-bottom{align-items:flex-start;flex-direction:column}.buyer-my-order-actions{width:100%;display:grid;grid-template-columns:1fr 1fr}.buyer-my-order-actions button{width:100%;justify-content:center}.buyer-my-orders-empty{padding:27px 14px}}
 @media(max-width:360px){.buyer-my-orders-tabs button{font-size:10px;gap:3px}.buyer-my-order-actions{grid-template-columns:1fr}.buyer-my-order-actions button{min-height:40px}}
+
+
+/* Fix the clipped “My orders” back link on mobile Order Details. */
+@media(max-width:600px){
+ .buyer-order-design>.customer-flow-heading{display:flex!important;flex-flow:row nowrap!important;align-items:center!important;justify-content:flex-start!important;gap:10px!important;min-height:48px!important;margin:0 0 4px!important;padding:4px 0 9px!important;border-bottom:1px solid #e7edf1!important;background:transparent!important}
+ .buyer-order-design>.customer-flow-heading .customer-back-button{display:inline-flex!important;align-items:center!important;justify-content:flex-start!important;flex:0 0 auto!important;width:auto!important;min-width:max-content!important;height:auto!important;min-height:36px!important;max-width:none!important;padding:7px 10px!important;overflow:visible!important;border:1px solid #dfe6ec!important;border-radius:9px!important;background:#fff!important;color:#526474!important;font-size:12px!important;line-height:1!important;white-space:nowrap!important}
+ .buyer-order-design>.customer-flow-heading .customer-back-button svg{display:block!important;width:16px!important;height:16px!important;flex:0 0 16px!important}
+ .buyer-order-design>.customer-flow-heading h1{display:block!important;flex:1 1 auto!important;min-width:0!important;margin:0!important;font-size:20px!important;line-height:1.2!important;white-space:nowrap!important}
+}
