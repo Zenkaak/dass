@@ -792,7 +792,7 @@ export function StorefrontFlow({
     const deliveryState=String(activeOrder?.deliveryStatus||'pending_delivery').toLowerCase();
     const paid=['succeeded','success','paid'].includes(paymentState);
     const orderClosed=['cancelled','returned','refunded'].includes(orderState);
-    const canRetryPayment=Boolean(activeOrder?.orderId&&!paid&&!orderClosed);
+    const canRetryPayment=Boolean(activeOrder?.orderId&&!paid&&!orderClosed&&(activeOrder?.lines?.length||0)>0);
     const paymentLabel=orderState==='refunded'||paymentState==='refunded'?'Refunded':paid?'Paid':paymentState==='failed'?'Payment failed':paymentState==='cancelled'?'Payment cancelled':paymentState==='pending'?'Awaiting confirmation':'Not yet paid';
     const deliveryLabel=deliveryState==='delivered'?'Delivered':deliveryState==='in_transit'?'On the way':orderState==='processing'?'Being prepared':orderState==='fulfilled'?'Ready for delivery':orderState==='cancelled'?'Cancelled':'Order received';
     const isDelivered=deliveryState==='delivered';
@@ -816,15 +816,15 @@ export function StorefrontFlow({
         </header>
 
         <section className="buyer-order-panel">
-          <div className="buyer-order-panel-heading"><span className="buyer-order-step">01</span><div><h3>What you ordered</h3><p>{activeOrder.lines.reduce((n,line)=>n+line.quantity,0)} item(s) in this order</p></div></div>
+          <div className="buyer-order-panel-heading"><span className="buyer-order-step">01</span><div><h3>What you ordered</h3><p>{activeOrder.lines.length?`${activeOrder.lines.reduce((n,line)=>n+line.quantity,0)} item(s) in this order`:'Order contents unavailable'}</p></div></div>
           <div className="buyer-order-products">
-            {activeOrder.lines.map(({product,quantity,lineTotal})=><article className="buyer-order-product" key={product.id}>
+            {activeOrder.lines.length?activeOrder.lines.map(({product,quantity,lineTotal})=><article className="buyer-order-product" key={product.id}>
               <ProductThumb product={product}/>
               <div className="buyer-order-product-copy"><strong>{product.name}</strong><span>Quantity: {quantity}</span><small>{formatKes(product.price)} per item</small>
                 {isDelivered&&paid&&<button type="button" className="customer-order-review-link" onClick={()=>onOpenProduct?.(product)}>★ Review product</button>}
               </div>
               <b>{formatKes(lineTotal ?? product.price*quantity)}</b>
-            </article>)}
+            </article>):<div className="buyer-order-missing-items" role="alert"><strong>We could not retrieve the items for this order.</strong><p>Do not make another payment for this order yet. Contact the shop or open a report so the order contents can be checked.</p><button type="button" className="customer-secondary-button" onClick={()=>onNavigate('reports')}>Get help with this order</button></div>}
           </div>
           {isDelivered&&<div className="buyer-order-delivered-message"><ShieldCheck size={17}/><span><strong>Marked as delivered</strong><small>If anything is missing or incorrect, contact the shop or open a report.</small></span></div>}
         </section>
@@ -849,9 +849,9 @@ export function StorefrontFlow({
           <div className="buyer-order-payment-method"><WalletCards size={17}/><span><strong>Payment method</strong><small>{paymentLabels[activeOrder.paymentMethod]}{activeOrder.receipt?' · Receipt '+activeOrder.receipt:''}</small></span></div>
           {activeOrder.paymentIssue&&<div className="buyer-order-inventory-alert" role="status"><strong>Payment received — shop confirmation needed</strong><p>{activeOrder.paymentIssue} The shop needs to contact you before this order can be prepared or dispatched.</p></div>}
           {canRetryPayment&&<div className="buyer-order-retry">
-            <div><strong>{paymentState==='pending'?'Payment is awaiting confirmation':'Finish paying for this order'}</strong><p>{paymentState==='pending'?'If the prompt expired or was not received, wait for its result before retrying.':'Your order is saved. You can request a new M-PESA prompt.'}</p></div>
+            <div><strong>{paymentState==='pending'?'Payment is awaiting confirmation':'Finish paying for this order'}</strong><p>{paymentState==='pending'?'If the prompt expired or was not received, wait for its result before retrying.':'Your order is saved. Check the previous M-PESA request first; a new prompt will be sent only if Safaricom confirms the previous one failed.'}</p></div>
             <label className="customer-form-label">M-PESA number<input type="tel" inputMode="tel" autoComplete="tel" value={retryPaymentPhone} onChange={e=>setRetryPaymentPhone(e.target.value)} placeholder="07XX XXX XXX or 2547XXXXXXXX" maxLength={16}/></label>
-            <button type="button" className="buyer-retry-payment" onClick={retryActiveOrderPayment} disabled={retryingOrder}>{retryingOrder?'Sending payment prompt…':'Retry M-PESA payment'}</button>
+            <button type="button" className="buyer-retry-payment" onClick={retryActiveOrderPayment} disabled={retryingOrder}>{retryingOrder?'Checking M-PESA…':paymentState==='pending'?'Check payment / retry if failed':'Retry M-PESA payment'}</button>
             {retryMessage&&<small className="market-order-retry-message" role="status">{retryMessage}</small>}
           </div>}
         </section>
