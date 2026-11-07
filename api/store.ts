@@ -385,10 +385,37 @@ export default async function handler(req:any,res:any){
    if(!orders.length)return send(res,404,{error:'Order not found for this buyer.'});
    const order=orders[0];if(!paymentPhone)return send(res,400,{error:'Enter a valid Kenyan M-PESA phone number to receive the payment prompt.'});
    if(['cancelled','refunded'].includes(String(order.status)))return send(res,409,{error:'This order is cancelled or refunded and cannot be paid.'});
-   const prior=await sql`SELECT status FROM public.payments WHERE tenant_id=${tenantId} AND order_id=${order.id} ORDER BY created_at DESC LIMIT 1`;
+   const prior=await sql`SELECT id,status,provider_checkout_id,provider_result FROM public.payments WHERE tenant_id=${tenantId} AND order_id=${order.id} ORDER BY created_at DESC LIMIT 1`;
    if(prior[0]?.status==='succeeded')return send(res,409,{error:'This order is already paid.'});
-   if(['initiated','pending'].includes(String(prior[0]?.status||'')))return send(res,409,{error:'A payment prompt is already awaiting a result. Please wait before retrying.'});
-   if(prior[0]?.status!=='failed'&&prior[0]?.status!=='cancelled')return send(res,409,{error:'Retry is available only after a payment has failed or been cancelled.'});
+   if(['initiated','pending'].includes(String(prior[0]?.status||''))){
+    if(prior[0]?.status==='initiated'&&!prior[0]?.provider_checkout_id){
+     await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||jsonb_build_object('recoveryNote','STK request was never recorded as accepted'),updated_at=now() WHERE id=${prior[0].id} AND status='initiated'`;
+    }else if(prior[0]?.provider_checkout_id){
+     try{
+      const checkRows=await sql`SELECT p.provider_result,pc.shortcode,pc.environment,pc.encrypted_credentials,pc.payout_method,pc.default_payout_method,pc.party_b,pc.till_party_b,pc.paybill_party_b,pc.account_reference,pm.shortcode AS central_shortcode,pm.environment AS central_environment,pm.encrypted_credentials AS central_credentials
+       FROM public.payments p LEFT JOIN public.payment_configs pc ON pc.tenant_id=p.tenant_id
+       LEFT JOIN public.platform_payment_methods pm ON pm.method=CASE WHEN p.provider_result->>'paymentMethod'='paybill' THEN 'paybill' ELSE 'till' END
+       WHERE p.id=${prior[0].id} AND p.tenant_id=${tenantId} LIMIT 1`;
+      if(!checkRows.length)throw Error('Payment configuration could not be loaded.');
+      const verification=await verifyStk(paymentDarajaCredentials(checkRows[0],env('DASNET_CREDENTIALS_ENCRYPTION_KEY')),String(prior[0].provider_checkout_id));
+      const resultCode=String(verification.ResultCode??'');
+      if(resultCode&&resultCode!=='0'){
+       const terminalStatus=resultCode==='1032'?'cancelled':'failed';
+       await sql`UPDATE public.payments SET status=${terminalStatus},provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({queryResultCode:resultCode,queryResultDescription:String(verification.ResultDesc||'')})}::jsonb,updated_at=now() WHERE id=${prior[0].id} AND status IN ('initiated','pending')`;
+      }else if(resultCode==='0'){
+       return send(res,409,{error:'Safaricom reports this payment as completed or still processing. We are waiting for the verified payment receipt before allowing another prompt. Do not pay again yet.'});
+      }else{
+       return send(res,409,{error:'Safaricom has not confirmed the previous prompt yet. Keep your phone available and try checking again shortly.'});
+      }
+     }catch(queryError:any){
+      console.error('Pending STK query failed before retry',{paymentId:prior[0].id,error:String(queryError?.message||queryError)});
+      return send(res,503,{error:'We could not confirm the previous M-PESA request with Safaricom. No second prompt was sent to avoid charging you twice. Please try again shortly.'});
+     }
+    }else{
+     return send(res,409,{error:'The previous M-PESA request has no Safaricom reference yet. Please contact the shop before starting another payment.'});
+    }
+   }
+   if(prior[0]?.status!=='failed'&&prior[0]?.status!=='cancelled'&&!(prior[0]?.status==='initiated'&&!prior[0]?.provider_checkout_id))return send(res,409,{error:'Retry is available only after a payment has failed or been cancelled.'});
    const configs=await sql`SELECT pc.*,pt.shortcode AS central_till_shortcode,pt.environment AS central_till_environment,pt.encrypted_credentials AS central_till_credentials,pb.shortcode AS central_paybill_shortcode,pb.environment AS central_paybill_environment,pb.encrypted_credentials AS central_paybill_credentials FROM public.tenants t LEFT JOIN public.payment_configs pc ON pc.tenant_id=t.id LEFT JOIN public.platform_payment_methods pt ON pt.method='till' LEFT JOIN public.platform_payment_methods pb ON pb.method='paybill' WHERE t.id=${tenantId} LIMIT 1`;
    const cfg=configs[0]||{},key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');
    const method=String(cfg.default_payout_method||cfg.payout_method||'till')==='paybill'?'paybill':'till';let payment:any=null;
