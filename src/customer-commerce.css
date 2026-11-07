@@ -4858,3 +4858,75 @@
 @media (prefers-reduced-motion:reduce) {
   .store-page *, .customer-flow * { scroll-behavior:auto !important; animation-duration:.01ms !important; transition-duration:.01ms !important; }
 }
+
+
+/* Buyer order details: clear full-width reading flow, with stronger mobile type. */
+.buyer-order-v2{
+  width:min(100% - 28px,1040px)!important;max-width:1040px!important;
+  margin:16px auto 36px!important;gap:0!important;
+}
+.buyer-order-v2>.customer-flow-heading{margin-bottom:14px}
+.buyer-order-v2 .buyer-order-overview{
+  grid-template-columns:minmax(0,1fr) auto;gap:14px 22px;
+  padding:22px 24px;border:0;border-radius:12px;
+  background:#f5f8fa;
+}
+.buyer-order-v2 .buyer-order-kicker{font-size:11px;letter-spacing:.12em}
+.buyer-order-v2 .buyer-order-overview-main h2{font-size:clamp(20px,3vw,26px);margin:7px 0}
+.buyer-order-v2 .buyer-order-overview-main p{font-size:13px}
+.buyer-order-v2 .buyer-order-total small{font-size:11px}
+.buyer-order-v2 .buyer-order-total strong{font-size:clamp(22px,3vw,28px)}
+.buyer-order-v2 .buyer-order-status-row{padding-top:14px}
+.buyer-order-v2 .buyer-order-status-row>span{font-size:12px;padding:8px 11px}
+.buyer-order-v2 .buyer-order-panel{
+  padding:20px 4px;border:0;border-bottom:1px solid #e7edf1;
+  border-radius:0;background:transparent;
+}
+.buyer-order-v2 .buyer-order-panel-heading{gap:13px;margin-bottom:15px}
+.buyer-order-v2 .buyer-order-step{width:32px;height:32px;flex-basis:32px;font-size:11px}
+.buyer-order-v2 .buyer-order-panel-heading h3{font-size:16px}
+.buyer-order-v2 .buyer-order-panel-heading p{font-size:12px}
+.buyer-order-v2 .buyer-order-product{grid-template-columns:68px minmax(0,1fr) auto;gap:14px;padding:14px 0}
+.buyer-order-v2 .buyer-order-product .customer-product-thumb{width:64px;height:64px;border-radius:9px}
+.buyer-order-v2 .buyer-order-product-copy strong{font-size:14px}
+.buyer-order-v2 .buyer-order-product-copy span,.buyer-order-v2 .buyer-order-product-copy small{font-size:12px}
+.buyer-order-v2 .buyer-order-product>b{font-size:14px}
+.buyer-order-v2 .buyer-order-detail-row{gap:13px;padding:14px 0}
+.buyer-order-v2 .buyer-order-detail-row strong{font-size:14px}
+.buyer-order-v2 .buyer-order-detail-row p{font-size:13px;line-height:1.55}
+.buyer-order-v2 .buyer-order-money>div{padding:10px 0;font-size:13px}
+.buyer-order-v2 .buyer-order-money .buyer-order-grand-total{font-size:16px}
+.buyer-order-v2 .buyer-order-payment-method{padding:14px 0}
+.buyer-order-v2 .buyer-order-payment-method strong{font-size:13px}
+.buyer-order-v2 .buyer-order-payment-method small{font-size:12px}
+.buyer-order-v2 .buyer-order-retry{margin-top:16px;padding:16px;border:1px solid #e6edf2;border-radius:10px;background:#f8fafb}
+.buyer-order-v2 .buyer-order-retry>div strong{font-size:14px}
+.buyer-order-v2 .buyer-order-retry>div p{font-size:12px;line-height:1.5}
+.buyer-order-v2 .buyer-order-retry input{min-height:46px;font-size:16px}
+.buyer-order-v2 .buyer-retry-payment{min-height:46px;font-size:14px}
+.buyer-order-v2 .buyer-order-bottom-actions{display:flex;gap:10px;flex-wrap:wrap;padding:18px 0}
+.buyer-order-v2 .buyer-order-bottom-actions button{min-height:46px}
+.buyer-order-missing-items{
+  display:grid;gap:8px;margin:8px 0;padding:16px;
+  border:1px solid #f0d7a6;border-radius:10px;background:#fff9ed;color:#6b4b18;
+}
+.buyer-order-missing-items strong{font-size:14px}
+.buyer-order-missing-items p{margin:0;font-size:13px;line-height:1.5}
+.buyer-order-missing-items button{justify-self:start;min-height:42px}
+@media(max-width:680px){
+  .buyer-order-v2{width:calc(100% - 20px)!important;margin:10px auto 28px!important}
+  .buyer-order-v2 .buyer-order-overview{grid-template-columns:minmax(0,1fr);padding:16px;gap:12px}
+  .buyer-order-v2 .buyer-order-total{text-align:left;justify-self:start}
+  .buyer-order-v2 .buyer-order-status-row{gap:7px}
+  .buyer-order-v2 .buyer-order-status-row>span{font-size:11px}
+  .buyer-order-v2 .buyer-order-panel{padding:16px 2px}
+  .buyer-order-v2 .buyer-order-product{grid-template-columns:56px minmax(0,1fr);gap:10px}
+  .buyer-order-v2 .buyer-order-product .customer-product-thumb{width:54px;height:58px}
+  .buyer-order-v2 .buyer-order-product>b{grid-column:2;justify-self:start;font-size:13px}
+  .buyer-order-v2 .buyer-order-product-copy strong{font-size:13px}
+  .buyer-order-v2 .buyer-order-detail-row p{overflow-wrap:anywhere}
+  .buyer-order-v2 .buyer-order-panel-heading{align-items:flex-start}
+  .buyer-order-v2 .buyer-order-payment-tag{font-size:10px;padding:6px 8px}
+  .buyer-order-v2 .buyer-order-bottom-actions{display:grid;grid-template-columns:1fr}
+  .buyer-order-v2 .buyer-order-bottom-actions button{width:100%}
+}
