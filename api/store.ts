@@ -390,6 +390,7 @@ export default async function handler(req:any,res:any){
    if(['initiated','pending'].includes(String(prior[0]?.status||''))){
     if(prior[0]?.status==='initiated'&&!prior[0]?.provider_checkout_id){
      await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||jsonb_build_object('recoveryNote','STK request was never recorded as accepted'),updated_at=now() WHERE id=${prior[0].id} AND status='initiated'`;
+     prior[0].status='failed';
     }else if(prior[0]?.provider_checkout_id){
      try{
       const checkRows=await sql`SELECT p.provider_result,pc.shortcode,pc.environment,pc.encrypted_credentials,pc.payout_method,pc.default_payout_method,pc.party_b,pc.till_party_b,pc.paybill_party_b,pc.account_reference,pm.shortcode AS central_shortcode,pm.environment AS central_environment,pm.encrypted_credentials AS central_credentials
