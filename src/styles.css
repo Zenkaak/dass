@@ -5145,3 +5145,36 @@ body:has(.ds-store) .ds-store-filter-row select{width:100%;height:42px;padding:0
 /* Keep the buyer's My Orders shortcut visible beside account and cart on mobile. */
 .ds-store-route-orders{width:42px;height:42px;display:grid;place-items:center;border:1px solid #e5e7eb;border-radius:7px;background:#fff;color:#39424e;cursor:pointer}
 .ds-store-route-orders:hover{border-color:#f0a04b;color:#b65b08;background:#fff9f2}
+
+
+/* Mobile QA hardening: prevent viewport-wide horizontal scrolling while
+   preserving intentional horizontal product rails and swipeable sections. */
+html,body,#root{width:100%;max-width:100%;min-width:0;}
+html,body{overflow-x:clip;}
+img,video,svg,canvas{max-width:100%;}
+button,input,select,textarea{font:inherit;}
+@media(max-width:760px){
+  .store-page,.store-page *,.customer-flow,.customer-flow *{box-sizing:border-box;}
+  .store-page,.customer-flow{min-width:0;max-width:100%;}
+  .store-page :where(h1,h2,h3,p,small,strong,span,label){overflow-wrap:anywhere;}
+  .store-page :where(input,select,textarea){max-width:100%;min-width:0;}
+  .store-page :where(button){max-width:100%;touch-action:manipulation;}
+  .store-page :where(table){display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .store-page .market-product-detail-route{max-width:100%;min-width:0;}
+  /* Add to Cart stays inside the product information, as requested; do not
+     cover the product page with a fixed bottom purchase bar on phones. */
+  .store-page[data-store-theme="marketplace"] .market-detail-mobile-bar{display:none!important;}
+  .store-page[data-store-theme="marketplace"] .market-detail-add-desktop{display:flex!important;position:static!important;width:100%!important;max-width:100%!important;margin:14px 0 0!important;}
+  .store-page[data-store-theme="marketplace"] .market-detail-summary,
+  .store-page[data-store-theme="marketplace"] .market-detail-gallery,
+  .store-page[data-store-theme="marketplace"] .market-detail-main-image{min-width:0!important;max-width:100%!important;}
+  .store-page[data-store-theme="marketplace"] .market-checkout-page .customer-payment-modal-backdrop{padding:10px!important;}
+  .store-page[data-store-theme="marketplace"] .market-checkout-page .customer-payment-modal{width:100%!important;max-width:460px!important;max-height:calc(100dvh - 20px)!important;overflow-y:auto!important;padding:18px!important;}
+  .store-page[data-store-theme="marketplace"] .market-checkout-page .customer-payment-modal-actions{flex-wrap:wrap!important;}
+}
+@media(max-width:390px){
+  .store-page .ds-store-home-mix-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+  .store-page .ds-store-product-name{overflow-wrap:anywhere;}
+  .store-page[data-store-theme="marketplace"] .market-checkout-page .customer-flow-actions{gap:7px!important;}
+  .store-page[data-store-theme="marketplace"] .market-checkout-page .customer-flow-actions button{min-height:42px!important;font-size:10px!important;}
+}
