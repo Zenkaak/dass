@@ -25,7 +25,7 @@ export function AuthPage({initial='signup'}:{initial?:Mode}) {
      <div className="auth-form-actions">{mode==='signup'&&step>1&&<button type="button" className="auth-back-step" onClick={()=>setStep(s=>Math.max(1,s-1))}><ArrowLeft size={15}/> Back</button>}<button className="button primary auth-submit dm-auth-submit" disabled={busy}>{busy?'Please wait…':mode==='signup'?(step<3?'Continue':step===3?'Send verification code':'Create shop'):mode==='login'?'Log in':sent?'Reset password':'Send reset code'} <ArrowRight size={16}/></button></div>
     </form>
     {(mode==='signup'||mode==='reset')&&sent&&<button className="auth-text-button" type="button" onClick={()=>{setSent(false);setCode('');setMessage('');setStep(3)}}>Change phone number</button>}
-    <div className="dm-auth-switch">{mode==='login'?<>New to DASMARKET? <button type="button" onClick={()=>changeMode('signup')}>Create your shop</button>:<>Already have an account? <button type="button" onClick={()=>changeMode('login')}>Log in</button></>}</div>
+    <div className="dm-auth-switch">{mode==='login'?<>New to DASMARKET? <button type="button" onClick={()=>changeMode('signup')}>Create your shop</button></>:<>Already have an account? <button type="button" onClick={()=>changeMode('login')}>Log in</button></>}</div>
     {mode==='login'&&<button className="dm-auth-forgot" type="button" onClick={()=>changeMode('reset')}>Forgot your password?</button>}{mode==='reset'&&<button className="dm-auth-forgot" type="button" onClick={()=>changeMode('login')}>Back to log in</button>}
     <div className="account-notice dm-auth-notice"><ShieldCheck size={17}/><span>Your password and verification code are handled securely. Never share an SMS code with anyone.</span></div>
    </section>
