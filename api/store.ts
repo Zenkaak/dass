@@ -574,7 +574,44 @@ export default async function handler(req:any,res:any){
      RETURNING id,order_id
    )
    SELECT c.id,c.order_number,p.id AS payment_id FROM new_chat c JOIN new_payment p ON p.order_id=c.id`;
-   if(!o.length){const prior=await sql`SELECT o.id,o.order_number,o.checkout_fingerprint,o.subtotal_minor,o.delivery_fee_minor,o.total_minor,o.discount_minor,o.coupon_code,p.status AS payment_status FROM public.orders o LEFT JOIN LATERAL (SELECT status FROM public.payments WHERE tenant_id=o.tenant_id AND order_id=o.id ORDER BY created_at DESC LIMIT 1) p ON true WHERE o.tenant_id=${tenantId} AND o.checkout_idempotency_key=${idempotency} LIMIT 1`;if(!prior.length)return send(res,409,{error:'Checkout is already being processed. Refresh your orders in a moment.'});if(prior[0].checkout_fingerprint!==checkoutFingerprint)return send(res,409,{error:'Your cart or delivery details changed. Start a fresh checkout to continue.'});return send(res,200,{ok:true,orderId:prior[0].id,orderNumber:prior[0].order_number,paymentStatus:prior[0].payment_status||'pending',subtotal:Number(prior[0].subtotal_minor)/100,deliveryFee:Number(prior[0].delivery_fee_minor||0)/100,discount:Number(prior[0].discount_minor||0)/100,total:Number(prior[0].total_minor)/100,couponCode:prior[0].coupon_code||null,chatToken:''});}
+   if(!o.length){
+    const prior=await sql`SELECT o.id,o.order_number,o.checkout_fingerprint,o.subtotal_minor,o.delivery_fee_minor,o.total_minor,o.discount_minor,o.coupon_code,
+      (SELECT COUNT(*)::int FROM public.order_items i WHERE i.tenant_id=o.tenant_id AND i.order_id=o.id) AS item_count,
+      p.status AS payment_status,p.provider_checkout_id,p.id AS payment_id
+      FROM public.orders o LEFT JOIN LATERAL (SELECT id,status,provider_checkout_id FROM public.payments WHERE tenant_id=o.tenant_id AND order_id=o.id ORDER BY created_at DESC LIMIT 1) p ON true
+      WHERE o.tenant_id=${tenantId} AND o.checkout_idempotency_key=${idempotency} LIMIT 1`;
+    if(!prior.length)return send(res,409,{error:'Checkout is already being processed. Refresh your orders in a moment.'});
+    const existing=prior[0];
+    if(existing.checkout_fingerprint!==checkoutFingerprint)return send(res,409,{error:'Your cart or delivery details changed. Start a fresh checkout to continue.'});
+    // Recover an earlier interrupted checkout rather than falsely reporting success.
+    if(Number(existing.item_count||0)===0){
+      await sql`INSERT INTO public.order_items(tenant_id,order_id,product_id,product_name,quantity,unit_price_minor,line_total_minor)
+        SELECT ${tenantId},${existing.id},i.product_id,i.product_name,i.quantity,i.unit_price_minor,i.line_total_minor
+        FROM jsonb_to_recordset(${JSON.stringify(orderLines)}::jsonb) AS i(product_id uuid,product_name text,quantity integer,unit_price_minor bigint,line_total_minor bigint)
+        WHERE NOT EXISTS (SELECT 1 FROM public.order_items WHERE tenant_id=${tenantId} AND order_id=${existing.id})`;
+    }
+    if(Number(existing.item_count||0)===0&&!lines.length)return send(res,409,{error:'This order has no saved items. Return to your cart and place the order again.'});
+    if(existing.payment_status==='succeeded')return send(res,200,{ok:true,orderId:existing.id,orderNumber:existing.order_number,paymentStatus:'succeeded',subtotal:Number(existing.subtotal_minor)/100,deliveryFee:Number(existing.delivery_fee_minor||0)/100,discount:Number(existing.discount_minor||0)/100,total:Number(existing.total_minor)/100,couponCode:existing.coupon_code||null,chatToken:''});
+    if(existing.payment_status==='pending'&&existing.provider_checkout_id)return send(res,200,{ok:true,orderId:existing.id,orderNumber:existing.order_number,paymentStatus:'pending',subtotal:Number(existing.subtotal_minor)/100,deliveryFee:Number(existing.delivery_fee_minor||0)/100,discount:Number(existing.discount_minor||0)/100,total:Number(existing.total_minor)/100,couponCode:existing.coupon_code||null,chatToken:'',message:'An M-PESA request is already active for this order.'});
+    let recoveredPaymentId=existing.payment_id;
+    if(!recoveredPaymentId||['failed','cancelled'].includes(String(existing.payment_status||''))){
+      const retryId=crypto.randomUUID();
+      const recovered=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result)
+        VALUES(${tenantId},${existing.id},'mpesa_daraja',${paymentPhone},${payableTotal},'KES','initiated',${retryId},${JSON.stringify({paymentMethod:method,source:'buyer_checkout_recovery'})}::jsonb) RETURNING id`;
+      recoveredPaymentId=recovered[0]?.id;
+    }
+    if(!recoveredPaymentId)return send(res,409,{error:'We could not recover this checkout. Please return to your cart and try again.'});
+    try{
+      const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dasmarket.co.ke'))).replace(/\/$/,'')+'/api/payments?action=daraja-callback';
+      const stk=await startStk(payment,{order_number:existing.order_number},paymentPhone,payableTotal/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):existing.order_number.slice(-12),callbackUrl);
+      await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({paymentMethod:method,source:'buyer_checkout_recovery',merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${recoveredPaymentId}`;
+      return send(res,200,{ok:true,orderId:existing.id,orderNumber:existing.order_number,paymentStatus:'pending',checkoutRequestId:stk.checkoutId,subtotal:Number(existing.subtotal_minor)/100,deliveryFee:Number(existing.delivery_fee_minor||0)/100,discount:Number(existing.discount_minor||0)/100,total:Number(existing.total_minor)/100,couponCode:existing.coupon_code||null,chatToken:'',message:'M-PESA prompt sent.'});
+    }catch(error:any){
+      await sql`UPDATE public.payments SET status='failed',provider_result=${JSON.stringify({paymentMethod:method,source:'buyer_checkout_recovery',error:String(error?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${recoveredPaymentId}`;
+      console.error('Checkout recovery STK request failed',error?.message||error);
+      return send(res,502,{error:error?.message||'Could not start the M-PESA payment prompt. Please retry from order details.'});
+    }
+   }
    const p=[{id:o[0].payment_id}];
    try{
     const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dasmarket.co.ke'))).replace(/\/$/,'')+'/api/payments?action=daraja-callback';
