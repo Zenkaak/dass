@@ -196,7 +196,7 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
     <label className="ds-store-search"><Search size={18}/><input aria-label="Search this store" value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){setFilter('All products');navigateBuyerPage('store')}}} placeholder="Search products in this store"/><button type="button" onClick={()=>{setFilter('All products');navigateBuyerPage('store')}}>Search</button></label>
     <div className="ds-store-route-actions">
       <button type="button" className="ds-store-route-home" onClick={()=>navigateBuyerPage('store')} aria-label="Shop home"><Home size={18}/></button>
-      <button type="button" className="ds-store-route-account" onClick={()=>{if(!buyerCustomer){setBuyerReturnPage('account');navigateBuyerPage('buyer-login')}else navigateBuyerPage('account')}} aria-label="My account"><UserRound size={18}/></button>
+      <button type="button" className="ds-store-route-orders" onClick={()=>navigateBuyerPage('orders')} aria-label="My orders" title="My orders"><Package size={18}/></button><button type="button" className="ds-store-route-account" onClick={()=>{if(!buyerCustomer){setBuyerReturnPage('account');navigateBuyerPage('buyer-login')}else navigateBuyerPage('account')}} aria-label="My account"><UserRound size={18}/></button>
       <button type="button" className="ds-store-cart" onClick={()=>navigateBuyerPage('cart')}><ShoppingCart size={19}/><span>Cart</span>{cartItems.length>0&&<b>{cartItems.reduce((n,[,q])=>n+q,0)}</b>}</button>
     </div>
   </header>}
@@ -228,7 +228,7 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
           </a>
           <div className="ds-store-header-actions">
             <button type="button" className="ds-store-notification" aria-label="Notifications" title="Notifications" onClick={()=>{if(!buyerCustomer){setBuyerReturnPage('account');navigateBuyerPage('buyer-login')}else navigateBuyerPage('account')}}><Bell size={19}/></button>
-            <button type="button" className="ds-store-account" onClick={()=>{if(!buyerCustomer){setBuyerReturnPage('account');navigateBuyerPage('buyer-login')}else navigateBuyerPage('account')}} aria-label="My account" title="My account"><UserRound size={19}/></button>
+            <button type="button" className="ds-store-orders" onClick={()=>navigateBuyerPage('orders')} aria-label="My orders" title="My orders"><Package size={19}/></button><button type="button" className="ds-store-account" onClick={()=>{if(!buyerCustomer){setBuyerReturnPage('account');navigateBuyerPage('buyer-login')}else navigateBuyerPage('account')}} aria-label="My account" title="My account"><UserRound size={19}/></button>
             <button type="button" className="ds-store-cart" onClick={()=>navigateBuyerPage('cart')} aria-label="Cart"><ShoppingCart size={19}/>{cartItems.length>0&&<b>{cartItems.reduce((n,[,q])=>n+q,0)}</b>}</button>
           </div>
         </div>
