@@ -102,6 +102,22 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
  const cachedStorefront=readCachedStorefront(slug);
  const previousPaymentStatus=useRef<string|null>(null);const [chatToken,setChatToken]=useState(''),[chatOrderId,setChatOrderId]=useState(''),[chatOrderNumber,setChatOrderNumber]=useState(''),[chatOrder,setChatOrder]=useState<any>(null),[chatMessages,setChatMessages]=useState<any[]>([]),[chatAttachments,setChatAttachments]=useState<any[]>([]),[chatDraft,setChatDraft]=useState(''),[chatSending,setChatSending]=useState(false),[paymentCelebration,setPaymentCelebration]=useState(false),[chatError,setChatError]=useState('');
  const [filter,setFilter]=useState('All products'),[search,setSearch]=useState(''),[sortOrder,setSortOrder]=useState('recommended'),[products,setProducts]=useState<LiveProduct[]>(()=>cachedStorefront?.products||[]),[shop,setShop]=useState<{name:string;description:string;logoUrl?:string;whatsappNumber?:string;contactPhone?:string;contactEmail?:string;termsAndConditions?:string;privacyPolicy?:string;returnPolicy?:string;deliveryPolicy?:string;deliveryHomeFee?:number;deliveryPickupFee?:number;faqs?:Array<{question:string;answer:string}>;theme?:string}|null>(()=>cachedStorefront?.shop||null),[loading,setLoading]=useState(!cachedStorefront),[error,setError]=useState(''),[cart,setCart]=useState<Record<string,number>>(()=>{try{const saved=JSON.parse(localStorage.getItem('dasnet-cart-'+slug)||'{}');if(!saved||typeof saved!=='object'||Array.isArray(saved))return {};return Object.fromEntries(Object.entries(saved).filter(([id,q])=>typeof id==='string'&&Number.isInteger(q)&&Number(q)>0).map(([id,q])=>[id,Math.min(99,Number(q))]));}catch{return {};}}),[selectedProduct,setSelectedProduct]=useState<LiveProduct|null>(null),[mobileSidebarOpen,setMobileSidebarOpen]=useState(false);
+  useEffect(()=>{
+    if(!mobileSidebarOpen)return;
+    const closeOnOutside=(event:PointerEvent)=>{
+      const target=event.target;
+      if(!(target instanceof Element))return;
+      if(target.closest('.market-global-drawer')||target.closest('.ds-store-menu-trigger'))return;
+      setMobileSidebarOpen(false);
+    };
+    const closeOnEscape=(event:KeyboardEvent)=>{if(event.key==='Escape')setMobileSidebarOpen(false);};
+    document.addEventListener('pointerdown',closeOnOutside,true);
+    document.addEventListener('keydown',closeOnEscape);
+    return()=>{
+      document.removeEventListener('pointerdown',closeOnOutside,true);
+      document.removeEventListener('keydown',closeOnEscape);
+    };
+  },[mobileSidebarOpen]);
  const [buyerPage,setBuyerPage]=useState(initialBuyerPage||'store'),[expandedCategory,setExpandedCategory]=useState(''),[,setAccountMenuOpen]=useState(false);
   const [wishlistIds,setWishlistIds]=useState<string[]>(()=>{try{const saved=JSON.parse(localStorage.getItem('dasnet-wishlist-'+slug)||'[]');return Array.isArray(saved)?saved.filter((id:any)=>typeof id==='string'):[]}catch{return[]}});
   useEffect(()=>{try{localStorage.setItem('dasnet-wishlist-'+slug,JSON.stringify(wishlistIds))}catch{}},[wishlistIds,slug]);
