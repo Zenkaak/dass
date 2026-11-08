@@ -5379,15 +5379,15 @@ button,input,select,textarea{font:inherit;}
 @media(max-width:760px){
  body:has(.ds-store){background:#f5f7fb}
  body:has(.ds-store) .ds-store{padding-bottom:calc(76px + env(safe-area-inset-bottom));background:#f5f7fb}
- body:has(.ds-store) .ds-store-navigation{position:sticky;top:0;z-index:120;background:#071d3b!important;color:#fff!important;padding:10px 12px 11px!important;box-shadow:0 3px 14px rgba(3,17,38,.18)}
- body:has(.ds-store) .ds-store-navigation-main{display:grid!important;grid-template-columns:38px minmax(0,1fr) auto!important;align-items:center;gap:8px!important;min-height:42px}
- body:has(.ds-store) .ds-store-menu-trigger{grid-column:1;grid-row:1;width:38px;height:40px;border:0!important;border-radius:9px;background:transparent!important;color:#fff!important;display:grid;place-items:center}
+ body:has(.ds-store) .ds-store-navigation{position:relative!important;top:auto!important;z-index:20;background:#071d3b!important;color:#fff!important;padding:9px 12px 10px!important;box-shadow:none!important}
+ body:has(.ds-store) .ds-store-navigation-main{display:grid!important;grid-template-columns:34px minmax(0,1fr) auto!important;align-items:center;gap:9px!important;min-height:40px}
+ body:has(.ds-store) .ds-store-menu-trigger{grid-column:1;grid-row:1;width:34px;height:38px;border:0!important;border-radius:8px;background:transparent!important;color:#fff!important;display:grid;place-items:center}
  body:has(.ds-store) .ds-store-brand{grid-column:2;grid-row:1;min-width:0;color:#fff!important;display:flex;align-items:center;gap:8px;text-decoration:none}
- body:has(.ds-store) .ds-store-mark{width:34px!important;height:34px!important;border-radius:9px!important;background:#ffcf18!important;color:#071d3b!important;display:grid;place-items:center;overflow:hidden}
+ body:has(.ds-store) .ds-store-mark{width:30px!important;height:30px!important;flex:0 0 30px;border-radius:8px!important;background:#ffcf18!important;color:#071d3b!important;display:grid;place-items:center;overflow:hidden}
  body:has(.ds-store) .ds-store-mark img{width:100%;height:100%;object-fit:contain}
- body:has(.ds-store) .ds-store-brand-word{font-size:16px!important;line-height:1.1;color:#fff!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
- body:has(.ds-store) .ds-store-header-actions{grid-column:3;grid-row:1;display:flex!important;align-items:center;gap:2px!important}
- body:has(.ds-store) .ds-store-header-actions button{width:35px!important;height:38px!important;border:0!important;border-radius:9px!important;background:transparent!important;color:#fff!important;display:grid;place-items:center}
+ body:has(.ds-store) .ds-store-brand-word{font-size:15px!important;font-weight:900!important;letter-spacing:.15px;line-height:1.1;color:#ffcf18!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ body:has(.ds-store) .ds-store-header-actions{grid-column:3;grid-row:1;display:flex!important;align-items:center;justify-content:flex-end;gap:7px!important}
+ body:has(.ds-store) .ds-store-header-actions button{width:32px!important;height:36px!important;padding:0!important;border:0!important;border-radius:8px!important;background:transparent!important;color:#fff!important;display:grid;place-items:center}
  body:has(.ds-store) .ds-store-header-actions button span{display:none}
  body:has(.ds-store) .ds-store-search{grid-column:1/-1;grid-row:2;width:100%;height:42px!important;min-height:42px!important;margin:9px 0 0!important;border:0!important;border-radius:24px!important;background:#fff!important;color:#1d2c40!important;display:flex;align-items:center;padding:0 8px 0 13px!important}
  body:has(.ds-store) .ds-store-search input{min-width:0;color:#1d2c40!important;font-size:13px!important}
