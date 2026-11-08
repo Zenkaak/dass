@@ -296,6 +296,10 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
         <div className="ds-store-category-heading"><h2>Shop by category</h2><button type="button" onClick={()=>setMobileSidebarOpen(true)}>View all <ArrowRight size={14}/></button></div>
         <div className="ds-store-category-tiles">{storefrontCategories.slice(0,8).map(category=><button type="button" className="ds-store-category-tile" key={category.name} onClick={()=>selectStoreCategory(category.name)}><span>{category.icon}</span><b>{category.name}</b></button>)}</div>
       </section>
+      <section className="ds-store-mobile-promo">
+        <div><span>SHOP WITH CONFIDENCE</span><h2>Find your next favourite</h2><p>Discover more from {shop?.name||'this shop'}.</p><button type="button" onClick={()=>{setSearch('');setFilter('All products');navigateBuyerPage('collection/all-products')}}>Explore all products <ArrowRight size={14}/></button></div>
+        <span className="ds-store-mobile-promo-art"><ShoppingBag size={42}/></span>
+      </section>
       <section className={"ds-store-browse-controls"+((search.trim()||filter!=='All products')?' is-active':'')} aria-label="Product filters">
         <div className="ds-store-browse-controls-heading"><div><span className="ds-eyebrow">FIND WHAT YOU NEED</span><h2>Browse the shop</h2></div><button type="button" onClick={()=>{setSearch('');setFilter('All products');setSortOrder('recommended');navigateBuyerPage('collection/all-products')}}>View all products <ArrowRight size={15}/></button></div>
         <div className="ds-store-filter-row">
