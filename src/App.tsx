@@ -3,9 +3,9 @@ import { unzipSync } from 'fflate';
 import { Activity, ArrowRight, ArrowUpRight, Bell, Heart, Star, ChevronRight, CircleAlert, Download, HelpCircle, LayoutDashboard, LogOut, Menu, X, MessageCircle, Package, Plus, RefreshCw, Search, Send, Settings, ShieldCheck, ShoppingBag, ShoppingCart, UserRound, Store, Wallet, WalletCards, Home, FileText, TicketPercent } from 'lucide-react';
 import { storefrontCategories } from './storefrontCatalog';
 import { marketplaceFaqs } from './marketplaceFaqs';
+import { AuthPage } from './AuthPage';
 
 
-const AuthPage = lazy(()=>import('./AuthPage').then(m=>({default:m.AuthPage})));
 const StorefrontFlow = lazy(()=>import('./StorefrontFlow').then(m=>({default:m.StorefrontFlow})));
 const SellerShopControls = lazy(()=>import('./SellerShopControls').then(m=>({default:m.SellerShopControls})));
 const BuyerAuthPage = lazy(()=>import('./BuyerAuthPage').then(m=>({default:m.BuyerAuthPage})));
