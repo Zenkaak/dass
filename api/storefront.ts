@@ -35,7 +35,15 @@ export default async function handler(req:any,res:any){
  if(req.method!=='GET'){res.setHeader('Allow','GET');return send(res,405,{error:'Method not allowed'});}
  try{
   const sql=db();
-  const slug=String(req.query?.slug||'').toLowerCase().trim();
+  let slug=String(req.query?.slug||'').toLowerCase().trim();
+  if(!slug){
+   const host=String(req.headers['x-forwarded-host']||req.headers.host||'').split(',')[0].trim().split(':')[0].toLowerCase();
+   if(!host||host==='dasmarket.co.ke'||host==='www.dasmarket.co.ke'||host.endsWith('.dasmarket.co.ke'))return send(res,400,{error:'Shop slug is required'});
+   const mapped=await sql`SELECT t.slug FROM public.domains d JOIN public.tenants t ON t.id=d.tenant_id WHERE lower(d.hostname)=${host} AND d.verified_at IS NOT NULL AND COALESCE(d.status,'active')='active' AND t.status IN ('trial','active') LIMIT 1`;
+   slug=String(mapped[0]?.slug||'');
+   if(!slug)return send(res,404,{error:'This domain is not connected to an active DASMARKET shop.'});
+   res.setHeader('Cache-Control','private, no-store, max-age=0');
+  }
   if(!slug)return send(res,400,{error:'Shop slug is required'});
   // One read-only query: avoid a serial UPDATE before every storefront request.
   // Product review aggregates are scoped to this tenant before joining the catalogue.
