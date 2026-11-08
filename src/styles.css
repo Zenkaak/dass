@@ -5723,3 +5723,23 @@ button,input,select,textarea{font:inherit;}
  body:has(.ds-store) .ds-store-browse-controls{display:none!important}
  body:has(.ds-store) .ds-store-browse-controls.is-active{display:block!important}
 }
+
+
+.seller-domains-panel{margin-top:24px;padding:22px;border:1px solid rgba(150,170,205,.18);border-radius:16px;background:rgba(255,255,255,.025)}
+.seller-domains-panel .seller-page-heading h2{display:flex;align-items:center;gap:9px}
+.seller-domain-add{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:14px;margin:18px 0 22px}
+.seller-domain-add label{display:grid;gap:7px;font-size:13px;font-weight:700}
+.seller-domain-add input{width:100%;min-height:44px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;background:rgba(5,12,24,.65);color:inherit;font:inherit}
+.seller-domain-add small,.seller-domain-main small{display:block;color:var(--muted);font-size:11px;font-weight:400;line-height:1.5}
+.seller-domain-empty{display:grid;justify-items:center;gap:8px;padding:28px 14px;border:1px dashed var(--line);border-radius:12px;color:var(--muted);text-align:center}
+.seller-domain-empty strong{color:inherit;font-size:14px}.seller-domain-empty span{font-size:12px;max-width:440px}
+.seller-domain-list{display:grid;gap:10px}
+.seller-domain-row{padding:14px;border:1px solid var(--line);border-radius:12px}
+.seller-domain-main{display:flex;align-items:center;gap:11px;min-width:0}.seller-domain-main>div{min-width:0;flex:1}.seller-domain-main strong{display:block;overflow-wrap:anywhere;font-size:14px}
+.seller-domain-status{padding:5px 9px;border-radius:20px;font-size:10px;font-weight:800;white-space:nowrap}.seller-domain-status.verified{background:rgba(22,163,74,.13);color:#4ade80}.seller-domain-status.pending{background:rgba(234,179,8,.12);color:#facc15}
+.seller-domain-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 0 31px}.seller-domain-actions a{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--blue)}.seller-domain-actions .danger{color:#fca5a5}
+.seller-domain-dns{margin-top:18px;padding:16px;border:1px solid rgba(130,170,255,.22);border-radius:12px;background:rgba(59,130,246,.055)}
+.seller-domain-dns h3{margin:0 0 6px;font-size:15px}.seller-domain-dns p{font-size:12px;line-height:1.6;color:var(--muted)}
+.seller-domain-record{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}.seller-domain-record>div{min-width:0}.seller-domain-record small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em}.seller-domain-record strong{display:block;margin-top:4px;overflow-wrap:anywhere;font-size:12px;font-family:monospace}
+.seller-domain-notice{padding:10px 12px;border-radius:9px;background:rgba(22,163,74,.1);color:#86efac;font-size:12px}
+@media(max-width:600px){.seller-domains-panel{padding:15px}.seller-domain-add{grid-template-columns:1fr}.seller-domain-add .seller-primary-btn{width:100%;justify-content:center}.seller-domain-actions{margin-left:0}.seller-domain-main{flex-wrap:wrap}.seller-domain-status{margin-left:auto}}
