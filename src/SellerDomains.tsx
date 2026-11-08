@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Globe, Plus, RefreshCw, ShieldCheck, Trash2, Copy, ExternalLink } from 'lucide-react';
+import { Globe, Plus, RefreshCw, Trash2, Copy, ExternalLink } from 'lucide-react';
 
 type Domain={hostname:string;isPrimary:boolean;verified:boolean;status:string;verification?:any;lastCheckedAt?:string};
 async function read(r:Response){const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Domain request failed.');return d;}
