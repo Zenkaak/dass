@@ -231,6 +231,11 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
   {buyerPage==='store'&&mobileSidebarOpen&&<button type="button" className="market-sidebar-scrim market-global-drawer-scrim" aria-label="Close navigation menu" onClick={()=>setMobileSidebarOpen(false)}/>}
   {buyerPage==='store'&&<aside className={"market-sidebar market-global-drawer"+(mobileSidebarOpen?" is-mobile-open":"")} aria-label="Shop navigation">
     <div className="market-sidebar-shop"><a href={buyerPath('store')} onClick={e=>{e.preventDefault();navigateBuyerPage('store')}}><Store size={18}/><span><b>{shop?.name||'Shop categories'}</b><small>Browse this shop</small></span></a><button type="button" className="market-sidebar-close" aria-label="Close navigation" onClick={()=>setMobileSidebarOpen(false)}><X size={16}/></button></div>
+    <div className="ds-store-drawer-account">
+      <span className="ds-store-drawer-avatar"><UserRound size={22}/></span>
+      <span><b>{buyerCustomer?.name||'Guest shopper'}</b><small>{buyerCustomer?.phone||'Sign in to manage your orders'}</small></span>
+      <button type="button" onClick={()=>{setBuyerReturnPage('account');navigateBuyerPage(buyerCustomer?'account':'buyer-login');setMobileSidebarOpen(false)}}>{buyerCustomer?'My account':'Sign in / Sign up'} <ArrowRight size={14}/></button>
+    </div>
     <div className="market-sidebar-title">DISCOVER</div>
     <nav className="market-sidebar-links" aria-label="Shop destinations">
       <button type="button" onClick={()=>{navigateBuyerPage('collection/all-products');setMobileSidebarOpen(false)}}><ShoppingBag size={16}/> All products</button>
@@ -287,6 +292,10 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
           <button type="button" className="ds-store-add" disabled={p.stockQuantity===0||(p.stockQuantity!==null&&(cart[p.id]||0)>=p.stockQuantity)} onClick={()=>setCart(c=>({...c,[p.id]:Math.min(99,p.stockQuantity??99,(c[p.id]||0)+1)}))}>{p.stockQuantity===0?'Out of stock':cart[p.id]?'Added':'Add to cart'}</button>
         </article>)}</div>
       </section>
+      <section className="ds-store-category-quicklinks" aria-label="Shop by category">
+        <div className="ds-store-category-heading"><h2>Shop by category</h2><button type="button" onClick={()=>setMobileSidebarOpen(true)}>View all <ArrowRight size={14}/></button></div>
+        <div className="ds-store-category-tiles">{storefrontCategories.slice(0,8).map(category=><button type="button" className="ds-store-category-tile" key={category.name} onClick={()=>selectStoreCategory(category.name)}><span>{category.icon}</span><b>{category.name}</b></button>)}</div>
+      </section>
       <section className="ds-store-browse-controls" aria-label="Product filters">
         <div className="ds-store-browse-controls-heading"><div><span className="ds-eyebrow">FIND WHAT YOU NEED</span><h2>Browse the shop</h2></div><button type="button" onClick={()=>{setSearch('');setFilter('All products');setSortOrder('recommended');navigateBuyerPage('collection/all-products')}}>View all products <ArrowRight size={15}/></button></div>
         <div className="ds-store-filter-row">
@@ -318,6 +327,12 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
         <div className="ds-store-faq-list">{marketplaceFaqs.slice(0,6).map(([question,answer])=><details key={question}><summary>{question}<span>＋</span></summary><p>{answer}</p></details>)}</div>
       </section>
       {cartItems.length>0&&<div className="ds-store-cartbar"><span><b>{cartItems.reduce((n,[,q])=>n+q,0)} items</b><small>KES {total.toLocaleString('en-KE')}</small></span><button type="button" onClick={()=>navigateBuyerPage('cart')}>Go to cart <ArrowRight size={16}/></button></div>}
+      <nav className="ds-store-mobile-nav" aria-label="Store navigation">
+        <button type="button" className="active" onClick={()=>navigateBuyerPage('store')}><Home size={19}/><span>Home</span></button>
+        <button type="button" onClick={()=>setMobileSidebarOpen(true)}><Package size={19}/><span>Categories</span></button>
+        <button type="button" onClick={()=>navigateBuyerPage('cart')}><ShoppingCart size={19}/><span>Cart</span>{cartItems.length>0&&<b>{cartItems.reduce((n,[,q])=>n+q,0)}</b>}</button>
+        <button type="button" onClick={()=>{if(!buyerCustomer){setBuyerReturnPage('account');navigateBuyerPage('buyer-login')}else navigateBuyerPage('account')}}><UserRound size={19}/><span>Account</span></button>
+      </nav>
       <footer className="ds-store-footer ds-store-footer-expanded">
         <div className="ds-store-footer-grid">
           <div className="ds-store-footer-brand"><a href={buyerPath('store')} onClick={e=>{e.preventDefault();navigateBuyerPage('store')}}><span className="ds-store-footer-mark">D</span><span><b>DASMARKET</b><small>BY DASNET</small></span></a><p>Discover products, connect with shops and shop with clearer information.</p><a className="ds-store-footer-whatsapp" href={`https://wa.me/254758884861?text=Hello%20DASNET%20Support%2C%20I%20need%20help%20with%20a%20storefront.`} target="_blank" rel="noopener noreferrer"><MessageCircle size={16}/> WhatsApp support</a></div>
