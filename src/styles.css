@@ -5379,7 +5379,7 @@ button,input,select,textarea{font:inherit;}
 @media(max-width:760px){
  body:has(.ds-store){background:#f5f7fb}
  body:has(.ds-store) .ds-store{padding-bottom:calc(76px + env(safe-area-inset-bottom));background:#f5f7fb}
- body:has(.ds-store) .ds-store-navigation{position:relative!important;top:auto!important;z-index:20;background:#071d3b!important;color:#fff!important;padding:9px 12px 10px!important;box-shadow:none!important}
+ body:has(.ds-store) .ds-store-navigation{position:sticky!important;top:0!important;z-index:1200!important;background:#071d3b!important;color:#fff!important;padding:8px 12px 9px!important;box-shadow:0 2px 10px rgba(3,17,38,.14)!important}
  body:has(.ds-store) .ds-store-navigation-main{display:grid!important;grid-template-columns:34px minmax(0,1fr) auto!important;align-items:center;gap:9px!important;min-height:40px}
  body:has(.ds-store) .ds-store-menu-trigger{grid-column:1;grid-row:1;width:34px;height:38px;border:0!important;border-radius:8px;background:transparent!important;color:#fff!important;display:grid;place-items:center}
  body:has(.ds-store) .ds-store-brand{grid-column:2;grid-row:1;min-width:0;color:#fff!important;display:flex;align-items:center;gap:8px;text-decoration:none}
@@ -5426,9 +5426,9 @@ button,input,select,textarea{font:inherit;}
  body:has(.ds-store) .ds-store-mobile-nav button.active{color:#0b3b7a}
  body:has(.ds-store) .ds-store-mobile-nav button.active svg{color:#f2b900}
  body:has(.ds-store) .ds-store-mobile-nav button>b{position:absolute;top:0;right:calc(50% - 23px);min-width:16px;height:16px;padding:0 4px;border-radius:99px;background:#e12d39;color:#fff;font-size:9px;display:grid;place-items:center}
- body:has(.ds-store) .market-global-drawer{position:fixed!important;top:0!important;bottom:0!important;left:0!important;width:min(86vw,350px)!important;max-width:350px!important;max-height:100dvh!important;overflow-y:auto!important;padding:0 0 calc(22px + env(safe-area-inset-bottom))!important;border:0!important;border-radius:0 18px 18px 0!important;background:#fff!important;box-shadow:12px 0 40px rgba(0,0,0,.22)!important;z-index:1400!important}
+ body:has(.ds-store) .market-global-drawer{position:fixed!important;top:112px!important;bottom:0!important;left:0!important;width:min(86vw,350px)!important;max-width:350px!important;max-height:calc(100dvh - 112px)!important;overflow-y:auto!important;padding:0 0 calc(22px + env(safe-area-inset-bottom))!important;border:0!important;border-radius:0 18px 18px 0!important;background:#fff!important;box-shadow:12px 0 40px rgba(0,0,0,.22)!important;z-index:1400!important}
  body:has(.ds-store) .market-global-drawer.is-mobile-open{transform:translateX(0)!important}
- body:has(.ds-store) .market-global-drawer-scrim{position:fixed!important;inset:0!important;z-index:1300!important;background:rgba(3,14,31,.62)!important;pointer-events:auto!important}
+ body:has(.ds-store) .market-global-drawer-scrim{position:fixed!important;inset:112px 0 0!important;z-index:1300!important;background:rgba(3,14,31,.62)!important;pointer-events:auto!important}
  body:has(.ds-store) .market-sidebar-shop{min-height:86px!important;padding:18px 16px!important;background:#071d3b!important;color:#fff!important;border:0!important}
  body:has(.ds-store) .market-sidebar-shop a{color:#fff!important}
  body:has(.ds-store) .market-sidebar-shop a b{color:#fff!important;font-size:16px!important}
