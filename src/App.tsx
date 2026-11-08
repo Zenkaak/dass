@@ -52,30 +52,42 @@ function Brand() {
 }
 
 function LandingPage() {
- return <main className="das-landing dm-platform-home">
+ return <main className="das-landing dm-platform-home dm-home-refresh">
   <header className="dm-home-header">
    <a className="dm-home-brand" href="/" aria-label="DASMARKET home"><span className="dm-home-mark">D</span><span><b>DASMARKET</b><small>YOUR BUSINESS. ONLINE.</small></span></a>
-   <nav aria-label="Main navigation"><a href="#platform">Platform</a><a href="#how-it-works">How it works</a><a href="#support">Support</a></nav>
+   <nav aria-label="Main navigation"><a href="#platform">Platform</a><a href="#how-it-works">How it works</a><a href="#support">Contact</a></nav>
    <div className="dm-home-actions"><a className="dm-home-login" href="/login">Log in</a><a className="dm-home-cta" href="/signup">Create your shop <ArrowRight size={16}/></a></div>
   </header>
-  <section className="dm-home-hero"><div className="dm-home-hero-copy">
-   <span className="dm-home-eyebrow"><i/> THE SIMPLE WAY TO SELL ONLINE</span>
-   <h1>Take your business online. <em>Grow without limits.</em></h1>
-   <p>Create your own online shop, showcase your products, manage orders and reach customers — all from one simple workspace.</p>
-   <div className="dm-home-hero-actions"><a href="/signup" className="dm-home-primary">Start your shop <ArrowRight size={17}/></a><a href="/login" className="dm-home-secondary">I already have an account</a></div>
-   <div className="dm-home-proof"><span><ShieldCheck size={16}/> Secure account access</span><span><Store size={16}/> Your own branded shop</span></div>
-  </div>
-  <div className="dm-home-visual"><div className="dm-home-glow"/><div className="dm-home-window"><div className="dm-home-window-top"><span/><span/><span/><b>My online shop</b></div><div className="dm-home-window-body"><aside><i/><i/><i/><i/></aside><div className="dm-home-window-content"><div className="dm-home-window-title"><span>Good morning 👋<b>Your shop is growing</b></span><i>● Live</i></div><div className="dm-home-stats"><span><small>Orders</small><b>128</b><i>↗ 12.8%</i></span><span><small>Products</small><b>46</b><i>Active listings</i></span></div><div className="dm-home-products"><div><i className="dm-home-product-art one">✦</i><span><b>Featured products</b><small>Manage your catalogue</small></span></div><div><i className="dm-home-product-art two">◈</i><span><b>New orders</b><small>Keep every sale organised</small></span></div></div></div></div></div><div className="dm-home-float dm-home-float-one"><span>✓</span><div><b>Shop published</b><small>Your storefront is online</small></div></div><div className="dm-home-float dm-home-float-two"><span>↗</span><div><b>One simple workspace</b><small>Products · Orders · Customers</small></div></div></div>
+  <section className="dm-refresh-hero">
+   <div className="dm-refresh-copy">
+    <span className="dm-refresh-kicker"><i/> MADE FOR AMBITIOUS BUSINESSES</span>
+    <h1>Make your business <em>impossible to miss.</em></h1>
+    <p>Launch a professional online shop, manage your products and orders, and give customers an easier way to buy from you.</p>
+    <div className="dm-refresh-actions"><a href="/signup" className="dm-refresh-primary">Create your shop <ArrowRight size={17}/></a><a href="/login" className="dm-refresh-login">Already have a shop? Log in</a></div>
+    <div className="dm-refresh-assurances"><span><ShieldCheck size={16}/> Simple, secure access</span><span><Store size={16}/> Your brand, your shop</span></div>
+   </div>
+   <div className="dm-refresh-stage" aria-label="Preview of the DASMARKET seller workspace">
+    <div className="dm-refresh-orb orb-a"/><div className="dm-refresh-orb orb-b"/>
+    <div className="dm-refresh-dashboard">
+     <div className="dm-refresh-dash-head"><div><small>YOUR BUSINESS AT A GLANCE</small><b>Good morning, seller <span>✦</span></b></div><i><span/> SHOP LIVE</i></div>
+     <div className="dm-refresh-metrics"><div><small>Total orders</small><b>128</b><em>↗ Growing steadily</em></div><div><small>Products listed</small><b>46</b><em>Ready for customers</em></div></div>
+     <div className="dm-refresh-dash-label">YOUR DAILY WORKSPACE</div>
+     <div className="dm-refresh-task"><span className="task-icon amber"><Package size={17}/></span><span><b>Manage your products</b><small>Keep your catalogue up to date</small></span><ChevronRight size={16}/></div>
+     <div className="dm-refresh-task"><span className="task-icon green"><ShoppingBag size={17}/></span><span><b>Track your orders</b><small>Stay on top of every sale</small></span><ChevronRight size={16}/></div>
+     <div className="dm-refresh-task"><span className="task-icon blue"><WalletCards size={17}/></span><span><b>Review your payments</b><small>Keep transactions organised</small></span><ChevronRight size={16}/></div>
+    </div>
+    <div className="dm-refresh-float"><span><ShieldCheck size={17}/></span><div><b>Your shop, your identity</b><small>A branded link customers can remember</small></div></div>
+   </div>
   </section>
-  <section className="dm-home-trust"><span>BUILT TO HELP YOU SELL WITH CONFIDENCE</span><div><b><ShieldCheck size={18}/> Secure sign-in</b><b><ShoppingBag size={18}/> Product catalogue</b><b><Wallet size={18}/> Order &amp; payment tools</b><b><LayoutDashboard size={18}/> Seller dashboard</b></div></section>
-  <section className="dm-home-platform" id="platform"><div className="dm-home-section-heading"><span>EVERYTHING IN ONE PLACE</span><h2>Run your online business with less hassle.</h2><p>From your first listing to your next order, the tools you need are together in one place.</p></div><div className="dm-home-feature-grid">
-   <article><i className="dm-home-feature-icon peach"><Store size={22}/></i><h3>Your own online shop</h3><p>Give your business a dedicated storefront with its own shop link and brand identity.</p></article>
-   <article><i className="dm-home-feature-icon blue"><ShoppingBag size={22}/></i><h3>Products made easy</h3><p>Add products, update prices, manage stock and keep your catalogue organised.</p></article>
-   <article><i className="dm-home-feature-icon green"><Package size={22}/></i><h3>Orders in one view</h3><p>Track incoming orders and manage fulfilment from your seller workspace.</p></article>
-   <article><i className="dm-home-feature-icon violet"><ShieldCheck size={22}/></i><h3>Account security</h3><p>Protect access with phone verification and secure account recovery.</p></article>
+  <section className="dm-refresh-proof"><span>ONE WORKSPACE. THE TOOLS TO KEEP MOVING.</span><div><b><Store size={18}/> Your own online shop</b><b><Package size={18}/> Product management</b><b><ShoppingBag size={18}/> Order tracking</b><b><ShieldCheck size={18}/> Secure account access</b></div></section>
+  <section className="dm-home-platform dm-refresh-platform" id="platform"><div className="dm-home-section-heading"><span>BUILT AROUND YOUR BUSINESS</span><h2>Less juggling. More time to grow.</h2><p>Bring the everyday work of running your online shop together in one clear, simple place.</p></div><div className="dm-refresh-feature-grid">
+   <article><i className="dm-home-feature-icon peach"><Store size={22}/></i><h3>A shop that feels like yours</h3><p>Give customers a dedicated shop link with your business name and identity.</p><span>01</span></article>
+   <article><i className="dm-home-feature-icon blue"><Package size={22}/></i><h3>Your products, organised</h3><p>Add products, update prices and keep stock information in one place.</p><span>02</span></article>
+   <article><i className="dm-home-feature-icon green"><ShoppingBag size={22}/></i><h3>Orders without the mess</h3><p>See incoming orders and manage fulfilment from your workspace.</p><span>03</span></article>
+   <article><i className="dm-home-feature-icon violet"><WalletCards size={22}/></i><h3>Payments in view</h3><p>Keep payment activity connected to the orders your customers place.</p><span>04</span></article>
   </div></section>
-  <section className="dm-home-how" id="how-it-works"><div><span>GET STARTED IN MINUTES</span><h2>Your shop, three simple steps.</h2></div><ol><li><i>01</i><b>Create your account</b><p>Register your details and verify your phone number.</p></li><li><i>02</i><b>Set up your shop</b><p>Choose your shop link and add your products.</p></li><li><i>03</i><b>Start selling</b><p>Share your shop and manage orders from your dashboard.</p></li></ol></section>
-  <section className="dm-home-final" id="support"><div><span>READY WHEN YOU ARE</span><h2>Give your business a home online.</h2><p>Set up your shop and take the next step with DASMARKET.</p></div><a href="/signup">Create your shop <ArrowRight size={17}/></a></section>
+  <section className="dm-refresh-how" id="how-it-works"><div className="dm-refresh-how-intro"><span>START WITH THE BASICS</span><h2>Up and running in three steps.</h2><p>No complicated setup. Create your account, build your shop, then share it with customers.</p><a href="/signup">Get started <ArrowRight size={16}/></a></div><ol><li><i>01</i><div><b>Create your account</b><p>Register your business details and verify your phone number.</p></div></li><li><i>02</i><div><b>Build your shop</b><p>Choose your shop address and add the products you sell.</p></div></li><li><i>03</i><div><b>Share and sell</b><p>Send customers your shop link and manage orders in one workspace.</p></div></li></ol></section>
+  <section className="dm-refresh-final" id="support"><div><span>YOUR NEXT CUSTOMER IS ONLINE</span><h2>Give your business a place to grow.</h2><p>Start with a shop that is simple to set up and easy to manage.</p></div><a href="/signup">Create your shop <ArrowRight size={17}/></a></section>
   <footer className="dm-home-footer"><a className="dm-home-brand" href="/"><span className="dm-home-mark">D</span><span><b>DASMARKET</b><small>YOUR BUSINESS. ONLINE.</small></span></a><span>© {new Date().getFullYear()} DASMARKET. All rights reserved.</span><div><a href="/login">Log in</a><a href="/signup">Create a shop</a><a href="mailto:support@dasnet.co.ke">Contact support</a></div></footer>
  </main>;
 }
