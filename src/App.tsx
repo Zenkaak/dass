@@ -267,8 +267,8 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
         </div>
         <label className="ds-store-search">
           <Search size={18}/>
-          <input aria-label="Search this store" value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){setFilter('All products');navigateBuyerPage('store')}}} placeholder="Search products in this store"/>
-          <button type="button" onClick={()=>{setFilter('All products');navigateBuyerPage('store');document.getElementById('market-products-grid')?.scrollIntoView({behavior:'smooth',block:'start'})}}>Search</button>
+          <input aria-label="Search products" value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){setFilter('All products');navigateBuyerPage('store')}}} placeholder="Search products"/>
+          <button type="button" aria-label="Search" onClick={()=>{setFilter('All products');navigateBuyerPage('store');document.getElementById('market-products-grid')?.scrollIntoView({behavior:'smooth',block:'start'})}}><Search size={20}/></button>
         </label>
       </header>
       <section className="ds-store-hero" key={homeHeroProduct?.id||"featured-empty"}>
