@@ -5626,3 +5626,39 @@ button,input,select,textarea{font:inherit;}
  body:has(.ds-store) .market-sidebar-title{padding:13px 16px 7px!important;font-size:9px!important;letter-spacing:.12em!important}
  body:has(.ds-store) .market-sidebar-links>button,body:has(.ds-store) .market-sidebar-category-button{min-height:43px!important;font-size:12px!important}
 }
+
+
+/* Storefront mobile layout: explicit, scoped composition */
+.ds-store-mobile-promo{display:none}
+@media(max-width:760px){
+ body:has(.ds-store) .ds-store{width:100%!important;max-width:none!important;overflow-x:hidden!important}
+ body:has(.ds-store) .ds-store-hero{height:218px!important;min-height:218px!important;display:grid!important;grid-template-columns:55% 45%!important;align-items:stretch!important;margin:10px 10px 12px!important;padding:0!important;background:#08264b!important;border-radius:12px!important;overflow:hidden!important}
+ body:has(.ds-store) .ds-store-hero-copy{grid-column:1!important;grid-row:1!important;position:relative!important;inset:auto!important;width:auto!important;max-width:none!important;padding:16px 5px 25px 13px!important;align-self:center!important;z-index:2!important}
+ body:has(.ds-store) .ds-store-hero-copy h1{font-size:20px!important;line-height:1.1!important;color:white!important;margin:7px 0!important}
+ body:has(.ds-store) .ds-store-hero-copy p{font-size:10px!important;line-height:1.35!important;color:#e8eff8!important}
+ body:has(.ds-store) .ds-store-hero-copy .ds-eyebrow{font-size:8px!important;color:#ffd34d!important}
+ body:has(.ds-store) .ds-store-hero-copy>button{font-size:10px!important;min-height:31px!important;background:#ffca05!important;color:#092346!important;border-radius:6px!important}
+ body:has(.ds-store) .ds-store-hero-image{grid-column:2!important;grid-row:1!important;position:relative!important;inset:auto!important;width:100%!important;height:100%!important;min-height:0!important;border:0!important;border-radius:0!important;overflow:hidden!important;background:#f4f6f9!important}
+ body:has(.ds-store) .ds-store-hero-image img{width:100%!important;height:100%!important;object-fit:cover!important;opacity:1!important}
+ body:has(.ds-store) .ds-store-spotlight-section{margin:0 10px 10px!important;padding:11px 9px!important;border-radius:11px!important;background:#fff!important}
+ body:has(.ds-store) .ds-store-rail{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;grid-auto-flow:row!important;grid-auto-columns:unset!important;gap:6px!important;overflow:visible!important;width:100%!important}
+ body:has(.ds-store) .ds-store-spotlight-card{min-width:0!important;width:100%!important;max-width:none!important;padding:4px!important;border:1px solid #e7ebf1!important;border-radius:8px!important}
+ body:has(.ds-store) .ds-store-spotlight-card .ds-store-product-image{width:100%!important;height:auto!important;aspect-ratio:1/1!important;margin:0!important}
+ body:has(.ds-store) .ds-store-spotlight-card .ds-store-product-name{font-size:9px!important;min-height:24px!important;line-height:1.2!important}
+ body:has(.ds-store) .ds-store-spotlight-card .ds-store-product>b{font-size:11px!important}
+ body:has(.ds-store) .ds-store-spotlight-card .ds-store-add{min-height:28px!important;font-size:9px!important}
+ body:has(.ds-store) .ds-store-category-quicklinks{display:block!important;margin:0 10px 10px!important;padding:11px 9px!important;background:#fff!important;border-radius:11px!important}
+ body:has(.ds-store) .ds-store-category-tiles{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px!important;overflow:visible!important}
+ body:has(.ds-store) .ds-store-category-tile{width:100%!important;min-width:0!important;min-height:72px!important;flex:none!important}
+ body:has(.ds-store) .ds-store-mobile-promo{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;margin:0 10px 12px!important;padding:15px!important;min-height:112px!important;border-radius:12px!important;background:#08264b!important;color:#fff!important;overflow:hidden!important}
+ body:has(.ds-store) .ds-store-mobile-promo>div{min-width:0}
+ body:has(.ds-store) .ds-store-mobile-promo>div>span{font-size:8px!important;letter-spacing:.12em!important;color:#ffd34d!important;font-weight:900}
+ body:has(.ds-store) .ds-store-mobile-promo h2{font-size:16px!important;line-height:1.15!important;margin:5px 0!important;color:#fff!important}
+ body:has(.ds-store) .ds-store-mobile-promo p{font-size:10px!important;color:#dce6f3!important;margin:0 0 8px!important}
+ body:has(.ds-store) .ds-store-mobile-promo button{border:0!important;border-radius:6px!important;padding:7px 9px!important;background:#ffca05!important;color:#092346!important;font-size:9px!important;font-weight:850!important}
+ body:has(.ds-store) .ds-store-mobile-promo-art{width:64px;height:64px;flex:0 0 64px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.12);color:#ffd34d}
+ body:has(.ds-store) .ds-store-home-mix-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
+ body:has(.ds-store) .ds-store-home-mix-grid .ds-store-product-image{height:auto!important;aspect-ratio:1/1!important}
+ body:has(.ds-store) .ds-store-browse-controls{display:none!important}
+ body:has(.ds-store) .ds-store-browse-controls.is-active{display:block!important}
+}
