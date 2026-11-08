@@ -5451,3 +5451,100 @@ button,input,select,textarea{font:inherit;}
 .ds-store-category-quicklinks{display:none}
 .ds-store-mobile-nav{display:none}
 .ds-store-drawer-account{display:none}
+
+
+/* Reference-matched tenant storefront mobile composition */
+@media(max-width:760px){
+ body:has(.ds-store) .ds-store-hero{
+  min-height:0!important;height:clamp(205px,57vw,255px)!important;
+  margin:10px 10px 12px!important;border-radius:14px!important;
+  background:#08264b!important;position:relative!important;isolation:isolate;
+  overflow:hidden!important;display:block!important;
+ }
+ body:has(.ds-store) .ds-store-hero-image{
+  position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
+  z-index:-2!important;border:0!important;border-radius:0!important;
+ }
+ body:has(.ds-store) .ds-store-hero-image img{width:100%!important;height:100%!important;object-fit:cover!important;object-position:center!important;opacity:.76}
+ body:has(.ds-store) .ds-store-hero:after{
+  content:"";position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(90deg,rgba(3,22,49,.96) 0%,rgba(3,22,49,.84) 45%,rgba(3,22,49,.10) 100%);
+ }
+ body:has(.ds-store) .ds-store-hero-copy{
+  width:74%!important;max-width:74%!important;padding:17px 15px 34px!important;
+  color:#fff!important;z-index:1!important;
+ }
+ body:has(.ds-store) .ds-store-hero-copy .ds-eyebrow{color:#ffd34e!important;font-size:9px!important;letter-spacing:.13em}
+ body:has(.ds-store) .ds-store-hero-copy h1{
+  color:#fff!important;font-size:clamp(19px,5.6vw,26px)!important;
+  line-height:1.08!important;margin:8px 0!important;display:-webkit-box;
+  -webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+ }
+ body:has(.ds-store) .ds-store-hero-copy p{
+  color:rgba(255,255,255,.9)!important;font-size:10px!important;line-height:1.35!important;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  margin:5px 0!important;max-width:95%;
+ }
+ body:has(.ds-store) .ds-store-hero-copy>strong{display:block;color:#ffda4b!important;font-size:15px!important;margin:6px 0}
+ body:has(.ds-store) .ds-store-hero-copy>button{
+  min-height:34px!important;padding:0 12px!important;border:0!important;border-radius:8px!important;
+  background:#ffca05!important;color:#071d3b!important;font-size:10px!important;font-weight:900!important;
+ }
+ body:has(.ds-store) .ds-store-hero-dots{left:15px!important;bottom:9px!important;z-index:2}
+ body:has(.ds-store) .ds-store-spotlight-section{padding:12px 10px!important}
+ body:has(.ds-store) .ds-store-rail{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  grid-auto-columns:unset!important;gap:7px!important;overflow:visible!important;
+  padding:0!important;scroll-snap-type:none!important;
+ }
+ body:has(.ds-store) .ds-store-spotlight-card{min-width:0!important;width:100%!important;overflow:hidden}
+ body:has(.ds-store) .ds-store-spotlight-card .ds-store-product-image{
+  height:auto!important;aspect-ratio:1/1!important;min-height:0!important;
+  border-radius:8px!important;margin:5px!important;width:calc(100% - 10px)!important;
+ }
+ body:has(.ds-store) .ds-store-spotlight-card .ds-store-product-image img{width:100%;height:100%;object-fit:contain}
+ body:has(.ds-store) .ds-store-spotlight-card .ds-store-product-name{
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  min-height:28px;font-size:9px!important;padding:0 5px!important;
+ }
+ body:has(.ds-store) .ds-store-spotlight-card .ds-store-rating{font-size:8px!important}
+ body:has(.ds-store) .ds-store-spotlight-card .ds-store-product>b{font-size:11px!important;padding:0 5px}
+ body:has(.ds-store) .ds-store-spotlight-card .ds-store-product>small:not(.ds-store-rating){font-size:8px!important;padding:0 5px}
+ body:has(.ds-store) .ds-store-spotlight-card .ds-store-add{margin:5px!important;width:calc(100% - 10px)!important;min-height:30px!important;font-size:9px!important}
+ body:has(.ds-store) .ds-store-spotlight-card .ds-store-fav{width:27px!important;height:27px!important;right:7px!important;top:7px!important}
+ body:has(.ds-store) .ds-store-browse-controls{display:none!important}
+ body:has(.ds-store) .ds-store-browse-controls.is-active{display:block!important}
+ body:has(.ds-store) .ds-store-category-quicklinks{margin-top:10px!important}
+ body:has(.ds-store) .ds-store-home-mix-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important}
+ body:has(.ds-store) .ds-store-home-mix-grid .ds-store-product-image{height:auto!important;aspect-ratio:1/1!important}
+ body:has(.ds-store) .ds-store-mobile-nav{background:#fff!important}
+ body:has(.ds-store) .market-global-drawer{
+  width:min(86vw,340px)!important;border-radius:0 16px 16px 0!important;
+  background:#fff!important;padding-bottom:calc(18px + env(safe-area-inset-bottom))!important;
+ }
+ body:has(.ds-store) .market-sidebar-shop{
+  min-height:76px!important;background:#061f43!important;padding:14px 15px!important;
+  display:flex!important;align-items:center!important;
+ }
+ body:has(.ds-store) .market-sidebar-shop a{display:flex!important;align-items:center!important;gap:10px!important}
+ body:has(.ds-store) .market-sidebar-shop a svg{color:#ffca05!important}
+ body:has(.ds-store) .market-sidebar-shop a b{font-size:15px!important;letter-spacing:.01em}
+ body:has(.ds-store) .market-sidebar-shop a small{font-size:10px!important}
+ body:has(.ds-store) .ds-store-drawer-account{
+  grid-template-columns:43px minmax(0,1fr)!important;padding:14px 14px 13px!important;
+  background:#f7f9fc!important;
+ }
+ body:has(.ds-store) .ds-store-drawer-account>button{
+  padding:6px 10px!important;border-radius:7px!important;background:#ffca05!important;
+  color:#082449!important;font-size:10px!important;
+ }
+ body:has(.ds-store) .market-sidebar-links>button{
+  min-height:43px!important;padding:9px 12px!important;font-size:12px!important;
+  border-radius:8px!important;color:#142a46!important;
+ }
+ body:has(.ds-store) .market-sidebar-category-button{
+  min-height:43px!important;padding:9px 10px!important;font-size:12px!important;
+ }
+ body:has(.ds-store) .market-sidebar-subcategories button{min-height:35px!important;font-size:11px!important}
+ body:has(.ds-store) .market-global-drawer-scrim{background:rgba(3,13,30,.58)!important}
+}
