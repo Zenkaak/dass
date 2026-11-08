@@ -52,46 +52,50 @@ function Brand() {
 }
 
 function LandingPage() {
- return <main className="das-landing dm-platform-home dm-home-refresh">
-  <header className="dm-home-header">
-   <a className="dm-home-brand" href="/" aria-label="DASMARKET home"><span className="dm-home-mark">D</span><span><b>DASMARKET</b><small>YOUR BUSINESS. ONLINE.</small></span></a>
-   <nav aria-label="Main navigation"><a href="#platform">Platform</a><a href="#how-it-works">How it works</a><a href="#support">Contact</a></nav>
-   <div className="dm-home-actions"><a className="dm-home-login" href="/login">Log in</a><a className="dm-home-cta" href="/signup">Create your shop <ArrowRight size={16}/></a></div>
+ return <main className="das-landing dm-platform-home dm-home-refresh dm-home-signature">
+  <header className="dm-home-header dm-signature-header">
+   <a className="dm-home-brand" href="/" aria-label="DASMARKET home"><span className="dm-home-mark">D</span><span><b>DASMARKET</b><small>SELL ONLINE. GROW EVERY DAY.</small></span></a>
+   <nav aria-label="Main navigation"><a href="#why-dasmarket">Why DASMARKET</a><a href="#getting-started">Getting started</a><a href="mailto:support@dasnet.co.ke">Talk to us</a></nav>
+   <div className="dm-home-actions"><a className="dm-home-login" href="/login">Log in</a><a className="dm-signature-header-cta" href="/signup">Open your shop <ArrowUpRight size={16}/></a></div>
   </header>
-  <section className="dm-refresh-hero">
-   <div className="dm-refresh-copy">
-    <span className="dm-refresh-kicker"><i/> MADE FOR AMBITIOUS BUSINESSES</span>
-    <h1>Make your business <em>impossible to miss.</em></h1>
-    <p>Launch a professional online shop, manage your products and orders, and give customers an easier way to buy from you.</p>
-    <div className="dm-refresh-actions"><a href="/signup" className="dm-refresh-primary">Create your shop <ArrowRight size={17}/></a><a href="/login" className="dm-refresh-login">Already have a shop? Log in</a></div>
-    <div className="dm-refresh-assurances"><span><ShieldCheck size={16}/> Simple, secure access</span><span><Store size={16}/> Your brand, your shop</span></div>
+  <section className="dm-signature-hero">
+   <div className="dm-signature-copy">
+    <div className="dm-signature-eyebrow"><span/> THE HOME OF YOUR ONLINE BUSINESS</div>
+    <h1>Your business<br/>deserves a <em>shopfront.</em></h1>
+    <p>Turn what you sell into a business customers can discover, browse and buy from. Your own online shop, with the tools to run it all in one place.</p>
+    <div className="dm-signature-actions"><a href="/signup" className="dm-signature-primary">Create your shop <ArrowRight size={17}/></a><a href="/login" className="dm-signature-secondary">I already have an account <span>→</span></a></div>
+    <div className="dm-signature-note"><ShieldCheck size={16}/><span>Built for Kenyan businesses</span><i/> <span>Your brand stays yours</span></div>
    </div>
-   <div className="dm-refresh-stage" aria-label="Preview of the DASMARKET seller workspace">
-    <div className="dm-refresh-orb orb-a"/><div className="dm-refresh-orb orb-b"/>
-    <div className="dm-refresh-dashboard">
-     <div className="dm-refresh-dash-head"><div><small>YOUR BUSINESS AT A GLANCE</small><b>Good morning, seller <span>✦</span></b></div><i><span/> SHOP LIVE</i></div>
-     <div className="dm-refresh-metrics"><div><small>Total orders</small><b>128</b><em>↗ Growing steadily</em></div><div><small>Products listed</small><b>46</b><em>Ready for customers</em></div></div>
-     <div className="dm-refresh-dash-label">YOUR DAILY WORKSPACE</div>
-     <div className="dm-refresh-task"><span className="task-icon amber"><Package size={17}/></span><span><b>Manage your products</b><small>Keep your catalogue up to date</small></span><ChevronRight size={16}/></div>
-     <div className="dm-refresh-task"><span className="task-icon green"><ShoppingBag size={17}/></span><span><b>Track your orders</b><small>Stay on top of every sale</small></span><ChevronRight size={16}/></div>
-     <div className="dm-refresh-task"><span className="task-icon blue"><WalletCards size={17}/></span><span><b>Review your payments</b><small>Keep transactions organised</small></span><ChevronRight size={16}/></div>
+   <div className="dm-signature-visual" aria-label="Illustration of a merchant's online storefront">
+    <div className="dm-signature-backdrop-shape"/>
+    <div className="dm-store-window">
+     <div className="dm-store-browser"><span/><span/><span/><small>YOURSHOP.DASMARKET.CO.KE</small><i><ShieldCheck size={12}/> SECURE SHOP</i></div>
+     <div className="dm-store-brandbar"><div className="dm-store-monogram">K</div><div><b>Kito & Co.</b><small>Everyday finds, thoughtfully chosen.</small></div><div className="dm-store-mini-icons"><Search size={16}/><ShoppingBag size={16}/></div></div>
+     <div className="dm-store-banner"><span>THE NEW COLLECTION</span><b>Good things<br/>start here.</b><small>Explore pieces picked for your everyday.</small><i>EXPLORE NOW ↗</i></div>
+     <div className="dm-store-section-head"><b>Popular right now</b><span>VIEW ALL →</span></div>
+     <div className="dm-store-products">
+      <div className="dm-store-product"><div className="dm-store-product-art art-bag"><span>✦</span></div><b>Everyday tote</b><small>KES 1,850</small></div>
+      <div className="dm-store-product"><div className="dm-store-product-art art-sneaker"><span>◒</span></div><b>City sneakers</b><small>KES 3,400</small></div>
+      <div className="dm-store-product"><div className="dm-store-product-art art-bottle"><span>◌</span></div><b>Daily essentials</b><small>KES 950</small></div>
+     </div>
     </div>
-    <div className="dm-refresh-float"><span><ShieldCheck size={17}/></span><div><b>Your shop, your identity</b><small>A branded link customers can remember</small></div></div>
+    <div className="dm-signature-float dm-signature-float-top"><span><Store size={17}/></span><div><b>Your own shop link</b><small>Easy to share. Easy to remember.</small></div></div>
+    <div className="dm-signature-float dm-signature-float-bottom"><span><ShoppingBag size={17}/></span><div><b>Orders in one place</b><small>From checkout to fulfilment.</small></div><i>↗</i></div>
    </div>
+   <div className="dm-signature-vertical">MADE FOR THE WAY YOU DO BUSINESS <span>—</span> KENYA</div>
   </section>
-  <section className="dm-refresh-proof"><span>ONE WORKSPACE. THE TOOLS TO KEEP MOVING.</span><div><b><Store size={18}/> Your own online shop</b><b><Package size={18}/> Product management</b><b><ShoppingBag size={18}/> Order tracking</b><b><ShieldCheck size={18}/> Secure account access</b></div></section>
-  <section className="dm-home-platform dm-refresh-platform" id="platform"><div className="dm-home-section-heading"><span>BUILT AROUND YOUR BUSINESS</span><h2>Less juggling. More time to grow.</h2><p>Bring the everyday work of running your online shop together in one clear, simple place.</p></div><div className="dm-refresh-feature-grid">
-   <article><i className="dm-home-feature-icon peach"><Store size={22}/></i><h3>A shop that feels like yours</h3><p>Give customers a dedicated shop link with your business name and identity.</p><span>01</span></article>
-   <article><i className="dm-home-feature-icon blue"><Package size={22}/></i><h3>Your products, organised</h3><p>Add products, update prices and keep stock information in one place.</p><span>02</span></article>
-   <article><i className="dm-home-feature-icon green"><ShoppingBag size={22}/></i><h3>Orders without the mess</h3><p>See incoming orders and manage fulfilment from your workspace.</p><span>03</span></article>
-   <article><i className="dm-home-feature-icon violet"><WalletCards size={22}/></i><h3>Payments in view</h3><p>Keep payment activity connected to the orders your customers place.</p><span>04</span></article>
+  <section className="dm-signature-strip"><span>ONE PLACE TO BUILD AND RUN YOUR BUSINESS</span><div><b><Store/> Your own branded shop</b><b><Package/> Products & inventory</b><b><ShoppingBag/> Orders & fulfilment</b><b><WalletCards/> Payment tracking</b></div></section>
+  <section className="dm-signature-benefits" id="why-dasmarket"><div className="dm-signature-section-intro"><span>YOUR BUSINESS, ON YOUR TERMS</span><h2>Everything you need.<br/><em>Nothing in your way.</em></h2><p>Whether you're starting small or ready for more customers, DASMARKET gives you a clear place to grow.</p></div><div className="dm-signature-benefit-list">
+   <article><span>01</span><div className="dm-signature-benefit-icon"><Store/></div><div><h3>A shop that carries your name</h3><p>Give customers a dedicated online destination with your shop name and identity at the centre.</p></div><ArrowUpRight/></article>
+   <article><span>02</span><div className="dm-signature-benefit-icon"><Package/></div><div><h3>Your catalogue, under control</h3><p>Add products, manage prices and keep your stock organised as your business changes.</p></div><ArrowUpRight/></article>
+   <article><span>03</span><div className="dm-signature-benefit-icon"><ShoppingBag/></div><div><h3>Orders that make sense</h3><p>See what customers have ordered and keep fulfilment moving from one workspace.</p></div><ArrowUpRight/></article>
+   <article><span>04</span><div className="dm-signature-benefit-icon"><WalletCards/></div><div><h3>Payments you can follow</h3><p>Keep payment activity connected to your orders, so the important details stay together.</p></div><ArrowUpRight/></article>
   </div></section>
-  <section className="dm-refresh-how" id="how-it-works"><div className="dm-refresh-how-intro"><span>START WITH THE BASICS</span><h2>Up and running in three steps.</h2><p>No complicated setup. Create your account, build your shop, then share it with customers.</p><a href="/signup">Get started <ArrowRight size={16}/></a></div><ol><li><i>01</i><div><b>Create your account</b><p>Register your business details and verify your phone number.</p></div></li><li><i>02</i><div><b>Build your shop</b><p>Choose your shop address and add the products you sell.</p></div></li><li><i>03</i><div><b>Share and sell</b><p>Send customers your shop link and manage orders in one workspace.</p></div></li></ol></section>
-  <section className="dm-refresh-final" id="support"><div><span>YOUR NEXT CUSTOMER IS ONLINE</span><h2>Give your business a place to grow.</h2><p>Start with a shop that is simple to set up and easy to manage.</p></div><a href="/signup">Create your shop <ArrowRight size={17}/></a></section>
-  <footer className="dm-home-footer"><a className="dm-home-brand" href="/"><span className="dm-home-mark">D</span><span><b>DASMARKET</b><small>YOUR BUSINESS. ONLINE.</small></span></a><span>© {new Date().getFullYear()} DASMARKET. All rights reserved.</span><div><a href="/login">Log in</a><a href="/signup">Create a shop</a><a href="mailto:support@dasnet.co.ke">Contact support</a></div></footer>
+  <section className="dm-signature-start" id="getting-started"><div><span>NO BIG MANUAL. NO GUESSWORK.</span><h2>From idea to online<br/>in three clear steps.</h2><p>Start with the essentials. You can build out your shop as your business grows.</p><a href="/signup">Start building your shop <ArrowRight size={16}/></a></div><ol><li><i>01</i><div><b>Set up your account</b><p>Register your business and create your secure login.</p></div><span>↗</span></li><li><i>02</i><div><b>Make the shop yours</b><p>Add your shop details, products and the information customers need.</p></div><span>↗</span></li><li><i>03</i><div><b>Share it with the world</b><p>Put your shop link out there and manage incoming orders.</p></div><span>↗</span></li></ol></section>
+  <section className="dm-signature-cta"><div><span>YOUR NEXT CHAPTER STARTS HERE</span><h2>Put your business<br/>on the map.</h2><p>Build a shop that is yours, and give customers a better way to buy.</p></div><a href="/signup">Create your shop <ArrowUpRight size={18}/></a><div className="dm-signature-cta-mark">D.</div></section>
+  <footer className="dm-home-footer dm-signature-footer"><a className="dm-home-brand" href="/"><span className="dm-home-mark">D</span><span><b>DASMARKET</b><small>SELL ONLINE. GROW EVERY DAY.</small></span></a><span>© {new Date().getFullYear()} DASMARKET. All rights reserved.</span><div><a href="/login">Log in</a><a href="/signup">Create a shop</a><a href="mailto:support@dasnet.co.ke">Contact support</a></div></footer>
  </main>;
 }
-
 type LiveProduct={id:string;name:string;description:string;category:string;type:string;price:number;currency:string;stockQuantity:number|null;active:boolean;spotlight?:boolean;testProduct?:boolean;sku?:string;images?:string[];imageUrl?:string;ratingAverage?:number;ratingCount?:number};
 function categorySlug(value:string){return value.toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
 function categoryRoute(value:string){const parent=storefrontCategories.find(c=>c.name===value||c.subcategories.includes(value));if(!parent)return '';if(value===parent.name)return categorySlug(parent.name);if(value.startsWith('All '))return categorySlug(parent.name)+'/'+(parent.name==='Gaming'?'all-games':'all-'+categorySlug(parent.name));return categorySlug(parent.name)+'/'+categorySlug(value);}
