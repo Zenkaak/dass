@@ -221,7 +221,7 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
       <span className="ds-store-mark">{shop?.logoUrl?<img src={shop.logoUrl} alt=""/>:<Store size={21}/>}</span>
       <span><strong>{shop?.name||'DASMARKET STORE'}</strong><small>Shop direct · Trusted marketplace</small></span>
     </a>
-    <label className="ds-store-search"><Search size={18}/><input aria-label="Search this store" value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){setFilter('All products');navigateBuyerPage('store')}}} placeholder="Search products in this store"/><button type="button" onClick={()=>{setFilter('All products');navigateBuyerPage('store')}}>Search</button></label>
+    <label className="ds-store-search"><Search size={18}/><input aria-label="Search this store" value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){setFilter('All products');navigateBuyerPage('store')}}} placeholder="Search products"/><button type="button" onClick={()=>{setFilter('All products');navigateBuyerPage('store')}}>Search</button></label>
     <div className="ds-store-route-actions">
       <button type="button" className="ds-store-route-home" onClick={()=>navigateBuyerPage('store')} aria-label="Shop home"><Home size={18}/></button>
       <button type="button" className="ds-store-route-orders" onClick={()=>navigateBuyerPage('orders')} aria-label="My orders" title="My orders"><Package size={18}/></button><button type="button" className="ds-store-route-account" onClick={()=>{if(!buyerCustomer){setBuyerReturnPage('account');navigateBuyerPage('buyer-login')}else navigateBuyerPage('account')}} aria-label="My account"><UserRound size={18}/></button>
@@ -331,12 +331,6 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
         <div className="ds-store-faq-list">{marketplaceFaqs.slice(0,6).map(([question,answer])=><details key={question}><summary>{question}<span>＋</span></summary><p>{answer}</p></details>)}</div>
       </section>
       {cartItems.length>0&&<div className="ds-store-cartbar"><span><b>{cartItems.reduce((n,[,q])=>n+q,0)} items</b><small>KES {total.toLocaleString('en-KE')}</small></span><button type="button" onClick={()=>navigateBuyerPage('cart')}>Go to cart <ArrowRight size={16}/></button></div>}
-      <nav className="ds-store-mobile-nav" aria-label="Store navigation">
-        <button type="button" className="active" onClick={()=>navigateBuyerPage('store')}><Home size={19}/><span>Home</span></button>
-        <button type="button" onClick={()=>setMobileSidebarOpen(true)}><Package size={19}/><span>Categories</span></button>
-        <button type="button" onClick={()=>navigateBuyerPage('cart')}><ShoppingCart size={19}/><span>Cart</span>{cartItems.length>0&&<b>{cartItems.reduce((n,[,q])=>n+q,0)}</b>}</button>
-        <button type="button" onClick={()=>{if(!buyerCustomer){setBuyerReturnPage('account');navigateBuyerPage('buyer-login')}else navigateBuyerPage('account')}}><UserRound size={19}/><span>Account</span></button>
-      </nav>
       <footer className="ds-store-footer ds-store-footer-expanded">
         <div className="ds-store-footer-grid">
           <div className="ds-store-footer-brand"><a href={buyerPath('store')} onClick={e=>{e.preventDefault();navigateBuyerPage('store')}}><span className="ds-store-footer-mark">D</span><span><b>DASMARKET</b><small>BY DASNET</small></span></a><p>Discover products, connect with shops and shop with clearer information.</p><a className="ds-store-footer-whatsapp" href={`https://wa.me/254758884861?text=Hello%20DASNET%20Support%2C%20I%20need%20help%20with%20a%20storefront.`} target="_blank" rel="noopener noreferrer"><MessageCircle size={16}/> WhatsApp support</a></div>
