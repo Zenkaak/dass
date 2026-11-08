@@ -5388,11 +5388,11 @@ button,input,select,textarea{font:inherit;}
   box-shadow:0 3px 12px rgba(4,20,48,.16)!important;
  }
  body:has(.ds-store) .ds-store-navigation-main{
-  display:grid!important;grid-template-columns:34px minmax(92px,1fr) auto!important;
-  align-items:center!important;gap:6px!important;min-height:48px!important;
+  display:grid!important;grid-template-columns:30px minmax(0,1fr) auto!important;
+  align-items:center!important;column-gap:5px!important;min-height:54px!important;
  }
  body:has(.ds-store) .ds-store-menu-trigger{
-  grid-column:1;grid-row:1;width:34px!important;height:42px!important;
+  grid-column:1;grid-row:1;width:30px!important;height:42px!important;
   border:0!important;border-radius:8px!important;background:transparent!important;
   color:#fff!important;display:grid!important;place-items:center!important;
  }
@@ -5403,27 +5403,29 @@ button,input,select,textarea{font:inherit;}
   gap:0!important;text-decoration:none!important;overflow:visible!important;
  }
  body:has(.ds-store) .ds-store-mark{
-  width:36px!important;height:36px!important;flex:0 0 36px!important;
+  width:30px!important;height:30px!important;flex:0 0 30px!important;
   border-radius:8px!important;background:#123b83!important;color:#ffca05!important;
   display:grid!important;place-items:center!important;overflow:hidden!important;
  }
  body:has(.ds-store) .ds-store-mark img{width:100%!important;height:100%!important;object-fit:contain!important}
  body:has(.ds-store) .ds-store-mark svg{width:26px!important;height:26px!important;stroke-width:2.3!important}
  body:has(.ds-store) .ds-store-brand-word{
-  display:block!important;visibility:visible!important;opacity:1!important;
+  display:-webkit-box!important;visibility:visible!important;opacity:1!important;
   flex:1 1 auto!important;min-width:0!important;width:auto!important;
-  margin:0 0 0 8px!important;padding:0 0 0 10px!important;
+  margin:0 0 0 6px!important;padding:0 0 0 8px!important;
   border-left:2px solid rgba(255,255,255,.9)!important;
-  font-size:clamp(14px,4.2vw,20px)!important;font-weight:900!important;
-  letter-spacing:-.25px!important;line-height:1.1!important;color:#ffca05!important;
-  white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+  font-size:clamp(12px,3.5vw,16px)!important;font-weight:900!important;
+  letter-spacing:-.15px!important;line-height:1.12!important;color:#ffca05!important;
+  white-space:normal!important;overflow:visible!important;text-overflow:clip!important;
+  overflow-wrap:anywhere!important;word-break:normal!important;
+  -webkit-box-orient:vertical!important;-webkit-line-clamp:3!important;
  }
  body:has(.ds-store) .ds-store-header-actions{
   grid-column:3;grid-row:1;display:flex!important;align-items:center!important;
-  justify-content:flex-end!important;gap:4px!important;flex:0 0 auto!important;
+  justify-content:flex-end!important;gap:2px!important;flex:0 0 auto!important;
  }
  body:has(.ds-store) .ds-store-header-actions button{
-  position:relative!important;flex:0 0 30px!important;width:30px!important;height:40px!important;
+  position:relative!important;flex:0 0 27px!important;width:27px!important;height:40px!important;
   padding:0!important;border:0!important;border-radius:8px!important;
   background:transparent!important;color:#fff!important;
   display:grid!important;place-items:center!important;
