@@ -5149,3 +5149,18 @@
  .buyer-order-design>.customer-flow-heading .customer-back-button svg{display:block!important;width:16px!important;height:16px!important;flex:0 0 16px!important}
  .buyer-order-design>.customer-flow-heading h1{display:block!important;flex:1 1 auto!important;min-width:0!important;margin:0!important;font-size:20px!important;line-height:1.2!important;white-space:nowrap!important}
 }
+
+
+/* Keep the approved seller name visible: this mobile rule must win over legacy compact-header hiding. */
+@media(max-width:760px){
+  body:has(.ds-store) .store-page .ds-store-navigation .ds-store-brand{
+    display:flex!important;flex:1 1 auto!important;min-width:0!important;max-width:none!important;width:100%!important;
+    grid-column:2!important;grid-row:1!important;overflow:visible!important;
+  }
+  body:has(.ds-store) .store-page .ds-store-navigation .ds-store-brand-word{
+    display:block!important;visibility:visible!important;opacity:1!important;flex:1 1 auto!important;
+    min-width:0!important;max-width:none!important;width:auto!important;color:#ffca05!important;
+    font-size:clamp(13px,4vw,19px)!important;font-weight:900!important;line-height:1.1!important;
+    white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+  }
+}
