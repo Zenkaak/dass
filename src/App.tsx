@@ -261,7 +261,7 @@ function MerchantStore({ slug, initialBuyerPage = 'store' }: { slug: string; ini
           </a>
           <div className="ds-store-header-actions">
             <button type="button" className="ds-store-notification" aria-label="Notifications" title="Notifications" onClick={()=>{if(!buyerCustomer){setBuyerReturnPage('account');navigateBuyerPage('buyer-login')}else navigateBuyerPage('account')}}><Bell size={19}/></button>
-            <button type="button" className="ds-store-orders" onClick={()=>navigateBuyerPage('orders')} aria-label="My orders" title="My orders"><Package size={19}/></button><button type="button" className="ds-store-account" onClick={()=>{if(!buyerCustomer){setBuyerReturnPage('account');navigateBuyerPage('buyer-login')}else navigateBuyerPage('account')}} aria-label="My account" title="My account"><UserRound size={19}/></button>
+            <button type="button" className="ds-store-account" onClick={()=>{if(!buyerCustomer){setBuyerReturnPage('account');navigateBuyerPage('buyer-login')}else navigateBuyerPage('account')}} aria-label="My account" title="My account"><UserRound size={19}/></button>
             <button type="button" className="ds-store-cart" onClick={()=>navigateBuyerPage('cart')} aria-label="Cart"><ShoppingCart size={19}/>{cartItems.length>0&&<b>{cartItems.reduce((n,[,q])=>n+q,0)}</b>}</button>
           </div>
         </div>
