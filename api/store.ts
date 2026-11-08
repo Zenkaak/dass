@@ -440,7 +440,7 @@ export default async function handler(req:any,res:any){
    const paymentId=crypto.randomUUID();
    const inserted=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result) VALUES(${tenantId},${order.id},'mpesa_daraja',${paymentPhone},${amount},'KES','initiated',${paymentId},${JSON.stringify({paymentMethod:method,source:'buyer_payment_retry'})}::jsonb) RETURNING id`;
    try{
-    const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dasmarket.co.ke'))).replace(/\/$/,'')+'/api/payments?action=daraja-callback';
+    const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/payments?action=daraja-callback';
     const stk=await startStk(payment,order,paymentPhone,amount/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):order.order_number.slice(-12),callbackUrl);
     await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({paymentMethod:method,source:'buyer_payment_retry',merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${inserted[0].id}`;
     return send(res,200,{ok:true,checkoutRequestId:stk.checkoutId,message:'M-PESA prompt sent. Enter your PIN to complete payment.'});
@@ -630,7 +630,7 @@ export default async function handler(req:any,res:any){
     }
     if(!recoveredPaymentId)return send(res,409,{error:'We could not recover this checkout. Please return to your cart and try again.'});
     try{
-      const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dasmarket.co.ke'))).replace(/\/$/,'')+'/api/payments?action=daraja-callback';
+      const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/payments?action=daraja-callback';
       const stk=await startStk(payment,{order_number:existing.order_number},paymentPhone,payableTotal/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):existing.order_number.slice(-12),callbackUrl);
       await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({paymentMethod:method,source:'buyer_checkout_recovery',merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${recoveredPaymentId}`;
       return send(res,200,{ok:true,orderId:existing.id,orderNumber:existing.order_number,paymentStatus:'pending',checkoutRequestId:stk.checkoutId,subtotal:Number(existing.subtotal_minor)/100,deliveryFee:Number(existing.delivery_fee_minor||0)/100,discount:Number(existing.discount_minor||0)/100,total:Number(existing.total_minor)/100,couponCode:existing.coupon_code||null,chatToken:'',message:'M-PESA prompt sent.'});
@@ -642,7 +642,7 @@ export default async function handler(req:any,res:any){
    }
    const p=[{id:o[0].payment_id}];
    try{
-    const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dasmarket.co.ke'))).replace(/\/$/,'')+'/api/payments?action=daraja-callback';
+    const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/payments?action=daraja-callback';
     const stk=await startStk(payment,o[0],paymentPhone,payableTotal/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):orderNo.slice(-12),callbackUrl);
     await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({paymentMethod:method,source:'buyer_checkout',merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
     return send(res,201,{ok:true,orderId:o[0].id,orderNumber:o[0].order_number,paymentStatus:'pending',checkoutRequestId:stk.checkoutId,chatToken:customerChatToken,subtotal:total/100,deliveryFee:deliveryFeeMinor/100,discount:discountMinor/100,total:payableTotal/100,couponCode:couponCode||null,message:'M-PESA prompt sent. Enter your PIN on your phone to complete payment.'});
@@ -876,7 +876,7 @@ export default async function handler(req:any,res:any){
    const idempotency=crypto.randomUUID();
    const p=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result) VALUES(${me.tenant_id},${order.id},'mpesa_daraja',${phone},${amount},'KES','initiated',${idempotency},${JSON.stringify({paymentMethod:method,source:'merchant_order_prompt'})}::jsonb) RETURNING id`;
    try{
-    const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dasmarket.co.ke'))).replace(/\/$/,'')+'/api/payments?action=daraja-callback';
+    const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/payments?action=daraja-callback';
     const stk=await startStk(payment,order,phone,amount/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):order.order_number.slice(-12),callbackUrl);
     await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({paymentMethod:method,source:'merchant_order_prompt',merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
     await audit(sql,me.tenant_id,me.user_id,'order.payment_prompt.sent','order',order.id,{paymentMethod:method,amountMinor:amount});
