@@ -5373,3 +5373,81 @@ button,input,select,textarea{font:inherit;}
 .dm-home-signature .dm-home-footer{width:calc(100% - 32px);padding:18px 0;gap:12px}.dm-home-signature .dm-home-footer>span{font-size:8px}.dm-home-signature .dm-home-footer>div{gap:12px}.dm-home-signature .dm-home-footer>div a{font-size:8px}
 }
 @media(max-width:360px){.dm-home-signature .dm-home-brand small{letter-spacing:.8px}.dm-signature-header-cta{padding:9px 8px}.dm-signature-copy h1{font-size:46px}.dm-signature-secondary{font-size:8px}.dm-signature-visual{min-height:310px}.dm-signature-float small{display:none}}
+
+
+/* DASMARKET tenant storefront — mobile-first marketplace shell */
+@media(max-width:760px){
+ body:has(.ds-store){background:#f5f7fb}
+ body:has(.ds-store) .ds-store{padding-bottom:calc(76px + env(safe-area-inset-bottom));background:#f5f7fb}
+ body:has(.ds-store) .ds-store-navigation{position:sticky;top:0;z-index:120;background:#071d3b!important;color:#fff!important;padding:10px 12px 11px!important;box-shadow:0 3px 14px rgba(3,17,38,.18)}
+ body:has(.ds-store) .ds-store-navigation-main{display:grid!important;grid-template-columns:38px minmax(0,1fr) auto!important;align-items:center;gap:8px!important;min-height:42px}
+ body:has(.ds-store) .ds-store-menu-trigger{grid-column:1;grid-row:1;width:38px;height:40px;border:0!important;border-radius:9px;background:transparent!important;color:#fff!important;display:grid;place-items:center}
+ body:has(.ds-store) .ds-store-brand{grid-column:2;grid-row:1;min-width:0;color:#fff!important;display:flex;align-items:center;gap:8px;text-decoration:none}
+ body:has(.ds-store) .ds-store-mark{width:34px!important;height:34px!important;border-radius:9px!important;background:#ffcf18!important;color:#071d3b!important;display:grid;place-items:center;overflow:hidden}
+ body:has(.ds-store) .ds-store-mark img{width:100%;height:100%;object-fit:contain}
+ body:has(.ds-store) .ds-store-brand-word{font-size:16px!important;line-height:1.1;color:#fff!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ body:has(.ds-store) .ds-store-header-actions{grid-column:3;grid-row:1;display:flex!important;align-items:center;gap:2px!important}
+ body:has(.ds-store) .ds-store-header-actions button{width:35px!important;height:38px!important;border:0!important;border-radius:9px!important;background:transparent!important;color:#fff!important;display:grid;place-items:center}
+ body:has(.ds-store) .ds-store-header-actions button span{display:none}
+ body:has(.ds-store) .ds-store-search{grid-column:1/-1;grid-row:2;width:100%;height:42px!important;min-height:42px!important;margin:9px 0 0!important;border:0!important;border-radius:24px!important;background:#fff!important;color:#1d2c40!important;display:flex;align-items:center;padding:0 8px 0 13px!important}
+ body:has(.ds-store) .ds-store-search input{min-width:0;color:#1d2c40!important;font-size:13px!important}
+ body:has(.ds-store) .ds-store-search button{height:34px!important;min-width:58px;border:0!important;border-radius:18px!important;background:#ffcf18!important;color:#071d3b!important;font-weight:800!important}
+ body:has(.ds-store) .ds-store-hero{margin:10px 10px 13px!important;min-height:238px!important;border-radius:14px!important;overflow:hidden;position:relative}
+ body:has(.ds-store) .ds-store-hero-copy{max-width:62%;padding:18px 12px 30px!important;position:relative;z-index:2}
+ body:has(.ds-store) .ds-store-hero-copy h1{font-size:clamp(21px,6vw,29px)!important;line-height:1.08!important}
+ body:has(.ds-store) .ds-store-hero-copy p{font-size:11px!important;line-height:1.45!important}
+ body:has(.ds-store) .ds-store-hero-image{position:absolute!important;right:0!important;top:0!important;bottom:0!important;width:48%!important;height:100%!important}
+ body:has(.ds-store) .ds-store-hero-image img{width:100%;height:100%;object-fit:cover}
+ body:has(.ds-store) .ds-store-hero-dots{bottom:10px!important;left:14px!important;right:auto!important}
+ body:has(.ds-store) .ds-store-section,body:has(.ds-store) .ds-store-browse-controls,body:has(.ds-store) .ds-store-faq,body:has(.ds-store) .ds-store-category-quicklinks{margin:0 10px 12px!important;padding:13px 10px!important;border-radius:12px!important;background:#fff!important}
+ body:has(.ds-store) .ds-store-section-title h2,body:has(.ds-store) .ds-store-browse-controls-heading h2{font-size:17px!important}
+ body:has(.ds-store) .ds-store-section-title{gap:8px!important}
+ body:has(.ds-store) .ds-store-section-title>button,body:has(.ds-store) .ds-store-browse-controls-heading>button{font-size:11px!important;white-space:nowrap}
+ body:has(.ds-store) .ds-store-rail{grid-auto-columns:43%!important;gap:8px!important;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:5px}
+ body:has(.ds-store) .ds-store-card{border-radius:9px!important;scroll-snap-align:start}
+ body:has(.ds-store) .ds-store-product-image{height:126px!important}
+ body:has(.ds-store) .ds-store-product-name{font-size:11px!important;line-height:1.3}
+ body:has(.ds-store) .ds-store-product>b{font-size:14px!important}
+ body:has(.ds-store) .ds-store-add{min-height:35px!important;font-size:11px!important}
+ body:has(.ds-store) .ds-store-category-quicklinks{display:block!important}
+ body:has(.ds-store) .ds-store-category-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+ body:has(.ds-store) .ds-store-category-heading h2{margin:0;color:#10284a;font-size:17px;font-weight:850}
+ body:has(.ds-store) .ds-store-category-heading button{border:0;background:transparent;color:#1556b7;font-size:11px;font-weight:800}
+ body:has(.ds-store) .ds-store-category-tiles{display:flex;gap:8px;overflow-x:auto;padding:1px 1px 7px;scroll-snap-type:x mandatory;scrollbar-width:none}
+ body:has(.ds-store) .ds-store-category-tiles::-webkit-scrollbar{display:none}
+ body:has(.ds-store) .ds-store-category-tile{flex:0 0 88px;min-height:88px;padding:8px 5px;border:1px solid #e7edf7;border-radius:11px;background:#f7f9fe;color:#10284a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;scroll-snap-align:start}
+ body:has(.ds-store) .ds-store-category-tile>span{font-size:23px;line-height:1.1}
+ body:has(.ds-store) .ds-store-category-tile>b{font-size:9px;line-height:1.2;text-align:center}
+ body:has(.ds-store) .ds-store-home-mix-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+ body:has(.ds-store) .ds-store-home-mix-grid .ds-store-product-image{height:132px!important}
+ body:has(.ds-store) .ds-store-footer{padding-bottom:18px!important}
+ body:has(.ds-store) .ds-store-mobile-nav{position:fixed;left:0;right:0;bottom:0;z-index:1100;min-height:62px;padding:6px 8px calc(6px + env(safe-area-inset-bottom));display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;background:#fff;border-top:1px solid #e7ebf1;box-shadow:0 -5px 18px rgba(14,31,53,.08)}
+ body:has(.ds-store) .ds-store-mobile-nav button{position:relative;min-width:0;border:0;background:transparent;color:#53657b;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;font-weight:700}
+ body:has(.ds-store) .ds-store-mobile-nav button.active{color:#0b3b7a}
+ body:has(.ds-store) .ds-store-mobile-nav button.active svg{color:#f2b900}
+ body:has(.ds-store) .ds-store-mobile-nav button>b{position:absolute;top:0;right:calc(50% - 23px);min-width:16px;height:16px;padding:0 4px;border-radius:99px;background:#e12d39;color:#fff;font-size:9px;display:grid;place-items:center}
+ body:has(.ds-store) .market-global-drawer{position:fixed!important;top:0!important;bottom:0!important;left:0!important;width:min(86vw,350px)!important;max-width:350px!important;max-height:100dvh!important;overflow-y:auto!important;padding:0 0 calc(22px + env(safe-area-inset-bottom))!important;border:0!important;border-radius:0 18px 18px 0!important;background:#fff!important;box-shadow:12px 0 40px rgba(0,0,0,.22)!important;z-index:1400!important}
+ body:has(.ds-store) .market-global-drawer.is-mobile-open{transform:translateX(0)!important}
+ body:has(.ds-store) .market-global-drawer-scrim{position:fixed!important;inset:0!important;z-index:1300!important;background:rgba(3,14,31,.62)!important;pointer-events:auto!important}
+ body:has(.ds-store) .market-sidebar-shop{min-height:86px!important;padding:18px 16px!important;background:#071d3b!important;color:#fff!important;border:0!important}
+ body:has(.ds-store) .market-sidebar-shop a{color:#fff!important}
+ body:has(.ds-store) .market-sidebar-shop a b{color:#fff!important;font-size:16px!important}
+ body:has(.ds-store) .market-sidebar-shop a small{color:#c8d5e8!important}
+ body:has(.ds-store) .market-sidebar-close{color:#fff!important;background:rgba(255,255,255,.12)!important;border:0!important;border-radius:50%!important}
+ body:has(.ds-store) .ds-store-drawer-account{padding:15px 15px 13px;display:grid;grid-template-columns:42px minmax(0,1fr);gap:4px 10px;align-items:center;border-bottom:1px solid #edf0f4}
+ body:has(.ds-store) .ds-store-drawer-avatar{grid-row:1/3;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#eaf0fa;color:#123c76}
+ body:has(.ds-store) .ds-store-drawer-account>span:nth-child(2){display:flex;flex-direction:column;gap:3px;min-width:0}
+ body:has(.ds-store) .ds-store-drawer-account>span:nth-child(2) b{font-size:13px;color:#142a46}
+ body:has(.ds-store) .ds-store-drawer-account>span:nth-child(2) small{font-size:10px;color:#78879a}
+ body:has(.ds-store) .ds-store-drawer-account>button{grid-column:2;justify-self:start;display:flex;align-items:center;gap:5px;padding:0;border:0;background:transparent;color:#b17b00;font-size:11px;font-weight:850}
+ body:has(.ds-store) .market-sidebar-title{padding:13px 16px 6px!important;color:#8793a2!important;font-size:9px!important;letter-spacing:.12em}
+ body:has(.ds-store) .market-sidebar-links{padding:0 10px}
+ body:has(.ds-store) .market-sidebar-links>button,.market-sidebar-category-button{min-height:42px!important;border-radius:9px!important;font-size:12px!important}
+ body:has(.ds-store) .market-sidebar-category{padding:0 10px}
+ body:has(.ds-store) .market-sidebar-category-button{width:100%;display:flex;align-items:center;gap:10px}
+ body:has(.ds-store) .market-sidebar-subcategories{padding-left:40px!important}
+ body:has(.ds-store) .ds-store-cartbar{bottom:calc(70px + env(safe-area-inset-bottom))!important}
+}
+.ds-store-category-quicklinks{display:none}
+.ds-store-mobile-nav{display:none}
+.ds-store-drawer-account{display:none}
