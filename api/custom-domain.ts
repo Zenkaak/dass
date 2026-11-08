@@ -23,6 +23,17 @@ export default async function handler(req:any,res:any){
    return send(res,200,{domains:rows.map((r:any)=>({hostname:r.hostname,isPrimary:r.is_primary,verified:Boolean(r.verified_at),verifiedAt:r.verified_at,status:r.status|| (r.verified_at?'active':'pending'),verification:r.verification_data||{},lastCheckedAt:r.last_checked_at}))});
   }
   const body=req.body||{},hostname=cleanHost(String(body.hostname||body.domain||''));
+  if(req.method==='POST'&&String(body.action||'')==='verify'){
+   if(!hostname)return send(res,400,{error:'Select a domain to verify.'});
+   const existing=await sql`SELECT hostname FROM public.domains WHERE tenant_id=${me.tenant_id} AND hostname=${hostname} AND hostname NOT LIKE '%.dasmarket.co.ke' LIMIT 1`;if(!existing.length)return send(res,404,{error:'Custom domain not found.'});
+   const config=vercelConfig();let verified:any;
+   try{verified=await vercel('/v9/projects/'+encodeURIComponent(config.project)+'/domains/'+encodeURIComponent(hostname)+'/verify','POST',{})}
+   catch(error:any){const current=await vercel('/v9/projects/'+encodeURIComponent(config.project)+'/domains/'+encodeURIComponent(hostname),'GET');verified=current}
+   const domain=verified.domain||verified,ok=Boolean(domain.verified);
+   const challenges=Array.isArray(domain.verification)?domain.verification:[];
+   await sql`UPDATE public.domains SET verified_at=CASE WHEN ${ok} THEN COALESCE(verified_at,now()) ELSE NULL END,status=${ok?'active':'pending'},verification_data=${JSON.stringify({verification:challenges,config:domain.config||{}})}::jsonb,last_checked_at=now(),updated_at=now() WHERE tenant_id=${me.tenant_id} AND hostname=${hostname}`;
+   return send(res,200,{ok:true,verified:ok,domain:hostname,status:ok?'active':'pending',challenge:challenges,dns:{records:dnsInstructions(hostname)},message:ok?'Domain verified. SSL provisioning is handled by Vercel and may take a few minutes.':'DNS is not verified yet. Check the records and try again.'});
+  }
   if(req.method==='POST'){
    if(!hostname)return send(res,400,{error:'Enter a valid public domain, for example www.yourshop.com.'});
    const owned=await sql`SELECT tenant_id FROM public.domains WHERE hostname=${hostname} LIMIT 1`;if(owned.length&&owned[0].tenant_id!==me.tenant_id)return send(res,409,{error:'This domain is already connected to another shop.'});
@@ -36,7 +47,7 @@ export default async function handler(req:any,res:any){
    const rows=await sql`SELECT hostname,is_primary,verified_at,status,verification_data FROM public.domains WHERE tenant_id=${me.tenant_id} AND hostname=${hostname} LIMIT 1`;
    return send(res,200,{ok:true,domain:{hostname,isPrimary:Boolean(rows[0]?.is_primary),verified:Boolean(rows[0]?.verified_at),status:rows[0]?.status||'pending',verification:rows[0]?.verification_data||{}},dns:{...dns,records:dnsInstructions(hostname)},challenge:verify,message:domain.verified?'Domain is already verified.':'Domain added. Add the DNS records below, then click Verify domain.'});
   }
-  if(req.method==='POST'&&String(body.action||'')==='verify'){}
+
   if(req.method==='DELETE'){
    if(!hostname)return send(res,400,{error:'Select a domain to disconnect.'});
    const existing=await sql`SELECT hostname FROM public.domains WHERE tenant_id=${me.tenant_id} AND hostname=${hostname} AND hostname NOT LIKE '%.dasmarket.co.ke' LIMIT 1`;if(!existing.length)return send(res,404,{error:'Custom domain not found.'});
@@ -45,17 +56,7 @@ export default async function handler(req:any,res:any){
    await sql`DELETE FROM public.domains WHERE tenant_id=${me.tenant_id} AND hostname=${hostname}`;
    return send(res,200,{ok:true,message:'Custom domain disconnected. Your DASMARKET subdomain remains active.'});
   }
-  if(String(body.action||'')==='verify'){
-   if(!hostname)return send(res,400,{error:'Select a domain to verify.'});
-   const existing=await sql`SELECT hostname FROM public.domains WHERE tenant_id=${me.tenant_id} AND hostname=${hostname} AND hostname NOT LIKE '%.dasmarket.co.ke' LIMIT 1`;if(!existing.length)return send(res,404,{error:'Custom domain not found.'});
-   const config=vercelConfig();let verified:any;
-   try{verified=await vercel('/v9/projects/'+encodeURIComponent(config.project)+'/domains/'+encodeURIComponent(hostname)+'/verify','POST',{})}
-   catch(error:any){const current=await vercel('/v9/projects/'+encodeURIComponent(config.project)+'/domains/'+encodeURIComponent(hostname),'GET');verified=current}
-   const domain=verified.domain||verified,ok=Boolean(domain.verified);
-   const challenges=Array.isArray(domain.verification)?domain.verification:[];
-   await sql`UPDATE public.domains SET verified_at=CASE WHEN ${ok} THEN COALESCE(verified_at,now()) ELSE NULL END,status=${ok?'active':'pending'},verification_data=${JSON.stringify({verification:challenges,config:domain.config||{}})}::jsonb,last_checked_at=now(),updated_at=now() WHERE tenant_id=${me.tenant_id} AND hostname=${hostname}`;
-   return send(res,200,{ok:true,verified:ok,domain:hostname,status:ok?'active':'pending',challenge:challenges,dns:{records:dnsInstructions(hostname)},message:ok?'Domain verified. SSL provisioning is handled by Vercel and may take a few minutes.':'DNS is not verified yet. Check the records and try again.'});
-  }
+
   return send(res,400,{error:'Unsupported domain action.'});
  }catch(error:any){console.error('custom domain API',error);const message=String(error?.message||'');if(message==='VERCEL_DOMAIN_CONFIG')return send(res,503,{error:'Custom-domain automation is not configured yet. Add VERCEL_API_TOKEN to the DASMARKET production environment.'});if(message.startsWith('VERCEL_API_'))return send(res,502,{error:message.replace(/^VERCEL_API_\d+:/,'Vercel: ')});return send(res,500,{error:message==='DB_CONFIG'?'Database is not configured.':'Could not manage this domain. Please retry.'})}
 }
