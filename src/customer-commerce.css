@@ -5164,3 +5164,9 @@
     white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
   }
 }
+
+
+/* Merchant storefront: no platform-branded footer label or artificial tail space. */
+.store-page:not(.is-checkout-route){padding-bottom:0!important;margin-bottom:0!important;}
+.store-page .ds-store-footer-expanded{margin-bottom:0!important;}
+.store-page .ds-store-footer-brand>a:first-child small{letter-spacing:.12em;}
