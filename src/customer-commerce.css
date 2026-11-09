@@ -5181,3 +5181,26 @@
 }
 .store-page .ds-store-footer-brand>a:first-child small { color:#cbd5df!important; }
 .store-page .ds-store-footer-brand>a:first-child b { font-size:16px!important;font-weight:850!important; }
+
+
+/* Checkout payment method selector: clear, compact and touch-friendly. */
+.market-payment-method-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:2px 0 16px}
+.market-payment-method-option{position:relative;display:flex;min-width:0;min-height:116px;flex-direction:column;align-items:flex-start;justify-content:center;gap:6px;padding:14px;border:1px solid #e2e8ed;border-radius:13px;background:#fff;text-align:left;cursor:pointer;transition:border-color .16s,background .16s,box-shadow .16s}
+.market-payment-method-option.is-selected{border:2px solid #16834a;padding:13px;background:#f7fcf8;box-shadow:0 4px 14px rgba(22,131,74,.08)}
+.market-payment-method-option:focus-visible{outline:3px solid color-mix(in srgb,var(--store-accent,#e47a13) 25%,transparent);outline-offset:2px}
+.market-payment-method-option.is-unavailable{background:#f8fafb;cursor:not-allowed;opacity:.7}
+.market-payment-method-brand{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;font-size:18px;font-weight:950}
+.market-payment-mpesa{background:#e7f7ed;color:#138342}
+.market-payment-airtel{background:#fff0f0;color:#d32f2f}
+.market-payment-card{background:#edf3fb;color:#345b88}
+.market-payment-method-option strong{font-size:12px;line-height:1.25;color:#24394a}
+.market-payment-method-option small{font-size:10px;color:#788792}
+.market-payment-method-option>i{position:absolute;top:11px;right:11px;display:grid;place-items:center;width:20px;height:20px;border:1px solid #dce4e9;border-radius:50%;font-size:11px;font-style:normal;color:#8a98a3}
+.market-payment-method-option.is-selected>i{border-color:#16834a;background:#16834a;color:#fff}
+.market-payment-method-option.is-unavailable>i{border:0;background:#edf1f4}
+.market-checkout-mpesa-select{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:15px 16px;border:1px solid #e4ece7;border-radius:11px;background:#fbfefc}
+.market-checkout-mpesa-select>span{display:grid;gap:5px;min-width:0}
+.market-checkout-mpesa-select strong{font-size:13px;color:#20382b}
+.market-checkout-mpesa-select small{font-size:11px;line-height:1.55;color:#718078}
+.market-checkout-mpesa-select .market-checkout-change-phone{flex:0 0 auto;margin:0}
+@media(max-width:520px){.market-payment-method-options{gap:7px}.market-payment-method-option{min-height:106px;padding:10px}.market-payment-method-option.is-selected{padding:9px}.market-payment-method-option strong{font-size:10px}.market-payment-method-option small{font-size:9px}.market-checkout-mpesa-select{align-items:flex-start;flex-direction:column}.market-checkout-mpesa-select .market-checkout-change-phone{padding:7px 0}}
