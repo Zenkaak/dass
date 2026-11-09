@@ -493,7 +493,7 @@ export function StorefrontFlow({
           deliveryAddress: deliveryAddress.trim(),
           deliveryDirections: deliveryDirections.trim(),
           pickupStation: pickupStation.trim(),
-          paymentMethod: 'till',
+          paymentMethod: 'mpesa',
           items: lines.map(({ product, quantity }) => ({ id: product.id, quantity })),
           idempotencyKey: checkoutIdempotency.current.key,
         }),
@@ -694,7 +694,7 @@ export function StorefrontFlow({
   }
 
   function renderCheckoutPayment() {
-    const confirmMpesa=()=>{if(!/^\\+?254[17]\\d{8}$|^0[17]\\d{8}$/.test(paymentPhone.trim().replace(/[\\s().-]/g,''))){setCheckoutError('Enter a valid Kenyan M-PESA phone number to receive the payment prompt.');return;}setCheckoutError('');setPaymentModal(null);};
+    const confirmMpesa=()=>{if(!/^\+?254[17]\d{8}$|^0[17]\d{8}$/.test(paymentPhone.trim().replace(/[\s().-]/g,''))){setCheckoutError('Enter a valid Kenyan M-PESA phone number to receive the payment prompt.');return;}setCheckoutError('');setPaymentModal(null);};
     const choosePayment=()=>{setCheckoutError('');setPaymentMethod('mpesa');setPaymentModal('mpesa');};
     return (
       <section className="customer-flow market-checkout-page market-checkout-redesign market-checkout-payment">
