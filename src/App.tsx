@@ -226,12 +226,12 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
     <label className="ds-store-search"><Search size={18}/><input aria-label="Search this store" value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){setFilter('All products');navigateBuyerPage('store')}}} placeholder="Search products"/><button type="button" onClick={()=>{setFilter('All products');navigateBuyerPage('store')}}>Search</button></label>
     <div className="ds-store-route-actions">
       <button type="button" className="ds-store-route-home" onClick={()=>navigateBuyerPage('store')} aria-label="Shop home"><Home size={18}/></button>
-      <button type="button" className="ds-store-route-orders" onClick={()=>navigateBuyerPage('orders')} aria-label="My orders" title="My orders"><Package size={18}/></button>
+      
       <button type="button" className="ds-store-cart" onClick={()=>navigateBuyerPage('cart')}><ShoppingCart size={19}/><span>Cart</span>{cartItems.length>0&&<b>{cartItems.reduce((n,[,q])=>n+q,0)}</b>}</button>
     </div>
   </header>}
-  {buyerPage==='store'&&mobileSidebarOpen&&<button type="button" className="market-sidebar-scrim market-global-drawer-scrim" aria-label="Close navigation menu" onClick={()=>setMobileSidebarOpen(false)}/>}
-  {buyerPage==='store'&&<aside className={"market-sidebar market-global-drawer"+(mobileSidebarOpen?" is-mobile-open":"")} aria-label="Shop navigation">
+  {buyerPage!=='buyer-login'&&buyerPage!=='buyer-signup'&&mobileSidebarOpen&&<button type="button" className="market-sidebar-scrim market-global-drawer-scrim" aria-label="Close navigation menu" onClick={()=>setMobileSidebarOpen(false)}/>}
+  {buyerPage!=='buyer-login'&&buyerPage!=='buyer-signup'&&<aside className={"market-sidebar market-global-drawer"+(mobileSidebarOpen?" is-mobile-open":"")} aria-label="Shop navigation">
     <div className="market-sidebar-shop"><a href={buyerPath('store')} onClick={e=>{e.preventDefault();navigateBuyerPage('store')}}><Store size={18}/><span><b>{shop?.name||'Shop categories'}</b><small>Browse this shop</small></span></a><button type="button" className="market-sidebar-close" aria-label="Close navigation" onClick={()=>{setMobileSidebarOpen(false);setDesktopSidebarOpen(false)}}><X size={16}/></button></div>
     <div className="ds-store-drawer-account">
       <span className="ds-store-drawer-avatar"><UserRound size={22}/></span>
@@ -251,6 +251,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
       <button type="button" className={"market-sidebar-category-button"+(filter===category.name?' active':'')} aria-expanded={expandedCategory===category.name} onClick={()=>setExpandedCategory(current=>current===category.name?'':category.name)}><span className="market-sidebar-category-icon" aria-hidden="true">{category.icon}</span><span>{category.name}</span><ChevronRight size={14} className="market-sidebar-category-chevron"/></button>
       {expandedCategory===category.name&&<div className="market-sidebar-subcategories">{category.subcategories.map(child=><button type="button" key={child} className={filter===child?'active':''} onClick={()=>{selectStoreCategory(child);setMobileSidebarOpen(false)}}>{child}</button>)}</div>}
     </div>)}
+    {buyerCustomer&&<div className="market-sidebar-account-footer"><button type="button" className="market-sidebar-logout" onClick={()=>{fetch('/api/buyer-auth?action=logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug}),credentials:'same-origin'}).finally(()=>{setBuyerCustomer(null);setCart({});navigateBuyerPage('store')})}}><LogOut size={17}/><span>Log out</span></button></div>}
   </aside>}
   {buyerPage==='store'?<>
     <main className="ds-store">
