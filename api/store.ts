@@ -337,12 +337,54 @@ export default async function handler(req:any,res:any){
    if(!secret)return send(res,503,{error:'Payment reconciliation is not configured.'});
    if(String(req.headers.authorization||'')!=='Bearer '+secret)return send(res,401,{error:'Unauthorized.'});
    const jobs=await sql`SELECT id FROM public.payment_reconciliation_jobs WHERE status='pending' ORDER BY created_at ASC LIMIT 25`;
-   let processed=0,failed=0;
+   let processed=0,failed=0,inventoryReleased=0,inventoryHeld=0,inventoryChecked=0;
    for(const job of jobs){
     try{if(await reconcilePaymentJob(sql,String(job.id)))processed++;}
     catch(error:any){failed++;console.error('Payment reconciliation job failed',{jobId:job.id,error:String(error?.message||error)});}
    }
-   return send(res,200,{ok:true,found:jobs.length,processed,failed});
+   // Expired reservations are not blindly released: first ask Daraja whether the
+   // STK prompt reached a terminal failure. A successful/ambiguous query keeps
+   // stock reserved until the verified callback supplies its receipt metadata.
+   const stale=await sql`SELECT DISTINCT p.id,p.tenant_id,p.order_id,p.phone,p.amount_minor,p.status,p.provider_checkout_id,p.provider_result,p.created_at,
+    pc.shortcode,pc.party_b,pc.account_type,pc.environment,pc.encrypted_credentials,pc.payout_method,pc.account_reference,pc.till_party_b,pc.paybill_party_b,pc.default_payout_method,
+    pm.shortcode AS central_shortcode,pm.environment AS central_environment,pm.encrypted_credentials AS central_credentials
+    FROM public.inventory_reservations ir
+    JOIN public.payments p ON p.id=ir.payment_id
+    LEFT JOIN public.payment_configs pc ON pc.tenant_id=p.tenant_id
+    LEFT JOIN public.platform_payment_methods pm ON pm.method=CASE WHEN p.provider_result->>'paymentMethod'='paybill' THEN 'paybill' ELSE 'till' END
+    WHERE ir.status='active' AND ir.expires_at<=now() AND p.status IN ('initiated','pending')
+    ORDER BY p.created_at ASC LIMIT 30`;
+   for(const payment of stale){
+    inventoryChecked++;
+    if(!payment.provider_checkout_id){
+     await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||jsonb_build_object('inventorySweep','expired_without_stk_reference','inventorySweepAt',now()),updated_at=now() WHERE id=${payment.id} AND status IN ('initiated','pending')`;
+     await releaseInventory(sql,String(payment.id));inventoryReleased++;
+     await notifyOrderBuyer(sql,payment.tenant_id,payment.order_id,'payment_update','Payment request expired','No M-PESA prompt was accepted for this payment. Stock has been released; you can retry checkout.');
+     continue;
+    }
+    try{
+     const credentials=paymentDarajaCredentials(payment,env('DASNET_CREDENTIALS_ENCRYPTION_KEY'));
+     const verification=await verifyStk(credentials,String(payment.provider_checkout_id));
+     const resultCode=String(verification.ResultCode??'');
+     if(resultCode&&resultCode!=='0'){
+      const terminalStatus=resultCode==='1032'||resultCode==='4999'?'cancelled':'failed';
+      await sql`UPDATE public.payments SET status=${terminalStatus},provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({inventorySweep:'terminal_provider_result',queryResultCode:resultCode,queryResultDescription:String(verification.ResultDesc||''),inventorySweepAt:new Date().toISOString()})}::jsonb,updated_at=now() WHERE id=${payment.id} AND status IN ('initiated','pending')`;
+      await releaseInventory(sql,String(payment.id));inventoryReleased++;
+      await notifyOrderBuyer(sql,payment.tenant_id,payment.order_id,'payment_update',terminalStatus==='cancelled'?'Payment cancelled':'Payment failed','Safaricom confirmed that the M-PESA request did not complete. Reserved stock has been released.');
+     }else{
+      await sql`UPDATE public.inventory_reservations SET expires_at=now()+interval '10 minutes',updated_at=now() WHERE payment_id=${payment.id} AND status='active'`;
+      await sql`UPDATE public.payments SET provider_result=COALESCE(provider_result,'{}'::jsonb)||jsonb_build_object('inventorySweep','provider_pending_or_success_waiting_for_callback','inventorySweepAt',now()),updated_at=now() WHERE id=${payment.id} AND status IN ('initiated','pending')`;
+      inventoryHeld++;
+     }
+    }catch(providerError:any){
+     // Verification unavailable is not proof of failure. Retain the reservation
+     // and retry on the next scheduled pass rather than overselling the item.
+     await sql`UPDATE public.inventory_reservations SET expires_at=now()+interval '5 minutes',updated_at=now() WHERE payment_id=${payment.id} AND status='active'`;
+     await sql`UPDATE public.payments SET provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({inventorySweep:'provider_verification_unavailable',inventorySweepError:String(providerError?.message||providerError).slice(0,300),inventorySweepAt:new Date().toISOString()})}::jsonb,updated_at=now() WHERE id=${payment.id} AND status IN ('initiated','pending')`;
+     failed++;console.error('Expired inventory reservation retained pending Daraja verification',{paymentId:payment.id,error:String(providerError?.message||providerError)});
+    }
+   }
+   return send(res,200,{ok:true,found:jobs.length,processed,failed,inventoryChecked,inventoryReleased,inventoryHeld});
   }
   const me=await seller(sql,req);
   if(req.method==='POST'&&action==='products-test-seed'){
@@ -415,6 +457,7 @@ export default async function handler(req:any,res:any){
    if(['initiated','pending'].includes(String(prior[0]?.status||''))){
     if(prior[0]?.status==='initiated'&&!prior[0]?.provider_checkout_id){
      await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||jsonb_build_object('recoveryNote','STK request was never recorded as accepted'),updated_at=now() WHERE id=${prior[0].id} AND status='initiated'`;
+     await releaseInventory(sql,String(prior[0].id));
      prior[0].status='failed';
     }else if(prior[0]?.provider_checkout_id){
      try{
