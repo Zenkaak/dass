@@ -438,7 +438,7 @@ export function StorefrontFlow({
       if(!live||requestInFlight||finished)return;
       requestInFlight=true;attempts++;
       try{
-        const response=await fetch('/api/buyer?action=customer-payment-status&slug='+encodeURIComponent(slug)+'&orderId='+encodeURIComponent(activeOrder.orderId),{credentials:'same-origin',cache:'no-store'});
+        const response=await fetch('/api/buyer?action=customer-payment-status&slug='+encodeURIComponent(slug)+'&orderId='+encodeURIComponent(String(activeOrder.orderId||'')),{credentials:'same-origin',cache:'no-store'});
         const data=await response.json().catch(()=>({}));
         if(!response.ok)throw Error(data.error||'Could not check payment status.');
         if(!live)return;
