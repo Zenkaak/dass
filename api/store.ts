@@ -566,7 +566,7 @@ export default async function handler(req:any,res:any){
      await sql`UPDATE public.payments SET status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paymentMethod:method,source:'buyer_payment_retry',stkSubmissionAmbiguous:true,manualReviewRequired:true,error:String(e?.message||'STK submission response was lost')})}::jsonb,updated_at=now() WHERE id=${inserted[0].id}`;
      await sql`UPDATE public.inventory_reservations SET expires_at=now()+interval '30 minutes',updated_at=now() WHERE payment_id=${inserted[0].id} AND status='active'`;
      console.error('Buyer retry STK submission outcome is ambiguous; retained for review',e?.message||e);
-     return send(res,202,{ok:true,paymentStatus:'pending',manualReviewRequired:true,error:'Safaricom did not return a confirmation. Do not retry yet; this payment is being held for review to avoid duplicate prompts.'});
+     return send(res,202,{ok:true,orderId:existing.id,orderNumber:existing.order_number,paymentStatus:'pending',manualReviewRequired:true,subtotal:Number(existing.subtotal_minor)/100,deliveryFee:Number(existing.delivery_fee_minor||0)/100,discount:Number(existing.discount_minor||0)/100,total:Number(existing.total_minor)/100,couponCode:existing.coupon_code||null,chatToken:'',message:'Safaricom did not return a confirmation. Do not retry yet; this payment is being held for review to avoid duplicate prompts.'});
     }
     await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paymentMethod:method,source:'buyer_payment_retry',error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${inserted[0].id}`;await releaseInventory(sql,String(inserted[0].id));
     console.error('Buyer payment retry failed',e?.message||e);return send(res,502,{error:e?.message||'Could not start the M-PESA payment prompt.'});
@@ -728,7 +728,7 @@ export default async function handler(req:any,res:any){
    if(!o.length){
     const prior=await sql`SELECT o.id,o.order_number,o.checkout_fingerprint,o.subtotal_minor,o.delivery_fee_minor,o.total_minor,o.discount_minor,o.coupon_code,
       (SELECT COUNT(*)::int FROM public.order_items i WHERE i.tenant_id=o.tenant_id AND i.order_id=o.id) AS item_count,
-      p.status AS payment_status,p.provider_checkout_id,p.id AS payment_id
+      p.status AS payment_status,p.provider_checkout_id,p.provider_result,p.id AS payment_id
       FROM public.orders o LEFT JOIN LATERAL (SELECT id,status,provider_checkout_id FROM public.payments WHERE tenant_id=o.tenant_id AND order_id=o.id ORDER BY created_at DESC LIMIT 1) p ON true
       WHERE o.tenant_id=${tenantId} AND o.checkout_idempotency_key=${idempotency} LIMIT 1`;
     if(!prior.length)return send(res,409,{error:'Checkout is already being processed. Refresh your orders in a moment.'});
@@ -743,7 +743,7 @@ export default async function handler(req:any,res:any){
     }
     if(Number(existing.item_count||0)===0&&!lines.length)return send(res,409,{error:'This order has no saved items. Return to your cart and place the order again.'});
     if(existing.payment_status==='succeeded')return send(res,200,{ok:true,orderId:existing.id,orderNumber:existing.order_number,paymentStatus:'succeeded',subtotal:Number(existing.subtotal_minor)/100,deliveryFee:Number(existing.delivery_fee_minor||0)/100,discount:Number(existing.discount_minor||0)/100,total:Number(existing.total_minor)/100,couponCode:existing.coupon_code||null,chatToken:''});
-    if(existing.payment_status==='pending'&&existing.provider_checkout_id)return send(res,200,{ok:true,orderId:existing.id,orderNumber:existing.order_number,paymentStatus:'pending',subtotal:Number(existing.subtotal_minor)/100,deliveryFee:Number(existing.delivery_fee_minor||0)/100,discount:Number(existing.discount_minor||0)/100,total:Number(existing.total_minor)/100,couponCode:existing.coupon_code||null,chatToken:'',message:'An M-PESA request is already active for this order.'});
+    if(existing.payment_status==='pending'&&(existing.provider_checkout_id||existing.provider_result?.manualReviewRequired||existing.provider_result?.stkSubmissionAmbiguous))return send(res,202,{ok:true,orderId:existing.id,orderNumber:existing.order_number,paymentStatus:'pending',manualReviewRequired:Boolean(existing.provider_result?.manualReviewRequired||existing.provider_result?.stkSubmissionAmbiguous),subtotal:Number(existing.subtotal_minor)/100,deliveryFee:Number(existing.delivery_fee_minor||0)/100,discount:Number(existing.discount_minor||0)/100,total:Number(existing.total_minor)/100,couponCode:existing.coupon_code||null,chatToken:'',message:'A payment request may already have been sent. Do not retry yet; this order is being checked.'});
     let recoveredPaymentId=existing.payment_id;
     if(!recoveredPaymentId||['failed','cancelled'].includes(String(existing.payment_status||''))){
       const retryId=crypto.randomUUID();
