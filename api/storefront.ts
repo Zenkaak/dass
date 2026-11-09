@@ -63,20 +63,6 @@ export default async function handler(req:any,res:any){
     JOIN target_tenant t ON t.id=r.tenant_id
     WHERE r.status='published'
     GROUP BY r.product_id
-  ), catalogue AS (
-    SELECT p.tenant_id,
-      jsonb_agg(jsonb_build_object(
-        'id',p.id,'name',p.name,'description',p.description,'product_type',p.product_type,
-        'price_minor',p.price_minor,'currency',p.currency,'stock_quantity',p.stock_quantity,
-        'is_active',p.is_active,'images',p.images,'metadata',p.metadata,'sku',p.sku,
-        'rating_average',COALESCE(rs.rating_average,0),'rating_count',COALESCE(rs.rating_count,0)
-      ) ORDER BY p.created_at DESC) AS products
-    FROM public.products p
-    JOIN target_tenant t ON t.id=p.tenant_id
-    LEFT JOIN review_stats rs ON rs.product_id=p.id
-    WHERE p.is_active=true
-    GROUP BY p.tenant_id
-  )
   ), product_page AS (
     SELECT p.id,p.name,p.description,p.product_type,p.price_minor,p.currency,p.stock_quantity,p.is_active,p.images,p.metadata,p.sku,COALESCE(rs.rating_average,0) AS rating_average,COALESCE(rs.rating_count,0) AS rating_count
     FROM public.products p JOIN target_tenant t ON t.id=p.tenant_id LEFT JOIN review_stats rs ON rs.product_id=p.id
