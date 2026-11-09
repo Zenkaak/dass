@@ -57,16 +57,19 @@ export default async function handler(req:any,res:any){
     FROM public.tenants t
     WHERE t.slug=${slug} AND (t.status IN ('trial','active') OR t.id IN (SELECT id FROM expired_ban))
     LIMIT 1
+  ), product_page_base AS (
+    SELECT p.id,p.name,p.description,p.product_type,p.price_minor,p.currency,p.stock_quantity,p.is_active,p.images,p.metadata,p.sku,p.created_at
+    FROM public.products p JOIN target_tenant t ON t.id=p.tenant_id
+    WHERE p.is_active=true ORDER BY p.created_at DESC LIMIT ${requestedLimit} OFFSET ${requestedOffset}
   ), review_stats AS (
     SELECT r.product_id,AVG(r.rating)::numeric(3,2) AS rating_average,COUNT(*)::int AS rating_count
     FROM public.product_reviews r
-    JOIN target_tenant t ON t.id=r.tenant_id
+    JOIN product_page_base p ON p.id=r.product_id
     WHERE r.status='published'
     GROUP BY r.product_id
   ), product_page AS (
-    SELECT p.id,p.name,p.description,p.product_type,p.price_minor,p.currency,p.stock_quantity,p.is_active,p.images,p.metadata,p.sku,p.created_at,COALESCE(rs.rating_average,0) AS rating_average,COALESCE(rs.rating_count,0) AS rating_count
-    FROM public.products p JOIN target_tenant t ON t.id=p.tenant_id LEFT JOIN review_stats rs ON rs.product_id=p.id
-    WHERE p.is_active=true ORDER BY p.created_at DESC LIMIT ${requestedLimit} OFFSET ${requestedOffset}
+    SELECT p.*,COALESCE(rs.rating_average,0) AS rating_average,COALESCE(rs.rating_count,0) AS rating_count
+    FROM product_page_base p LEFT JOIN review_stats rs ON rs.product_id=p.id
   ), page_data AS (
     SELECT COALESCE(jsonb_agg(jsonb_build_object('id',p.id,'name',p.name,'description',p.description,'product_type',p.product_type,'price_minor',p.price_minor,'currency',p.currency,'stock_quantity',p.stock_quantity,'is_active',p.is_active,'images',p.images,'metadata',p.metadata,'sku',p.sku,'rating_average',p.rating_average,'rating_count',p.rating_count) ORDER BY p.created_at DESC),'[]'::jsonb) AS products FROM product_page p
   ), product_total AS (SELECT COUNT(*)::int AS total FROM public.products p JOIN target_tenant t ON t.id=p.tenant_id WHERE p.is_active=true)
