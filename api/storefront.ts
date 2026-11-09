@@ -87,7 +87,7 @@ export default async function handler(req:any,res:any){
   LEFT JOIN catalogue c ON c.tenant_id=t.id`;
   if(!rows.length)return send(res,404,{error:'Shop not found'});
   const row=rows[0];
-  res.setHeader('Cache-Control','public, s-maxage=10, stale-while-revalidate=30');
+  res.setHeader('Cache-Control','public, s-maxage=30, stale-while-revalidate=120');
   return send(res,200,{shop:{name:row.shop_name,slug:row.slug,description:row.description||'',logoUrl:row.logo_url||'',whatsappNumber:row.whatsapp_number||'',contactPhone:row.contact_phone||row.whatsapp_number||'',contactEmail:row.contact_email||'',termsAndConditions:row.terms_and_conditions||'',privacyPolicy:row.privacy_policy||'',returnPolicy:row.return_policy||'',deliveryPolicy:row.delivery_policy||'',deliveryHomeFee:Number(row.delivery_home_fee_minor||0)/100,deliveryPickupFee:Number(row.delivery_pickup_fee_minor||0)/100,faqs:Array.isArray(row.storefront_faqs)?row.storefront_faqs:[],theme:/^#[0-9a-f]{6}$/i.test(String(row.storefront_theme||''))?row.storefront_theme:'#e47a13'},products:(row.products||[]).map((p:any)=>productOut(p,false))});
 
   return send(res,404,{error:'Shop not found'});
