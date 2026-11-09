@@ -5170,3 +5170,40 @@
 .store-page:not(.is-checkout-route){padding-bottom:0!important;margin-bottom:0!important;}
 .store-page .ds-store-footer-expanded{margin-bottom:0!important;}
 .store-page .ds-store-footer-brand>a:first-child small{letter-spacing:.12em;}
+
+
+/* Storefront footer identity: merchant branding must remain legible on the dark footer. */
+.store-page .ds-store-footer-brand>a:first-child,
+.store-page .ds-store-footer-brand>a:first-child b,
+.store-page .ds-store-footer-brand>a:first-child strong,
+.store-page .ds-store-footer-brand>a:first-child span:not(.ds-store-footer-mark) {
+  color:#fff!important;
+}
+.store-page .ds-store-footer-brand>a:first-child small { color:#cbd5df!important; }
+.store-page .ds-store-footer-brand>a:first-child b { font-size:16px!important;font-weight:850!important; }
+
+/* Fixed mobile buyer navigation; reserve no artificial white tail below the footer. */
+.ds-store-mobile-bottom-nav { display:none; }
+@media(max-width:760px) {
+  .ds-store-mobile-bottom-nav {
+    position:fixed!important;left:0!important;right:0!important;bottom:0!important;
+    z-index:2147483000!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));
+    min-height:62px;padding:7px 8px calc(7px + env(safe-area-inset-bottom));
+    border-top:1px solid #e5e9ed;background:#fff!important;
+    box-shadow:0 -5px 20px rgba(20,35,48,.12);
+  }
+  .ds-store-mobile-bottom-nav button {
+    position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    min-width:0;border:0;background:transparent;color:#657482;font-size:10px;font-weight:700;
+  }
+  .ds-store-mobile-bottom-nav button svg { width:19px;height:19px; }
+  .ds-store-mobile-bottom-nav button.active { color:var(--store-accent,#e47a13); }
+  .ds-store-mobile-bottom-nav button i {
+    position:absolute;top:0;left:calc(50% + 5px);min-width:16px;height:16px;padding:0 4px;
+    border-radius:99px;background:#e47a13;color:#fff;font-size:9px;font-style:normal;line-height:16px;
+  }
+  .store-page { padding-bottom:0!important;margin-bottom:0!important;background:#f5f6f8!important; }
+  .store-page .ds-store-footer-expanded { margin-bottom:0!important; }
+  .store-page:not(.is-checkout-route) .store-whatsapp-float { bottom:78px!important; }
+  .store-page.is-checkout-route .ds-store-mobile-bottom-nav { display:none!important; }
+}
