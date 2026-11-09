@@ -40,6 +40,26 @@ async function reserveInventory(sql:any,paymentId:string){
  try{await sql`SELECT public.reserve_inventory_for_payment(${paymentId})`;}catch(error:any){if(String(error?.message||'').includes('OUT_OF_STOCK'))throw Error('OUT_OF_STOCK');throw error;}
 }
 async function releaseInventory(sql:any,paymentId:string){await sql`SELECT public.release_inventory_reservations(${paymentId})`;}
+async function verifyInventoryCronOidc(token:string){
+ try{
+  const parts=token.split('.');if(parts.length!==3)return false;
+  const header=JSON.parse(Buffer.from(parts[0],'base64url').toString('utf8'));
+  const claims=JSON.parse(Buffer.from(parts[1],'base64url').toString('utf8'));
+  if(header.alg!=='RS256'||!header.kid)return false;
+  const aud=Array.isArray(claims.aud)?claims.aud:[claims.aud],now=Math.floor(Date.now()/1000);
+  if(claims.iss!=='https://token.actions.githubusercontent.com'||!aud.includes('dasnet-inventory-reconciliation'))return false;
+  if(String(claims.repository||'').toLowerCase()!=='zenkaak/dass'||claims.ref!=='refs/heads/main')return false;
+  if(String(claims.workflow_ref||'').toLowerCase()!=='zenkaak/dass/.github/workflows/reconcile-inventory.yml@refs/heads/main')return false;
+  if(String(claims.repository_id||'')!=='1438529271'||String(claims.repository_owner_id||'')!=='262563148')return false;
+  if(!Number.isFinite(claims.exp)||claims.exp<now-15||!Number.isFinite(claims.iat)||claims.iat>now+30)return false;
+  const response=await fetch('https://token.actions.githubusercontent.com/.well-known/jwks',{headers:{'Accept':'application/json'}});
+  if(!response.ok)return false;
+  const jwks=await response.json() as any,jwk=(jwks.keys||[]).find((key:any)=>key.kid===header.kid&&key.kty==='RSA');
+  if(!jwk)return false;
+  const publicKey=crypto.createPublicKey({key:jwk,format:'jwk'});
+  return crypto.verify('RSA-SHA256',Buffer.from(parts[0]+'.'+parts[1]),publicKey,Buffer.from(parts[2],'base64url'));
+ }catch{return false;}
+}
 async function reconcilePaymentJob(sql:any,jobId:string){
  try{
   const result=await sql`WITH claimed AS (UPDATE public.payment_reconciliation_jobs SET status='completed',attempts=attempts+1,processed_at=now(),updated_at=now(),last_error=NULL WHERE id=${jobId} AND status='pending' RETURNING id,tenant_id,order_id,payment_id), order_update AS (UPDATE public.orders o SET status='confirmed',updated_at=now() FROM claimed j JOIN public.payments p ON p.id=j.payment_id WHERE o.id=j.order_id AND o.tenant_id=j.tenant_id AND o.status='pending' AND COALESCE(p.provider_result->>'inventoryIssue','')='' RETURNING o.id), payment_notice AS (INSERT INTO public.buyer_notifications(tenant_id,buyer_phone,order_id,notification_type,title,detail) SELECT j.tenant_id,o.customer_phone,j.order_id,'payment_update',CASE WHEN COALESCE(p.provider_result->>'inventoryIssue','')<>'' THEN 'Payment received — stock review required' ELSE 'Payment confirmed' END,CASE WHEN COALESCE(p.provider_result->>'inventoryIssue','')<>'' THEN 'Your M-PESA payment was confirmed, but stock changed during checkout. The shop must review availability before dispatch.' ELSE 'Your M-PESA payment was confirmed.' END FROM claimed j JOIN public.orders o ON o.id=j.order_id AND o.tenant_id=j.tenant_id JOIN public.payments p ON p.id=j.payment_id WHERE NULLIF(o.customer_phone,'') IS NOT NULL RETURNING id), order_notice AS (INSERT INTO public.buyer_notifications(tenant_id,buyer_phone,order_id,notification_type,title,detail) SELECT j.tenant_id,o.customer_phone,j.order_id,'order_update','Order confirmed','Your order has been confirmed by the shop.' FROM claimed j JOIN public.orders o ON o.id=j.order_id AND o.tenant_id=j.tenant_id JOIN public.payments p ON p.id=j.payment_id WHERE NULLIF(o.customer_phone,'') IS NOT NULL AND COALESCE(p.provider_result->>'inventoryIssue','')='' RETURNING id), coupon_update AS (UPDATE public.store_coupons c SET used_count=c.used_count+1,updated_at=now() FROM claimed j JOIN public.orders o ON o.id=j.order_id AND o.tenant_id=j.tenant_id JOIN public.payments p ON p.id=j.payment_id WHERE o.coupon_code IS NOT NULL AND c.tenant_id=j.tenant_id AND c.code=o.coupon_code AND COALESCE(p.provider_result->>'inventoryIssue','')='' RETURNING c.id), callback_update AS (UPDATE public.payment_configs pc SET callback_verified_at=now() FROM claimed j WHERE pc.tenant_id=j.tenant_id RETURNING pc.tenant_id) SELECT (SELECT COUNT(*) FROM claimed)::integer AS claimed,(SELECT COUNT(*) FROM order_update)::integer AS orders_updated,(SELECT COUNT(*) FROM payment_notice)::integer AS payment_notifications,(SELECT COUNT(*) FROM order_notice)::integer AS order_notifications,(SELECT COUNT(*) FROM coupon_update)::integer AS coupons_updated,(SELECT COUNT(*) FROM callback_update)::integer AS configs_updated`;
@@ -332,10 +352,11 @@ export default async function handler(req:any,res:any){
    }catch(err:any){console.error('Daraja callback verification failed',err?.message||err);return send(res,503,{ResultCode:1,ResultDesc:'Payment verification is temporarily unavailable. Retry required.'});}
    return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
   }
-  if(req.method==='GET'&&action==='reconcile-payments'){
+  if(['GET','POST'].includes(req.method)&&action==='reconcile-payments'){
    const secret=env('CRON_SECRET')||env('DASNET_RECONCILIATION_SECRET');
-   if(!secret)return send(res,503,{error:'Payment reconciliation is not configured.'});
-   if(String(req.headers.authorization||'')!=='Bearer '+secret)return send(res,401,{error:'Unauthorized.'});
+   const authorization=String(req.headers.authorization||''),provided=authorization.startsWith('Bearer ')?authorization.slice(7):'';
+   const authorized=(Boolean(secret)&&provided===secret)||await verifyInventoryCronOidc(provided);
+   if(!authorized)return send(res,401,{error:'Unauthorized.'});
    const jobs=await sql`SELECT id FROM public.payment_reconciliation_jobs WHERE status='pending' ORDER BY created_at ASC LIMIT 25`;
    let processed=0,failed=0,inventoryReleased=0,inventoryHeld=0,inventoryChecked=0;
    for(const job of jobs){
