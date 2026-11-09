@@ -475,6 +475,43 @@ export default async function handler(req:any,res:any){
    return send(res,200,{ok:true,created:rows.length,total:totals.reduce((n:number,r:any)=>n+Number(r.total||0),0),categories:totals,message:rows.length?rows.length+' test products added.':'The test catalogue is already complete.'});
   }
 
+  if(req.method==='GET'&&action==='customer-payment-status'){
+   const slug=String(req.query?.slug||'').toLowerCase().trim(),orderId=String(req.query?.orderId||'').trim();
+   if(!slug||!orderId)return send(res,400,{error:'Shop and order reference are required.'});
+   const shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
+   if(!shops.length)return send(res,404,{error:'Shop not found.'});
+   const tenantId=shops[0].id,buyer=await buyerSession(sql,req,tenantId);
+   if(!buyer)return send(res,401,{error:'Sign in to check this payment.'});
+   const owned=await sql`SELECT id,order_number FROM public.orders WHERE id=${orderId} AND tenant_id=${tenantId} AND right(regexp_replace(customer_phone,'[^0-9]','','g'),9)=right(regexp_replace(${buyer.phone},'[^0-9]','','g'),9) LIMIT 1`;
+   if(!owned.length)return send(res,404,{error:'Order not found for this buyer.'});
+   const payments=await sql`SELECT id,status,provider_checkout_id,provider_receipt,provider_result FROM public.payments WHERE tenant_id=${tenantId} AND order_id=${orderId} ORDER BY created_at DESC LIMIT 1`;
+   if(!payments.length)return send(res,200,{orderId,paymentStatus:'unpaid',terminal:true});
+   const payment=payments[0];
+   if(['succeeded','failed','cancelled','reversed'].includes(String(payment.status)))return send(res,200,{orderId,paymentStatus:payment.status,receipt:payment.provider_receipt||null,terminal:true});
+   if(!payment.provider_checkout_id)return send(res,200,{orderId,paymentStatus:payment.status||'pending',terminal:false,queryAvailable:false});
+   try{
+    const config=await sql`SELECT p.provider_result,pc.shortcode,pc.environment,pc.encrypted_credentials,pc.payout_method,pc.default_payout_method,pc.party_b,pc.till_party_b,pc.paybill_party_b,pc.account_reference,pm.shortcode AS central_shortcode,pm.environment AS central_environment,pm.encrypted_credentials AS central_credentials
+     FROM public.payments p LEFT JOIN public.payment_configs pc ON pc.tenant_id=p.tenant_id
+     LEFT JOIN public.platform_payment_methods pm ON pm.method=CASE WHEN p.provider_result->>'paymentMethod'='paybill' THEN 'paybill' ELSE 'till' END
+     WHERE p.id=${payment.id} AND p.tenant_id=${tenantId} LIMIT 1`;
+    if(!config.length)throw Error('Payment configuration could not be loaded.');
+    const verification=await verifyStk(paymentDarajaCredentials(config[0],env('DASNET_CREDENTIALS_ENCRYPTION_KEY')),String(payment.provider_checkout_id));
+    const resultCode=String(verification.ResultCode??'');
+    if(resultCode&&resultCode!=='0'){
+     const terminalStatus=resultCode==='1032'?'cancelled':'failed';
+     await sql`UPDATE public.payments SET status=${terminalStatus},provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({queryResultCode:resultCode,queryResultDescription:String(verification.ResultDesc||'')})}::jsonb,updated_at=now() WHERE id=${payment.id} AND status IN ('initiated','pending')`;
+     await releaseInventory(sql,String(payment.id));
+     return send(res,200,{orderId,paymentStatus:terminalStatus,receipt:null,terminal:true,message:String(verification.ResultDesc||'Safaricom did not complete the payment.')});
+    }
+    // A successful STK query response is not itself a receipt. Wait for the signed callback
+    // to attach the M-PESA receipt before telling the buyer that payment succeeded.
+    return send(res,200,{orderId,paymentStatus:'pending',receipt:null,terminal:false,queryAvailable:true,message:resultCode==='0'?'Safaricom processed the request; waiting for the payment receipt callback.':'Waiting for Safaricom to finish processing.'});
+   }catch(queryError:any){
+    console.error('Buyer payment status query failed',{paymentId:payment.id,error:String(queryError?.message||queryError)});
+    return send(res,200,{orderId,paymentStatus:payment.status||'pending',receipt:null,terminal:false,queryAvailable:false,message:'Still checking with Safaricom.'});
+   }
+  }
+
   if(req.method==='GET'&&action==='customer-orders'){
    const slug=String(req.query?.slug||'').toLowerCase().trim();
    const shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
