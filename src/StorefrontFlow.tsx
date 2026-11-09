@@ -611,7 +611,7 @@ export function StorefrontFlow({
 
   function renderCheckoutDelivery() {
     const savePickupStation=(event:any)=>{event.preventDefault();const value=pickupStationDraft.trim();if(!value)return;setPickupStation(value);setPickupStationEditor(false);};
-    const saveDeliveryPreference=async()=>buyerFeatureRequest('buyer-delivery-preference',{deliveryMethod,deliveryCounty,deliverySubCounty,deliveryEstate,deliveryAddress,deliveryDirections,pickupStation});
+    const saveDeliveryPreference=async()=>{setDeliveryPreferenceLoading(true);try{return await buyerFeatureRequest('buyer-delivery-preference',{deliveryMethod,deliveryCounty,deliverySubCounty,deliveryEstate,deliveryAddress,deliveryDirections,pickupStation});}finally{setDeliveryPreferenceLoading(false);}};
     return (
       <section className="customer-flow market-checkout-page market-checkout-redesign">
         <CheckoutProgress step={1}/>
@@ -665,7 +665,7 @@ export function StorefrontFlow({
           <p className="market-checkout-order-secure"><ShieldCheck size={16}/> Your order details are protected. You will review the final amount before payment.</p>
         </aside></div>
         {checkoutError&&<p className="customer-checkout-error" role="alert">{checkoutError}</p>}
-        <div className="market-checkout-bottom-action"><div><small>ORDER TOTAL</small><strong>{formatKes(total)}</strong></div><button type="button" className="customer-primary-button" disabled={deliveryPreferenceLoading||!customerName.trim()||!customerPhone.trim()||(deliveryMethod==='pickup'&&(!pickupStation.trim()||!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))} onClick={async()=>{setCheckoutError('');try{await saveDeliveryPreference();setOrderConfirmed(false);onNavigate('checkout/payment')}catch(error:any){setCheckoutError(error.message||'Could not save your delivery details. Please try again.')}}}>{deliveryPreferenceLoading?'Loading saved delivery…':'Continue to payment'} <ArrowRight size={18}/></button></div>
+        <div className="market-checkout-bottom-action"><div><small>ORDER TOTAL</small><strong>{formatKes(total)}</strong></div><button type="button" className="customer-primary-button" disabled={deliveryPreferenceLoading||!customerName.trim()||!customerPhone.trim()||(deliveryMethod==='pickup'&&(!pickupStation.trim()||!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))} onClick={async()=>{setCheckoutError('');try{await saveDeliveryPreference();setOrderConfirmed(false);onNavigate('checkout/payment')}catch(error:any){setCheckoutError(error.message||'Could not save your delivery details. Please try again.')}}}>{deliveryPreferenceLoading?'Saving delivery details…':'Continue to payment'} <ArrowRight size={18}/></button></div>
       </section>
     );
   }
