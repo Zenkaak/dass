@@ -87,9 +87,26 @@ function decryptBundle(blob:any,key:string,kind:'seller'|'platform') {
 async function darajaToken(c:any){
  const host=c.environment==='sandbox'?'https://sandbox.safaricom.co.ke':'https://api.safaricom.co.ke';
  const auth=Buffer.from(c.consumerKey+':'+c.consumerSecret).toString('base64');
- const r=await fetch(host+'/oauth/v1/generate?grant_type=client_credentials',{headers:{Authorization:'Basic '+auth}});
- const d:any=await r.json();if(!r.ok||!d.access_token)throw Error('Daraja authentication failed. Check the selected credentials and environment.');
- return {host,accessToken:d.access_token};
+ let lastError:any=null;
+ // OAuth is a safe GET: retry short-lived DNS/socket/5xx failures before starting STK.
+ for(let attempt=1;attempt<=3;attempt++){
+  try{
+   const r=await fetch(host+'/oauth/v1/generate?grant_type=client_credentials',{headers:{Authorization:'Basic '+auth,Accept:'application/json'},signal:AbortSignal.timeout(12000)});
+   const raw=await r.text();let d:any={};try{d=raw?JSON.parse(raw):{};}catch{throw Error('Daraja authentication returned an unreadable response (HTTP '+r.status+').');}
+   if(r.ok&&d.access_token)return {host,accessToken:d.access_token};
+   const message=String(d.error_description||d.errorMessage||d.error||'');
+   if(r.status>=500&&attempt<3){lastError=Error('Daraja OAuth temporarily unavailable (HTTP '+r.status+').');continue;}
+   throw Error(message||'Daraja authentication failed (HTTP '+r.status+'). Check the selected credentials and environment.');
+  }catch(error:any){
+   lastError=error;
+   const msg=String(error?.message||error);
+   const transient=error?.name==='AbortError'||error?.name==='TimeoutError'||error?.name==='TypeError'||/fetch failed|socket|network|timed out|ECONNRESET|EAI_AGAIN|ENOTFOUND/i.test(msg);
+   if(!transient||attempt===3)break;
+   await new Promise(resolve=>setTimeout(resolve,250*attempt));
+  }
+ }
+ console.error('Daraja OAuth request exhausted transient retries',{error:String(lastError?.message||lastError)});
+ throw Error('M-PESA connection is temporarily unavailable. Please try again in a moment.');
 }
 function darajaPassword(shortcode:string,passkey:string,stamp:string){return Buffer.from(shortcode+passkey+stamp).toString('base64')}
 
@@ -132,8 +149,9 @@ function timestamp(){const d=new Date();return d.getUTCFullYear()+String(d.getUT
 async function startStk(c:any,order:any,phone:string,amount:number,reference:string,callbackUrl:string){
  const {host,accessToken}=await darajaToken(c),stamp=timestamp(),shortcode=String(c.shortcode),type=c.accountType;
  const payload:any={BusinessShortCode:shortcode,Password:darajaPassword(shortcode,c.passkey,stamp),Timestamp:stamp,TransactionType:type,Amount:Math.max(1,Math.round(amount)),PartyA:phone.replace('+',''),PartyB:String(c.partyB||shortcode),PhoneNumber:phone.replace('+',''),CallBackURL:callbackUrl,AccountReference:String(reference).slice(0,12),TransactionDesc:'Order '+order.order_number};
- const r=await fetch(host+'/mpesa/stkpush/v1/processrequest',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify(payload)});
- const d:any=await r.json();if(!r.ok||!d.CheckoutRequestID||String(d.ResponseCode)!=='0')throw Error(d.errorMessage||d.ResponseDescription||'Safaricom did not accept the STK request.');
+ const r=await fetch(host+'/mpesa/stkpush/v1/processrequest',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(25000)});
+ const raw=await r.text();let d:any={};try{d=raw?JSON.parse(raw):{};}catch{throw Error('Safaricom returned an unreadable STK response (HTTP '+r.status+'). Check your M-PESA messages before retrying.');}
+ if(!r.ok||!d.CheckoutRequestID||String(d.ResponseCode)!=='0')throw Error(d.errorMessage||d.ResponseDescription||'Safaricom did not accept the STK request (HTTP '+r.status+').');
  return {checkoutId:d.CheckoutRequestID,merchantRequestId:d.MerchantRequestID,response:d};
 }
 async function verifyStk(c:any,checkoutId:string){
