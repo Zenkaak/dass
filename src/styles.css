@@ -5972,3 +5972,7 @@ button,input,select,textarea{font:inherit;}
   body:has(.ds-store) .ds-store-rail::-webkit-scrollbar-track{background:#edf1f6!important;border-radius:20px!important}
   body:has(.ds-store) .ds-store-rail::-webkit-scrollbar-thumb{background:#aebbd0!important;border-radius:20px!important}
 }
+
+
+/* Desktop storefront catalogue: 56 products = 14 complete rows of four. */
+@media(min-width:761px){body:has(.ds-store) .ds-store-home-mix-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:16px!important;align-items:stretch!important}body:has(.ds-store) .ds-store-home-mix-grid>.ds-store-card{min-width:0!important;width:auto!important}}
