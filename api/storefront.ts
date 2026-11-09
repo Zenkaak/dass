@@ -49,6 +49,7 @@ export default async function handler(req:any,res:any){
   const requestedOffset=Math.max(0,Number(req.query?.offset)||0);
   const requestedSearch=String(req.query?.search||'').trim().slice(0,120);
   const requestedCategory=String(req.query?.category||'').trim().slice(0,100);
+  const requestedIds=String(req.query?.ids||'').split(',').map((id:string)=>id.trim()).filter((id:string)=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)).slice(0,50);
   const searchPattern=requestedSearch?('%'+requestedSearch+'%'):'';
   const rows=await sql`WITH expired_ban AS (
     UPDATE public.tenants
@@ -65,6 +66,7 @@ export default async function handler(req:any,res:any){
     WHERE p.is_active=true
       AND (${requestedSearch}='' OR concat_ws(' ',p.name,p.description,p.sku,COALESCE(p.metadata->>'category',''),p.product_type) ILIKE ${searchPattern})
       AND (${requestedCategory}='' OR EXISTS (SELECT 1 FROM unnest(string_to_array(${requestedCategory},'|')) AS selected(value) WHERE COALESCE(p.metadata->>'category',CASE WHEN p.product_type='data_bundle' THEN 'Data bundles' WHEN p.product_type='digital' THEN 'Digital products' ELSE 'Shop products' END) ILIKE '%'||selected.value||'%'))
+      AND (cardinality(${requestedIds}::uuid[])=0 OR p.id=ANY(${requestedIds}::uuid[]))
   ), product_page_base AS (
     SELECT p.id,p.name,p.description,p.product_type,p.price_minor,p.currency,p.stock_quantity,p.is_active,p.images,p.metadata,p.sku,p.created_at
     FROM filtered_products p ORDER BY p.created_at DESC,p.id DESC LIMIT ${requestedLimit} OFFSET ${requestedOffset}
