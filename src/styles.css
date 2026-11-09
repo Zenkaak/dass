@@ -5941,3 +5941,34 @@ button,input,select,textarea{font:inherit;}
   gap:16px!important;
  }
 }
+
+/* Desktop product rails: keep horizontal collections scrollable instead of
+   squeezing every item into the viewport. The full catalogue remains a grid. */
+@media (min-width:761px){
+  body:has(.ds-store) .ds-store-rail{
+    display:flex!important;
+    flex-flow:row nowrap!important;
+    align-items:stretch!important;
+    gap:18px!important;
+    width:100%!important;
+    max-width:100%!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    padding:4px 2px 16px!important;
+    scroll-snap-type:x mandatory!important;
+    scroll-behavior:smooth!important;
+    overscroll-behavior-x:contain!important;
+    scrollbar-width:thin!important;
+    scrollbar-color:#aebbd0 #edf1f6!important;
+  }
+  body:has(.ds-store) .ds-store-rail > .ds-store-spotlight-card{
+    flex:0 0 clamp(205px,20vw,250px)!important;
+    width:clamp(205px,20vw,250px)!important;
+    min-width:clamp(205px,20vw,250px)!important;
+    max-width:250px!important;
+    scroll-snap-align:start!important;
+  }
+  body:has(.ds-store) .ds-store-rail::-webkit-scrollbar{height:9px!important}
+  body:has(.ds-store) .ds-store-rail::-webkit-scrollbar-track{background:#edf1f6!important;border-radius:20px!important}
+  body:has(.ds-store) .ds-store-rail::-webkit-scrollbar-thumb{background:#aebbd0!important;border-radius:20px!important}
+}
