@@ -6,6 +6,7 @@ import {
   ArrowRight,
   Check,
   ChevronRight,
+  ChevronDown,
   MapPin,
   Package,
   Search,
