@@ -446,9 +446,13 @@ export function StorefrontFlow({
         if(status==='succeeded'||status==='failed'||status==='cancelled'||status==='reversed'){
           finished=true;
           setOrders(current=>current.map(order=>order.orderId===activeOrder.orderId?{...order,paymentStatus:status,receipt:data.receipt||null}:order));
-          setPaymentPollMessage(status==='succeeded'?'Payment confirmed by Safaricom.':'Safaricom has returned the final payment result.');
-          onOrderCreated?.(activeOrder.chatToken||'',activeOrder.orderNumber);
-          onNavigate('checkout/complete');
+          if(status==='succeeded'){
+            setPaymentPollMessage('Payment confirmed by Safaricom.');
+            onOrderCreated?.(activeOrder.chatToken||'',activeOrder.orderNumber);
+            onNavigate('checkout/complete');
+          }else{
+            setPaymentPollMessage(data.message|| (status==='cancelled'?'Safaricom confirmed that the payment was cancelled.':'Safaricom confirmed that the payment was not successful. You can retry when ready.'));
+          }
           return;
         }
         setPaymentPollMessage(attempts>20?'Still waiting for Safaricom. We’ll keep checking automatically…':data.message||'Waiting for Safaricom payment confirmation…');
