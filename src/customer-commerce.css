@@ -5221,3 +5221,18 @@
 .store-page .market-sidebar-account-footer{position:sticky;bottom:0;z-index:3;margin-top:12px;padding:12px 8px max(12px,env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(255,255,255,.92),#fff 24%);border-top:1px solid #e9edf0}
 .store-page .market-sidebar-logout{width:100%;min-height:44px;display:flex;align-items:center;justify-content:flex-start;gap:11px;padding:10px 12px;border:1px solid #f0d9d9;border-radius:10px;background:#fff8f8;color:#a83232;font:inherit;font-size:13px;font-weight:700;text-align:left;cursor:pointer}
 .store-page .market-sidebar-logout:hover,.store-page .market-sidebar-logout:focus-visible{background:#fff0f0;outline:2px solid rgba(168,50,50,.16);outline-offset:1px}
+
+
+.market-payment-processing{max-width:680px;margin:0 auto;padding:36px 18px;text-align:center}
+.market-payment-processing-icon{width:76px;height:76px;border-radius:50%;margin:10px auto 22px;display:grid;place-items:center;background:#fff7ed;border:1px solid #fed7aa}
+.market-payment-processing-icon span{width:34px;height:34px;border:3px solid #fed7aa;border-top-color:#e47a13;border-radius:50%;animation:market-payment-spin .8s linear infinite}
+@keyframes market-payment-spin{to{transform:rotate(360deg)}}
+.market-payment-processing h1{font-size:clamp(25px,5vw,34px);line-height:1.15;margin:10px 0}
+.market-payment-processing-copy{max-width:480px;margin:0 auto 22px;color:#64748b;line-height:1.6}
+.market-payment-processing-card{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;text-align:left;padding:18px;margin:20px 0}
+.market-payment-processing-card>div{display:flex;flex-direction:column;gap:7px;min-width:0}
+.market-payment-processing-card small{font-size:10px;color:#64748b;font-weight:700;letter-spacing:.06em}
+.market-payment-processing-card strong{font-size:14px;overflow-wrap:anywhere}
+.market-payment-poll-status{font-weight:650;color:#9a580d;margin:18px 0}
+.market-payment-processing .customer-preview-note{display:flex;align-items:flex-start;justify-content:center;gap:8px;line-height:1.5}
+@media(max-width:560px){.market-payment-processing{padding:24px 12px}.market-payment-processing-card{grid-template-columns:1fr;gap:12px}.market-payment-processing-card>div{display:grid;grid-template-columns:112px minmax(0,1fr);align-items:center}.market-payment-processing-card strong{font-size:13px}}
