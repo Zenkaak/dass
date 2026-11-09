@@ -1,6 +1,14 @@
 import { neon } from '@neondatabase/serverless';
 import crypto from 'node:crypto';
 
+// Keep a stack trace for legacy URL parser warnings so the originating dependency
+// can be identified and upgraded instead of hiding the warning.
+const warningProcess:any=process;
+if(!warningProcess.__dasnetDep0169Trace){
+ warningProcess.__dasnetDep0169Trace=true;
+ process.on('warning',(warning:any)=>{if(warning?.code==='DEP0169')console.warn('DASNET DEP0169 origin trace',warning.stack||warning.message);});
+}
+
 const env=(k:string)=>(process.env[k]||'').trim();
 const send=(res:any,s:number,b:unknown)=>res.status(s).json(b);
 const hash=(s:string)=>crypto.createHash('sha256').update(s).digest('hex');
