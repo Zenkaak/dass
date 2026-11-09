@@ -165,7 +165,7 @@ function formatKes(amount: number) {
 function ProductThumb({ product }: { product: StoreProduct }) {
   const image = product.images?.[0] || product.imageUrl;
   return image
-    ? <img className="customer-product-thumb" src={image} alt={product.name} loading="lazy" onError={event=>{event.currentTarget.onerror=null;event.currentTarget.src='data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22640%22 height=%22480%22 viewBox=%220 0 640 480%22%3E%3Crect width=%22640%22 height=%22480%22 fill=%22%23eaf0f6%22/%3E%3Cpath d=%22M240 280l80-100 70 80 45-55 70 75%22 fill=%22none%22 stroke=%22%2394a3b8%22 stroke-width=%2216%22/%3E%3C/svg%3E'}} />
+    ? <img className="customer-product-thumb" src={image} alt={product.name} loading="lazy" decoding="async" onError={event=>{event.currentTarget.onerror=null;event.currentTarget.src='data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22640%22 height=%22480%22 viewBox=%220 0 640 480%22%3E%3Crect width=%22640%22 height=%22480%22 fill=%22%23eaf0f6%22/%3E%3Cpath d=%22M240 280l80-100 70 80 45-55 70 75%22 fill=%22none%22 stroke=%22%2394a3b8%22 stroke-width=%2216%22/%3E%3C/svg%3E'}} />
     : <div className="customer-product-thumb customer-product-placeholder" aria-hidden="true"><ShoppingBag size={22} /></div>;
 }
 
@@ -681,7 +681,7 @@ export function StorefrontFlow({
         <aside className="market-checkout-order-card">
           <div className="market-checkout-order-card-head"><span>YOUR ORDER</span><strong>{lines.reduce((count,line)=>count+line.quantity,0)} {lines.reduce((count,line)=>count+line.quantity,0)===1?'item':'items'}</strong></div>
           <div className="market-checkout-order-items">{lines.map(({product,quantity})=><div className="market-checkout-order-item" key={product.id}><ProductThumb product={product}/><div><strong>{product.name}</strong><small>Qty {quantity} · {formatKes(product.price)} each</small></div><b>{formatKes(product.price*quantity)}</b></div>)}</div>
-          <div className="market-checkout-order-total"><span>Items subtotal</span><strong>{formatKes(total)}</strong></div>
+          <div className="market-checkout-order-total"><span>Items subtotal</span><strong>{formatKes(subtotal)}</strong></div>
           <div className="market-checkout-order-total"><span>{deliveryMethod==='pickup'?'Pickup fee':'Delivery fee'}</span><strong>{deliveryFee?formatKes(deliveryFee):'Free'}</strong></div>
           {appliedCoupon&&<div className="market-checkout-order-total"><span>Discount</span><strong>−{formatKes(appliedCoupon.discount)}</strong></div>}
           <div className="market-checkout-order-grand"><span>Order total</span><strong>{formatKes(total)}</strong></div>
