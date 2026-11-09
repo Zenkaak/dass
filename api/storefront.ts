@@ -47,6 +47,10 @@ export default async function handler(req:any,res:any){
   if(!slug)return send(res,400,{error:'Shop slug is required'});
   const requestedLimit=Math.max(1,Math.min(60,Number(req.query?.limit)||35));
   const requestedOffset=Math.max(0,Number(req.query?.offset)||0);
+  const requestedSearch=String(req.query?.search||'').trim().slice(0,120);
+  const requestedCategory=String(req.query?.category||'').trim().slice(0,100);
+  const searchPattern=requestedSearch?('%'+requestedSearch+'%'):'';
+  const categoryPattern=requestedCategory?('%'+requestedCategory+'%'):'';
   const rows=await sql`WITH expired_ban AS (
     UPDATE public.tenants
     SET status=COALESCE(NULLIF(status_before_ban,'banned'),'active'),status_before_ban=NULL,ban_reason=NULL,ban_expires_at=NULL,updated_at=now()
@@ -57,10 +61,14 @@ export default async function handler(req:any,res:any){
     FROM public.tenants t
     WHERE t.slug=${slug} AND (t.status IN ('trial','active') OR t.id IN (SELECT id FROM expired_ban))
     LIMIT 1
+  ), filtered_products AS (
+    SELECT p.* FROM public.products p JOIN target_tenant t ON t.id=p.tenant_id
+    WHERE p.is_active=true
+      AND (${requestedSearch}='' OR concat_ws(' ',p.name,p.description,p.sku,COALESCE(p.metadata->>'category',''),p.product_type) ILIKE ${searchPattern})
+      AND (${requestedCategory}='' OR COALESCE(p.metadata->>'category',CASE WHEN p.product_type='data_bundle' THEN 'Data bundles' WHEN p.product_type='digital' THEN 'Digital products' ELSE 'Shop products' END) ILIKE ${categoryPattern})
   ), product_page_base AS (
     SELECT p.id,p.name,p.description,p.product_type,p.price_minor,p.currency,p.stock_quantity,p.is_active,p.images,p.metadata,p.sku,p.created_at
-    FROM public.products p JOIN target_tenant t ON t.id=p.tenant_id
-    WHERE p.is_active=true ORDER BY p.created_at DESC,p.id DESC LIMIT ${requestedLimit} OFFSET ${requestedOffset}
+    FROM filtered_products p ORDER BY p.created_at DESC,p.id DESC LIMIT ${requestedLimit} OFFSET ${requestedOffset}
   ), review_stats AS (
     SELECT r.product_id,AVG(r.rating)::numeric(3,2) AS rating_average,COUNT(*)::int AS rating_count
     FROM public.product_reviews r
@@ -72,7 +80,7 @@ export default async function handler(req:any,res:any){
     FROM product_page_base p LEFT JOIN review_stats rs ON rs.product_id=p.id
   ), page_data AS (
     SELECT COALESCE(jsonb_agg(jsonb_build_object('id',p.id,'name',p.name,'description',p.description,'product_type',p.product_type,'price_minor',p.price_minor,'currency',p.currency,'stock_quantity',p.stock_quantity,'is_active',p.is_active,'images',p.images,'metadata',p.metadata,'sku',p.sku,'rating_average',p.rating_average,'rating_count',p.rating_count) ORDER BY p.created_at DESC,p.id DESC),'[]'::jsonb) AS products FROM product_page p
-  ), product_total AS (SELECT COUNT(*)::int AS total FROM public.products p JOIN target_tenant t ON t.id=p.tenant_id WHERE p.is_active=true)
+  ), product_total AS (SELECT COUNT(*)::int AS total FROM filtered_products)
   SELECT t.id AS tenant_id,t.name AS shop_name,t.slug,
     s.description,s.logo_url,s.whatsapp_number,s.contact_phone,s.contact_email,
     s.terms_and_conditions,s.privacy_policy,s.return_policy,s.delivery_policy,
