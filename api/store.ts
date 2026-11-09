@@ -729,7 +729,7 @@ export default async function handler(req:any,res:any){
     const prior=await sql`SELECT o.id,o.order_number,o.checkout_fingerprint,o.subtotal_minor,o.delivery_fee_minor,o.total_minor,o.discount_minor,o.coupon_code,
       (SELECT COUNT(*)::int FROM public.order_items i WHERE i.tenant_id=o.tenant_id AND i.order_id=o.id) AS item_count,
       p.status AS payment_status,p.provider_checkout_id,p.provider_result,p.id AS payment_id
-      FROM public.orders o LEFT JOIN LATERAL (SELECT id,status,provider_checkout_id FROM public.payments WHERE tenant_id=o.tenant_id AND order_id=o.id ORDER BY created_at DESC LIMIT 1) p ON true
+      FROM public.orders o LEFT JOIN LATERAL (SELECT id,status,provider_checkout_id,provider_result FROM public.payments WHERE tenant_id=o.tenant_id AND order_id=o.id ORDER BY created_at DESC LIMIT 1) p ON true
       WHERE o.tenant_id=${tenantId} AND o.checkout_idempotency_key=${idempotency} LIMIT 1`;
     if(!prior.length)return send(res,409,{error:'Checkout is already being processed. Refresh your orders in a moment.'});
     const existing=prior[0];
