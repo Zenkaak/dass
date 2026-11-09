@@ -258,7 +258,7 @@ export function StorefrontFlow({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mpesa');
   const [paymentModal,setPaymentModal]=useState<PaymentMethod|null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [paymentPollMessage,setPaymentPollMessage]=useState('Contacting Safaricom to check your payment…');
+  const [paymentPollMessage,setPaymentPollMessage]=useState('Waiting for payment confirmation…');
   const [checkoutError, setCheckoutError] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('pickup');
   const [deliveryCounty, setDeliveryCounty] = useState('');
@@ -460,7 +460,7 @@ export function StorefrontFlow({
         if(live)setPaymentPollMessage('Connection interrupted. Retrying the payment check automatically…');
       }finally{requestInFlight=false;}
     };
-    setPaymentPollMessage('Contacting Safaricom to check your payment…');
+    setPaymentPollMessage('Waiting for payment confirmation…');
     void checkPayment();
     const timer=window.setInterval(()=>{if(document.visibilityState==='visible')void checkPayment();},6000);
     return()=>{live=false;window.clearInterval(timer);};
@@ -568,7 +568,7 @@ export function StorefrontFlow({
       setActiveOrderNumber(order.orderNumber);
       checkoutIdempotency.current=null;
       onCartChange({});
-      setPaymentPollMessage('Contacting Safaricom to check your payment…');
+      setPaymentPollMessage('Waiting for payment confirmation…');
       onNavigate('checkout/processing');
     } catch (error) {
       setCheckoutError(error instanceof Error ? error.message : 'Checkout failed. Please try again.');
@@ -807,7 +807,7 @@ export function StorefrontFlow({
       <div className="market-payment-processing-icon" aria-hidden="true"><span/></div>
       <span className="buyer-section-kicker">SECURE PAYMENT CHECK</span>
       <h1>Confirming your M-PESA payment</h1>
-      <p className="market-payment-processing-copy">We’re checking the transaction with Safaricom. Keep this page open while we wait for the final confirmation.</p>
+      <p className="market-payment-processing-copy">Keep this page open while we wait for the payment confirmation.</p>
       <div className="customer-panel market-payment-processing-card">
         <div><small>ORDER NUMBER</small><strong>{activeOrder.orderNumber}</strong></div>
         <div><small>AMOUNT</small><strong>{formatKes(activeOrder.total)}</strong></div>
