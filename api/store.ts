@@ -497,6 +497,10 @@ export default async function handler(req:any,res:any){
     if(!config.length)throw Error('Payment configuration could not be loaded.');
     const verification=await verifyStk(paymentDarajaCredentials(config[0],env('DASNET_CREDENTIALS_ENCRYPTION_KEY')),String(payment.provider_checkout_id));
     const resultCode=String(verification.ResultCode??'');
+    if(resultCode==='4999'||!resultCode){
+     await sql`UPDATE public.payments SET provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({queryResultCode:resultCode||null,queryResultDescription:String(verification.ResultDesc||'The transaction is still under processing')})}::jsonb,updated_at=now() WHERE id=${payment.id} AND status IN ('initiated','pending')`;
+     return send(res,200,{orderId,paymentStatus:'pending',receipt:null,terminal:false,queryAvailable:true,message:'Waiting for payment confirmation…'});
+    }
     if(resultCode&&resultCode!=='0'){
      const terminalStatus=resultCode==='1032'?'cancelled':'failed';
      await sql`UPDATE public.payments SET status=${terminalStatus},provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({queryResultCode:resultCode,queryResultDescription:String(verification.ResultDesc||'')})}::jsonb,updated_at=now() WHERE id=${payment.id} AND status IN ('initiated','pending')`;
