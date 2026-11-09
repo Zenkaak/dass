@@ -188,6 +188,22 @@ function FlowHeading({
   );
 }
 
+function SearchableLocationSelect({label,value,options,placeholder,onChange,disabled=false}:{label:string;value:string;options:string[];placeholder:string;onChange:(value:string)=>void;disabled?:boolean}) {
+  const [query,setQuery]=useState(value);
+  const [open,setOpen]=useState(false);
+  useEffect(()=>{setQuery(value)},[value]);
+  const matches=options.filter(option=>option.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())).slice(0,80);
+  return <label className="customer-form-label market-search-select-label">{label}
+    <span className="market-search-select">
+      <input type="text" value={query} disabled={disabled} placeholder={placeholder} autoComplete="off" role="combobox" aria-expanded={open} aria-autocomplete="list" onFocus={()=>setOpen(true)} onChange={event=>{setQuery(event.target.value);setOpen(true)}} onKeyDown={event=>{if(event.key==='Escape')setOpen(false);if(event.key==='Enter'&&open&&matches.length){event.preventDefault();onChange(matches[0]);setQuery(matches[0]);setOpen(false)}}}/>
+      <button type="button" className="market-search-select-toggle" aria-label={open?'Close options':`Show ${label.toLowerCase()} options`} disabled={disabled} onClick={()=>setOpen(current=>!current)}><ChevronDown size={16}/></button>
+      {open&&!disabled&&<div className="market-search-select-menu" role="listbox">
+        {matches.length?matches.map(option=><button type="button" role="option" aria-selected={option===value} key={option} onMouseDown={event=>event.preventDefault()} onClick={()=>{onChange(option);setQuery(option);setOpen(false)}}>{option}</button>):<div className="market-search-select-empty">No matches found</div>}
+      </div>}
+    </span>
+  </label>;
+}
+
 export function StorefrontFlow({
   slug,
   shopName,
@@ -633,8 +649,8 @@ export function StorefrontFlow({
           {pickupStation&&!pickupStationEditor ? <div className="market-checkout-saved-location"><div><strong>{pickupStation}</strong><small>{[deliveryAddress,deliveryEstate,deliverySubCounty,deliveryCounty].filter(Boolean).join(', ')||'Saved pickup location'} · Saved for future orders</small></div><button type="button" onClick={()=>{setPickupStationDraft(pickupStation);setPickupStationEditor(true)}}>Change location</button></div> : null}
           {(!pickupStation||pickupStationEditor) && <form className="market-checkout-location-form" onSubmit={savePickupStation}>
             <div className="market-checkout-fields">
-              <label className="customer-form-label">County<input required list="market-checkout-county-options" value={deliveryCounty} onChange={e=>{setDeliveryCounty(e.target.value);setDeliverySubCounty('')}} placeholder="Search or select county"/><datalist id="market-checkout-county-options">{kenyanCounties.map(county=><option key={county} value={county}/>)}</datalist></label>
-              <label className="customer-form-label">Sub-county<input required list="market-checkout-subcounty-options" value={deliverySubCounty} onChange={e=>setDeliverySubCounty(e.target.value)} placeholder="Search or select sub-county"/><datalist id="market-checkout-subcounty-options">{(kenyanSubCounties[deliveryCounty]||[]).map(item=><option key={item} value={item}/>)}</datalist></label>
+              <SearchableLocationSelect label="County" value={deliveryCounty} options={kenyanCounties} placeholder="Type to search counties…" onChange={county=>{setDeliveryCounty(county);setDeliverySubCounty('')}}/>
+              <SearchableLocationSelect label="Sub-county" value={deliverySubCounty} options={kenyanSubCounties[deliveryCounty]||[]} placeholder={deliveryCounty?'Type to search sub-counties…':'Select a county first'} disabled={!deliveryCounty} onChange={setDeliverySubCounty}/>
               <label className="customer-form-label market-checkout-full">Pickup address / collection point<input required value={pickupStationDraft} onChange={e=>setPickupStationDraft(e.target.value)} placeholder="Pickup station, building, shop or collection point"/></label>
               <label className="customer-form-label">Estate / area<input required value={deliveryEstate} onChange={e=>setDeliveryEstate(e.target.value)} placeholder="Estate, town or neighbourhood"/></label>
               <label className="customer-form-label">Street / physical address<input required value={deliveryAddress} onChange={e=>setDeliveryAddress(e.target.value)} placeholder="Street, building or nearby address"/></label>
@@ -645,8 +661,8 @@ export function StorefrontFlow({
         </div> : <div className="market-checkout-card">
           <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><MapPin size={18}/></span><div><h2>Delivery address</h2><p>Provide the location where the seller should deliver</p></div></div>
           <div className="market-checkout-fields">
-            <label className="customer-form-label">County<input required list="market-checkout-county-options" value={deliveryCounty} onChange={e=>{setDeliveryCounty(e.target.value);setDeliverySubCounty('')}} placeholder="Search or select county"/><datalist id="market-checkout-county-options">{kenyanCounties.map(county=><option key={county} value={county}/>)}</datalist></label>
-            <label className="customer-form-label">Sub-county<input required list="market-checkout-subcounty-options" value={deliverySubCounty} onChange={e=>setDeliverySubCounty(e.target.value)} placeholder="Search or select sub-county"/><datalist id="market-checkout-subcounty-options">{(kenyanSubCounties[deliveryCounty]||[]).map(item=><option key={item} value={item}/>)}</datalist></label>
+            <SearchableLocationSelect label="County" value={deliveryCounty} options={kenyanCounties} placeholder="Type to search counties…" onChange={county=>{setDeliveryCounty(county);setDeliverySubCounty('')}}/>
+            <SearchableLocationSelect label="Sub-county" value={deliverySubCounty} options={kenyanSubCounties[deliveryCounty]||[]} placeholder={deliveryCounty?'Type to search sub-counties…':'Select a county first'} disabled={!deliveryCounty} onChange={setDeliverySubCounty}/>
             <label className="customer-form-label">Estate / area<input required value={deliveryEstate} onChange={e=>setDeliveryEstate(e.target.value)} placeholder="e.g. Kilimani"/></label>
             <label className="customer-form-label">Physical address<input required value={deliveryAddress} onChange={e=>setDeliveryAddress(e.target.value)} placeholder="Building, street, plot or house number"/></label>
             <label className="customer-form-label market-checkout-full">Directions / landmark <small>(optional)</small><textarea value={deliveryDirections} onChange={e=>setDeliveryDirections(e.target.value)} placeholder="Nearby landmark, gate details or directions"/></label>
