@@ -21,7 +21,7 @@ async function buyerSession(sql:any,req:any,tenantId:string){
 }
 async function seller(sql:any,req:any){
  const t=token(req);if(!t)return null;
- const rows=await sql`SELECT u.id AS user_id,m.tenant_id,t.slug,t.name AS shop_name,m.role,si.description AS shop_description FROM public.auth_sessions ss JOIN public.users u ON u.id=ss.user_id JOIN public.memberships m ON m.user_id=u.id JOIN public.tenants t ON t.id=m.tenant_id LEFT JOIN public.sites si ON si.tenant_id=t.id WHERE ss.token_hash=${hash(t)} AND ss.expires_at>now() AND t.status IN ('trial','active') AND (SELECT count(*) FROM public.memberships mx WHERE mx.user_id=u.id)=1 ORDER BY m.created_at LIMIT 1`;
+ const rows=await sql`SELECT u.id AS user_id,u.display_name AS personal_name,m.tenant_id,t.slug,t.name AS shop_name,m.role,si.description AS shop_description FROM public.auth_sessions ss JOIN public.users u ON u.id=ss.user_id JOIN public.memberships m ON m.user_id=u.id JOIN public.tenants t ON t.id=m.tenant_id LEFT JOIN public.sites si ON si.tenant_id=t.id WHERE ss.token_hash=${hash(t)} AND ss.expires_at>now() AND t.status IN ('trial','active') AND (SELECT count(*) FROM public.memberships mx WHERE mx.user_id=u.id)=1 ORDER BY m.created_at LIMIT 1`;
  return rows[0]||null;
 }
 async function audit(sql:any,tenantId:string,actorId:string,action:string,type:string,id:string|null,metadata:any={}){await sql`INSERT INTO public.audit_logs(tenant_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${tenantId},${actorId},${action},${type},${id},${JSON.stringify(metadata)}::jsonb)`}
