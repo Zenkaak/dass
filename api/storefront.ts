@@ -50,7 +50,7 @@ export default async function handler(req:any,res:any){
   const requestedSearch=String(req.query?.search||'').trim().slice(0,120);
   const requestedCategory=String(req.query?.category||'').trim().slice(0,100);
   const searchPattern=requestedSearch?('%'+requestedSearch+'%'):'';
-  const categoryPattern=requestedCategory?('%'+requestedCategory+'%'):'';
+  const categoryParts=requestedCategory?requestedCategory.split('|').filter(Boolean):[];
   const rows=await sql`WITH expired_ban AS (
     UPDATE public.tenants
     SET status=COALESCE(NULLIF(status_before_ban,'banned'),'active'),status_before_ban=NULL,ban_reason=NULL,ban_expires_at=NULL,updated_at=now()
@@ -65,7 +65,7 @@ export default async function handler(req:any,res:any){
     SELECT p.* FROM public.products p JOIN target_tenant t ON t.id=p.tenant_id
     WHERE p.is_active=true
       AND (${requestedSearch}='' OR concat_ws(' ',p.name,p.description,p.sku,COALESCE(p.metadata->>'category',''),p.product_type) ILIKE ${searchPattern})
-      AND (${requestedCategory}='' OR COALESCE(p.metadata->>'category',CASE WHEN p.product_type='data_bundle' THEN 'Data bundles' WHEN p.product_type='digital' THEN 'Digital products' ELSE 'Shop products' END) ILIKE ${categoryPattern})
+      AND (${requestedCategory}='' OR EXISTS (SELECT 1 FROM unnest(string_to_array(${requestedCategory},'|')) AS selected(value) WHERE COALESCE(p.metadata->>'category',CASE WHEN p.product_type='data_bundle' THEN 'Data bundles' WHEN p.product_type='digital' THEN 'Digital products' ELSE 'Shop products' END) ILIKE '%'||selected.value||'%'))
   ), product_page_base AS (
     SELECT p.id,p.name,p.description,p.product_type,p.price_minor,p.currency,p.stock_quantity,p.is_active,p.images,p.metadata,p.sku,p.created_at
     FROM filtered_products p ORDER BY p.created_at DESC,p.id DESC LIMIT ${requestedLimit} OFFSET ${requestedOffset}
