@@ -219,6 +219,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
  if(buyerPage==='buyer-login'||buyerPage==='buyer-signup') return <Deferred><BuyerAuthPage slug={slug} shopName={shop?.name||'This shop'} initial={buyerPage==='buyer-signup'?'signup':'login'} onBack={()=>navigateBuyerPage('store')} onAuthenticated={(customer)=>{setBuyerCustomer(customer);const target=buyerReturnPage||'account';setBuyerPage(target);setAccountMenuOpen(false);const next=buyerPath(target);if(window.location.pathname!==next)window.history.pushState({buyerPage:target},'',next)}}/></Deferred>;
  return <main className={"store-page"+(buyerPage==='faqs'?" store-faq-route":"")+(buyerPage==='cart'||buyerPage.startsWith('checkout/')?" is-checkout-route":"")+(desktopSidebarOpen?"":" is-sidebar-collapsed")} data-store-theme='marketplace' style={{'--store-accent':shop?.theme||'#e47a13'} as any}>
   {buyerPage!=='store'&&<header className="ds-store-head ds-store-route-head">
+    <button type="button" className="ds-store-menu-trigger ds-store-route-menu-trigger" aria-label="Open shop navigation" onClick={()=>{if(window.innerWidth>760)setDesktopSidebarOpen(v=>!v);else setMobileSidebarOpen(true)}}><Menu size={21}/></button>
     <a className="ds-store-brand" href={buyerPath('store')} onClick={e=>{e.preventDefault();navigateBuyerPage('store')}}>
       <span className="ds-store-mark">{shop?.logoUrl?<img src={shop.logoUrl} alt=""/>:<Store size={21}/>}</span>
       <span><strong>{shop?.name||'DASMARKET STORE'}</strong><small>Shop direct · Trusted marketplace</small></span>
