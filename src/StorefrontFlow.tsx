@@ -679,11 +679,21 @@ export function StorefrontFlow({
         <div className="market-checkout-intro"><span>STEP 2 OF 3</span><h2>Choose how to pay</h2><p>Your payment is securely processed through M-PESA.</p></div>
         <div className="market-checkout-payment-layout">
           <div className="market-checkout-main-column">
-            <div className="market-checkout-card market-checkout-mpesa-card">
-              <div className="market-checkout-card-heading"><span className="market-checkout-mpesa-mark">M</span><div><h2>M-PESA</h2><p>Safaricom mobile money</p></div><span className="market-checkout-selected-pill"><Check size={14}/> Available</span></div>
-              <button type="button" className="market-checkout-mpesa-select" onClick={choosePayment}><span><strong>Pay with M-PESA</strong><small>Receive an STK prompt on your phone and enter your M-PESA PIN</small></span><span className="market-checkout-radio checked"/></button>
-              <div className="market-checkout-secure-note"><ShieldCheck size={17}/><span>Your order remains pending until Safaricom confirms the payment. Do not share your M-PESA PIN with anyone.</span></div>
-              <button type="button" className="market-checkout-change-phone" onClick={choosePayment}>Pay with a different phone number</button>
+            <div className="market-checkout-card market-checkout-payment-methods-card">
+              <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><WalletCards size={18}/></span><div><h2>Choose a payment method</h2><p>Select how you would like to complete your payment.</p></div></div>
+              <div className="market-payment-method-options" role="group" aria-label="Available payment methods">
+                <button type="button" className="market-payment-method-option is-selected" aria-pressed="true" onClick={choosePayment}>
+                  <span className="market-payment-method-brand market-payment-mpesa">M</span><strong>M-PESA</strong><small>STK Push</small><i><Check size={13}/></i>
+                </button>
+                <button type="button" className="market-payment-method-option is-unavailable" disabled aria-disabled="true" title="Airtel Money is not enabled for this shop">
+                  <span className="market-payment-method-brand market-payment-airtel">A</span><strong>Airtel Money</strong><small>Not enabled</small><i>—</i>
+                </button>
+                <button type="button" className="market-payment-method-option is-unavailable" disabled aria-disabled="true" title="Card payments are not enabled for this shop">
+                  <span className="market-payment-method-brand market-payment-card">▤</span><strong>Bank card</strong><small>Not enabled</small><i>—</i>
+                </button>
+              </div>
+              <div className="market-checkout-mpesa-select" role="group" aria-label="M-PESA payment details"><span><strong>Pay securely with M-PESA</strong><small>We will send a payment request to your selected Kenyan mobile number. Enter your PIN only in the official M-PESA prompt.</small></span><button type="button" className="market-checkout-change-phone" onClick={choosePayment}>Choose phone number</button></div>
+              <div className="market-checkout-secure-note"><ShieldCheck size={17}/><span>Your order remains pending until Safaricom confirms the payment. Never share your M-PESA PIN or one-time password with anyone.</span></div>
             </div>
             <div className="market-checkout-card market-checkout-voucher-card">
               <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><TicketPercent size={18}/></span><div><h2>Have a voucher?</h2><p>Apply a discount code to this order</p></div></div>
