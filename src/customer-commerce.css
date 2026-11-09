@@ -5215,3 +5215,9 @@
 .market-search-select-menu button:hover,.market-search-select-menu button:focus-visible,.market-search-select-menu button[aria-selected="true"]{background:#f0f7f3;color:#167343;outline:0}
 .market-search-select-empty{padding:14px 12px;color:#778592;font-size:13px}
 .market-search-select-toggle:disabled{opacity:.4;cursor:not-allowed}
+
+
+/* Keep the buyer sign-out action reachable at the bottom of the shop sidebar. */
+.store-page .market-sidebar-account-footer{position:sticky;bottom:0;z-index:3;margin-top:12px;padding:12px 8px max(12px,env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(255,255,255,.92),#fff 24%);border-top:1px solid #e9edf0}
+.store-page .market-sidebar-logout{width:100%;min-height:44px;display:flex;align-items:center;justify-content:flex-start;gap:11px;padding:10px 12px;border:1px solid #f0d9d9;border-radius:10px;background:#fff8f8;color:#a83232;font:inherit;font-size:13px;font-weight:700;text-align:left;cursor:pointer}
+.store-page .market-sidebar-logout:hover,.store-page .market-sidebar-logout:focus-visible{background:#fff0f0;outline:2px solid rgba(168,50,50,.16);outline-offset:1px}
