@@ -1656,3 +1656,37 @@
 @media(prefers-reduced-motion:reduce) {
   .store-page .ds-store-hero { animation:none !important; }
 }
+
+
+/* Desktop storefront product grids: four full-width cards per row. The old
+   six-column card sizing left two visibly empty slots in every catalogue row. */
+@media (min-width: 761px) {
+  .store-page .ds-store-home-mix-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    grid-auto-flow: row !important;
+    gap: 16px !important;
+    overflow: visible !important;
+  }
+  .store-page .ds-store-catalogue-rows {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 16px !important;
+  }
+  .store-page .ds-store-catalogue-row {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    grid-auto-flow: row !important;
+    gap: 16px !important;
+    width: 100% !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+  .store-page .ds-store-catalogue-row > .ds-store-card {
+    flex: initial !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: auto !important;
+  }
+}
