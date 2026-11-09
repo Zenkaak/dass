@@ -60,7 +60,7 @@ export default async function handler(req:any,res:any){
   ), product_page_base AS (
     SELECT p.id,p.name,p.description,p.product_type,p.price_minor,p.currency,p.stock_quantity,p.is_active,p.images,p.metadata,p.sku,p.created_at
     FROM public.products p JOIN target_tenant t ON t.id=p.tenant_id
-    WHERE p.is_active=true ORDER BY p.created_at DESC LIMIT ${requestedLimit} OFFSET ${requestedOffset}
+    WHERE p.is_active=true ORDER BY p.created_at DESC,p.id DESC LIMIT ${requestedLimit} OFFSET ${requestedOffset}
   ), review_stats AS (
     SELECT r.product_id,AVG(r.rating)::numeric(3,2) AS rating_average,COUNT(*)::int AS rating_count
     FROM public.product_reviews r
@@ -71,7 +71,7 @@ export default async function handler(req:any,res:any){
     SELECT p.*,COALESCE(rs.rating_average,0) AS rating_average,COALESCE(rs.rating_count,0) AS rating_count
     FROM product_page_base p LEFT JOIN review_stats rs ON rs.product_id=p.id
   ), page_data AS (
-    SELECT COALESCE(jsonb_agg(jsonb_build_object('id',p.id,'name',p.name,'description',p.description,'product_type',p.product_type,'price_minor',p.price_minor,'currency',p.currency,'stock_quantity',p.stock_quantity,'is_active',p.is_active,'images',p.images,'metadata',p.metadata,'sku',p.sku,'rating_average',p.rating_average,'rating_count',p.rating_count) ORDER BY p.created_at DESC),'[]'::jsonb) AS products FROM product_page p
+    SELECT COALESCE(jsonb_agg(jsonb_build_object('id',p.id,'name',p.name,'description',p.description,'product_type',p.product_type,'price_minor',p.price_minor,'currency',p.currency,'stock_quantity',p.stock_quantity,'is_active',p.is_active,'images',p.images,'metadata',p.metadata,'sku',p.sku,'rating_average',p.rating_average,'rating_count',p.rating_count) ORDER BY p.created_at DESC,p.id DESC),'[]'::jsonb) AS products FROM product_page p
   ), product_total AS (SELECT COUNT(*)::int AS total FROM public.products p JOIN target_tenant t ON t.id=p.tenant_id WHERE p.is_active=true)
   SELECT t.id AS tenant_id,t.name AS shop_name,t.slug,
     s.description,s.logo_url,s.whatsapp_number,s.contact_phone,s.contact_email,
