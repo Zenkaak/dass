@@ -62,26 +62,25 @@ function LandingPage() {
   <section className="dm-signature-hero">
    <div className="dm-signature-copy">
     <div className="dm-signature-eyebrow"><span/> THE HOME OF YOUR ONLINE BUSINESS</div>
-    <h1>Your business<br/>deserves a <em>shopfront.</em></h1>
-    <p>Turn what you sell into a business customers can discover, browse and buy from. Your own online shop, with the tools to run it all in one place.</p>
+    <h1>Run your business.<br/><em>Grow with confidence.</em></h1>
+    <p>DASNET gives Kenyan sellers one simple place to register, launch their online shop, manage products, follow orders and track payments.</p>
     <div className="dm-signature-actions"><a href="/signup" className="dm-signature-primary">Create your shop <ArrowRight size={17}/></a><a href="/login" className="dm-signature-secondary">I already have an account <span>→</span></a></div>
     <div className="dm-signature-note"><ShieldCheck size={16}/><span>Built for Kenyan businesses</span><i/> <span>Your brand stays yours</span></div>
    </div>
-   <div className="dm-signature-visual" aria-label="Illustration of a merchant's online storefront">
+   <div className="dm-signature-visual dm-dashboard-visual" aria-label="Illustration of the DASNET seller dashboard">
     <div className="dm-signature-backdrop-shape"/>
-    <div className="dm-store-window">
-     <div className="dm-store-browser"><span/><span/><span/><small>YOURSHOP.DASMARKET.CO.KE</small><i><ShieldCheck size={12}/> SECURE SHOP</i></div>
-     <div className="dm-store-brandbar"><div className="dm-store-monogram">K</div><div><b>Kito & Co.</b><small>Everyday finds, thoughtfully chosen.</small></div><div className="dm-store-mini-icons"><Search size={16}/><ShoppingBag size={16}/></div></div>
-     <div className="dm-store-banner"><span>THE NEW COLLECTION</span><b>Good things<br/>start here.</b><small>Explore pieces picked for your everyday.</small><i>EXPLORE NOW ↗</i></div>
-     <div className="dm-store-section-head"><b>Popular right now</b><span>VIEW ALL →</span></div>
-     <div className="dm-store-products">
-      <div className="dm-store-product"><div className="dm-store-product-art art-bag"><span>✦</span></div><b>Everyday tote</b><small>KES 1,850</small></div>
-      <div className="dm-store-product"><div className="dm-store-product-art art-sneaker"><span>◒</span></div><b>City sneakers</b><small>KES 3,400</small></div>
-      <div className="dm-store-product"><div className="dm-store-product-art art-bottle"><span>◌</span></div><b>Daily essentials</b><small>KES 950</small></div>
+    <div className="dm-dashboard-window">
+     <div className="dm-dashboard-top"><span className="dm-dashboard-logo">D</span><b>DASNET <small>SELLER WORKSPACE</small></b><span className="dm-dashboard-top-right"><Bell size={15}/><i>J</i></span></div>
+     <div className="dm-dashboard-body">
+      <aside><b><LayoutDashboard size={13}/> Overview</b><span><Package size={13}/> Products</span><span><ShoppingBag size={13}/> Orders</span><span><WalletCards size={13}/> Payments</span><span><Settings size={13}/> Shop settings</span></aside>
+      <div className="dm-dashboard-main"><div className="dm-dashboard-welcome"><div><small>MONDAY, 9 NOVEMBER</small><h3>Good morning, James 👋</h3><p>Here's what's happening with your business.</p></div><span>View shop ↗</span></div>
+       <div className="dm-dashboard-metrics"><div><small>Total sales</small><b>KES 84,250</b><i>↗ 12.8%</i></div><div><small>Orders</small><b>126</b><i>↗ 8.2%</i></div><div><small>Products</small><b>48</b><i>Active catalogue</i></div></div>
+       <div className="dm-dashboard-lower"><div className="dm-dashboard-chart"><b>Sales overview</b><small>LAST 7 DAYS</small><div className="dm-dashboard-bars"><i/><i/><i/><i/><i/><i/><i/></div><div className="dm-dashboard-axis"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div></div><div className="dm-dashboard-orders"><b>Recent orders</b><span><i/> #DM-2048 <strong>Paid</strong></span><span><i/> #DM-2047 <strong>Processing</strong></span><span><i/> #DM-2046 <strong>Paid</strong></span></div></div>
+      </div>
      </div>
     </div>
-    <div className="dm-signature-float dm-signature-float-top"><span><Store size={17}/></span><div><b>Your own shop link</b><small>Easy to share. Easy to remember.</small></div></div>
-    <div className="dm-signature-float dm-signature-float-bottom"><span><ShoppingBag size={17}/></span><div><b>Orders in one place</b><small>From checkout to fulfilment.</small></div><i>↗</i></div>
+    <div className="dm-signature-float dm-signature-float-top"><span><Store size={17}/></span><div><b>Your business, your brand</b><small>Your own shop on DASMARKET</small></div></div>
+    <div className="dm-signature-float dm-signature-float-bottom"><span><Activity size={17}/></span><div><b>Everything in one place</b><small>Products, orders and payments.</small></div><i>↗</i></div>
    </div>
    <div className="dm-signature-vertical">MADE FOR THE WAY YOU DO BUSINESS <span>—</span> KENYA</div>
   </section>
