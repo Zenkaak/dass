@@ -1,0 +1,89 @@
+/* Storefront rendering and layout performance layer.
+   Keep above-the-fold content eager; defer paint for long sections below it. */
+.ds-store > .ds-store-section:not(.ds-store-spotlight-section),
+.ds-store > .ds-store-category-quicklinks,
+.ds-store > .ds-store-mobile-promo,
+.ds-store > .ds-store-browse-controls,
+.ds-store > .ds-store-faq,
+.ds-store > .ds-store-footer {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 620px;
+}
+
+.ds-store-home-mix-grid,
+.ds-store-catalogue-rows,
+.ds-store-collection-rows,
+.ds-store-rail {
+  contain: layout style;
+}
+
+.ds-store-card,
+.market-related-card {
+  contain: layout paint style;
+  min-width: 0;
+}
+
+.ds-store-product-image,
+.market-related-image,
+.market-detail-main-image {
+  display: block;
+  overflow: hidden;
+  background: #f4f6f8;
+}
+
+.ds-store-product-image {
+  aspect-ratio: 1 / 1;
+}
+
+.ds-store-product-image img,
+.market-related-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  content-visibility: auto;
+}
+
+.market-detail-main-image {
+  aspect-ratio: 1 / 1;
+}
+
+.market-detail-main-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ds-store-hero-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+@media (max-width: 760px) {
+  .ds-store > .ds-store-section:not(.ds-store-spotlight-section),
+  .ds-store > .ds-store-category-quicklinks,
+  .ds-store > .ds-store-mobile-promo,
+  .ds-store > .ds-store-browse-controls,
+  .ds-store > .ds-store-faq,
+  .ds-store > .ds-store-footer {
+    contain-intrinsic-size: auto 520px;
+  }
+
+  .ds-store-card {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 310px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-store *,
+  .market-product-detail-route * {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
