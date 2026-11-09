@@ -5204,3 +5204,14 @@
 .market-checkout-mpesa-select small{font-size:11px;line-height:1.55;color:#718078}
 .market-checkout-mpesa-select .market-checkout-change-phone{flex:0 0 auto;margin:0}
 @media(max-width:520px){.market-payment-method-options{gap:7px}.market-payment-method-option{min-height:106px;padding:10px}.market-payment-method-option.is-selected{padding:9px}.market-payment-method-option strong{font-size:10px}.market-payment-method-option small{font-size:9px}.market-checkout-mpesa-select{align-items:flex-start;flex-direction:column}.market-checkout-mpesa-select .market-checkout-change-phone{padding:7px 0}}
+
+/* Checkout location search dropdowns: native touch-friendly interactive options */
+.market-search-select-label{display:grid;gap:7px}
+.market-search-select{position:relative;display:block;width:100%}
+.market-search-select>input{width:100%;padding-right:43px!important}
+.market-search-select-toggle{position:absolute;right:5px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:34px;height:34px;border:0;border-radius:8px;background:transparent;color:#526475;cursor:pointer;z-index:2}
+.market-search-select-menu{position:absolute;z-index:80;top:calc(100% + 5px);left:0;right:0;max-height:245px;overflow-y:auto;overscroll-behavior:contain;border:1px solid #dce4eb;border-radius:11px;background:#fff;box-shadow:0 12px 32px rgba(24,39,55,.16);padding:5px}
+.market-search-select-menu button{display:block;width:100%;min-height:42px;padding:10px 12px;text-align:left;border:0;border-radius:7px;background:#fff;color:#263746;font:inherit;font-size:14px;cursor:pointer}
+.market-search-select-menu button:hover,.market-search-select-menu button:focus-visible,.market-search-select-menu button[aria-selected="true"]{background:#f0f7f3;color:#167343;outline:0}
+.market-search-select-empty{padding:14px 12px;color:#778592;font-size:13px}
+.market-search-select-toggle:disabled{opacity:.4;cursor:not-allowed}
