@@ -258,6 +258,7 @@ export function StorefrontFlow({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mpesa');
   const [paymentModal,setPaymentModal]=useState<PaymentMethod|null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [paymentPollMessage,setPaymentPollMessage]=useState('Contacting Safaricom to check your payment…');
   const [checkoutError, setCheckoutError] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('pickup');
   const [deliveryCounty, setDeliveryCounty] = useState('');
@@ -430,6 +431,37 @@ export function StorefrontFlow({
   const activeOrder = orders.find((order) => order.orderNumber === activeOrderNumber) || (!activeOrderNumber ? orders[0] : undefined);
   useEffect(()=>{if(activeOrder?.orderId)setRetryPaymentPhone(activeOrder.customerPhone||initialCustomerPhone);if(activeOrder?.orderId&&['order-detail','order-tracking'].includes(view))onOpenChat?.('',activeOrder.orderNumber,activeOrder.orderId)},[view,activeOrder?.orderId,initialCustomerPhone]);
 
+  useEffect(()=>{
+    if(view!=='checkout/processing'||!activeOrder?.orderId)return;
+    let live=true,requestInFlight=false,attempts=0,finished=false;
+    const checkPayment=async()=>{
+      if(!live||requestInFlight||finished)return;
+      requestInFlight=true;attempts++;
+      try{
+        const response=await fetch('/api/buyer?action=customer-payment-status&slug='+encodeURIComponent(slug)+'&orderId='+encodeURIComponent(activeOrder.orderId),{credentials:'same-origin',cache:'no-store'});
+        const data=await response.json().catch(()=>({}));
+        if(!response.ok)throw Error(data.error||'Could not check payment status.');
+        if(!live)return;
+        const status=String(data.paymentStatus||'pending').toLowerCase();
+        if(status==='succeeded'||status==='failed'||status==='cancelled'||status==='reversed'){
+          finished=true;
+          setOrders(current=>current.map(order=>order.orderId===activeOrder.orderId?{...order,paymentStatus:status,receipt:data.receipt||null}:order));
+          setPaymentPollMessage(status==='succeeded'?'Payment confirmed by Safaricom.':'Safaricom has returned the final payment result.');
+          onOrderCreated?.(activeOrder.chatToken||'',activeOrder.orderNumber);
+          onNavigate('checkout/complete');
+          return;
+        }
+        setPaymentPollMessage(attempts>20?'Still waiting for Safaricom. We’ll keep checking automatically…':data.message||'Waiting for Safaricom payment confirmation…');
+      }catch(error:any){
+        if(live)setPaymentPollMessage('Connection interrupted. Retrying the payment check automatically…');
+      }finally{requestInFlight=false;}
+    };
+    setPaymentPollMessage('Contacting Safaricom to check your payment…');
+    void checkPayment();
+    const timer=window.setInterval(()=>{if(document.visibilityState==='visible')void checkPayment();},6000);
+    return()=>{live=false;window.clearInterval(timer);};
+  },[view,slug,activeOrder?.orderId,activeOrder?.orderNumber]);
+
   useEffect(()=>{const status=String(activeOrder?.paymentStatus||'');if(lastPaymentStatus.current&&lastPaymentStatus.current!=='succeeded'&&status==='succeeded'){setPaymentCelebration(true);const timer=window.setTimeout(()=>setPaymentCelebration(false),5200);lastPaymentStatus.current=status;return()=>window.clearTimeout(timer)}if(status)lastPaymentStatus.current=status},[activeOrder?.paymentStatus]);
   async function retryActiveOrderPayment(){if(!activeOrder?.orderId||retryingOrder)return;const cleaned=retryPaymentPhone.trim().replace(/[\s().-]/g,'');if(!/^\+?254[17]\d{8}$|^0[17]\d{8}$/.test(cleaned)){setRetryMessage('Enter a valid Kenyan M-PESA number (07…, 01… or 254…).');return;}setRetryingOrder(true);setRetryMessage('');try{const r=await fetch('/api/payments?action=customer-payment-retry',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug,orderId:activeOrder.orderId,paymentPhone:cleaned})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Could not retry payment');setOrders(current=>current.map(order=>order.orderId===activeOrder.orderId?{...order,paymentStatus:'pending'}:order));setRetryMessage('M-PESA prompt sent. Enter your PIN to complete payment.')}catch(e:any){setRetryMessage(e.message||'Could not retry payment')}finally{setRetryingOrder(false)}}
   const recentlyViewedProducts = recentlyViewedIds
@@ -531,9 +563,9 @@ export function StorefrontFlow({
       setOrders(updatedOrders);
       setActiveOrderNumber(order.orderNumber);
       checkoutIdempotency.current=null;
-      onOrderCreated?.(data.chatToken||'', data.orderNumber);
       onCartChange({});
-      onNavigate('checkout/complete');
+      setPaymentPollMessage('Contacting Safaricom to check your payment…');
+      onNavigate('checkout/processing');
     } catch (error) {
       setCheckoutError(error instanceof Error ? error.message : 'Checkout failed. Please try again.');
     } finally {
@@ -763,6 +795,24 @@ export function StorefrontFlow({
         <div className="market-checkout-bottom-action"><div><small>{orderConfirmed?'READY TO PAY':'ORDER TOTAL'}</small><strong>{formatKes(total)}</strong></div><button type="button" className="customer-primary-button" disabled={!lines.length||!customerName.trim()||!customerPhone.trim()||paymentMethod!=='mpesa'||submitting||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))||(deliveryMethod==='pickup'&&(!pickupStation.trim()||!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))} onClick={orderConfirmed?placeOrder:()=>setOrderConfirmed(true)}>{submitting?'Requesting M-PESA…':orderConfirmed?'Pay with M-PESA':'Confirm order'} <ArrowRight size={18}/></button></div>
       </section>
     );
+  }
+
+  function renderPaymentProcessing() {
+    if(!activeOrder)return <section className="customer-flow"><FlowHeading title="Payment processing" onBack={()=>onNavigate('cart')}/><div className="customer-empty-state"><p>Loading…</p></div></section>;
+    return <section className="customer-flow customer-success-page market-payment-processing">
+      <div className="market-payment-processing-icon" aria-hidden="true"><span/></div>
+      <span className="buyer-section-kicker">SECURE PAYMENT CHECK</span>
+      <h1>Confirming your M-PESA payment</h1>
+      <p className="market-payment-processing-copy">We’re checking the transaction with Safaricom. Keep this page open while we wait for the final confirmation.</p>
+      <div className="customer-panel market-payment-processing-card">
+        <div><small>ORDER NUMBER</small><strong>{activeOrder.orderNumber}</strong></div>
+        <div><small>AMOUNT</small><strong>{formatKes(activeOrder.total)}</strong></div>
+        <div><small>PAYMENT PHONE</small><strong>{paymentPhone||activeOrder.customerPhone}</strong></div>
+      </div>
+      <p className="market-payment-poll-status" role="status">{paymentPollMessage}</p>
+      <p className="customer-preview-note"><ShieldCheck size={15}/> Your order will only be marked paid after Safaricom’s payment receipt is verified. Do not send another payment prompt while this check is running.</p>
+      <div className="customer-flow-actions"><button type="button" className="customer-secondary-button" onClick={()=>openOrder(activeOrder,'order-detail')}>View order status</button></div>
+    </section>;
   }
 
   function renderSuccess() {
@@ -1060,7 +1110,7 @@ export function StorefrontFlow({
   );
 
   if (view === 'store') return null;
-  const pageContent = view === 'cart' ? renderCart() : view === 'checkout/delivery' ? (lines.length ? renderCheckoutDelivery() : renderCart()) : view === 'checkout/payment' ? (lines.length ? renderCheckoutPayment() : renderCart()) : view === 'checkout/review' ? (lines.length ? renderReview() : renderCart()) : view === 'checkout/complete' ? renderSuccess() : view === 'orders' || view.startsWith('orders/') ? renderOrders() : view === 'order-detail' ? renderOrderDetail() : view === 'order-tracking' ? renderTracking() : view === 'account' ? renderAccount() : view === 'profile' ? renderProfile() : renderAccountSection() || (<section className="customer-flow"><FlowHeading title="Shopping assistant" onBack={() => onNavigate('store')} /><div className="customer-panel customer-account-detail"><Search size={24} /><p>{accountSectionCopy.assistant.description}</p><button type="button" className="customer-secondary-button" onClick={() => onNavigate('store')}>Back to the store</button></div></section>);
+  const pageContent = view === 'cart' ? renderCart() : view === 'checkout/delivery' ? (lines.length ? renderCheckoutDelivery() : renderCart()) : view === 'checkout/payment' ? (lines.length ? renderCheckoutPayment() : renderCart()) : view === 'checkout/review' ? (lines.length ? renderReview() : renderCart()) : view === 'checkout/processing' ? renderPaymentProcessing() : view === 'checkout/complete' ? renderSuccess() : view === 'orders' || view.startsWith('orders/') ? renderOrders() : view === 'order-detail' ? renderOrderDetail() : view === 'order-tracking' ? renderTracking() : view === 'account' ? renderAccount() : view === 'profile' ? renderProfile() : renderAccountSection() || (<section className="customer-flow"><FlowHeading title="Shopping assistant" onBack={() => onNavigate('store')} /><div className="customer-panel customer-account-detail"><Search size={24} /><p>{accountSectionCopy.assistant.description}</p><button type="button" className="customer-secondary-button" onClick={() => onNavigate('store')}>Back to the store</button></div></section>);
   // The storefront-level marketplace header is the single buyer navigation surface for every route.
   // Do not mount a second sticky nav here: nested sticky bars overlapped the account/cart content
   // and intercepted taps on mobile.
