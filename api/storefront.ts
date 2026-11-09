@@ -50,7 +50,6 @@ export default async function handler(req:any,res:any){
   const requestedSearch=String(req.query?.search||'').trim().slice(0,120);
   const requestedCategory=String(req.query?.category||'').trim().slice(0,100);
   const searchPattern=requestedSearch?('%'+requestedSearch+'%'):'';
-  const categoryParts=requestedCategory?requestedCategory.split('|').filter(Boolean):[];
   const rows=await sql`WITH expired_ban AS (
     UPDATE public.tenants
     SET status=COALESCE(NULLIF(status_before_ban,'banned'),'active'),status_before_ban=NULL,ban_reason=NULL,ban_expires_at=NULL,updated_at=now()
