@@ -335,7 +335,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
         <div className="ds-store-section-title"><div><span className="ds-eyebrow">HELP CENTRE</span><h2>Frequently asked questions</h2><p>Helpful answers before you place an order.</p></div><button type="button" onClick={()=>navigateBuyerPage('faqs')}>View all FAQs <ArrowRight size={15}/></button></div>
         <div className="ds-store-faq-list">{marketplaceFaqs.slice(0,6).map(([question,answer])=><details key={question}><summary>{question}<span>＋</span></summary><p>{answer}</p></details>)}</div>
       </section>
-      {(view==='store'||view.startsWith('collection/'))&&catalogueHasMore&&<div className="ds-store-load-more-wrap"><button type="button" className="ds-store-load-more" onClick={loadMoreProducts} disabled={loadingMore}>{loadingMore?'Loading products…':'Load 35 more products'}</button><small>Showing {products.length} loaded products</small></div>}
+      {catalogueHasMore&&<div className="ds-store-load-more-wrap"><button type="button" className="ds-store-load-more" onClick={loadMoreProducts} disabled={loadingMore}>{loadingMore?'Loading products…':'Load 35 more products'}</button><small>Showing {products.length} loaded products</small></div>}
       {cartItems.length>0&&<div className="ds-store-cartbar"><span><b>{cartItems.reduce((n,[,q])=>n+q,0)} items</b><small>KES {total.toLocaleString('en-KE')}</small></span><button type="button" onClick={()=>navigateBuyerPage('cart')}>Go to cart <ArrowRight size={16}/></button></div>}
       <footer className="ds-store-footer ds-store-footer-expanded">
         <div className="ds-store-footer-grid">
