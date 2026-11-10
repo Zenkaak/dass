@@ -91,9 +91,9 @@ function LandingPage() {
    <div className="d2-trust-intro"><div className="d2-kicker">BUILT WITH RESPONSIBILITY</div><h2>Trust matters when <em>business happens online.</em></h2><p>DASNET gives sellers and buyers tools to make shop activity clearer, safer and easier to manage.</p></div>
    <div className="d2-trust-grid">
     <article><span><ShieldCheck/></span><div><h3>Clear payment status</h3><p>Orders move to confirmed only after payment is verified. Buyers can see when a payment is still awaiting confirmation.</p></div></article>
-    <article><span><MessageSquare/></span><div><h3>Report a problem</h3><p>Buyers and sellers can raise order-related complaints and share supporting details for review.</p></div></article>
+    <article><span><MessageCircle/></span><div><h3>Report a problem</h3><p>Buyers and sellers can raise order-related complaints and share supporting details for review.</p></div></article>
     <article><span><FileText/></span><div><h3>Shop policies in view</h3><p>Sellers can publish their own delivery, returns and privacy information so customers know the shop's terms.</p></div></article>
-    <article><span><LockKeyhole/></span><div><h3>Account controls</h3><p>Manage your shop and account through your seller dashboard. Keep your sign-in details private and secure.</p></div></article>
+    <article><span><ShieldCheck/></span><div><h3>Account controls</h3><p>Manage your shop and account through your seller dashboard. Keep your sign-in details private and secure.</p></div></article>
    </div>
    <div className="d2-trust-note"><ShieldCheck/><p><b>Need help with an order?</b> Use the reports and support options available in your account, and include the order reference so the issue can be traced.</p><a href="mailto:support@dasnet.co.ke">Contact support <ArrowRight size={15}/></a></div>
   </section>
