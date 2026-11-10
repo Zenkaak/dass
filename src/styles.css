@@ -6300,3 +6300,49 @@ button,input,select,textarea{font:inherit;}
  .d2-dns-table>div{font-size:7px;gap:5px}
  .d2-dns-title small{display:block;margin:4px 0 0}
 }
+
+
+/* Trust & safety and FAQ — confidence sections */
+.d2-trust{background:#f5f7fa;padding:66px max(calc((100vw - 1110px)/2),30px) 62px}
+.d2-trust-intro{max-width:650px;margin-bottom:28px}
+.d2-trust-intro h2,.d2-faq-heading h2{font-size:clamp(32px,4vw,45px);line-height:1.1;letter-spacing:-1.8px;margin:13px 0}
+.d2-trust-intro>p,.d2-faq-heading>p{font-size:13px;line-height:1.65;color:#5d6d80;max-width:560px}
+.d2-trust-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.d2-trust-grid article{display:flex;gap:15px;padding:20px;border:1px solid #e1e7ee;border-radius:10px;background:#fff}
+.d2-trust-grid article>span{flex:0 0 38px;width:38px;height:38px;border-radius:9px;background:#eaf6ef;color:#18865b;display:grid;place-items:center}
+.d2-trust-grid article>span svg{width:19px;height:19px}
+.d2-trust-grid h3{font-size:14px;margin:1px 0 6px}
+.d2-trust-grid p{font-size:11px;line-height:1.6;color:#5d6d80;margin:0}
+.d2-trust-note{margin-top:14px;border:1px solid #dce5ed;background:#fff;border-radius:9px;padding:14px 17px;display:flex;align-items:center;gap:12px}
+.d2-trust-note>svg{width:20px;height:20px;flex:0 0 auto;color:#19865b}
+.d2-trust-note p{font-size:10px;line-height:1.55;color:#53677c;margin:0;flex:1}
+.d2-trust-note a{font-size:10px;font-weight:800;color:#092849;text-decoration:none;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.d2-faq{max-width:1160px;margin:auto;padding:66px 24px 72px;display:grid;grid-template-columns:.78fr 1.22fr;gap:55px;align-items:start}
+.d2-faq-heading{position:sticky;top:24px}
+.d2-faq-heading h2{max-width:370px}
+.d2-faq-list{border-top:1px solid #e3e8ee}
+.d2-faq-list details{border-bottom:1px solid #e3e8ee}
+.d2-faq-list summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 3px;font-size:13px;font-weight:750;color:#092849}
+.d2-faq-list summary::-webkit-details-marker{display:none}
+.d2-faq-list summary span{width:25px;height:25px;border:1px solid #dce3eb;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;font-size:17px;font-weight:400;color:#9a7400;transition:transform .2s}
+.d2-faq-list details[open] summary span{transform:rotate(45deg);background:#fff4d2;border-color:#f2d77f}
+.d2-faq-list details p{font-size:11px;line-height:1.7;color:#607184;margin:-3px 35px 17px 3px;max-width:620px}
+@media(max-width:800px){
+ .d2-trust{padding:42px 18px}
+ .d2-trust-intro{margin-bottom:20px}
+ .d2-trust-intro h2,.d2-faq-heading h2{font-size:31px;letter-spacing:-1.1px}
+ .d2-trust-intro>p,.d2-faq-heading>p{font-size:11px}
+ .d2-trust-grid{grid-template-columns:1fr;gap:8px}
+ .d2-trust-grid article{padding:15px;gap:12px}
+ .d2-trust-grid article>span{width:34px;height:34px;flex-basis:34px}
+ .d2-trust-grid h3{font-size:12px}
+ .d2-trust-grid p{font-size:10px}
+ .d2-trust-note{align-items:flex-start;flex-wrap:wrap;padding:12px;gap:9px}
+ .d2-trust-note p{flex:1 1 calc(100% - 32px);font-size:9px}
+ .d2-trust-note a{margin-left:29px}
+ .d2-faq{padding:43px 18px 48px;grid-template-columns:1fr;gap:17px}
+ .d2-faq-heading{position:static}
+ .d2-faq-heading h2{margin:10px 0}
+ .d2-faq-list summary{font-size:11px;padding:15px 1px}
+ .d2-faq-list details p{font-size:10px;margin-right:28px}
+}
