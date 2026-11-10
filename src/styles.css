@@ -6062,3 +6062,92 @@ button,input,select,textarea{font:inherit;}
 @media(max-width:900px){.dh-links{gap:14px}.dh-links a{font-size:11px}.dh-hero{grid-template-columns:1fr 1fr;min-height:470px}.dh-hero-art{min-height:470px}.dh-hero h1{font-size:clamp(39px,6vw,56px)}.dh-domain{gap:25px;grid-template-columns:.8fr 1.2fr;padding-inline:25px}.dh-domain-preview{grid-template-columns:125px 1fr}.dh-preview-main{padding:20px 15px}.dh-feature-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:650px){.dh-nav{height:64px;padding:0 17px}.dh-brand{font-size:20px}.dh-bag{width:34px;height:34px}.dh-links,.dh-actions{display:none}.dh-mobile-menu{display:block;position:relative}.dh-mobile-menu summary{list-style:none;display:grid;place-items:center;width:40px;height:40px;border-radius:9px;background:#f0f3f8;color:#132b4b;cursor:pointer}.dh-mobile-menu summary::-webkit-details-marker{display:none}.dh-mobile-menu>div{position:absolute;right:0;top:48px;z-index:9;width:220px;padding:10px;background:#fff;border:1px solid #e5eaf1;border-radius:12px;box-shadow:0 15px 40px #10294b25;display:grid;gap:2px}.dh-mobile-menu>div a{padding:11px 10px;border-radius:7px;font-size:13px;font-weight:700;color:#183252}.dh-mobile-menu>div a:hover{background:#fff5cf}.dh-hero{display:flex;flex-direction:column;padding:0;background:#fff;min-height:0}.dh-hero-copy{padding:30px 20px 23px}.dh-eyebrow{font-size:9px;padding:7px 10px}.dh-hero h1{font-size:clamp(42px,12vw,56px);letter-spacing:-2.5px;margin:17px 0 12px}.dh-hero-copy>p{font-size:14px;line-height:1.55;max-width:340px}.dh-hero-actions{gap:10px;margin-top:19px}.dh-cta-large{padding:13px 16px;font-size:12px}.dh-watch{padding:12px 14px;font-size:11px}.dh-trust{gap:12px;margin-top:22px;justify-content:space-between}.dh-trust span{font-size:9px;gap:5px}.dh-trust svg{width:19px;height:19px}.dh-hero-art{min-height:330px;width:100%}.dh-shop-scene{background:linear-gradient(120deg,#d9b08d 0 42%,#263f55 42% 100%)}.dh-scene-sun{width:180px;height:180px;right:8%;top:6%}.dh-scene-copy{font-size:27px;right:7%;top:8%}.dh-storefront{left:7%;bottom:11%;width:50%;height:59%;border-width:7px}.dh-laptop{right:5%;bottom:10%;width:42%}.dh-laptop-screen{height:145px;border-width:7px;border-bottom-width:10px;padding:8px}.dh-mini-top{font-size:9px}.dh-mini-top small{font-size:5px}.dh-mini-stats{margin:10px 0}.dh-mini-stats i{height:25px}.dh-mini-chart{height:51px;gap:5px}.dh-domain-float{left:4%;bottom:3%;padding:9px 11px;gap:7px}.dh-domain-float>svg:first-child{width:20px}.dh-domain-float b{font-size:10px}.dh-domain-float small{font-size:8px}.dh-benefits{padding:14px 12px;display:grid;grid-template-columns:1fr 1fr;gap:13px}.dh-benefits span{font-size:10px;gap:7px}.dh-benefits svg{width:18px;height:18px}.dh-how{padding:43px 18px 50px}.dh-steps{grid-template-columns:1fr;gap:8px;margin-top:28px}.dh-steps article{padding:5px 0}.dh-steps article>span{left:calc(50% - 48px);top:0}.dh-steps article>svg{width:32px;height:32px;margin:8px 0}.dh-steps h3{font-size:14px}.dh-steps p{font-size:11px;margin:3px 0}.dh-steps>b{font-size:0;height:12px}.dh-steps>b:after{content:'↓';font-size:20px}.dh-domain{grid-template-columns:1fr;padding:44px 18px;gap:25px}.dh-domain h2{font-size:39px}.dh-domain-copy>p{font-size:13px}.dh-domain-preview{grid-template-columns:100px 1fr;min-height:235px}.dh-preview-sidebar{padding:13px 8px;gap:13px;font-size:8px}.dh-preview-sidebar b{font-size:10px}.dh-preview-sidebar b svg{width:14px}.dh-preview-main{padding:17px 11px}.dh-preview-main h3{font-size:17px}.dh-preview-main>p{font-size:9px}.dh-preview-card{padding:10px}.dh-preview-card>span{font-size:9px}.dh-preview-input{font-size:8px;padding:7px;margin:10px 0}.dh-preview-input i{padding:7px;font-size:8px}.dh-preview-success{font-size:8px;padding:7px}.dh-features{padding:48px 18px}.dh-features h2{font-size:34px}.dh-feature-grid{grid-template-columns:1fr 1fr;gap:9px;margin-top:25px}.dh-feature-grid article{padding:14px}.dh-feature-grid article>svg{width:22px;height:22px}.dh-feature-grid h3{font-size:12px;margin:10px 0 5px}.dh-feature-grid p{font-size:10px}.dh-final{margin:0 10px 10px;padding:27px 20px;align-items:flex-start;flex-direction:column;gap:18px}.dh-final h2{font-size:32px}.dh-footer{padding:18px;gap:12px}.dh-footer .dh-brand{font-size:18px}.dh-footer>span{font-size:9px}.dh-footer>div{width:100%;margin:3px 0 0;gap:19px}.dh-footer>div a{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.dasnet-home *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+
+/* Landing page refinement: balanced mobile proportions and tighter section rhythm */
+.dasnet-home .dh-hero{min-height:490px;grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr)}
+.dasnet-home .dh-hero-copy{max-width:650px}
+.dasnet-home .dh-hero h1{font-size:clamp(40px,4.7vw,62px);line-height:1.02;letter-spacing:-2.6px}
+.dasnet-home .dh-hero-art{min-height:490px}
+.dasnet-home .dh-how{padding-block:52px 58px}
+.dasnet-home .dh-domain{padding-block:54px}
+.dasnet-home .dh-domain-preview{min-height:250px}
+@media(max-width:650px){
+ .dasnet-home .dh-hero-copy{padding:27px 20px 20px}
+ .dasnet-home .dh-hero h1{font-size:clamp(39px,10.5vw,47px);line-height:1.04;letter-spacing:-2px;margin:15px 0 11px;max-width:520px}
+ .dasnet-home .dh-hero-copy>p{font-size:13px;line-height:1.5;max-width:390px}
+ .dasnet-home .dh-hero-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+ .dasnet-home .dh-cta-large,.dasnet-home .dh-watch{min-height:46px;padding:11px 10px;font-size:11px;white-space:nowrap}
+ .dasnet-home .dh-trust{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:19px}
+ .dasnet-home .dh-trust span{font-size:8px;line-height:1.25;align-items:flex-start}
+ .dasnet-home .dh-trust svg{width:17px;height:17px;flex:none}
+ .dasnet-home .dh-hero-art{min-height:230px;height:230px}
+ .dasnet-home .dh-scene-sun{width:135px;height:135px;top:8%;right:12%}
+ .dasnet-home .dh-scene-copy{font-size:21px;top:8%;right:6%}
+ .dasnet-home .dh-storefront{height:58%;width:47%;bottom:10%;left:6%;border-width:5px}
+ .dasnet-home .dh-store-sign{font-size:9px;letter-spacing:2px}
+ .dasnet-home .dh-laptop{width:39%;right:5%;bottom:10%}
+ .dasnet-home .dh-laptop-screen{height:112px;padding:6px;border-width:5px;border-bottom-width:8px}
+ .dasnet-home .dh-mini-top{font-size:8px}
+ .dasnet-home .dh-mini-top small{font-size:5px}
+ .dasnet-home .dh-mini-stats{margin:7px 0}
+ .dasnet-home .dh-mini-stats i{height:18px}
+ .dasnet-home .dh-mini-chart{height:37px;gap:4px;padding:0 5px}
+ .dasnet-home .dh-laptop-base{height:7px}
+ .dasnet-home .dh-domain-float{left:3%;bottom:2%;padding:7px 9px;gap:6px}
+ .dasnet-home .dh-domain-float>svg:first-child{width:17px;height:17px}
+ .dasnet-home .dh-domain-float>svg:last-child{width:15px;height:15px}
+ .dasnet-home .dh-domain-float b{font-size:8px}
+ .dasnet-home .dh-domain-float small{font-size:7px}
+ .dasnet-home .dh-benefits{padding:13px 15px;gap:11px 8px}
+ .dasnet-home .dh-benefits span{font-size:9px}
+ .dasnet-home .dh-how{padding:35px 16px 39px}
+ .dasnet-home .dh-steps{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:22px}
+ .dasnet-home .dh-steps> b{display:none}
+ .dasnet-home .dh-steps article{min-width:0;min-height:132px;padding:13px 7px 10px;border:1px solid #e7ebf1;border-radius:11px;background:#fff;justify-content:flex-start}
+ .dasnet-home .dh-steps article>span{position:static;width:21px;height:21px;font-size:10px;margin-bottom:3px}
+ .dasnet-home .dh-steps article>svg{width:26px;height:26px;margin:5px 0}
+ .dasnet-home .dh-steps h3{font-size:11px;line-height:1.2;text-align:center;margin:4px 0}
+ .dasnet-home .dh-steps p{font-size:9px;line-height:1.35;margin:3px 0 0}
+ .dasnet-home .dh-domain{padding:34px 16px;gap:19px}
+ .dasnet-home .dh-domain h2{font-size:32px;line-height:1.06;letter-spacing:-1.5px;margin:10px 0}
+ .dasnet-home .dh-domain-copy>p{font-size:12px;line-height:1.55;margin:8px 0}
+ .dasnet-home .dh-domain ul{grid-template-columns:1fr;gap:8px;margin:14px 0 17px}
+ .dasnet-home .dh-domain li{font-size:10px}
+ .dasnet-home .dh-dark-cta{font-size:10px;padding:11px 13px}
+ .dasnet-home .dh-domain-preview{grid-template-columns:82px minmax(0,1fr);min-height:190px;border-radius:12px}
+ .dasnet-home .dh-preview-sidebar{padding:11px 7px;gap:10px;font-size:7px}
+ .dasnet-home .dh-preview-sidebar b{font-size:9px;gap:4px}
+ .dasnet-home .dh-preview-sidebar b svg{width:12px;height:12px}
+ .dasnet-home .dh-preview-sidebar strong{padding:7px 5px}
+ .dasnet-home .dh-preview-sidebar span svg,.dasnet-home .dh-preview-sidebar strong svg{width:11px;height:11px}
+ .dasnet-home .dh-preview-main{padding:13px 9px}
+ .dasnet-home .dh-preview-main>small{font-size:6px;letter-spacing:.5px}
+ .dasnet-home .dh-preview-main h3{font-size:15px;margin:8px 0 3px}
+ .dasnet-home .dh-preview-main>p{font-size:8px;margin-bottom:10px}
+ .dasnet-home .dh-preview-card{padding:8px}
+ .dasnet-home .dh-preview-card>span{font-size:8px;gap:5px}
+ .dasnet-home .dh-preview-card>span svg{width:13px;height:13px}
+ .dasnet-home .dh-preview-input{font-size:7px;padding:6px;margin:8px 0}
+ .dasnet-home .dh-preview-input i{font-size:7px;padding:6px}
+ .dasnet-home .dh-preview-success{font-size:7px;padding:6px;gap:4px}
+ .dasnet-home .dh-preview-success svg{width:11px;height:11px}
+ .dasnet-home .dh-features{padding:38px 16px}
+ .dasnet-home .dh-features h2{font-size:29px;line-height:1.1}
+ .dasnet-home .dh-feature-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:20px}
+ .dasnet-home .dh-feature-grid article{padding:13px 11px;border-radius:10px}
+ .dasnet-home .dh-feature-grid h3{font-size:11px;line-height:1.25}
+ .dasnet-home .dh-feature-grid p{font-size:9px;line-height:1.45}
+ .dasnet-home .dh-final{padding:24px 18px;gap:13px}
+ .dasnet-home .dh-final h2{font-size:28px}
+ .dasnet-home .dh-final p{font-size:10px}
+ .dasnet-home .dh-footer{padding:15px 16px}
+}
+@media(max-width:370px){
+ .dasnet-home .dh-hero h1{font-size:38px}
+ .dasnet-home .dh-hero-actions{grid-template-columns:1fr}
+ .dasnet-home .dh-trust span{font-size:7px}
+ .dasnet-home .dh-steps article{min-height:140px;padding-inline:5px}
+ .dasnet-home .dh-steps h3{font-size:10px}
+ .dasnet-home .dh-domain-preview{grid-template-columns:72px minmax(0,1fr)}
+}
