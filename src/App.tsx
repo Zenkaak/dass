@@ -56,9 +56,9 @@ function LandingPage() {
  return <main className="dasnet-home d2-home">
   <header className="d2-nav">
    <a className="d2-brand" href="/"><span><ShoppingBag size={22}/></span>DASNET</a>
-   <nav><a href="#platform">Platform</a><a href="#features">Features</a><a href="#domains">Custom domains</a><a href="#how">How it works</a></nav>
+   <nav><a href="#platform">Platform</a><a href="#features">Features</a><a href="#domains">Custom domains</a><a href="#how">How it works</a><a href="#trust">Trust &amp; Safety</a><a href="#faqs">FAQs</a></nav>
    <div className="d2-nav-actions"><a href="/login">Log in</a><a className="d2-button d2-button-small" href="/signup">Create your shop <ArrowRight size={16}/></a></div>
-   <details className="d2-menu"><summary aria-label="Open menu"><Menu/></summary><div><a href="#platform">Platform</a><a href="#features">Features</a><a href="#domains">Custom domains</a><a href="#how">How it works</a><a href="/login">Log in</a><a href="/signup">Create your shop</a></div></details>
+   <details className="d2-menu"><summary aria-label="Open menu"><Menu/></summary><div><a href="#platform">Platform</a><a href="#features">Features</a><a href="#domains">Custom domains</a><a href="#how">How it works</a><a href="#trust">Trust &amp; Safety</a><a href="#faqs">FAQs</a><a href="/login">Log in</a><a href="/signup">Create your shop</a></div></details>
   </header>
   <section className="d2-hero" id="platform">
    <div className="d2-hero-copy"><div className="d2-kicker"><i/> BUILT FOR BUSINESSES IN KENYA</div>
@@ -87,8 +87,29 @@ function LandingPage() {
    <div className="d2-domain-ui"><div className="d2-domain-ui-head"><span><Globe/> Domain management</span><b><i/> Seller dashboard</b></div><div className="d2-domain-field"><div><small>YOUR DOMAIN</small><strong>www.yourbusiness.co.ke</strong></div><span>Connect</span></div><div className="d2-dns-title">DNS SETUP <small>Example layout — records supplied for your domain</small></div><div className="d2-dns-table"><div><b>TYPE</b><b>HOST</b><b>VALUE</b></div><div><span>A</span><span>@</span><span>Provided in dashboard</span></div><div><span>CNAME</span><span>www</span><span>Provided in dashboard</span></div></div><div className="d2-domain-status"><ShieldCheck/> Check connection status in your dashboard</div></div>
   </section>
   <section className="d2-how" id="how"><div className="d2-kicker">GET YOUR BUSINESS ONLINE</div><h2>Three steps to your <em>own online shop.</em></h2><div className="d2-steps"><article><span>01</span><UserRound/><h3>Create your account</h3><p>Register with DASNET to get started.</p></article><article><span>02</span><Store/><h3>Set up your shop</h3><p>Add your shop details, products and brand.</p></article><article><span>03</span><TrendingUp/><h3>Start selling</h3><p>Share your shop and manage orders as they come in.</p></article></div></section>
+  <section className="d2-trust" id="trust">
+   <div className="d2-trust-intro"><div className="d2-kicker">BUILT WITH RESPONSIBILITY</div><h2>Trust matters when <em>business happens online.</em></h2><p>DASNET gives sellers and buyers tools to make shop activity clearer, safer and easier to manage.</p></div>
+   <div className="d2-trust-grid">
+    <article><span><ShieldCheck/></span><div><h3>Clear payment status</h3><p>Orders move to confirmed only after payment is verified. Buyers can see when a payment is still awaiting confirmation.</p></div></article>
+    <article><span><MessageSquare/></span><div><h3>Report a problem</h3><p>Buyers and sellers can raise order-related complaints and share supporting details for review.</p></div></article>
+    <article><span><FileText/></span><div><h3>Shop policies in view</h3><p>Sellers can publish their own delivery, returns and privacy information so customers know the shop's terms.</p></div></article>
+    <article><span><LockKeyhole/></span><div><h3>Account controls</h3><p>Manage your shop and account through your seller dashboard. Keep your sign-in details private and secure.</p></div></article>
+   </div>
+   <div className="d2-trust-note"><ShieldCheck/><p><b>Need help with an order?</b> Use the reports and support options available in your account, and include the order reference so the issue can be traced.</p><a href="mailto:support@dasnet.co.ke">Contact support <ArrowRight size={15}/></a></div>
+  </section>
+  <section className="d2-faq" id="faqs"><div className="d2-faq-heading"><div className="d2-kicker">GOOD QUESTIONS. CLEAR ANSWERS.</div><h2>Frequently asked <em>questions.</em></h2><p>Here are a few things sellers usually want to know before getting started.</p></div>
+   <div className="d2-faq-list">
+    <details><summary>How do I create a shop on DASNET?<span>+</span></summary><p>Create a DASNET account, complete your shop setup, then add your products and shop details from the seller dashboard.</p></details>
+    <details><summary>Can I use my own domain name?<span>+</span></summary><p>Yes. If you own a domain, you can add it from your seller dashboard and follow the DNS instructions shown there. The domain must be verified before it can serve your shop.</p></details>
+    <details><summary>Which payment methods can my customers use?<span>+</span></summary><p>Payment options depend on the methods enabled for your shop. M-PESA and other configured methods may be offered at checkout.</p></details>
+    <details><summary>When is an order marked as paid?<span>+</span></summary><p>An order should only be treated as paid after the payment provider's confirmation has been verified. A payment that is still processing remains awaiting confirmation.</p></details>
+    <details><summary>Can I manage products and orders myself?<span>+</span></summary><p>Yes. Your seller dashboard brings together product management, orders, shop settings and other available selling tools.</p></details>
+    <details><summary>What if a buyer or seller has a problem?<span>+</span></summary><p>Use the reports or complaints workflow in your account to raise an issue, add the relevant order reference and provide supporting information.</p></details>
+    <details><summary>How much does DASNET cost?<span>+</span></summary><p>For current plan and fee information, contact DASNET support before you begin selling. Any applicable charges should be made clear before you commit.</p></details>
+   </div>
+  </section>
   <section className="d2-final"><div><div className="d2-kicker">READY WHEN YOU ARE</div><h2>Give your business<br/>a place online.</h2><p>Create your shop and start building your online presence.</p></div><a className="d2-button" href="/signup">Create your shop <ArrowRight/></a></section>
-  <footer className="d2-footer"><a className="d2-brand" href="/"><span><ShoppingBag size={20}/></span>DASNET</a><small>Powered by DASMARKET</small><div><a href="#features">Features</a><a href="#domains">Domains</a><a href="/login">Log in</a><a href="mailto:support@dasnet.co.ke">Support</a></div><small>© DASNET. All rights reserved.</small></footer>
+  <footer className="d2-footer"><a className="d2-brand" href="/"><span><ShoppingBag size={20}/></span>DASNET</a><small>Powered by DASMARKET</small><div><a href="#features">Features</a><a href="#domains">Domains</a><a href="#trust">Trust &amp; Safety</a><a href="#faqs">FAQs</a><a href="/login">Log in</a><a href="mailto:support@dasnet.co.ke">Support</a></div><small>© DASNET. All rights reserved.</small></footer>
  </main>;
 }
 
