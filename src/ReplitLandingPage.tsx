@@ -3,18 +3,12 @@ import './replit-landing.css';
 import { ArrowDown, ArrowRight, ArrowUp, Check, CheckCircle2, CircleHelp, Globe2, Menu, Plus, ShoppingBag, Sparkles, Store, WandSparkles, X, ShieldCheck, MessageCircle, FileText } from 'lucide-react';
 
 const faqs = [
-  { q: 'How do I create my shop?', a: 'Create a seller account, choose a shop name, and follow the setup steps in your dashboard. You can add products and prepare your storefront before sharing it with customers.' },
-  { q: 'Do I need a website or technical experience?', a: 'No. DASMARKET provides a storefront and seller dashboard. You can manage your products and orders without building a website from scratch.' },
-  { q: 'What web address does my shop get?', a: 'Your shop starts with its own address under dasmarket.co.ke, such as yourshop.dasmarket.co.ke. You can share that link with customers.' },
-  { q: 'Can I connect a domain I already own?', a: 'Yes. Open Domains in your seller dashboard, add the domain you own, and follow the DNS instructions shown there. Your existing DASMARKET address remains available while you set up the custom domain.' },
-  { q: 'Can I manage my shop from my phone?', a: 'Yes. The seller workspace is designed to be usable on mobile as well as desktop, so you can check orders and manage your shop while away from your computer.' },
-  { q: 'Where do payments from my sales go?', a: 'Payments from completed sales are sent directly to the payout destination you configure for your shop, such as your Till, Paybill or bank account. Keep your payout details up to date in your seller settings.' },
-  { q: 'How do customers pay?', a: 'Available payment methods are shown during checkout for each shop. Customers should follow the checkout instructions and wait for payment confirmation before treating an order as paid.' },
-  { q: 'When is an order marked as paid?', a: 'An order should only be treated as paid after the payment status has been confirmed. A payment prompt or pending message by itself is not proof of a successful payment.' },
-  { q: 'Can I set delivery, returns and privacy policies?', a: 'Sellers can publish shop policies so customers can review important information before ordering. Keep delivery timelines, return conditions and contact details clear and current.' },
-  { q: 'What if there is a problem with an order?', a: 'Buyers and sellers can use the order reporting and support process to raise an issue and share relevant details. Keep your order reference and any supporting evidence available.' },
-  { q: 'How do I keep my account secure?', a: 'Use a unique password, keep your sign-in details private, and sign out on shared devices. Never share a one-time verification code with someone who contacts you unexpectedly.' },
-  { q: 'How do I contact DASMARKET support?', a: 'Use the support contact options published on the DASMARKET website or inside your account. For an order issue, include the order reference so the team can locate the right transaction.' },
+  { q: 'How do I create a shop?', a: 'Create a seller account, choose a shop name and follow the setup steps in your dashboard. Add your products and prepare your storefront before sharing it with customers.' },
+  { q: 'Do I need technical experience?', a: 'No. DASMARKET provides the storefront and seller workspace. You can manage products and orders without building a website from scratch.' },
+  { q: 'Can I use my own domain?', a: 'Yes. Your shop starts with a DASMARKET subdomain. You can connect a domain you own from the seller dashboard; your original shop address remains available.' },
+  { q: 'Where do payments from my sales go?', a: 'Configure your shop payout destination in seller settings, such as your Till, Paybill or bank account. Keep those details current and review transaction status before fulfilment.' },
+  { q: 'Can customers see my delivery and return policies?', a: 'Yes. Add your shop policies so customers can review delivery, returns and privacy information before placing an order.' },
+  { q: 'What if there is a problem with an order?', a: 'Buyers and sellers can use the order reporting process to raise an issue and share relevant details. Include the order reference and supporting evidence.' }
 ];
 
 function Brand({ footer = false }: { footer?: boolean }) {
@@ -68,7 +62,7 @@ export function ReplitLandingPage() {
           <div className={`rm-nav-links${menuOpen ? " rm-open" : ""}`}>
             <a href="#how-it-works" onClick={closeMenu} data-testid="link-how-it-works">How it works</a>
             <a href="#your-brand" onClick={closeMenu} data-testid="link-your-brand">Your brand</a>
-            <a href="#domains" onClick={closeMenu} data-testid="link-domains">Domains</a><a href="#seller-dashboard" onClick={closeMenu}>Dashboard</a><a href="#trust-safety" onClick={closeMenu}>Trust &amp; Safety</a>
+            <a href="#domains" onClick={closeMenu} data-testid="link-domains">Domains</a><a href="#seller-dashboard" onClick={closeMenu}>Seller tools</a><a href="#trust-safety" onClick={closeMenu}>Trust &amp; Safety</a>
             <a href="#faq" onClick={closeMenu} data-testid="link-faq">FAQ</a>
           </div>
           <div className="rm-nav-actions">
@@ -83,12 +77,12 @@ export function ReplitLandingPage() {
           <div className="rm-container rm-hero-grid">
             <div className="rm-hero-copy">
               <div className="rm-hero-kicker rm-eyebrow rm-reveal"><span className="rm-kicker-dot" /> A home for the things you make</div>
-              <h1 className="rm-display rm-reveal rm-reveal-delay" id="hero-title">Your shop,<br />all in one place.</h1>
-              <p className="rm-reveal rm-reveal-delay-2">Bring your products together in a storefront made for your brand. Every shop gets its own shareable DASMARKET address from day one.</p>
+              <h1 className="rm-display rm-reveal rm-reveal-delay" id="hero-title">Your online shop.<br />Managed in one place.</h1>
+              <p className="rm-reveal rm-reveal-delay-2">Launch a branded online store, manage orders and products, and connect your own domain—all from one seller account.</p>
               <ul className="rm-hero-benefits rm-reveal rm-reveal-delay-2">
-                <li><CheckCircle2 size={16} /> Your own branded storefront</li>
-                <li><CheckCircle2 size={16} /> A DASMARKET subdomain, ready to share</li>
-                <li><CheckCircle2 size={16} /> Connect a custom domain from settings</li>
+                <li><CheckCircle2 size={16} /> A branded online storefront</li>
+                <li><CheckCircle2 size={16} /> A shop address included</li>
+                <li><CheckCircle2 size={16} /> Optional custom domain connection</li>
               </ul>
               <div className="rm-hero-ctas rm-reveal rm-reveal-delay-2">
                 <a className="rm-button rm-button-coral" href="/signup" data-testid="button-start-shop">Create your shop <ArrowRight size={15} /></a>
@@ -101,30 +95,30 @@ export function ReplitLandingPage() {
         <section className="rm-section" id="how-it-works">
           <div className="rm-container">
             <div className="rm-section-intro">
-              <div><div className="rm-eyebrow rm-section-label">01 / Getting started</div><h2>From “I’ve got an idea” to “it’s open.”</h2></div>
-              <p>No web developer, launch checklist, or perfect plan required. Just bring what you make. We’ll help you put it on the map.</p>
+              <div><div className="rm-eyebrow rm-section-label">01 / Getting started</div><h2>Launch your online shop in three steps.</h2></div>
+              <p>Set up your shop, add your catalogue and publish your store. You can manage it without building a website from scratch.</p>
             </div>
             <div className="rm-steps-grid">
-              <article className="rm-step"><div className="rm-step-num">01</div><div><div className="rm-step-icon"><Store size={19} /></div><h3>Give your shop a name</h3><p>Claim your own little corner of the internet. Your shareable DASMARKET address is ready with your shop.</p></div></article>
-              <article className="rm-step"><div className="rm-step-num">02</div><div><div className="rm-step-icon"><ShoppingBag size={19} /></div><h3>Bring your best things</h3><p>Add products, tell people what makes them special, and arrange your storefront to feel like you.</p></div></article>
-              <article className="rm-step"><div className="rm-step-num">03</div><div><div className="rm-step-icon"><Sparkles size={19} /></div><h3>Open the doors</h3><p>Share your shop with the world. Keep building your brand as your customers and ideas grow.</p></div></article>
+              <article className="rm-step"><div className="rm-step-num">01</div><div><div className="rm-step-icon"><Store size={19} /></div><h3>Create your seller account</h3><p>Choose your shop name and get a shareable DASMARKET web address.</p></div></article>
+              <article className="rm-step"><div className="rm-step-num">02</div><div><div className="rm-step-icon"><ShoppingBag size={19} /></div><h3>Add your products</h3><p>Upload product details, images, prices and stock information.</p></div></article>
+              <article className="rm-step"><div className="rm-step-num">03</div><div><div className="rm-step-icon"><Sparkles size={19} /></div><h3>Publish your storefront</h3><p>Publish your shop and share its link with customers.</p></div></article>
             </div>
-            <div className="rm-steps-foot"><span>A small start is still a start.</span><a href="/signup" data-testid="link-start-from-steps">Start setting up <ArrowRight size={14} /></a></div>
+            <div className="rm-steps-foot"><span>Your shop can be updated as your business grows.</span><a href="/signup" data-testid="link-start-from-steps">Create your shop <ArrowRight size={14} /></a></div>
           </div>
         </section>
 
         <section className="rm-section rm-brand-section" id="your-brand">
           <div className="rm-container">
             <div className="rm-section-intro">
-              <div><div className="rm-eyebrow rm-section-label">02 / Your storefront</div><h2>A shop that feels like your brand.</h2></div>
-              <p>Give your products a clear, welcoming home online. Start with the essentials and shape your storefront as your business grows.</p>
+              <div><div className="rm-eyebrow rm-section-label">02 / Your storefront</div><h2>A storefront for your business.</h2></div>
+              <p>Present your products under your own shop name, with a dedicated address customers can visit and share.</p>
             </div>
             <div className="rm-storefront-showcase">
               <div className="rm-storefront-copy">
-                <div className="rm-eyebrow">Made for independent sellers</div>
-                <h3>Make room for the good things you make.</h3>
-                <p>Your shop starts with a name and a shareable address. Add your products, tell your story, and make the storefront your own.</p>
-                <a className="rm-button rm-button-dark" href="#domains" data-testid="link-storefront-domains">Explore domain options <ArrowRight size={14} /></a>
+                <div className="rm-eyebrow">YOUR STOREFRONT</div>
+                <h3>Your products. Your brand. Your store.</h3>
+                <p>Build a product catalogue and publish a storefront that carries your business name and identity.</p>
+                <a className="rm-button rm-button-dark" href="#domains" data-testid="link-storefront-domains">View domain options <ArrowRight size={14} /></a>
               </div>
               <div className="rm-storefront-preview" aria-label="Example of a DASMARKET seller storefront">
                 <div className="rm-shop-window">
@@ -152,15 +146,15 @@ export function ReplitLandingPage() {
           <div className="rm-container rm-domain-layout">
             <div className="rm-domain-copy">
               <div className="rm-eyebrow rm-section-label">03 / Your address, your pace</div>
-              <h2>Your shop deserves an address of its own.</h2>
-              <p>Open with a ready-to-share DASMARKET address. When your brand is ready for its own domain, connect it from your seller dashboard—without having to build a website or start over.</p>
+              <h2>A dedicated web address for your shop.</h2>
+              <p>Every shop starts with a DASMARKET subdomain. You can connect a domain you already own from your seller dashboard whenever you’re ready.</p>
               <div className="rm-domain-journey">
-                <div className="rm-domain-stage"><span className="rm-domain-stage-no">01</span><div><small>START HERE</small><strong>yourshop.dasmarket.co.ke</strong><p>Your shop link is ready as part of setup.</p></div><span className="rm-domain-stage-tag">Included</span></div>
+                <div className="rm-domain-stage"><span className="rm-domain-stage-no">01</span><div><small>START HERE</small><strong>yourshop.dasmarket.co.ke</strong><p>Included when you create your shop.</p></div><span className="rm-domain-stage-tag">Included</span></div>
                 <div className="rm-domain-journey-line"><span /></div>
-                <div className="rm-domain-stage"><span className="rm-domain-stage-no">02</span><div><small>WHEN YOU’RE READY</small><strong>www.yourbrand.co.ke</strong><p>Connect a domain you already own in your dashboard.</p></div><span className="rm-domain-stage-tag">Your choice</span></div>
+                <div className="rm-domain-stage"><span className="rm-domain-stage-no">02</span><div><small>WHEN YOU’RE READY</small><strong>www.yourbrand.co.ke</strong><p>Connect a domain you own from your seller dashboard.</p></div><span className="rm-domain-stage-tag">Your choice</span></div>
               </div>
               <a className="rm-button rm-button-dark" href="/signup" data-testid="button-domain-start">Create your shop <ArrowRight size={14} /></a>
-              <p className="rm-domain-footnote">Keep your original DASMARKET link while your custom domain is being connected.</p>
+              <p className="rm-domain-footnote">Your DASMARKET address remains available when you connect a custom domain.</p>
             </div>
             <div className="rm-domain-art" aria-label="Your shop address options">
               <div className="rm-address-card">
@@ -184,8 +178,8 @@ export function ReplitLandingPage() {
         <section className="rm-section rm-tools-section" id="seller-dashboard">
           <div className="rm-container">
             <div className="rm-section-intro">
-              <div><div className="rm-eyebrow rm-section-label">04 / Run your shop</div><h2>The tools behind your storefront.</h2></div>
-              <p>Manage the work that happens after your shop goes live—from adding products to fulfilling orders and keeping customers informed.</p>
+              <div><div className="rm-eyebrow rm-section-label">04 / Run your shop</div><h2>Manage your shop from one workspace.</h2></div>
+              <p>Keep essential shop operations together: catalogue, orders, payouts, customer support and store settings.</p>
             </div>
             <div className="rm-tools-grid">
               <article><span>01</span><div><ShoppingBag size={20}/><h3>Products &amp; stock</h3><p>Add products, update prices, organise categories and keep stock information current.</p></div></article>
@@ -195,23 +189,23 @@ export function ReplitLandingPage() {
               <article><span>05</span><div><MessageCircle size={20}/><h3>Customer support</h3><p>Manage customer questions and use the order-reporting process when something goes wrong.</p></div></article>
               <article><span>06</span><div><ShieldCheck size={20}/><h3>Shop policies</h3><p>Publish clear delivery, returns and privacy information for customers before checkout.</p></div></article>
             </div>
-            <div className="rm-tools-note"><CheckCircle2 size={17}/><p><b>One seller account, one shop workspace.</b> Keep your shop operations together and manage them from desktop or mobile.</p></div>
+            <div className="rm-tools-note"><CheckCircle2 size={17}/><p><b>One seller account. One shop workspace.</b> Manage your shop from desktop or mobile.</p></div>
           </div>
         </section>
 
         <section className="rm-trust-section" id="trust-safety">
           <div className="rm-container">
             <div className="rm-trust-intro">
-              <div><div className="rm-eyebrow rm-section-label">06 / Trust &amp; safety</div><h2>Know what happens.<br/>Know how you’re protected.</h2></div>
-              <p>Clear payment records, shop information and a way to raise concerns help everyone trade with confidence. These are the practical checks to make before and after an order.</p>
+              <div><div className="rm-eyebrow rm-section-label">06 / Trust &amp; safety</div><h2>Clear information. Safer transactions.</h2></div>
+              <p>Know how payments are confirmed, where to find shop policies and how to report an order issue.</p>
             </div>
             <div className="rm-trust-list">
-              <article className="rm-trust-row"><span className="rm-trust-number">01</span><span className="rm-trust-row-icon"><ShieldCheck size={22}/></span><div className="rm-trust-row-title"><small>PAYMENTS</small><h3>Only confirmed payments count.</h3></div><p>A payment prompt is not proof of payment. Check the confirmed transaction and order status before handing over goods or arranging delivery.</p></article>
-              <article className="rm-trust-row"><span className="rm-trust-number">02</span><span className="rm-trust-row-icon"><MessageCircle size={22}/></span><div className="rm-trust-row-title"><small>ORDER SUPPORT</small><h3>There’s a clear way to report a problem.</h3></div><p>Buyers and sellers can raise an order report, share the order reference and provide supporting information for review.</p></article>
-              <article className="rm-trust-row"><span className="rm-trust-number">03</span><span className="rm-trust-row-icon"><FileText size={22}/></span><div className="rm-trust-row-title"><small>SHOP INFORMATION</small><h3>Check the shop’s terms first.</h3></div><p>Review delivery charges, timelines, returns and privacy information before you place an order. Sellers should keep these details current.</p></article>
-              <article className="rm-trust-row"><span className="rm-trust-number">04</span><span className="rm-trust-row-icon"><CheckCircle2 size={22}/></span><div className="rm-trust-row-title"><small>ACCOUNT SECURITY</small><h3>Keep your account in your hands.</h3></div><p>Use a unique password. Never share your password, M-PESA PIN or one-time verification code with anyone.</p></article>
+              <article className="rm-trust-row"><span className="rm-trust-number">01</span><span className="rm-trust-row-icon"><ShieldCheck size={22}/></span><div className="rm-trust-row-title"><small>PAYMENTS</small><h3>Verify payment before fulfilment.</h3></div><p>A payment prompt is not proof of payment. Check the confirmed transaction and order status before handing over goods or arranging delivery.</p></article>
+              <article className="rm-trust-row"><span className="rm-trust-number">02</span><span className="rm-trust-row-icon"><MessageCircle size={22}/></span><div className="rm-trust-row-title"><small>ORDER SUPPORT</small><h3>Order issues have a reporting process.</h3></div><p>Buyers and sellers can raise an order report, share the order reference and provide supporting information for review.</p></article>
+              <article className="rm-trust-row"><span className="rm-trust-number">03</span><span className="rm-trust-row-icon"><FileText size={22}/></span><div className="rm-trust-row-title"><small>SHOP INFORMATION</small><h3>Review shop policies before ordering.</h3></div><p>Review delivery charges, timelines, returns and privacy information before you place an order. Sellers should keep these details current.</p></article>
+              <article className="rm-trust-row"><span className="rm-trust-number">04</span><span className="rm-trust-row-icon"><CheckCircle2 size={22}/></span><div className="rm-trust-row-title"><small>ACCOUNT SECURITY</small><h3>Protect your account details.</h3></div><p>Use a unique password. Never share your password, M-PESA PIN or one-time verification code with anyone.</p></article>
             </div>
-            <div className="rm-trust-reminder"><ShieldCheck size={20}/><p><b>A quick safety reminder</b><span>DASMARKET support will never ask you to disclose your password, M-PESA PIN or OTP. If a message feels suspicious, stop and contact us through the official support channel.</span></p></div>
+            <div className="rm-trust-reminder"><ShieldCheck size={20}/><p><b>Security reminder</b><span>Never share your password, M-PESA PIN or one-time verification code. Contact support through the official DASMARKET channels if a message seems suspicious.</span></p></div>
           </div>
         </section>
 
@@ -219,9 +213,9 @@ export function ReplitLandingPage() {
           <div className="rm-container rm-faq-layout">
             <div className="rm-faq-heading">
               <div className="rm-eyebrow rm-section-label">07 / Good questions</div>
-              <h2>Before you open the door.</h2>
-              <p>Starting something new comes with questions. Here are a few of the things sellers ask us.</p>
-              <a href="/signup" data-testid="link-faq-help"><CircleHelp size={15} /> Still wondering? Start here.</a>
+              <h2>Frequently asked questions</h2>
+              <p>Answers to common questions about setting up and operating a DASMARKET shop.</p>
+              <a href="/signup" data-testid="link-faq-help"><CircleHelp size={15} /> Need help? Contact support.</a>
             </div>
             <div className="rm-faq-list">
               {faqs.map((faq, index) => (
@@ -239,9 +233,9 @@ export function ReplitLandingPage() {
         <section className="rm-final-cta" id="start">
           <div className="rm-container rm-cta-inner">
             <div>
-              <div className="rm-eyebrow">Your next chapter is yours to make</div>
-              <h2>Make a little room for what’s next.</h2>
-              <p>Your shop can be up and taking shape today. Start with your name and your idea.</p>
+              <div className="rm-eyebrow">READY TO GET STARTED</div>
+              <h2>Set up your shop on DASMARKET.</h2>
+              <p>Create your seller account and begin setting up your online store.</p>
             </div>
             <div className="rm-cta-actions"><a className="rm-button rm-button-coral" href="/signup">Create your shop <ArrowRight size={15}/></a><a className="rm-button rm-button-outline" href="/login">Already have an account? Log in</a></div>
           </div>
@@ -253,7 +247,7 @@ export function ReplitLandingPage() {
       <footer className="rm-footer">
         <div className="rm-container rm-footer-inner">
           <Brand footer />
-          <div className="rm-footer-copy">An independent shop starts with an idea. © 2026 DASMARKET</div>
+          <div className="rm-footer-copy">© 2026 DASMARKET. All rights reserved.</div>
           <div className="rm-footer-links"><a href="#how-it-works" data-testid="link-footer-how">How it works</a><a href="#domains" data-testid="link-footer-domains">Domains</a><a href="#trust-safety">Trust &amp; Safety</a><a href="#faq" data-testid="link-footer-faq">FAQ</a></div>
           <a className="rm-back-top" href="#top" data-testid="link-back-to-top">Back to top <ArrowUp size={12} /></a>
         </div>
