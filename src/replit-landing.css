@@ -1096,3 +1096,8 @@
 .rm-nav .rm-brand{gap:11px;color:#fff;font-family:var(--app-font-display);font-size:20px;font-weight:850;letter-spacing:-.055em}
 .rm-nav .rm-brand-mark{width:34px;height:34px;display:grid;place-items:center;flex:none;border-radius:11px;background:#ff781b;color:#fff;font:800 21px/1 var(--app-font-display);transform:none;box-shadow:0 2px 5px rgba(15,28,44,.14)}
 .rm-nav-actions{gap:0}
+
+
+/* Slightly reduce the homepage hero headline size for a calmer balance. */
+.rm-hero h1 { font-size:clamp(50px,5.7vw,78px); }
+@media(max-width:680px){ .rm-hero h1 { font-size:clamp(43px,10.5vw,58px); } }
