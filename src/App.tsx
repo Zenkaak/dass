@@ -67,16 +67,37 @@ function LandingPage() {
     <div className="d2-hero-actions"><a className="d2-button" href="/signup">Create your shop <ArrowRight size={18}/></a><a className="d2-text-link" href="#how"><span>▶</span> See how it works</a></div>
     <div className="d2-proof"><span><ShieldCheck/> Secure checkout</span><span><WalletCards/> M-PESA ready</span><span><Headphones/> Seller support</span></div>
    </div>
-   <div className="d2-product" aria-label="Illustrative DASMARKET seller dashboard preview">
-    <div className="d2-product-top"><div className="d2-product-brand"><span><ShoppingBag size={14}/></span> DASMARKET <small>SELLER WORKSPACE</small></div><span className="d2-online"><i/> Store active</span></div>
-    <div className="d2-product-body"><aside className="d2-side"><b><LayoutDashboard/> Overview</b><span><Package/> Products</span><span><ShoppingCart/> Orders</span><span><Wallet/> Payments</span><span><Globe/> Domains</span><span><Settings/> Settings</span></aside>
-     <div className="d2-workspace"><div className="d2-workspace-head"><div><small>YOUR BUSINESS</small><h3>Shop overview</h3></div><span>Last 7 days⌄</span></div>
-      <div className="d2-metrics"><article><small>Total sales</small><b>KES —</b><em>Sales summary</em></article><article><small>Orders</small><b>—</b><em>Order activity</em></article><article><small>Products</small><b>—</b><em>Your catalogue</em></article></div>
-      <div className="d2-chart"><div className="d2-chart-head"><b>Sales activity</b><small>Dashboard preview</small></div><div className="d2-chart-bars"><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/></div><div className="d2-chart-axis"><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span></div></div>
-      <div className="d2-bottom-row"><div><b>Recent orders</b><span><i/> Order management preview</span></div><div><b>Store status</b><span className="d2-green"><i/> Ready to sell</span></div></div>
+   <div className="d2-demo-stage" aria-label="Seller dashboard demonstration with sample Kenyan shop data">
+    <div className="d2-demo-desktop">
+     <div className="d2-product-top"><div className="d2-product-brand"><span><ShoppingBag size={14}/></span> DASMARKET <small>SELLER WORKSPACE</small></div><span className="d2-online"><i/> DEMO STORE</span></div>
+     <div className="d2-product-body">
+      <aside className="d2-side"><b><LayoutDashboard/> Overview</b><span><Package/> Products</span><span><ShoppingCart/> Orders</span><span><Wallet/> Payments</span><span><Globe/> Domains</span><span><TicketPercent/> Coupons</span><span><Settings/> Settings</span></aside>
+      <div className="d2-workspace">
+       <div className="d2-demo-welcome"><div><small>MONDAY, 9 NOVEMBER 2026 · KINGSLEY HOME &amp; LIVING</small><h3>Good morning, James 👋</h3><p>Here’s what’s happening in your shop.</p></div><span className="d2-demo-period">Last 7 days⌄</span></div>
+       <div className="d2-metrics d2-demo-metrics"><article><small>Total sales</small><b>KES 248,650</b><em className="d2-demo-up">↗ 18.6% vs last week</em></article><article><small>Orders</small><b>126</b><em className="d2-demo-up">↗ 12 new today</em></article><article><small>Products</small><b>84</b><em>6 low in stock</em></article><article><small>Pending fulfilment</small><b>18</b><em>Needs attention</em></article></div>
+       <div className="d2-demo-middle">
+        <div className="d2-chart d2-demo-chart"><div className="d2-chart-head"><b>Sales overview</b><small>KES · 7 days</small></div><div className="d2-demo-chart-total">KES 248,650 <span>+18.6%</span></div><div className="d2-chart-bars"><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/></div><div className="d2-chart-axis"><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span></div></div>
+        <div className="d2-demo-best"><div className="d2-demo-panel-head"><b>Top products</b><small>View all</small></div>
+         <div className="d2-demo-product-row"><img src="https://images.unsplash.com/photo-1540574163026-643ea20ade25?w=100&h=100&fit=crop" alt="Modern lounge chair"/><span><b>Accent lounge chair</b><small>Living room · 32 sold</small></span><strong>KES 8,500</strong></div>
+         <div className="d2-demo-product-row"><img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&h=100&fit=crop" alt="Minimal wristwatch"/><span><b>Classic wristwatch</b><small>Accessories · 24 sold</small></span><strong>KES 3,200</strong></div>
+         <div className="d2-demo-product-row"><img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100&h=100&fit=crop" alt="Wireless headphones"/><span><b>Wireless headphones</b><small>Electronics · 19 sold</small></span><strong>KES 4,800</strong></div>
+        </div>
+       </div>
+       <div className="d2-demo-orders"><div className="d2-demo-panel-head"><b>Recent orders</b><small>See all orders →</small></div><div className="d2-demo-order-head"><span>ORDER</span><span>CUSTOMER</span><span>AMOUNT</span><span>STATUS</span></div>
+        <div className="d2-demo-order"><b>#DM-1048</b><span>Mary Wanjiku</span><strong>KES 12,700</strong><em className="paid">Paid</em></div>
+        <div className="d2-demo-order"><b>#DM-1047</b><span>Brian Otieno</span><strong>KES 8,500</strong><em className="processing">Processing</em></div>
+        <div className="d2-demo-order"><b>#DM-1046</b><span>Faith Njeri</span><strong>KES 3,200</strong><em className="paid">Paid</em></div>
+       </div>
+      </div>
      </div>
+     <div className="d2-product-foot"><span><ShieldCheck/> Your shop. Your brand.</span><span>Illustrative dashboard · Demo data</span></div>
     </div>
-    <div className="d2-product-foot"><span><ShieldCheck/> Your shop. Your brand.</span><span>Preview interface</span></div>
+    <div className="d2-demo-mobile">
+     <div className="d2-demo-phone-top"><span className="d2-demo-phone-dot"/><b>DASMARKET</b><span>☰</span></div>
+     <div className="d2-demo-phone-body"><small>KINGSLEY HOME &amp; LIVING</small><h4>Overview</h4><div className="d2-demo-phone-card"><span>Total sales</span><b>KES 248,650</b><em>↗ 18.6% this week</em></div><div className="d2-demo-phone-stats"><div><small>Orders</small><b>126</b></div><div><small>Products</small><b>84</b></div></div><div className="d2-demo-phone-chart"><b>Sales activity</b><div>{[34,52,43,68,49,86,72].map((h,i)=><i key={i} style={{height:h+'%'}}/>)}</div><small>MON　 TUE　 WED　 THU　 FRI　 SAT　 SUN</small></div><div className="d2-demo-phone-order"><b>Latest order</b><strong>#DM-1048</strong><span>Mary Wanjiku · KES 12,700</span><em>Paid</em></div></div>
+     <div className="d2-demo-phone-nav"><span>⌂<small>Home</small></span><span>▦<small>Products</small></span><span>▤<small>Orders</small></span><span>◉<small>Account</small></span></div>
+    </div>
+    <div className="d2-demo-caption"><span><i/> LIVE PRODUCT WALKTHROUGH</span><b>One dashboard. Your whole business.</b><small>All figures and customer details shown are illustrative demo data.</small></div>
    </div>
   </section>
   <section className="d2-strip"><span><WalletCards/><b>Local payments</b><small>M-PESA and more</small></span><span><Store/><b>Your own storefront</b><small>Your brand, your shop</small></span><span><Package/><b>Business tools</b><small>Products and orders</small></span><span><Headphones/><b>Local support</b><small>Help when you need it</small></span></section>
