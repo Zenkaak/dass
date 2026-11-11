@@ -257,6 +257,8 @@ export function ReplitLandingPage() {
         </section>
       </main>
 
+      <a className="rm-whatsapp-float" href="https://wa.me/254758884861?text=Hello%20DASMARKET%20support%2C%20I%20need%20some%20help." target="_blank" rel="noreferrer" aria-label="Chat with DASMARKET support on WhatsApp"><MessageCircle size={21}/><span>Chat with support</span></a>
+
       <footer className="rm-footer">
         <div className="rm-container rm-footer-inner">
           <Brand footer />
