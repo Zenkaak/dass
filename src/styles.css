@@ -6518,3 +6518,18 @@ button,input,select,textarea{font:inherit;}
  .dm-auth-v3 .dm-auth-v3-points{grid-template-columns:1fr}
  .dm-auth-v3 .dm-auth-v3-points>div{align-items:center}
 }
+
+
+/* Keep seller registration focused on the form */
+.dm-auth-v3 .dm-auth-v3-wrap{width:min(440px,100%);margin:64px auto 0}
+.dm-auth-v3 .dm-auth-v3-heading{margin:0 0 22px}
+.dm-auth-v3 .dm-auth-v3-heading h1{margin:0 0 7px;font-size:30px;letter-spacing:-.8px}
+.dm-auth-v3 .dm-auth-v3-heading p{font-size:13px}
+.dm-auth-v3 .dm-auth-v3-card{padding:25px 25px 21px;border-radius:12px;box-shadow:0 8px 30px #182a3b0a}
+.dm-auth-v3 .dm-auth-v3-footer{width:min(440px,100%);margin:22px auto 0}
+@media(max-width:680px){
+ .dm-auth-v3 .dm-auth-v3-wrap{width:100%;margin:38px auto 0}
+ .dm-auth-v3 .dm-auth-v3-heading h1{font-size:27px}
+ .dm-auth-v3 .dm-auth-v3-card{padding:20px 17px 17px}
+ .dm-auth-v3 .dm-auth-v3-footer{margin-top:20px}
+}
