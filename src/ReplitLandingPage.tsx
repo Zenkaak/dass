@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import './replit-landing.css';
-import { ArrowDown, ArrowRight, ArrowUp, Check, CheckCircle2, CircleHelp, Globe2, Menu, Plus, ShoppingBag, Sparkles, Store, X, ShieldCheck, MessageCircle, FileText } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUp, Check, CheckCircle2, CircleHelp, Globe2, Menu, Plus, ShoppingBag, Sparkles, Store, WandSparkles, X, ShieldCheck, MessageCircle, FileText } from 'lucide-react';
 
 const faqs = [
   {
