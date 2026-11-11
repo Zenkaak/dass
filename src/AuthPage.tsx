@@ -15,12 +15,19 @@ export function AuthPage({initial='signup'}:{initial?:Mode}) {
    <div className="dm-auth-v3-header-action">{mode==='login'?<>New here? <button type="button" onClick={()=>changeMode('signup')}>Create a shop</button></>:<>Already registered? <button type="button" onClick={()=>changeMode('login')}>Sign in</button></>}</div>
   </header>
   <section className="dm-auth-v3-wrap">
-   <div className="dm-auth-v3-heading">
-    <span className="dm-auth-v3-kicker"><i/> SELLER ACCOUNT</span>
-    <h1>{mode==='signup'?'Create your online shop':mode==='login'?'Sign in to DASMARKET':'Reset your password'}</h1>
-    <p>{mode==='signup'?'Set up your shop in a few simple steps.':mode==='login'?'Manage your products, orders and shop settings.':'Verify your phone number to reset your password.'}</p>
-   </div>
-   <section className="dm-auth-v3-card">
+   <div className="dm-auth-v3-layout">
+    <aside className="dm-auth-v3-intro">
+     <span className="dm-auth-v3-kicker"><i/> SELLER ACCOUNT</span>
+     <h1>{mode==='signup'?'Your business deserves its own online store.':mode==='login'?'Good to have you back.':'Let’s get you back in.'}</h1>
+     <p>{mode==='signup'?'Create your shop, add your products and start receiving orders — all in one place.':mode==='login'?'Pick up where you left off and keep your shop moving.':'Verify your phone number to reset your password.'}</p>
+     <div className="dm-auth-v3-points">
+      <div><span><Store size={17}/></span><section><b>Your own shop address</b><small>Share a store link that belongs to your brand.</small></section></div>
+      <div><span><CheckCircle2 size={17}/></span><section><b>Simple shop management</b><small>Manage products and orders from one dashboard.</small></section></div>
+      <div><span><ShieldCheck size={17}/></span><section><b>Phone-verified account</b><small>Keep your seller account protected.</small></section></div>
+     </div>
+     <div className="dm-auth-v3-note">No website-building experience needed.</div>
+    </aside>
+    <section className="dm-auth-v3-card">
     {mode==='signup'&&<div className="dm-auth-v3-progress"><div className="dm-auth-stepper"><div>{[1,2,3,4].map(n=><i key={n} className={n<=step?'active':''}/>)}</div><small>STEP {step} OF 4 <span>· {['Your details','Shop address','Phone number','Verify & secure'][step-1]}</span></small></div></div>}
     <form className="auth-form dm-auth-form dm-auth-v3-form" onSubmit={submit}>
      {mode==='signup'&&step===1&&<><label>Your full name<input value={name} onChange={e=>setName(e.target.value)} required maxLength={100} autoComplete="name" placeholder="Enter your full name"/></label><label>Business / shop name<input value={shop} onChange={e=>{setShop(e.target.value);if(!slug)setSlug(e.target.value.toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''))}} required maxLength={100} placeholder="e.g. Kingsley Stores"/></label></>}
@@ -35,7 +42,8 @@ export function AuthPage({initial='signup'}:{initial?:Mode}) {
     {mode==='login'&&<button className="dm-auth-forgot" type="button" onClick={()=>changeMode('reset')}>Forgot your password?</button>}
     {mode==='reset'&&<button className="dm-auth-forgot" type="button" onClick={()=>changeMode('login')}>Back to sign in</button>}
     <div className="dm-auth-v3-secure"><ShieldCheck size={16}/><span>Your account is protected with phone verification.</span></div>
-   </section>
+    </section>
+   </div>
    <footer className="dm-auth-v3-footer"><span>© {new Date().getFullYear()} DASMARKET</span><a href="mailto:support@dasnet.co.ke">Need help? Contact support</a></footer>
   </section>
  </main>;
