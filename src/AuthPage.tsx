@@ -39,3 +39,4 @@ export function AuthPage({initial='signup'}:{initial?:Mode}) {
    <footer className="dm-auth-v3-footer"><span>© {new Date().getFullYear()} DASMARKET</span><a href="mailto:support@dasnet.co.ke">Need help? Contact support</a></footer>
   </section>
  </main>;
+}
