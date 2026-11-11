@@ -4,6 +4,7 @@ import { Activity, ArrowRight, ArrowUpRight, Bell, Heart, Star, ChevronRight, Ci
 import { storefrontCategories } from './storefrontCatalog';
 import { marketplaceFaqs } from './marketplaceFaqs';
 import { AuthPage } from './AuthPage';
+import ReplitLandingPage from './ReplitLandingPage';
 
 
 const StorefrontFlow = lazy(()=>import('./StorefrontFlow').then(m=>({default:m.StorefrontFlow})));
@@ -52,87 +53,7 @@ function Brand() {
   return <a className="brand" href="/" aria-label="DASNET home"><span className="brand-mark">D</span><span>DASNET</span></a>;
 }
 
-function LandingPage() {
- return <main className="dasnet-home d2-home">
-  <header className="d2-nav">
-   <a className="d2-brand" href="/"><span><ShoppingBag size={22}/></span>DASMARKET</a>
-   <nav><a href="#platform">Platform</a><a href="#features">Features</a><a href="#domains">Custom domains</a><a href="#how">How it works</a><a href="#trust">Trust &amp; Safety</a><a href="#faqs">FAQs</a></nav>
-   <div className="d2-nav-actions"><a href="/login">Log in</a><a className="d2-button d2-button-small" href="/signup">Create your shop <ArrowRight size={16}/></a></div>
-   <details className="d2-menu"><summary aria-label="Open menu"><Menu/></summary><div><a href="#platform">Platform</a><a href="#features">Features</a><a href="#domains">Custom domains</a><a href="#how">How it works</a><a href="#trust">Trust &amp; Safety</a><a href="#faqs">FAQs</a><a href="/login">Log in</a><a href="/signup">Create your shop</a></div></details>
-  </header>
-  <section className="d2-hero" id="platform">
-   <div className="d2-hero-copy"><div className="d2-kicker"><i/> BUILT FOR BUSINESSES IN KENYA</div>
-    <h1>Your business deserves <em>its own online shop.</em></h1>
-    <p>Launch your store, manage orders and accept payments from one simple place.</p>
-    <div className="d2-hero-actions"><a className="d2-button" href="/signup">Create your shop <ArrowRight size={18}/></a><a className="d2-text-link" href="#how"><span>▶</span> See how it works</a></div>
-    <div className="d2-proof"><span><ShieldCheck/> Secure checkout</span><span><WalletCards/> M-PESA ready</span><span><Headphones/> Seller support</span></div>
-   </div>
-   <div className="d2-demo-stage" aria-label="Seller dashboard demonstration with sample Kenyan shop data">
-    <div className="d2-demo-desktop">
-     <div className="d2-product-top"><div className="d2-product-brand"><span><ShoppingBag size={14}/></span> DASMARKET <small>SELLER WORKSPACE</small></div><span className="d2-online"><i/> DEMO STORE</span></div>
-     <div className="d2-product-body">
-      <aside className="d2-side"><b><LayoutDashboard/> Overview</b><span><Package/> Products</span><span><ShoppingCart/> Orders</span><span><Wallet/> Payments</span><span><Globe/> Domains</span><span><TicketPercent/> Coupons</span><span><Settings/> Settings</span></aside>
-      <div className="d2-workspace">
-       <div className="d2-demo-welcome"><div><small>MONDAY, 9 NOVEMBER 2026 · KINGSLEY HOME &amp; LIVING</small><h3>Good morning, James 👋</h3><p>Here’s what’s happening in your shop.</p></div><span className="d2-demo-period">Last 7 days⌄</span></div>
-       <div className="d2-metrics d2-demo-metrics"><article><small>Total sales</small><b>KES 248,650</b><em className="d2-demo-up">↗ 18.6% vs last week</em></article><article><small>Orders</small><b>126</b><em className="d2-demo-up">↗ 12 new today</em></article><article><small>Products</small><b>84</b><em>6 low in stock</em></article><article><small>Pending fulfilment</small><b>18</b><em>Needs attention</em></article></div>
-       <div className="d2-demo-middle">
-        <div className="d2-chart d2-demo-chart"><div className="d2-chart-head"><b>Sales overview</b><small>KES · 7 days</small></div><div className="d2-demo-chart-total">KES 248,650 <span>+18.6%</span></div><div className="d2-chart-bars"><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/></div><div className="d2-chart-axis"><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span></div></div>
-        <div className="d2-demo-best"><div className="d2-demo-panel-head"><b>Top products</b><small>View all</small></div>
-         <div className="d2-demo-product-row"><img src="https://images.unsplash.com/photo-1540574163026-643ea20ade25?w=100&h=100&fit=crop" alt="Modern lounge chair"/><span><b>Accent lounge chair</b><small>Living room · 32 sold</small></span><strong>KES 8,500</strong></div>
-         <div className="d2-demo-product-row"><img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&h=100&fit=crop" alt="Minimal wristwatch"/><span><b>Classic wristwatch</b><small>Accessories · 24 sold</small></span><strong>KES 3,200</strong></div>
-         <div className="d2-demo-product-row"><img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100&h=100&fit=crop" alt="Wireless headphones"/><span><b>Wireless headphones</b><small>Electronics · 19 sold</small></span><strong>KES 4,800</strong></div>
-        </div>
-       </div>
-       <div className="d2-demo-orders"><div className="d2-demo-panel-head"><b>Recent orders</b><small>See all orders →</small></div><div className="d2-demo-order-head"><span>ORDER</span><span>CUSTOMER</span><span>AMOUNT</span><span>STATUS</span></div>
-        <div className="d2-demo-order"><b>#DM-1048</b><span>Mary Wanjiku</span><strong>KES 12,700</strong><em className="paid">Paid</em></div>
-        <div className="d2-demo-order"><b>#DM-1047</b><span>Brian Otieno</span><strong>KES 8,500</strong><em className="processing">Processing</em></div>
-        <div className="d2-demo-order"><b>#DM-1046</b><span>Faith Njeri</span><strong>KES 3,200</strong><em className="paid">Paid</em></div>
-       </div>
-      </div>
-     </div>
-     <div className="d2-product-foot"><span><ShieldCheck/> Your shop. Your brand.</span><span>Illustrative dashboard · Demo data</span></div>
-    </div>
-    <div className="d2-demo-mobile">
-     <div className="d2-demo-phone-top"><span className="d2-demo-phone-dot"/><b>DASMARKET</b><span>☰</span></div>
-     <div className="d2-demo-phone-body"><small>KINGSLEY HOME &amp; LIVING</small><h4>Overview</h4><div className="d2-demo-phone-card"><span>Total sales</span><b>KES 248,650</b><em>↗ 18.6% this week</em></div><div className="d2-demo-phone-stats"><div><small>Orders</small><b>126</b></div><div><small>Products</small><b>84</b></div></div><div className="d2-demo-phone-chart"><b>Sales activity</b><div>{[34,52,43,68,49,86,72].map((h,i)=><i key={i} style={{height:h+'%'}}/>)}</div><small>MON　 TUE　 WED　 THU　 FRI　 SAT　 SUN</small></div><div className="d2-demo-phone-order"><b>Latest order</b><strong>#DM-1048</strong><span>Mary Wanjiku · KES 12,700</span><em>Paid</em></div></div>
-     <div className="d2-demo-phone-nav"><span>⌂<small>Home</small></span><span>▦<small>Products</small></span><span>▤<small>Orders</small></span><span>◉<small>Account</small></span></div>
-    </div>
-    <div className="d2-demo-caption"><span><i/> LIVE PRODUCT WALKTHROUGH</span><b>One dashboard. Your whole business.</b><small>All figures and customer details shown are illustrative demo data.</small></div>
-   </div>
-  </section>
-  <section className="d2-strip"><span><WalletCards/><b>Local payments</b><small>M-PESA and more</small></span><span><Store/><b>Your own storefront</b><small>Your brand, your shop</small></span><span><Package/><b>Business tools</b><small>Products and orders</small></span><span><Headphones/><b>Local support</b><small>Help when you need it</small></span></section>
-  <section className="d2-section d2-features" id="features"><div className="d2-section-intro"><div className="d2-kicker">ONE PLATFORM. YOUR WHOLE SHOP.</div><h2>Everything you need to <em>sell online.</em></h2><p>Spend less time juggling tools and more time looking after your customers.</p></div>
-   <div className="d2-feature-grid"><article><span><Store/></span><h3>Your own online shop</h3><p>Give customers a dedicated place to discover your products and shop your brand.</p><small>STOREFRONT</small></article><article><span><ShoppingCart/></span><h3>Orders in one place</h3><p>Follow incoming orders and keep fulfilment organised from your seller dashboard.</p><small>ORDER MANAGEMENT</small></article><article><span><WalletCards/></span><h3>Payments made simpler</h3><p>Offer familiar payment options including M-PESA, subject to your payment setup.</p><small>PAYMENTS</small></article><article><span><Package/></span><h3>Products and inventory</h3><p>Add products, manage availability and keep your catalogue up to date.</p><small>CATALOGUE</small></article><article><span><Activity/></span><h3>Business overview</h3><p>See your shop activity and understand how your business is performing.</p><small>INSIGHTS</small></article><article><span><TicketPercent/></span><h3>Tools to bring buyers back</h3><p>Use coupons and promotions to encourage customers to return.</p><small>GROWTH TOOLS</small></article></div>
-  </section>
-  <section className="d2-domain-section" id="domains"><div className="d2-domain-copy"><div className="d2-kicker">YOUR BRAND. YOUR WEB ADDRESS.</div><h2>Put your shop on <em>your own domain.</em></h2><p>Already own a domain? Connect it from your seller dashboard and give customers a web address that belongs to your business.</p><ul><li><ShieldCheck/> Add a domain you own</li><li><ShieldCheck/> Follow guided DNS instructions</li><li><ShieldCheck/> Verify and monitor connection status</li></ul><a className="d2-button d2-button-light" href="/signup">Get started <ArrowRight size={17}/></a></div>
-   <div className="d2-domain-ui"><div className="d2-domain-ui-head"><span><Globe/> Domain management</span><b><i/> Seller dashboard</b></div><div className="d2-domain-field"><div><small>YOUR DOMAIN</small><strong>www.yourbusiness.co.ke</strong></div><span>Connect</span></div><div className="d2-dns-title">DNS SETUP <small>Example layout — records supplied for your domain</small></div><div className="d2-dns-table"><div><b>TYPE</b><b>HOST</b><b>VALUE</b></div><div><span>A</span><span>@</span><span>Provided in dashboard</span></div><div><span>CNAME</span><span>www</span><span>Provided in dashboard</span></div></div><div className="d2-domain-status"><ShieldCheck/> Check connection status in your dashboard</div></div>
-  </section>
-  <section className="d2-how" id="how"><div className="d2-kicker">GET YOUR BUSINESS ONLINE</div><h2>Three steps to your <em>own online shop.</em></h2><div className="d2-steps"><article><span>01</span><UserRound/><h3>Create your account</h3><p>Register with DASMARKET to get started.</p></article><article><span>02</span><Store/><h3>Set up your shop</h3><p>Add your shop details, products and brand.</p></article><article><span>03</span><TrendingUp/><h3>Start selling</h3><p>Share your shop and manage orders as they come in.</p></article></div></section>
-  <section className="d2-trust" id="trust">
-   <div className="d2-trust-intro"><div className="d2-kicker">BUILT WITH RESPONSIBILITY</div><h2>Trust matters when <em>business happens online.</em></h2><p>DASMARKET gives sellers and buyers tools to make shop activity clearer, safer and easier to manage.</p></div>
-   <div className="d2-trust-grid">
-    <article><span><ShieldCheck/></span><div><h3>Clear payment status</h3><p>Orders move to confirmed only after payment is verified. Buyers can see when a payment is still awaiting confirmation.</p></div></article>
-    <article><span><MessageCircle/></span><div><h3>Report a problem</h3><p>Buyers and sellers can raise order-related complaints and share supporting details for review.</p></div></article>
-    <article><span><FileText/></span><div><h3>Shop policies in view</h3><p>Sellers can publish their own delivery, returns and privacy information so customers know the shop's terms.</p></div></article>
-    <article><span><ShieldCheck/></span><div><h3>Account controls</h3><p>Manage your shop and account through your seller dashboard. Keep your sign-in details private and secure.</p></div></article>
-   </div>
-   <div className="d2-trust-note"><ShieldCheck/><p><b>Need help with an order?</b> Use the reports and support options available in your account, and include the order reference so the issue can be traced.</p><a href="mailto:support@dasnet.co.ke">Contact support <ArrowRight size={15}/></a></div>
-  </section>
-  <section className="d2-faq" id="faqs"><div className="d2-faq-heading"><div className="d2-kicker">GOOD QUESTIONS. CLEAR ANSWERS.</div><h2>Frequently asked <em>questions.</em></h2><p>Here are a few things sellers usually want to know before getting started.</p></div>
-   <div className="d2-faq-list">
-    <details><summary>How do I create a shop on DASMARKET?<span>+</span></summary><p>Create a DASMARKET account, complete your shop setup, then add your products and shop details from the seller dashboard.</p></details>
-    <details><summary>Can I use my own domain name?<span>+</span></summary><p>Yes. If you own a domain, you can add it from your seller dashboard and follow the DNS instructions shown there. The domain must be verified before it can serve your shop.</p></details>
-    <details><summary>Which payment methods can my customers use?<span>+</span></summary><p>Payment options depend on the methods enabled for your shop. M-PESA and other configured methods may be offered at checkout.</p></details>
-    <details><summary>When is an order marked as paid?<span>+</span></summary><p>An order should only be treated as paid after the payment provider's confirmation has been verified. A payment that is still processing remains awaiting confirmation.</p></details>
-    <details><summary>Can I manage products and orders myself?<span>+</span></summary><p>Yes. Your seller dashboard brings together product management, orders, shop settings and other available selling tools.</p></details>
-    <details><summary>What if a buyer or seller has a problem?<span>+</span></summary><p>Use the reports or complaints workflow in your account to raise an issue, add the relevant order reference and provide supporting information.</p></details>
-    <details><summary>How much does DASMARKET cost?<span>+</span></summary><p>For current plan and fee information, contact DASMARKET support before you begin selling. Any applicable charges should be made clear before you commit.</p></details>
-   </div>
-  </section>
-  <section className="d2-final"><div><div className="d2-kicker">READY WHEN YOU ARE</div><h2>Give your business<br/>a place online.</h2><p>Create your shop and start building your online presence.</p></div><a className="d2-button" href="/signup">Create your shop <ArrowRight/></a></section>
-  <footer className="d2-footer"><a className="d2-brand" href="/"><span><ShoppingBag size={20}/></span>DASMARKET</a><small>Powered by DASMARKET</small><div><a href="#features">Features</a><a href="#domains">Domains</a><a href="#trust">Trust &amp; Safety</a><a href="#faqs">FAQs</a><a href="/login">Log in</a><a href="mailto:support@dasnet.co.ke">Support</a></div><small>© DASMARKET. All rights reserved.</small></footer>
- </main>;
-}
+function LandingPage() { return <ReplitLandingPage/>; }
 
 type LiveProduct={id:string;name:string;description:string;category:string;type:string;price:number;currency:string;stockQuantity:number|null;active:boolean;spotlight?:boolean;testProduct?:boolean;sku?:string;images?:string[];imageUrl?:string;ratingAverage?:number;ratingCount?:number};
 function categorySlug(value:string){return value.toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
