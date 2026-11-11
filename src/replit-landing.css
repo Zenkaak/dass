@@ -778,3 +778,69 @@
  .rm-whatsapp-float { right:14px;bottom:14px;padding:13px;border-radius:50%; }
  .rm-whatsapp-float span { display:none; }
 }
+
+
+/* Homepage clarity and accessibility refinements */
+#how-it-works.rm-section { background:#f7f8fb; color:#202d40; }
+#how-it-works .rm-section-label { color:#286bdc; }
+#how-it-works .rm-section-intro h2,
+#how-it-works .rm-step h3 { color:#202d40; }
+#how-it-works .rm-section-intro p,
+#how-it-works .rm-step p { color:#66758a; }
+#how-it-works .rm-step-num { color:#286bdc; }
+#how-it-works .rm-step-icon { background:#eaf1ff; color:#286bdc; }
+#how-it-works .rm-step+.rm-step { border-color:#dce3ed; }
+#how-it-works .rm-steps-foot { border-color:#dce3ed; }
+#how-it-works .rm-steps-foot>span { color:#66758a; }
+#how-it-works .rm-steps-foot a { color:#245fc5; }
+
+/* Replace the decorative fake storefront with a clear address explanation. */
+.rm-domain-art { background:#eaf0f8; gap:13px; padding:30px; transform:none; }
+.rm-address-card { width:100%; max-width:440px; padding:23px 24px; border:1px solid #dce4ef; border-radius:14px; background:#fff; box-shadow:0 12px 30px rgba(35,55,86,.07); }
+.rm-address-card-head { display:flex; align-items:center; gap:8px; color:#32734f; font:700 10px var(--app-font-mono); letter-spacing:.08em; }
+.rm-address-live-dot { width:8px; height:8px; border-radius:50%; background:#25a365; box-shadow:0 0 0 4px #e5f5ec; }
+.rm-address-card-label { margin-top:20px; color:#78869a; font:600 9px var(--app-font-mono); letter-spacing:.08em; }
+.rm-address-card>strong { display:block; margin-top:7px; color:#202d40; font-size:clamp(15px,2vw,20px); overflow-wrap:anywhere; }
+.rm-address-card>p { margin:8px 0 0; color:#68778b; font-size:12px; line-height:1.6; }
+.rm-address-card-status { display:flex; align-items:center; gap:7px; margin-top:17px; color:#32734f; font-size:11px; font-weight:700; }
+.rm-address-connector { display:flex; align-items:center; gap:10px; width:100%; max-width:440px; color:#65758c; }
+.rm-address-connector span { height:1px; flex:1; background:#c6d2e2; }
+.rm-address-connector small { font:600 9px var(--app-font-mono); letter-spacing:.06em; white-space:nowrap; }
+.rm-address-card-custom .rm-address-card-head { color:#286bdc; }
+.rm-address-card-custom .rm-address-card-status { color:#286bdc; }
+
+/* Trust & Safety: calm, readable, action-oriented instead of a dark panel. */
+.rm-trust-section { background:#f5f7fb; color:#202d40; border-top:1px solid #e5eaf1; border-bottom:1px solid #e5eaf1; }
+.rm-trust-intro h2 { color:#202d40; }
+.rm-trust-intro>p { color:#65748a; }
+.rm-trust-section .rm-section-label { color:#286bdc; }
+.rm-trust-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.rm-trust-card,.rm-trust-card-featured,.rm-trust-featured { min-height:220px; padding:25px; border:1px solid #e0e6ef; border-radius:14px; background:#fff; box-shadow:0 8px 25px rgba(30,48,74,.045); }
+.rm-trust-icon { width:46px; height:46px; background:#edf3ff; color:#286bdc; }
+.rm-trust-card>small { margin-top:20px; color:#718096; }
+.rm-trust-card h3 { color:#202d40; }
+.rm-trust-card p { color:#66758a; font-size:13px; line-height:1.75; }
+.rm-trust-card-foot { color:#286bdc; }
+.rm-trust-reminder { border:1px solid #dce5f2; background:#edf3fb; color:#286bdc; }
+.rm-trust-reminder p { color:#53657c; font-size:12px; }
+.rm-trust-reminder b { color:#202d40; }
+
+/* Give primary and secondary actions clear breathing room. */
+.rm-hero-ctas { display:flex; flex-wrap:wrap; align-items:center; gap:22px; }
+.rm-hero-ctas .rm-button { min-width:174px; justify-content:center; }
+.rm-hero-ctas .rm-button-outline { margin-left:4px; }
+.rm-whatsapp-float { right:24px; bottom:24px; min-height:60px; padding:16px 24px; gap:12px; font-size:15px; box-shadow:0 12px 34px rgba(13,70,44,.32); }
+.rm-whatsapp-float svg { width:27px; height:27px; }
+@media(max-width:680px) {
+ .rm-domain-art { padding:19px 14px; }
+ .rm-address-card { padding:19px 17px; }
+ .rm-address-connector small { font-size:8px; }
+ .rm-trust-grid { grid-template-columns:1fr; }
+ .rm-trust-card,.rm-trust-card-featured,.rm-trust-featured { min-height:0; }
+ .rm-hero-ctas { align-items:stretch; flex-direction:column; gap:13px; }
+ .rm-hero-ctas .rm-button { width:100%; min-height:50px; }
+ .rm-hero-ctas .rm-button-outline { margin-left:0; }
+ .rm-whatsapp-float { right:14px; bottom:14px; min-height:56px; padding:14px 19px; border-radius:999px; }
+ .rm-whatsapp-float span { display:inline; }
+ .rm-whatsapp-float svg { width:25px; height:25px; }
+}
