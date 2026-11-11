@@ -130,6 +130,24 @@ export function ReplitLandingPage() {
               <div><div className="rm-eyebrow rm-section-label">04 / Run your shop</div><h2>Manage your shop from one workspace.</h2></div>
 
             </div>
+            <div className="rm-dashboard-showcase">
+              <div className="rm-dashboard-showcase-copy">
+                <span className="rm-dashboard-tag">THE SELLER WORKSPACE</span>
+                <h3>Your shop, at a glance.</h3>
+                <p>Orders, sales, products, stock and store settings come together in one clear desktop workspace.</p>
+                <ul>
+                  <li><CheckCircle2 size={16}/> Track orders and sales</li>
+                  <li><CheckCircle2 size={16}/> Manage products and inventory</li>
+                  <li><CheckCircle2 size={16}/> Control payouts and your domain</li>
+                </ul>
+                <a className="rm-button rm-button-coral" href="/signup">Create your shop <ArrowRight size={15}/></a>
+              </div>
+              <div className="rm-dashboard-photo">
+                <div className="rm-browser-bar"><span/><span/><span/><b>dashboard.dasmarket.co.ke</b><i>•••</i></div>
+                <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1800&q=85" alt="Modern desktop computer workspace representing the DASMARKET seller dashboard" loading="lazy"/>
+                <div className="rm-dashboard-photo-caption"><span><i/> LIVE SELLER WORKSPACE</span><b>One dashboard. Your whole business.</b></div>
+              </div>
+            </div>
             <div className="rm-tools-grid">
               <article><span>01</span><div><ShoppingBag size={20}/><h3>Products &amp; stock</h3><p>Add products, update prices, organise categories and keep stock information current.</p></div></article>
               <article><span>02</span><div><FileText size={20}/><h3>Orders &amp; delivery</h3><p>Review incoming orders, track fulfilment and keep delivery details organised.</p></div></article>
