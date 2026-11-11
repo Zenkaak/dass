@@ -144,8 +144,8 @@ export function ReplitLandingPage() {
               </div>
               <div className="rm-dashboard-photo">
                 <div className="rm-browser-bar"><span/><span/><span/><b>dashboard.dasmarket.co.ke</b><i>•••</i></div>
-                <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1800&q=85" alt="Modern desktop computer workspace representing the DASMARKET seller dashboard" loading="lazy"/>
-                <div className="rm-dashboard-photo-caption"><span><i/> LIVE SELLER WORKSPACE</span><b>One dashboard. Your whole business.</b></div>
+                <img src="/images/Manage%20Your%20Shop%20in%20One%20Workspace.png" alt="DASMARKET demo seller dashboard displayed on a laptop, showing orders, sales, products and shop management" loading="lazy"/>
+                <div className="rm-dashboard-photo-caption"><span><i/> DASHBOARD DEMO</span><b>One workspace. Your whole business.</b></div>
               </div>
             </div>
             <div className="rm-tools-grid">
