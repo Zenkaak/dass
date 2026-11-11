@@ -1090,3 +1090,9 @@
  .rm-dashboard-photo-caption{left:9px;right:9px;bottom:9px;padding:9px}
  .rm-dashboard-photo-caption b{font-size:8px}
 }
+
+
+/* DASMARKET primary wordmark in the homepage header */
+.rm-nav .rm-brand{gap:11px;color:#fff;font-family:var(--app-font-display);font-size:20px;font-weight:850;letter-spacing:-.055em}
+.rm-nav .rm-brand-mark{width:34px;height:34px;display:grid;place-items:center;flex:none;border-radius:11px;background:#ff781b;color:#fff;font:800 21px/1 var(--app-font-display);transform:none;box-shadow:0 2px 5px rgba(15,28,44,.14)}
+.rm-nav-actions{gap:0}
