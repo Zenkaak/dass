@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import './replit-landing.css';
 import { ArrowDown, ArrowRight, ArrowUp, Check, CheckCircle2, CircleHelp, Globe2, Menu, Plus, ShoppingBag, Sparkles, Store, X, ShieldCheck, MessageCircle, FileText } from 'lucide-react';
 
 const faqs = [
@@ -86,23 +87,23 @@ export function ReplitLandingPage() {
           </div>
         </section>
 
-        <section className="dashboard-section" id="seller-dashboard">
+        <section className="rm-dashboard-section" id="seller-dashboard">
           <div className="rm-container">
             <div className="rm-section-intro"><div><div className="rm-eyebrow rm-section-label">03 / Your seller dashboard</div><h2>See your whole shop at a glance.</h2></div><p>Products, orders, payments and performance—together in one workspace. The example below uses illustrative Kenyan shop data.</p></div>
-            <div className="dashboard-window">
-              <div className="dash-top"><b><span className="dash-mark">d.</span> DASMARKET <small>SELLER WORKSPACE</small></b><span>● DEMO STORE</span></div>
-              <div className="dash-layout"><aside><b>▦ &nbsp; Overview</b><span>▤ &nbsp; Products</span><span>▣ &nbsp; Orders</span><span>↗ &nbsp; Payments</span><span>◎ &nbsp; Domains</span><span>⚙ &nbsp; Settings</span></aside>
-                <div className="dash-main">
-                  <div className="dash-greeting"><div><small>KINGSLEY HOME &amp; LIVING · NAIROBI, KENYA</small><h3>Good morning, James</h3><p>Here’s what’s happening in your shop.</p></div><span>Last 7 days⌄</span></div>
-                  <div className="dash-stats"><article><small>Total sales</small><b>KES 248,650</b><em>↑ 18.6% this week</em></article><article><small>Orders</small><b>126</b><em>12 new today</em></article><article><small>Products</small><b>84</b><em>6 low in stock</em></article><article><small>To fulfil</small><b>18</b><em>Needs attention</em></article></div>
-                  <div className="dash-content"><div className="dash-chart"><div><b>Sales overview</b><small>KES · 7 days</small></div><strong>KES 248,650 <em>+18.6%</em></strong><div className="dash-bars"><i style={{height:'36%'}}/><i style={{height:'51%'}}/><i style={{height:'42%'}}/><i style={{height:'66%'}}/><i style={{height:'49%'}}/><i style={{height:'78%'}}/><i style={{height:'60%'}}/><i style={{height:'46%'}}/><i style={{height:'73%'}}/><i style={{height:'58%'}}/><i style={{height:'88%'}}/><i style={{height:'67%'}}/><i style={{height:'95%'}}/><i style={{height:'75%'}}/></div><div className="dash-days"><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span></div></div>
-                    <div className="dash-products"><b>Top products</b><div><img src="https://images.unsplash.com/photo-1540574163026-643ea20ade25?w=100&h=100&fit=crop" alt="Accent lounge chair"/><span><strong>Accent lounge chair</strong><small>32 sold</small></span><b>KES 8,500</b></div><div><img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&h=100&fit=crop" alt="Classic wristwatch"/><span><strong>Classic wristwatch</strong><small>24 sold</small></span><b>KES 3,200</b></div><div><img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100&h=100&fit=crop" alt="Wireless headphones"/><span><strong>Wireless headphones</strong><small>19 sold</small></span><b>KES 4,800</b></div></div></div>
-                  <div className="dash-orders"><b>Recent orders</b><div className="order-head"><span>ORDER</span><span>CUSTOMER</span><span>AMOUNT</span><span>STATUS</span></div><div><b>#DM-1048</b><span>Mary Wanjiku</span><b>KES 12,700</b><em>Paid</em></div><div><b>#DM-1047</b><span>Brian Otieno</span><b>KES 8,500</b><em className="processing">Processing</em></div><div><b>#DM-1046</b><span>Faith Njeri</span><b>KES 3,200</b><em>Paid</em></div></div>
+            <div className="rm-dashboard-window">
+              <div className="rm-dash-top"><b><span className="rm-dash-mark">d.</span> DASMARKET <small>SELLER WORKSPACE</small></b><span>● DEMO STORE</span></div>
+              <div className="rm-dash-layout"><aside><b>▦ &nbsp; Overview</b><span>▤ &nbsp; Products</span><span>▣ &nbsp; Orders</span><span>↗ &nbsp; Payments</span><span>◎ &nbsp; Domains</span><span>⚙ &nbsp; Settings</span></aside>
+                <div className="rm-dash-main">
+                  <div className="rm-dash-greeting"><div><small>KINGSLEY HOME &amp; LIVING · NAIROBI, KENYA</small><h3>Good morning, James</h3><p>Here’s what’s happening in your shop.</p></div><span>Last 7 days⌄</span></div>
+                  <div className="rm-dash-stats"><article><small>Total sales</small><b>KES 248,650</b><em>↑ 18.6% this week</em></article><article><small>Orders</small><b>126</b><em>12 new today</em></article><article><small>Products</small><b>84</b><em>6 low in stock</em></article><article><small>To fulfil</small><b>18</b><em>Needs attention</em></article></div>
+                  <div className="rm-dash-content"><div className="rm-dash-chart"><div><b>Sales overview</b><small>KES · 7 days</small></div><strong>KES 248,650 <em>+18.6%</em></strong><div className="rm-dash-bars"><i style={{height:'36%'}}/><i style={{height:'51%'}}/><i style={{height:'42%'}}/><i style={{height:'66%'}}/><i style={{height:'49%'}}/><i style={{height:'78%'}}/><i style={{height:'60%'}}/><i style={{height:'46%'}}/><i style={{height:'73%'}}/><i style={{height:'58%'}}/><i style={{height:'88%'}}/><i style={{height:'67%'}}/><i style={{height:'95%'}}/><i style={{height:'75%'}}/></div><div className="rm-dash-days"><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span></div></div>
+                    <div className="rm-dash-products"><b>Top products</b><div><img src="https://images.unsplash.com/photo-1540574163026-643ea20ade25?w=100&h=100&fit=crop" alt="Accent lounge chair"/><span><strong>Accent lounge chair</strong><small>32 sold</small></span><b>KES 8,500</b></div><div><img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&h=100&fit=crop" alt="Classic wristwatch"/><span><strong>Classic wristwatch</strong><small>24 sold</small></span><b>KES 3,200</b></div><div><img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100&h=100&fit=crop" alt="Wireless headphones"/><span><strong>Wireless headphones</strong><small>19 sold</small></span><b>KES 4,800</b></div></div></div>
+                  <div className="rm-dash-orders"><b>Recent orders</b><div className="rm-order-head"><span>ORDER</span><span>CUSTOMER</span><span>AMOUNT</span><span>STATUS</span></div><div><b>#DM-1048</b><span>Mary Wanjiku</span><b>KES 12,700</b><em>Paid</em></div><div><b>#DM-1047</b><span>Brian Otieno</span><b>KES 8,500</b><em className="rm-processing">Processing</em></div><div><b>#DM-1046</b><span>Faith Njeri</span><b>KES 3,200</b><em>Paid</em></div></div>
                 </div>
-              </div><div className="dash-foot"><span>✓ Your shop. Your brand.</span><span>Illustrative dashboard · Demo data</span></div>
+              </div><div className="rm-dash-foot"><span>✓ Your shop. Your brand.</span><span>Illustrative dashboard · Demo data</span></div>
             </div>
-            <div className="dash-mobile"><div className="dash-mobile-head"><b>DASMARKET</b><span>☰</span></div><small>KINGSLEY HOME &amp; LIVING</small><h3>Overview</h3><article><small>Total sales</small><b>KES 248,650</b><em>↑ 18.6% this week</em></article><section><div><small>Orders</small><b>126</b></div><div><small>Products</small><b>84</b></div></section><article className="phone-chart"><b>Sales activity</b><div><i style={{height:'34%'}}/><i style={{height:'52%'}}/><i style={{height:'43%'}}/><i style={{height:'68%'}}/><i style={{height:'49%'}}/><i style={{height:'86%'}}/><i style={{height:'72%'}}/></div></article><article><b>Latest order · #DM-1048</b><p>Mary Wanjiku · KES 12,700</p><em>Paid</em></article><nav>⌂ Home　 ▦ Products　 ▤ Orders　 ◉ Account</nav></div>
-            <p className="dash-disclaimer">All sales figures, customers, order numbers and product performance shown are sample demo data.</p>
+            <div className="rm-dash-mobile"><div className="rm-dash-mobile-head"><b>DASMARKET</b><span>☰</span></div><small>KINGSLEY HOME &amp; LIVING</small><h3>Overview</h3><article><small>Total sales</small><b>KES 248,650</b><em>↑ 18.6% this week</em></article><section><div><small>Orders</small><b>126</b></div><div><small>Products</small><b>84</b></div></section><article className="rm-phone-chart"><b>Sales activity</b><div><i style={{height:'34%'}}/><i style={{height:'52%'}}/><i style={{height:'43%'}}/><i style={{height:'68%'}}/><i style={{height:'49%'}}/><i style={{height:'86%'}}/><i style={{height:'72%'}}/></div></article><article><b>Latest order · #DM-1048</b><p>Mary Wanjiku · KES 12,700</p><em>Paid</em></article><nav>⌂ Home　 ▦ Products　 ▤ Orders　 ◉ Account</nav></div>
+            <p className="rm-dash-disclaimer">All sales figures, customers, order numbers and product performance shown are sample demo data.</p>
           </div>
         </section>
 
@@ -219,7 +220,7 @@ export function ReplitLandingPage() {
           <div className="rm-container rm-quote-inner"><div className="rm-quote-mark">“</div><div className="rm-quote-copy">The best time to open your shop isn’t when everything is perfect. It’s when you’re ready to begin.</div><div className="rm-quote-byline">A NOTE FROM DASMARKET</div></div>
         </section>
 
-        <section className="trust-section" id="trust-safety"><div className="rm-container trust-layout"><div><div className="rm-eyebrow rm-section-label">06 / Trust &amp; safety</div><h2>Confidence at every step.</h2><p>Tools and clear information help buyers and sellers manage online orders responsibly.</p></div><div className="trust-list"><article><ShieldCheck/><div><b>Verified payment status</b><p>Orders are confirmed only after payment confirmation is verified.</p></div></article><article><MessageCircle/><div><b>Order reports and support</b><p>Buyers and sellers can raise order-related issues and share supporting details.</p></div></article><article><FileText/><div><b>Visible shop policies</b><p>Sellers can publish delivery, returns and privacy information for their customers.</p></div></article></div></div></section>
+        <section className="rm-trust-section" id="trust-safety"><div className="rm-container rm-trust-layout"><div><div className="rm-eyebrow rm-section-label">06 / Trust &amp; safety</div><h2>Confidence at every step.</h2><p>Tools and clear information help buyers and sellers manage online orders responsibly.</p></div><div className="rm-trust-list"><article><ShieldCheck/><div><b>Verified payment status</b><p>Orders are confirmed only after payment confirmation is verified.</p></div></article><article><MessageCircle/><div><b>Order reports and support</b><p>Buyers and sellers can raise order-related issues and share supporting details.</p></div></article><article><FileText/><div><b>Visible shop policies</b><p>Sellers can publish delivery, returns and privacy information for their customers.</p></div></article></div></div></section>
 
         <section className="rm-section rm-faq-section" id="faq">
           <div className="rm-container rm-faq-layout">
@@ -249,7 +250,7 @@ export function ReplitLandingPage() {
               <h2>Make a little room for what’s next.</h2>
               <p>Your shop can be up and taking shape today. Start with your name and your idea.</p>
             </div>
-            <div className="cta-actions"><a className="rm-button rm-button-coral" href="/signup">Create your shop <ArrowRight size={15}/></a><a className="rm-button rm-button-outline" href="/login">Already have an account? Log in</a></div>
+            <div className="rm-cta-actions"><a className="rm-button rm-button-coral" href="/signup">Create your shop <ArrowRight size={15}/></a><a className="rm-button rm-button-outline" href="/login">Already have an account? Log in</a></div>
           </div>
         </section>
       </main>
