@@ -1003,3 +1003,59 @@
  .rm-domain-layout { gap:24px; }
  .rm-tools-grid article { padding:15px 0; }
 }
+
+
+/* Compact layout pass: remove excess vertical whitespace without changing the approved hero or navigation. */
+.rm-section { padding:42px 0 !important; }
+.rm-section-intro { margin-bottom:20px !important; }
+.rm-section-intro h2,.rm-domain-copy h2,.rm-trust-intro h2,.rm-faq-heading h2 { margin-top:8px; }
+.rm-steps-grid { gap:14px !important; }
+.rm-step { padding:15px 6px !important; }
+.rm-step-icon { margin-bottom:8px; }
+.rm-step h3 { margin:8px 0 5px; }
+.rm-step p { margin:0; }
+.rm-domain-layout { gap:24px !important; }
+.rm-domain-copy>p { margin:12px 0 16px !important; }
+.rm-domain-journey { margin:16px 0 !important; }
+.rm-domain-stage { padding:11px 0 !important; }
+.rm-domain-stage p { margin:4px 0 0 !important; }
+.rm-tools-grid article { padding:14px 0 !important; }
+.rm-tools-grid h3 { margin:6px 0 4px !important; }
+.rm-tools-grid p { line-height:1.5 !important; }
+.rm-trust-section { padding:42px 0 !important; }
+.rm-trust-intro { margin-bottom:18px !important; }
+.rm-trust-row { padding:12px 4px !important; gap:12px !important; }
+.rm-trust-row>p { line-height:1.5 !important; }
+.rm-faq-layout { gap:32px !important; }
+.rm-faq-question { padding:11px 0 !important; }
+.rm-faq-answer { padding-bottom:11px !important; line-height:1.55 !important; }
+.rm-final-cta { padding:40px 0 !important; }
+.rm-final-cta h2 { margin:9px 0 7px !important; }
+.rm-footer { padding:18px 0 !important; }
+.rm-footer-inner { gap:14px !important; }
+@media(max-width:680px) {
+  .rm-section { padding:30px 0 !important; }
+  .rm-section-intro { margin-bottom:14px !important; }
+  .rm-section-intro h2,.rm-domain-copy h2,.rm-trust-intro h2,.rm-faq-heading h2 { font-size:27px !important; }
+  .rm-steps-grid { grid-template-columns:1fr !important; }
+  .rm-step { display:grid; grid-template-columns:28px minmax(0,1fr); gap:10px !important; padding:12px 0 !important; }
+  .rm-step-num { padding-top:4px; }
+  .rm-step-icon { width:30px; height:30px; margin:0 0 6px; }
+  .rm-step h3 { margin:0 0 3px !important; font-size:15px !important; }
+  .rm-step p { font-size:12px !important; }
+  .rm-domain-layout { gap:12px !important; }
+  .rm-domain-copy>p { margin:9px 0 12px !important; font-size:13px !important; }
+  .rm-domain-journey { margin:12px 0 !important; }
+  .rm-domain-stage { padding:9px 0 !important; }
+  .rm-tools-grid { grid-template-columns:1fr !important; }
+  .rm-tools-grid article { padding:11px 0 !important; }
+  .rm-trust-section { padding:30px 0 !important; }
+  .rm-trust-intro { margin-bottom:12px !important; }
+  .rm-trust-row { padding:11px 0 !important; }
+  .rm-trust-row>p { margin-top:-2px !important; }
+  .rm-faq-layout { gap:14px !important; }
+  .rm-faq-question { padding:10px 0 !important; }
+  .rm-final-cta { padding:30px 0 !important; }
+  .rm-final-cta h2 { font-size:30px !important; }
+  .rm-footer { padding:15px 0 !important; }
+}
