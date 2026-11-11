@@ -14,7 +14,7 @@ const faqs = [
 function Brand({ footer = false }: { footer?: boolean }) {
   return (
     <a className="rm-brand" href="/" aria-label="DASMARKET home" data-testid="link-brand-home">
-      <span className="rm-brand-mark">d.</span>
+      <span className="rm-brand-mark" aria-hidden="true">D</span>
       <span>DASMARKET</span>
       {footer && <span className="rm-eyebrow" style={{ fontSize: 8, marginLeft: 2 }}>YOUR SHOP. YOUR BRAND.</span>}
     </a>
@@ -67,7 +67,6 @@ export function ReplitLandingPage() {
           </div>
           <div className="rm-nav-actions">
             <a className="rm-nav-login" href="/login" data-testid="link-sign-in">Sign in</a>
-            <a className="rm-button rm-button-dark" href="/signup" data-testid="button-nav-start">Open your shop <ArrowRight size={14} /></a>
           </div>
         </nav>
       </header>
