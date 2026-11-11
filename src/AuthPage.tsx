@@ -10,7 +10,6 @@ export function AuthPage({initial='signup'}:{initial?:Mode}) {
  return <main className="account-page dm-auth-page dm-auth-v3">
   <header className="dm-auth-v3-header">
    <a className="dm-home-brand" href="/" aria-label="DASMARKET home"><span className="dm-home-mark">D</span><span><b>DASMARKET</b><small>YOUR BUSINESS. ONLINE.</small></span></a>
-   <div className="dm-auth-v3-header-action">{mode==='login'?<>New here? <button type="button" onClick={()=>changeMode('signup')}>Create a shop</button></>:<>Already registered? <button type="button" onClick={()=>changeMode('login')}>Sign in</button></>}</div>
   </header>
   <section className="dm-auth-v3-wrap">
    <div className="dm-auth-v3-heading">
@@ -32,6 +31,7 @@ export function AuthPage({initial='signup'}:{initial?:Mode}) {
     {mode==='login'&&<button className="dm-auth-forgot" type="button" onClick={()=>changeMode('reset')}>Forgot your password?</button>}
     {mode==='reset'&&<button className="dm-auth-forgot" type="button" onClick={()=>changeMode('login')}>Back to sign in</button>}
    </section>
+   <div className="dm-auth-v3-mode-switch">{mode==='login'?<>New to DASMARKET? <button type="button" onClick={()=>changeMode('signup')}>Create a shop</button></>:<>Already registered? <button type="button" onClick={()=>changeMode('login')}>Sign in</button></>}</div>
    <footer className="dm-auth-v3-footer"><span>© {new Date().getFullYear()} DASMARKET</span><a href="mailto:support@dasnet.co.ke">Need help? Contact support</a></footer>
   </section>
  </main>;
