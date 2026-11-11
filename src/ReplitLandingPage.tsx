@@ -9,6 +9,7 @@ const faqs = [
   { q: 'Can I connect a domain I already own?', a: 'Yes. Open Domains in your seller dashboard, add the domain you own, and follow the DNS instructions shown there. Your existing DASMARKET address remains available while you set up the custom domain.' },
   { q: 'How long does a custom domain take to work?', a: 'After you update the DNS records, verification and propagation can take some time. The dashboard should show the connection status; do not remove your original shop address while the new one is being verified.' },
   { q: 'Can I manage my shop from my phone?', a: 'Yes. The seller workspace is designed to be usable on mobile as well as desktop, so you can check orders and manage your shop while away from your computer.' },
+  { q: 'Where do payments from my sales go?', a: 'Payments from completed sales are sent directly to the payout destination you configure for your shop, such as your Till, Paybill or bank account. Keep your payout details up to date in your seller settings.' },
   { q: 'How do customers pay?', a: 'Available payment methods are shown during checkout for each shop. Customers should follow the checkout instructions and wait for payment confirmation before treating an order as paid.' },
   { q: 'When is an order marked as paid?', a: 'An order should only be treated as paid after the payment status has been confirmed. A payment prompt or pending message by itself is not proof of a successful payment.' },
   { q: 'Can I set delivery, returns and privacy policies?', a: 'Sellers can publish shop policies so customers can review important information before ordering. Keep delivery timelines, return conditions and contact details clear and current.' },
@@ -154,17 +155,21 @@ export function ReplitLandingPage() {
               <a className="rm-button rm-button-dark" href="/signup" data-testid="button-domain-start">Create your shop <ArrowRight size={14} /></a>
               <p className="rm-domain-footnote">Keep your original DASMARKET link while your custom domain is being connected.</p>
             </div>
-            <div className="rm-domain-art" aria-label="Illustration of a shop moving from a DASMARKET address to a custom domain">
-              <div className="rm-domain-art-kicker">A BRAND THAT GROWS WITH YOU</div>
-              <div className="rm-domain-browser">
-                <div className="rm-domain-browser-top"><i/><i/><i/><span>YOUR ONLINE SHOP</span></div>
-                <div className="rm-domain-browser-body">
-                  <div className="rm-domain-mini-brand"><span>d.</span><b>YOUR BRAND</b><small>SHOP&nbsp;&nbsp; ABOUT&nbsp;&nbsp; CONTACT</small></div>
-                  <div className="rm-domain-visual"><div className="rm-domain-visual-copy"><small>MADE BY YOU</small><b>A home for<br/>your best work.</b><span>Explore the collection <ArrowRight size={12}/></span></div><div className="rm-domain-visual-shape"><div/><i/></div></div>
-                  <div className="rm-domain-browser-url"><Globe2 size={13}/> yourshop.dasmarket.co.ke <span>LIVE SHOP LINK</span></div>
-                </div>
+            <div className="rm-domain-art" aria-label="Your shop address options">
+              <div className="rm-address-card">
+                <div className="rm-address-card-head"><span className="rm-address-live-dot"/> YOUR SHOP IS LIVE</div>
+                <div className="rm-address-card-label">YOUR DASMARKET ADDRESS</div>
+                <strong>yourshop.dasmarket.co.ke</strong>
+                <p>Ready to share as soon as your shop is set up.</p>
+                <div className="rm-address-card-status"><CheckCircle2 size={16}/> Included with your shop</div>
               </div>
-              <div className="rm-domain-custom-note"><Globe2 size={17}/><span><b>Later, make it yours.</b><small>Connect your own domain when the time feels right.</small></span><CheckCircle2 size={17}/></div>
+              <div className="rm-address-connector"><span/><small>WHEN YOUR BUSINESS IS READY</small><span/></div>
+              <div className="rm-address-card rm-address-card-custom">
+                <div className="rm-address-card-head"><Globe2 size={15}/> YOUR OWN DOMAIN</div>
+                <strong>www.yourbrand.co.ke</strong>
+                <p>Connect a domain you own from your seller dashboard. Your original shop link keeps working.</p>
+                <div className="rm-address-card-status"><ArrowRight size={15}/> Optional · Connect later</div>
+              </div>
             </div>
           </div>
         </section>
@@ -202,7 +207,8 @@ export function ReplitLandingPage() {
               <article className="rm-feature-row"><span className="rm-feature-index">02</span><div><h3>Your own shop, under your name</h3><p>Start with a DASMARKET web address that’s simple to share and yours from day one.</p></div><Check size={17} /></article>
               <article className="rm-feature-row"><span className="rm-feature-index">03</span><div><h3>Control from one dashboard</h3><p>Keep the everyday details of your shop together, from products to your storefront settings.</p></div><Check size={17} /></article>
               <article className="rm-feature-row"><span className="rm-feature-index">04</span><div><h3>Space to make your brand bigger</h3><p>Connect a custom domain later and give your growing business its own address on the web.</p></div><Check size={17} /></article>
-              <article className="rm-feature-row"><span className="rm-feature-index">05</span><div><h3>Easy to keep moving</h3><p>Start with what you have now. Add more to your shop when you’re ready for what’s next.</p></div><Check size={17} /></article>
+              <article className="rm-feature-row"><span className="rm-feature-index">05</span><div><h3>Sales paid to your business</h3><p>Money from completed sales goes directly to the payout destination you set up — your Till, Paybill or bank account. You stay in control of where your sales are sent.</p></div><Check size={17} /></article>
+              <article className="rm-feature-row"><span className="rm-feature-index">06</span><div><h3>Easy to keep moving</h3><p>Start with what you have now. Add more to your shop when you’re ready for what’s next.</p></div><Check size={17} /></article>
             </div>
           </div>
         </section>
@@ -257,7 +263,7 @@ export function ReplitLandingPage() {
         </section>
       </main>
 
-      <a className="rm-whatsapp-float" href="https://wa.me/254758884861?text=Hello%20DASMARKET%20support%2C%20I%20need%20some%20help." target="_blank" rel="noreferrer" aria-label="Chat with DASMARKET support on WhatsApp"><MessageCircle size={21}/><span>Chat with support</span></a>
+      <a className="rm-whatsapp-float" href="https://wa.me/254758884861?text=Hello%20DASMARKET%20support%2C%20I%20need%20some%20help." target="_blank" rel="noreferrer" aria-label="Chat with DASMARKET support on WhatsApp"><MessageCircle size={24}/><span>Talk to us</span></a>
 
       <footer className="rm-footer">
         <div className="rm-container rm-footer-inner">
