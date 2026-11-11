@@ -6533,3 +6533,21 @@ button,input,select,textarea{font:inherit;}
  .dm-auth-v3 .dm-auth-v3-card{padding:20px 17px 17px}
  .dm-auth-v3 .dm-auth-v3-footer{margin-top:20px}
 }
+
+
+/* Center the seller auth dialog and keep account switching below it. */
+.dm-auth-v3{display:flex!important;flex-direction:column!important;min-height:100svh!important}
+.dm-auth-v3-header{flex:0 0 72px}
+.dm-auth-v3 .dm-auth-v3-wrap{width:min(440px,100%);margin:auto!important;display:flex;flex-direction:column;justify-content:center}
+.dm-auth-v3 .dm-auth-v3-heading{margin:0 0 17px}
+.dm-auth-v3 .dm-auth-v3-card{width:100%}
+.dm-auth-v3-mode-switch{margin:16px auto 0;text-align:center;color:#71808d;font-size:12px}
+.dm-auth-v3-mode-switch button{border:0;background:none;padding:3px 0 3px 4px;color:#9a6b08;font:inherit;font-weight:800;cursor:pointer}
+.dm-auth-v3 .dm-auth-v3-footer{margin:19px auto 0!important;width:100%}
+@media(max-width:680px){
+ .dm-auth-v3-header{flex-basis:62px}
+ .dm-auth-v3 .dm-auth-v3-wrap{margin:auto!important;padding:22px 0}
+ .dm-auth-v3 .dm-auth-v3-heading{margin-bottom:14px}
+ .dm-auth-v3-mode-switch{font-size:11px;margin-top:14px}
+ .dm-auth-v3 .dm-auth-v3-footer{margin-top:17px!important}
+}
