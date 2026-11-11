@@ -3,30 +3,20 @@ import './replit-landing.css';
 import { ArrowDown, ArrowRight, ArrowUp, Check, CheckCircle2, CircleHelp, Globe2, Menu, Plus, ShoppingBag, Sparkles, Store, WandSparkles, X, ShieldCheck, MessageCircle, FileText } from 'lucide-react';
 
 const faqs = [
-  {
-    q: 'What happens when I open a shop?',
-    a: 'You choose a shop name, add your products, and DASMARKET creates your storefront with a shareable address like yourshop.dasmarket.co.ke. Your shop is yours to shape, and you can publish when it is ready.',
-  },
-  {
-    q: 'Do I need a website or technical experience?',
-    a: 'No. DASMARKET gives you the building blocks for a complete online shop, including product pages, a storefront, and a dashboard. You can start with a few products and make it your own as you go.',
-  },
-  {
-    q: 'Can I use my own domain later?',
-    a: 'Yes. Start with your included DASMARKET subdomain, then connect a domain you already own from your dashboard settings whenever you are ready to make the shop even more distinctly yours.',
-  },
-  {
-    q: 'Can I change my shop name and look?',
-    a: 'Absolutely. You can update your shop details and presentation as your brand takes shape. The storefront is a starting point, not a box you have to stay inside.',
-  },
-  {
-    q: 'What can I sell?',
-    a: 'DASMARKET is made for independent sellers and small brands. From handmade goods and homewares to vintage finds and considered collections, your shop is a place to bring your own catalog to life.',
-  },
-  {
-    q: 'How much does it cost to get started?',
-    a: 'Create your shop and explore the experience before committing. The details of any paid plans or transaction fees should be reviewed on the current plan page before you publish.',
-  },
+  { q: 'How do I create my shop?', a: 'Create a seller account, choose a shop name, and follow the setup steps in your dashboard. You can add products and prepare your storefront before sharing it with customers.' },
+  { q: 'Do I need a website or technical experience?', a: 'No. DASMARKET provides a storefront and seller dashboard. You can manage your products and orders without building a website from scratch.' },
+  { q: 'What web address does my shop get?', a: 'Your shop starts with its own address under dasmarket.co.ke, such as yourshop.dasmarket.co.ke. You can share that link with customers.' },
+  { q: 'Can I connect a domain I already own?', a: 'Yes. Open Domains in your seller dashboard, add the domain you own, and follow the DNS instructions shown there. Your existing DASMARKET address remains available while you set up the custom domain.' },
+  { q: 'How long does a custom domain take to work?', a: 'After you update the DNS records, verification and propagation can take some time. The dashboard should show the connection status; do not remove your original shop address while the new one is being verified.' },
+  { q: 'Can I manage my shop from my phone?', a: 'Yes. The seller workspace is designed to be usable on mobile as well as desktop, so you can check orders and manage your shop while away from your computer.' },
+  { q: 'How do customers pay?', a: 'Available payment methods are shown during checkout for each shop. Customers should follow the checkout instructions and wait for payment confirmation before treating an order as paid.' },
+  { q: 'When is an order marked as paid?', a: 'An order should only be treated as paid after the payment status has been confirmed. A payment prompt or pending message by itself is not proof of a successful payment.' },
+  { q: 'Can I set delivery, returns and privacy policies?', a: 'Sellers can publish shop policies so customers can review important information before ordering. Keep delivery timelines, return conditions and contact details clear and current.' },
+  { q: 'What if there is a problem with an order?', a: 'Buyers and sellers can use the order reporting and support process to raise an issue and share relevant details. Keep your order reference and any supporting evidence available.' },
+  { q: 'How do I keep my account secure?', a: 'Use a unique password, keep your sign-in details private, and sign out on shared devices. Never share a one-time verification code with someone who contacts you unexpectedly.' },
+  { q: 'What does it cost to use DASMARKET?', a: 'Any applicable plan charges or transaction fees should be reviewed on the current pricing or plan information shown during registration and in your account. Check those details before publishing.' },
+  { q: 'Can I change my shop name and appearance?', a: 'You can manage your shop details and available storefront settings from your seller dashboard. Some address changes may affect the link customers already have, so review the confirmation carefully.' },
+  { q: 'How do I contact DASMARKET support?', a: 'Use the support contact options published on the DASMARKET website or inside your account. For an order issue, include the order reference so the team can locate the right transaction.' },
 ];
 
 function Brand({ footer = false }: { footer?: boolean }) {
@@ -154,26 +144,27 @@ export function ReplitLandingPage() {
           <div className="rm-container rm-domain-layout">
             <div className="rm-domain-copy">
               <div className="rm-eyebrow rm-section-label">03 / Your address, your pace</div>
-              <h2>Start with a link. Grow into your own domain.</h2>
-              <p>Every new shop gets a DASMARKET subdomain, so there’s one less thing between you and opening. When you’re ready for your own web address, connect a custom domain from your dashboard settings.</p>
-              <div className="rm-domain-flow">
-                <div className="rm-domain-chip">TODAY&nbsp; <span>little-field.dasmarket.co.ke</span></div><ArrowRight className="rm-flow-arrow" size={16} /><div className="rm-domain-chip">WHENEVER&nbsp; <span>littlefield.studio</span></div>
+              <h2>Your shop deserves an address of its own.</h2>
+              <p>Open with a ready-to-share DASMARKET address. When your brand is ready for its own domain, connect it from your seller dashboard—without having to build a website or start over.</p>
+              <div className="rm-domain-journey">
+                <div className="rm-domain-stage"><span className="rm-domain-stage-no">01</span><div><small>START HERE</small><strong>yourshop.dasmarket.co.ke</strong><p>Your shop link is ready as part of setup.</p></div><span className="rm-domain-stage-tag">Included</span></div>
+                <div className="rm-domain-journey-line"><span /></div>
+                <div className="rm-domain-stage"><span className="rm-domain-stage-no">02</span><div><small>WHEN YOU’RE READY</small><strong>www.yourbrand.co.ke</strong><p>Connect a domain you already own in your dashboard.</p></div><span className="rm-domain-stage-tag">Your choice</span></div>
               </div>
-              <a className="rm-button rm-button-dark" href="/signup" data-testid="button-domain-start">Start with your shop link <ArrowRight size={14} /></a>
+              <a className="rm-button rm-button-dark" href="/signup" data-testid="button-domain-start">Create your shop <ArrowRight size={14} /></a>
+              <p className="rm-domain-footnote">Keep your original DASMARKET link while your custom domain is being connected.</p>
             </div>
-            <div className="rm-domain-art" aria-label="Custom domain settings preview">
-              <div className="rm-orbit" />
-              <div className="rm-domain-panel">
-                <div className="rm-panel-head"><span>SHOP SETTINGS&nbsp; / &nbsp;DOMAINS</span><span className="rm-panel-status">Connected</span></div>
-                <div className="rm-panel-body">
-                  <div className="rm-panel-title">Your domain</div>
-                  <div className="rm-panel-sub">Manage how customers find your shop.</div>
-                  <div className="rm-domain-row"><span>little-field.dasmarket.co.ke</span><span>DEFAULT</span></div>
-                  <div className="rm-domain-row" style={{ marginTop: 7 }}><span>littlefield.studio</span><span>PRIMARY</span></div>
-                  <div className="rm-panel-button">+ &nbsp; Connect a custom domain</div>
+            <div className="rm-domain-art" aria-label="Illustration of a shop moving from a DASMARKET address to a custom domain">
+              <div className="rm-domain-art-kicker">A BRAND THAT GROWS WITH YOU</div>
+              <div className="rm-domain-browser">
+                <div className="rm-domain-browser-top"><i/><i/><i/><span>YOUR ONLINE SHOP</span></div>
+                <div className="rm-domain-browser-body">
+                  <div className="rm-domain-mini-brand"><span>d.</span><b>YOUR BRAND</b><small>SHOP&nbsp;&nbsp; ABOUT&nbsp;&nbsp; CONTACT</small></div>
+                  <div className="rm-domain-visual"><div className="rm-domain-visual-copy"><small>MADE BY YOU</small><b>A home for<br/>your best work.</b><span>Explore the collection <ArrowRight size={12}/></span></div><div className="rm-domain-visual-shape"><div/><i/></div></div>
+                  <div className="rm-domain-browser-url"><Globe2 size={13}/> yourshop.dasmarket.co.ke <span>LIVE SHOP LINK</span></div>
                 </div>
               </div>
-              <div className="rm-domain-note">Your dashboard, when you’re ready. No rush.</div>
+              <div className="rm-domain-custom-note"><Globe2 size={17}/><span><b>Later, make it yours.</b><small>Connect your own domain when the time feels right.</small></span><CheckCircle2 size={17}/></div>
             </div>
           </div>
         </section>
@@ -220,7 +211,18 @@ export function ReplitLandingPage() {
           <div className="rm-container rm-quote-inner"><div className="rm-quote-mark">“</div><div className="rm-quote-copy">The best time to open your shop isn’t when everything is perfect. It’s when you’re ready to begin.</div><div className="rm-quote-byline">A NOTE FROM DASMARKET</div></div>
         </section>
 
-        <section className="rm-trust-section" id="trust-safety"><div className="rm-container rm-trust-layout"><div><div className="rm-eyebrow rm-section-label">06 / Trust &amp; safety</div><h2>Confidence at every step.</h2><p>Tools and clear information help buyers and sellers manage online orders responsibly.</p></div><div className="rm-trust-list"><article><ShieldCheck/><div><b>Verified payment status</b><p>Orders are confirmed only after payment confirmation is verified.</p></div></article><article><MessageCircle/><div><b>Order reports and support</b><p>Buyers and sellers can raise order-related issues and share supporting details.</p></div></article><article><FileText/><div><b>Visible shop policies</b><p>Sellers can publish delivery, returns and privacy information for their customers.</p></div></article></div></div></section>
+        <section className="rm-trust-section" id="trust-safety">
+          <div className="rm-container">
+            <div className="rm-trust-intro"><div><div className="rm-eyebrow rm-section-label">06 / Trust &amp; safety</div><h2>Clear steps. Safer shopping.</h2></div><p>Trust is built through transparent information, careful payment checks and a clear way to raise concerns. Here’s what buyers and sellers should know.</p></div>
+            <div className="rm-trust-grid">
+              <article className="rm-trust-card rm-trust-featured"><span className="rm-trust-icon"><ShieldCheck size={21}/></span><small>01 / PAYMENT CLARITY</small><h3>Confirmation matters.</h3><p>A payment prompt is not the same as a completed payment. Orders should only be treated as paid after the payment status is confirmed.</p><span className="rm-trust-card-foot">Check the status before fulfilment</span></article>
+              <article className="rm-trust-card"><span className="rm-trust-icon"><MessageCircle size={21}/></span><small>02 / ORDER SUPPORT</small><h3>A route to raise issues.</h3><p>Buyers and sellers can report an order concern and provide relevant order details and supporting information.</p></article>
+              <article className="rm-trust-card"><span className="rm-trust-icon"><FileText size={21}/></span><small>03 / SHOP POLICIES</small><h3>Know what to expect.</h3><p>Review a shop’s delivery, returns and privacy information before placing an order. Sellers should keep these details accurate.</p></article>
+              <article className="rm-trust-card"><span className="rm-trust-icon"><CheckCircle2 size={21}/></span><small>04 / ACCOUNT CARE</small><h3>Protect your sign-in.</h3><p>Use a strong unique password, keep verification codes private and avoid signing in on devices you do not trust.</p></article>
+            </div>
+            <div className="rm-trust-reminder"><ShieldCheck size={18}/><p><b>Stay alert.</b> DASMARKET will never need you to share your password or one-time verification code in a chat. If something feels wrong, pause and contact support through the official channels.</p></div>
+          </div>
+        </section>
 
         <section className="rm-section rm-faq-section" id="faq">
           <div className="rm-container rm-faq-layout">
@@ -254,6 +256,8 @@ export function ReplitLandingPage() {
           </div>
         </section>
       </main>
+
+      <a className="rm-whatsapp-float" href="https://wa.me/?text=Hello%20DASMARKET%20support%2C%20I%20need%20some%20help." target="_blank" rel="noreferrer" aria-label="Contact DASMARKET on WhatsApp"><MessageCircle size={21}/><span>Chat with support</span></a>
 
       <footer className="rm-footer">
         <div className="rm-container rm-footer-inner">
