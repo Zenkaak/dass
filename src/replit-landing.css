@@ -769,3 +769,12 @@
  .rm-trust-card>small { margin-top:17px; }
  .rm-trust-reminder { padding:14px; }
 }
+
+
+.rm-whatsapp-float { position:fixed;z-index:60;right:24px;bottom:24px;display:flex;align-items:center;gap:10px;padding:13px 17px;border:1px solid rgba(255,255,255,.25);border-radius:999px;background:#168653;color:#fff;text-decoration:none;box-shadow:0 9px 28px rgba(13,70,44,.28);font-size:12px;font-weight:700;transition:transform .2s,box-shadow .2s; }
+.rm-whatsapp-float:hover { transform:translateY(-3px);box-shadow:0 13px 32px rgba(13,70,44,.34); }
+.rm-whatsapp-float svg { flex:none; }
+@media(max-width:680px) {
+ .rm-whatsapp-float { right:14px;bottom:14px;padding:13px;border-radius:50%; }
+ .rm-whatsapp-float span { display:none; }
+}
