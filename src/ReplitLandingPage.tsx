@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import './replit-landing.css';
 import { ArrowDown, ArrowRight, ArrowUp, Check, CheckCircle2, CircleHelp, Globe2, Menu, Plus, ShoppingBag, Sparkles, Store, WandSparkles, X, ShieldCheck, MessageCircle, FileText } from 'lucide-react';
 
@@ -33,6 +33,29 @@ function Brand({ footer = false }: { footer?: boolean }) {
 export function ReplitLandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [supportPosition, setSupportPosition] = useState(() => {
+    try { const saved = localStorage.getItem('dasmarket-support-position'); if (saved) return JSON.parse(saved); } catch {}
+    return { x: Math.max(12, window.innerWidth - 174), y: Math.max(12, window.innerHeight - 86) };
+  });
+  const supportDrag = useRef<{ pointerX:number; pointerY:number; x:number; y:number; moved:boolean } | null>(null);
+  function moveSupportButton(event: React.PointerEvent<HTMLAnchorElement>) {
+    if (!supportDrag.current) return;
+    const drag = supportDrag.current;
+    const dx = event.clientX - drag.pointerX, dy = event.clientY - drag.pointerY;
+    if (Math.abs(dx) + Math.abs(dy) > 5) drag.moved = true;
+    if (drag.moved) setSupportPosition({
+      x: Math.max(8, Math.min(window.innerWidth - 142, drag.x + dx)),
+      y: Math.max(8, Math.min(window.innerHeight - 64, drag.y + dy))
+    });
+  }
+  function finishSupportDrag() {
+    if (!supportDrag.current) return;
+    const moved = supportDrag.current.moved;
+    supportDrag.current = null;
+    try { localStorage.setItem('dasmarket-support-position', JSON.stringify(supportPosition)); } catch {}
+    if (moved) supportWasDragged.current = true;
+  }
+  const supportWasDragged = useRef(false);
   function closeMenu() {
     setMenuOpen(false);
   }
@@ -219,14 +242,17 @@ export function ReplitLandingPage() {
 
         <section className="rm-trust-section" id="trust-safety">
           <div className="rm-container">
-            <div className="rm-trust-intro"><div><div className="rm-eyebrow rm-section-label">06 / Trust &amp; safety</div><h2>Clear steps. Safer shopping.</h2></div><p>Trust is built through transparent information, careful payment checks and a clear way to raise concerns. Here’s what buyers and sellers should know.</p></div>
-            <div className="rm-trust-grid">
-              <article className="rm-trust-card rm-trust-featured"><span className="rm-trust-icon"><ShieldCheck size={21}/></span><small>01 / PAYMENT CLARITY</small><h3>Confirmation matters.</h3><p>A payment prompt is not the same as a completed payment. Orders should only be treated as paid after the payment status is confirmed.</p><span className="rm-trust-card-foot">Check the status before fulfilment</span></article>
-              <article className="rm-trust-card"><span className="rm-trust-icon"><MessageCircle size={21}/></span><small>02 / ORDER SUPPORT</small><h3>A route to raise issues.</h3><p>Buyers and sellers can report an order concern and provide relevant order details and supporting information.</p></article>
-              <article className="rm-trust-card"><span className="rm-trust-icon"><FileText size={21}/></span><small>03 / SHOP POLICIES</small><h3>Know what to expect.</h3><p>Review a shop’s delivery, returns and privacy information before placing an order. Sellers should keep these details accurate.</p></article>
-              <article className="rm-trust-card"><span className="rm-trust-icon"><CheckCircle2 size={21}/></span><small>04 / ACCOUNT CARE</small><h3>Protect your sign-in.</h3><p>Use a strong unique password, keep verification codes private and avoid signing in on devices you do not trust.</p></article>
+            <div className="rm-trust-intro">
+              <div><div className="rm-eyebrow rm-section-label">06 / Trust &amp; safety</div><h2>Know what happens.<br/>Know how you’re protected.</h2></div>
+              <p>Clear payment records, shop information and a way to raise concerns help everyone trade with confidence. These are the practical checks to make before and after an order.</p>
             </div>
-            <div className="rm-trust-reminder"><ShieldCheck size={18}/><p><b>Stay alert.</b> DASMARKET will never need you to share your password or one-time verification code in a chat. If something feels wrong, pause and contact support through the official channels.</p></div>
+            <div className="rm-trust-list">
+              <article className="rm-trust-row"><span className="rm-trust-number">01</span><span className="rm-trust-row-icon"><ShieldCheck size={22}/></span><div className="rm-trust-row-title"><small>PAYMENTS</small><h3>Only confirmed payments count.</h3></div><p>A payment prompt is not proof of payment. Check the confirmed transaction and order status before handing over goods or arranging delivery.</p></article>
+              <article className="rm-trust-row"><span className="rm-trust-number">02</span><span className="rm-trust-row-icon"><MessageCircle size={22}/></span><div className="rm-trust-row-title"><small>ORDER SUPPORT</small><h3>There’s a clear way to report a problem.</h3></div><p>Buyers and sellers can raise an order report, share the order reference and provide supporting information for review.</p></article>
+              <article className="rm-trust-row"><span className="rm-trust-number">03</span><span className="rm-trust-row-icon"><FileText size={22}/></span><div className="rm-trust-row-title"><small>SHOP INFORMATION</small><h3>Check the shop’s terms first.</h3></div><p>Review delivery charges, timelines, returns and privacy information before you place an order. Sellers should keep these details current.</p></article>
+              <article className="rm-trust-row"><span className="rm-trust-number">04</span><span className="rm-trust-row-icon"><CheckCircle2 size={22}/></span><div className="rm-trust-row-title"><small>ACCOUNT SECURITY</small><h3>Keep your account in your hands.</h3></div><p>Use a unique password. Never share your password, M-PESA PIN or one-time verification code with anyone.</p></article>
+            </div>
+            <div className="rm-trust-reminder"><ShieldCheck size={20}/><p><b>A quick safety reminder</b><span>DASMARKET support will never ask you to disclose your password, M-PESA PIN or OTP. If a message feels suspicious, stop and contact us through the official support channel.</span></p></div>
           </div>
         </section>
 
@@ -263,7 +289,7 @@ export function ReplitLandingPage() {
         </section>
       </main>
 
-      <a className="rm-whatsapp-float" href="https://wa.me/254758884861?text=Hello%20DASMARKET%20support%2C%20I%20need%20some%20help." target="_blank" rel="noreferrer" aria-label="Chat with DASMARKET support on WhatsApp"><MessageCircle size={24}/><span>Talk to us</span></a>
+      <a className="rm-whatsapp-float" href="https://wa.me/254758884861?text=Hello%20DASMARKET%20support%2C%20I%20need%20some%20help." target="_blank" rel="noreferrer" aria-label="Drag to move. Talk to DASMARKET support on WhatsApp" title="Drag to move" style={{left:supportPosition.x,top:supportPosition.y,right:'auto',bottom:'auto',touchAction:'none'}} onPointerDown={e=>{supportDrag.current={pointerX:e.clientX,pointerY:e.clientY,x:supportPosition.x,y:supportPosition.y,moved:false};e.currentTarget.setPointerCapture(e.pointerId);}} onPointerMove={moveSupportButton} onPointerUp={finishSupportDrag} onPointerCancel={finishSupportDrag} onClick={e=>{if(supportWasDragged.current){e.preventDefault();supportWasDragged.current=false;}}}><MessageCircle size={24}/><span>Talk to us</span><i aria-hidden="true">↕</i></a>
 
       <footer className="rm-footer">
         <div className="rm-container rm-footer-inner">
