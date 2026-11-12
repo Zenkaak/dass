@@ -599,6 +599,7 @@ export default function App() {
   const tenantSubdomain = hostname.endsWith('.dasmarket.co.ke') && !['www','app','mambu'].includes(hostname.split('.')[0]) ? hostname.split('.')[0] : '';
   const isPlatformHost=hostname==='dasmarket.co.ke'||hostname==='www.dasmarket.co.ke'||hostname==='app.dasmarket.co.ke'||hostname==='mambu.dasmarket.co.ke'||hostname.endsWith('.vercel.app')||hostname==='localhost'||hostname==='127.0.0.1';
   const isCustomDomain=!isPlatformHost&&!tenantSubdomain;
+  const isAdminCustomHost=hostname.startsWith('adm.')&&isCustomDomain;
   // Warm the storefront UI chunks while the shop data request is in flight.
   useEffect(()=>{if(tenantSubdomain){import('./StorefrontFlow').catch(()=>{});import('./BuyerAuthPage').catch(()=>{});}},[tenantSubdomain]);
   useEffect(()=>{if(hostname==='mambu.dasmarket.co.ke'||path==='dashboard'||path.startsWith('dashboard/')||path==='platform-admin')import('./mambu-admin.css').catch(()=>{});},[hostname,path]);
@@ -607,6 +608,7 @@ export default function App() {
     if (path === 'reset-password') return <Deferred><AuthPage initial="reset" /></Deferred>;
     return <Deferred><PlatformAdminDashboard /></Deferred>;
   }
+  if (isAdminCustomHost) { if (path === 'login') return <Deferred><AuthPage initial="login" /></Deferred>; if (path === 'reset-password') return <Deferred><AuthPage initial="reset" /></Deferred>; return <SellerDashboard initialOrderNumber={path.startsWith('dashboard/')?decodeURIComponent(path.slice('dashboard/'.length)):''} />; }
   if (tenantSubdomain) return <MerchantStore slug={tenantSubdomain} initialBuyerPage={path||'store'} />;
   if (isCustomDomain) return <MerchantStore slug="" initialBuyerPage={path||'store'} />;
   if (isPlatformHost && isPlatformSeoPath(path)) return <PlatformSeoPage slug={path} />;
