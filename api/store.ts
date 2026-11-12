@@ -286,7 +286,8 @@ export default async function handler(req:any,res:any){
    // when credential decryption or a verification API is unavailable.
    if(resultCode!==0){
     const terminalStatus=resultCode===1032?'cancelled':'failed';
-    await sql`UPDATE public.payments SET status=${terminalStatus},provider_result=${JSON.stringify({...((p.provider_result&&typeof p.provider_result==='object')?p.provider_result:{}),callback:cb,resultCode,resultDescription:String(cb.ResultDesc||'')})}::jsonb,updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
+    await sql`UPDATE public.payments SET status=${terminalStatus},provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({callback:cb,resultCode,resultDescription:String(cb.ResultDesc||'')})}::jsonb,updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
+    await releaseInventory(sql,String(p.id));
     await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'payment_update',terminalStatus==='cancelled'?'Payment cancelled':'Payment failed','Payment for your order was '+terminalStatus+'.');
     return send(res,200,{ResultCode:0,ResultDesc:terminalStatus==='cancelled'?'Customer cancelled payment':'Payment failure recorded'});
    }
@@ -303,8 +304,30 @@ export default async function handler(req:any,res:any){
     const meta=cb.CallbackMetadata?.Item||[],val=(n:string)=>meta.find((x:any)=>x.Name===n)?.Value;
     const amount=Number(val('Amount')??checked.Amount),receipt=String(val('MpesaReceiptNumber')??checked.MpesaReceiptNumber??''),phone=String(val('PhoneNumber')??checked.PhoneNumber??'');
     if(!receipt||Math.round(amount*100)!==Number(p.amount_minor)||phone.replace(/^\+/, '')!==String(p.phone).replace(/^\+/,''))throw Error('Callback details do not match the pending order.');
-    const settlement=await sql`WITH wanted AS (SELECT product_id,SUM(quantity)::integer AS quantity FROM public.order_items WHERE tenant_id=${p.tenant_id} AND order_id=${p.order_id} AND product_id IS NOT NULL GROUP BY product_id), eligible AS (SELECT COUNT(*)::integer AS count FROM wanted w JOIN public.products pr ON pr.id=w.product_id AND pr.tenant_id=${p.tenant_id} WHERE pr.stock_quantity IS NULL OR pr.stock_quantity>=w.quantity), payment_mark AS (UPDATE public.payments SET status='succeeded',provider_receipt=${receipt},provider_result=(${JSON.stringify({...((p.provider_result&&typeof p.provider_result==='object')?p.provider_result:{}),callback:cb,query:checked})}::jsonb || jsonb_build_object('inventoryApplied',(SELECT COUNT(*) FROM wanted)=0 OR (SELECT count FROM eligible)=(SELECT COUNT(*) FROM wanted),'inventoryIssue',CASE WHEN (SELECT COUNT(*) FROM wanted)=0 OR (SELECT count FROM eligible)=(SELECT COUNT(*) FROM wanted) THEN NULL ELSE 'Payment confirmed, but stock changed during checkout. Seller review required.' END)),verified_at=now(),updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending') RETURNING id,tenant_id,order_id), stock_update AS (UPDATE public.products pr SET stock_quantity=CASE WHEN pr.stock_quantity IS NULL THEN NULL ELSE pr.stock_quantity-w.quantity END,updated_at=now() FROM wanted w,payment_mark pm,eligible e WHERE pr.id=w.product_id AND pr.tenant_id=${p.tenant_id} AND (SELECT COUNT(*) FROM wanted)>0 AND e.count=(SELECT COUNT(*) FROM wanted) AND (pr.stock_quantity IS NULL OR pr.stock_quantity>=w.quantity) RETURNING pr.id), queued AS (INSERT INTO public.payment_reconciliation_jobs(payment_id,tenant_id,order_id,status) SELECT id,tenant_id,order_id,'pending' FROM payment_mark ON CONFLICT(payment_id) DO NOTHING RETURNING id) SELECT (SELECT COUNT(*) FROM wanted)::integer AS wanted_count,(SELECT count FROM eligible)::integer AS eligible_count,(SELECT COUNT(*) FROM payment_mark)::integer AS payment_count,(SELECT COUNT(*) FROM stock_update)::integer AS stock_count,(SELECT COUNT(*) FROM queued)::integer AS queued_count`;
-    if(Number(settlement[0]?.payment_count||0)===0)return send(res,200,{ResultCode:0,ResultDesc:'Already processed'});if(Number(settlement[0]?.stock_count||0)!==Number(settlement[0]?.wanted_count||0))console.error('Verified payment needs seller inventory review',{orderId:p.order_id,tenantId:p.tenant_id});
+    let inventoryIssue='';
+    const reservationRows=await sql`SELECT status FROM public.inventory_reservations WHERE payment_id=${p.id} ORDER BY created_at ASC`;
+    if(!reservationRows.length){
+     try{await reserveInventory(sql,String(p.id));}
+     catch(stockError:any){inventoryIssue='Payment confirmed, but stock could not be reserved. Seller review required.';console.error('Verified payment has no available stock reservation',{paymentId:p.id,error:String(stockError?.message||stockError)});}
+    }else if(!reservationRows.some((r:any)=>r.status==='active'||r.status==='consumed')){
+     inventoryIssue='Payment confirmed after its stock reservation was released. Seller review required.';
+    }
+    if(!inventoryIssue){
+     const active=await sql`SELECT id FROM public.inventory_reservations WHERE payment_id=${p.id} AND status='active' LIMIT 1`;
+     if(active.length)await sql`SELECT public.consume_inventory_reservations(${p.id})`;
+    }
+    const settlement=await sql`WITH payment_mark AS (
+      UPDATE public.payments SET status='succeeded',provider_receipt=${receipt},
+       provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({callback:cb,query:checked,inventoryApplied:!inventoryIssue,inventoryIssue:inventoryIssue||null})}::jsonb,
+       verified_at=now(),updated_at=now()
+      WHERE id=${p.id} AND status IN ('initiated','pending') RETURNING id,tenant_id,order_id
+     ), queued AS (
+      INSERT INTO public.payment_reconciliation_jobs(payment_id,tenant_id,order_id,status)
+      SELECT id,tenant_id,order_id,'pending' FROM payment_mark
+      ON CONFLICT(payment_id) DO NOTHING RETURNING id
+     ) SELECT (SELECT COUNT(*) FROM payment_mark)::integer AS payment_count,(SELECT COUNT(*) FROM queued)::integer AS queued_count`
+    if(Number(settlement[0]?.payment_count||0)===0)return send(res,200,{ResultCode:0,ResultDesc:'Already processed'});
+    if(inventoryIssue)await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'payment_update','Payment received — stock review required',inventoryIssue);
     const jobRows=await sql`SELECT id FROM public.payment_reconciliation_jobs WHERE payment_id=${p.id} LIMIT 1`;if(jobRows.length){try{await reconcilePaymentJob(sql,String(jobRows[0].id));}catch(reconcileError:any){console.error('Verified payment queued for later reconciliation',{paymentId:p.id,error:String(reconcileError?.message||reconcileError)});}}
    }catch(err:any){console.error('Daraja callback verification failed',err?.message||err);return send(res,503,{ResultCode:1,ResultDesc:'Payment verification is temporarily unavailable. Retry required.'});}
    return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
