@@ -1668,3 +1668,19 @@
 
 /* Keep the DASMARKET D logo mark upright. */
 .rm-page-shell .rm-brand-mark { transform:none !important; }
+
+/* Keep every homepage element level: no tilted cards, mockups, notes, stamps or icons. */
+.rm-page-shell .rm-brand-mark,
+.rm-page-shell .rm-shop-window,
+.rm-page-shell .rm-domain-card,
+.rm-page-shell .rm-sales-card,
+.rm-page-shell .rm-hero-stamp,
+.rm-page-shell .rm-domain-panel,
+.rm-page-shell .rm-domain-note,
+.rm-page-shell .rm-faq-question[aria-expanded="true"] svg,
+.rm-page-shell .rm-domain-browser,
+.rm-page-shell .rm-domain-visual-shape div,
+.rm-page-shell .rm-domain-visual-shape i,
+.rm-page-shell .rm-dashboard-photo {
+  transform: none !important;
+}
