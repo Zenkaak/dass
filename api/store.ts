@@ -29,8 +29,23 @@ async function buyerSession(sql:any,req:any,tenantId:string){
 }
 async function seller(sql:any,req:any){
  const t=token(req);if(!t)return null;
- const rows=await sql`SELECT u.id AS user_id,u.display_name AS personal_name,m.tenant_id,t.slug,t.name AS shop_name,m.role,si.description AS shop_description FROM public.auth_sessions ss JOIN public.users u ON u.id=ss.user_id JOIN public.memberships m ON m.user_id=u.id JOIN public.tenants t ON t.id=m.tenant_id LEFT JOIN public.sites si ON si.tenant_id=t.id WHERE ss.token_hash=${hash(t)} AND ss.expires_at>now() AND t.status IN ('trial','active') AND (SELECT count(*) FROM public.memberships mx WHERE mx.user_id=u.id)=1 ORDER BY m.created_at LIMIT 1`;
+ const identity=await sql`SELECT m.tenant_id FROM public.auth_sessions ss JOIN public.memberships m ON m.user_id=ss.user_id WHERE ss.token_hash=${hash(t)} AND ss.expires_at>now() AND (SELECT count(*) FROM public.memberships mx WHERE mx.user_id=m.user_id)=1 ORDER BY m.created_at LIMIT 1`;
+ if(!identity.length)return null;
+ await sql`UPDATE public.tenants t SET status='past_due',updated_at=now() WHERE t.id=${identity[0].tenant_id} AND t.status IN ('trial','active') AND EXISTS (SELECT 1 FROM public.subscriptions s WHERE s.tenant_id=t.id AND ((s.status='trialing' AND COALESCE(s.trial_ends_at,s.current_period_end)<=now()) OR (s.status='active' AND s.current_period_end<=now())))`;
+ const rows=await sql`SELECT u.id AS user_id,u.display_name AS personal_name,m.tenant_id,t.slug,t.name AS shop_name,m.role,si.description AS shop_description FROM public.auth_sessions ss JOIN public.users u ON u.id=ss.user_id JOIN public.memberships m ON m.user_id=u.id JOIN public.tenants t ON t.id=m.tenant_id LEFT JOIN public.sites si ON si.tenant_id=t.id WHERE ss.token_hash=${hash(t)} AND ss.expires_at>now() AND t.status IN ('trial','active','past_due') AND (SELECT count(*) FROM public.memberships mx WHERE mx.user_id=u.id)=1 ORDER BY m.created_at LIMIT 1`;
  return rows[0]||null;
+}
+async function productCapacity(sql:any,tenantId:string,requested:number){
+ const subs=await sql`SELECT s.status,s.trial_ends_at,s.current_period_end,p.features FROM public.subscriptions s JOIN public.subscription_plans p ON p.id=s.plan_id WHERE s.tenant_id=${tenantId} ORDER BY s.created_at DESC LIMIT 1`;
+ const sub=subs[0];
+ if(!sub)return {ok:false,error:'Your shop has no active subscription or free trial. Choose a plan to continue.',code:'SUBSCRIPTION_REQUIRED'};
+ const expiry=sub.status==='trialing'?sub.trial_ends_at:sub.status==='active'?sub.current_period_end:null;
+ if(!['trialing','active'].includes(String(sub.status))||!expiry||new Date(expiry).getTime()<=Date.now())return {ok:false,error:'Your free trial or subscription has expired. Choose a paid plan to reconnect your shop.',code:'SUBSCRIPTION_EXPIRED'};
+ const rawLimit=sub.features?.product_limit,limit=rawLimit===undefined||rawLimit===null?50:Number(rawLimit);
+ const countRows=await sql`SELECT count(*)::int AS total FROM public.products WHERE tenant_id=${tenantId}`;
+ const total=Number(countRows[0]?.total||0);
+ if(Number.isFinite(limit)&&limit>0&&total+requested>limit)return {ok:false,error:'You have reached your '+limit+'-product limit ('+total+' currently listed). Upgrade your subscription to add more products.',code:'PRODUCT_LIMIT_REACHED',limit,total,requested};
+ return {ok:true,limit,total,requested};
 }
 async function audit(sql:any,tenantId:string,actorId:string,action:string,type:string,id:string|null,metadata:any={}){await sql`INSERT INTO public.audit_logs(tenant_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${tenantId},${actorId},${action},${type},${id},${JSON.stringify(metadata)}::jsonb)`}
 async function notifyBuyer(sql:any,tenantId:string,buyerPhone:string,orderId:string|null,type:string,title:string,detail:string,complaintId:string|null=null){if(!buyerPhone)return;await sql`INSERT INTO public.buyer_notifications(tenant_id,buyer_phone,order_id,complaint_id,notification_type,title,detail) VALUES(${tenantId},${buyerPhone},${orderId},${complaintId},${type},${title},${detail})`;}
@@ -482,6 +497,7 @@ export default async function handler(req:any,res:any){
     }
    }
    if(rows.length){
+    const capacity=await productCapacity(sql,me.tenant_id,rows.length);if(!capacity.ok)return send(res,403,capacity);
     await sql`INSERT INTO public.products(tenant_id,name,slug,description,product_type,price_minor,stock_quantity,is_active,sku,images,metadata) SELECT ${me.tenant_id},p.name,p.slug,p.description,'physical',p.price_minor,p.stock_quantity,true,p.sku,p.images,p.metadata FROM jsonb_to_recordset(${JSON.stringify(rows)}::jsonb) AS p(name text,slug text,description text,price_minor bigint,stock_quantity integer,sku text,images jsonb,metadata jsonb)`;
     await audit(sql,me.tenant_id,me.user_id,'products.test_catalogue_seeded','product',null,{created:rows.length,categories:categories.length});
    }
@@ -1049,6 +1065,7 @@ export default async function handler(req:any,res:any){
    if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission to import products.'});
    const rows=Array.isArray(req.body?.products)?req.body.products:[];if(!rows.length||rows.length>500)return send(res,400,{error:'Import between 1 and 500 products.'});
    const clean:any[]=[];for(let i=0;i<rows.length;i++){const r=rows[i]||{},name=String(r.name||'').trim().slice(0,120),price=Number(r.price),description=String(r.description||'').trim().slice(0,2000),type=['physical','data_bundle','digital'].includes(String(r.type||'').toLowerCase())?String(r.type).toLowerCase():'physical',stock=r.stock===null||r.stock===''?null:Number(r.stock),sku=String(r.sku||'').trim().slice(0,80)||null,image=String(r.image||'').trim(),imageKey=String(r.imageKey||'').trim();if(!name||!Number.isFinite(price)||price<0||price>100000000||(stock!==null&&(!Number.isInteger(stock)||stock<0)))return send(res,400,{error:'Invalid product on CSV row '+String(r.row||i+2)});if(image&&(!/^https:\/\//i.test(image)||image.length>2000))return send(res,400,{error:'Invalid HTTPS image URL on CSV row '+String(r.row||i+2)});if(imageKey&&!imageKey.startsWith(me.tenant_id+'/products/'))return send(res,400,{error:'Invalid uploaded image on CSV row '+String(r.row||i+2)});clean.push({name,price,description,type,stock,sku,images:imageKey?['neon-object:'+imageKey]:image?[image]:[]});}
+   const capacity=await productCapacity(sql,me.tenant_id,clean.length);if(!capacity.ok)return send(res,403,capacity);
    for(const p of clean){await sql`INSERT INTO public.products(tenant_id,name,slug,description,product_type,price_minor,stock_quantity,sku,images,metadata) VALUES(${me.tenant_id},${p.name},${slugify(p.name)+'-'+crypto.randomBytes(4).toString('hex')},${p.description},${p.type},${Math.round(p.price*100)},${p.stock},${p.sku},${JSON.stringify(p.images)}::jsonb,'{}'::jsonb)`;}
    await audit(sql,me.tenant_id,me.user_id,'products.bulk_imported','product',null,{count:clean.length});return send(res,201,{ok:true,imported:clean.length,message:clean.length+' products imported successfully.'});
   }
@@ -1068,6 +1085,7 @@ export default async function handler(req:any,res:any){
     await audit(sql,me.tenant_id,me.user_id,'product.updated','product',id,{name,type,price});
     return send(res,200,{ok:true});
    }
+   const capacity=await productCapacity(sql,me.tenant_id,1);if(!capacity.ok)return send(res,403,capacity);
    const inserted=await sql`INSERT INTO public.products(tenant_id,name,slug,description,product_type,price_minor,stock_quantity,sku,images,metadata) VALUES(${me.tenant_id},${name},${slugify(name)+'-'+crypto.randomBytes(4).toString('hex')},${description},${type},${Math.round(price*100)},${stock},${sku},${JSON.stringify(images)}::jsonb,${JSON.stringify(metadata)}::jsonb) RETURNING id`;
    await audit(sql,me.tenant_id,me.user_id,'product.created','product',inserted[0].id,{name,type,price});
    return send(res,201,{ok:true});
