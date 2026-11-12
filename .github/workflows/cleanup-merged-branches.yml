@@ -46,6 +46,7 @@ jobs:
             "bingw-style-seller-dashboard"
             "fix/payout-readiness-status"
             "improve-order-chat-payment-and-admin-details"
+            "fix/exact-jumia-storefront-recreation"
           )
 
           mapfile -t merged_branches < <(
