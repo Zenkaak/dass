@@ -102,7 +102,7 @@ export default async function handler(req:any,res:any){
    const [settings,credentials,transactions]=await Promise.all([
     sql`SELECT setting_value FROM public.platform_settings WHERE setting_key='subscription_payment' LIMIT 1`,
     sql`SELECT method,shortcode,environment,encrypted_credentials FROM public.platform_payment_methods ORDER BY method`,
-    sql`SELECT p.id,p.tenant_id,p.phone,p.amount_minor,p.currency,p.status,p.provider_receipt,p.created_at,p.verified_at,p.provider_result,t.name AS shop_name,t.slug FROM public.payments p JOIN public.tenants t ON t.id=p.tenant_id WHERE p.provider_result->>'source'='seller_subscription' ORDER BY p.created_at DESC LIMIT 100`
+    sql`SELECT p.id,p.tenant_id,p.phone,p.amount_minor,p.currency,p.status,p.provider_receipt,p.created_at,p.verified_at,p.provider_result,t.name AS shop_name,t.slug,sp.name AS plan_name FROM public.payments p JOIN public.tenants t ON t.id=p.tenant_id LEFT JOIN public.subscription_plans sp ON sp.id::text=p.provider_result->>'planId' WHERE p.provider_result->>'source'='seller_subscription' ORDER BY p.created_at DESC LIMIT 100`
    ]);
    const cfg=settings[0]?.setting_value||{},methods:any={till:{configured:false,shortcode:'',environment:'production'},paybill:{configured:false,shortcode:'',environment:'production'}};
    for(const row of credentials){const secret=row.encrypted_credentials||{};methods[row.method]={configured:!!(secret.data&&row.shortcode),shortcode:row.shortcode||'',environment:row.environment||'production'};}
