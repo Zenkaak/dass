@@ -3,7 +3,14 @@ import './replit-landing.css';
 import { ArrowRight, CheckCircle2, CreditCard, Globe2, Menu, PackageCheck, ShoppingBag, Store, Truck, X } from 'lucide-react';
 
 function Brand() {
-  return <a className="rm-brand" href="/" aria-label="DASMARKET home"><span className="rm-brand-mark" aria-hidden="true">D</span><span>DASMARKET</span></a>;
+  return <a className="rm-brand" href="/" aria-label="DASMARKET home">
+    <svg className="rm-brand-logo" viewBox="0 0 40 40" role="img" aria-label="DASMARKET logo">
+      <rect x="1" y="1" width="38" height="38" rx="10" fill="#fff"/>
+      <path d="M10 9h9.2c7.1 0 11.8 4.3 11.8 11s-4.7 11-11.8 11H10V9Zm8.7 16.9c4.1 0 6.6-2.1 6.6-5.9s-2.5-5.9-6.6-5.9h-2.9v11.8h2.9Z" fill="#2469df"/>
+      <path d="M29 8h3v9h-3z" fill="#f5a623"/>
+    </svg>
+    <span className="rm-brand-word">DASMARKET</span>
+  </a>;
 }
 
 export function ReplitLandingPage() {
@@ -27,15 +34,15 @@ export function ReplitLandingPage() {
             <div className="rm-hero-kicker rm-eyebrow"><span className="rm-kicker-dot" /> YOUR BUSINESS, ONLINE</div>
             <h1 className="rm-display" id="hero-title">Your online shop.<br />All in one place.</h1>
             <p>Create a professional online store for your business. Showcase your products, manage orders and accept payments through the options configured for your shop.</p>
-            <div className="rm-hero-ctas"><a className="rm-button rm-button-coral" href="/signup" data-testid="button-start-shop">Create your shop <ArrowRight size={15} /></a><a className="rm-button rm-button-outline" href="/login" data-testid="button-hero-sign-in">Sign in <ArrowRight size={14} /></a></div>
             <div className="rm-home-proof"><span><CheckCircle2 size={15}/> Your own branded storefront</span><span><CheckCircle2 size={15}/> Products and orders in one workspace</span><span><CheckCircle2 size={15}/> Connect a domain you own</span></div>
+            <div className="rm-hero-ctas"><a className="rm-button rm-button-coral" href="/signup" data-testid="button-start-shop">Create your shop <ArrowRight size={15} /></a><a className="rm-button rm-button-outline" href="/login" data-testid="button-hero-sign-in">Sign in <ArrowRight size={14} /></a></div>
           </div></div>
         </section>
         <section className="rm-home-facts" aria-label="DASMARKET platform highlights"><div className="rm-container rm-home-facts-grid">
-          <div><strong>Your brand</strong><span>A storefront that represents your business</span></div>
-          <div><strong>One workspace</strong><span>Products, orders and shop settings together</span></div>
-          <div><strong>Flexible checkout</strong><span>Payment options configured for your shop</span></div>
-          <div><strong>Your domain</strong><span>Use your shop address or connect your own</span></div>
+          <div><span className="rm-home-fact-icon"><Store size={19}/></span><span className="rm-home-fact-copy"><strong>Your brand</strong><span>A storefront that represents your business</span></span></div>
+          <div><span className="rm-home-fact-icon"><PackageCheck size={19}/></span><span className="rm-home-fact-copy"><strong>One workspace</strong><span>Products, orders and shop settings together</span></span></div>
+          <div><span className="rm-home-fact-icon"><CreditCard size={19}/></span><span className="rm-home-fact-copy"><strong>Flexible checkout</strong><span>Payment options configured for your shop</span></span></div>
+          <div><span className="rm-home-fact-icon"><Globe2 size={19}/></span><span className="rm-home-fact-copy"><strong>Your domain</strong><span>Use your shop address or connect your own</span></span></div>
         </div></section>
         <section className="rm-section rm-home-features" id="features"><div className="rm-container">
           <div className="rm-home-section-heading"><div className="rm-eyebrow rm-section-label">EVERYTHING INCLUDED</div><h2>The tools to run your shop, already in one place.</h2><p>From the first product listing to the completed customer order, manage the work from one seller account.</p></div>
@@ -68,14 +75,20 @@ export function ReplitLandingPage() {
           <div className="rm-cta-actions"><a className="rm-button rm-button-coral" href="/signup">Create your shop <ArrowRight size={15}/></a><a className="rm-button rm-button-outline" href="/login">Sign in</a></div>
         </div></section>
       </main>
-      <footer className="rm-footer"><div className="rm-container rm-footer-inner">
-        <div className="rm-footer-top rm-home-footer-top"><Brand/>
-          <div className="rm-footer-contact"><strong>Contact</strong><a href="mailto:support@dasmarket.co.ke">support@dasmarket.co.ke</a><a href="tel:+254758884861">+254 758 884 861</a><a href="https://wa.me/254758884861" target="_blank" rel="noreferrer">WhatsApp</a></div>
-          <div className="rm-footer-group"><strong>Company</strong><a href="/contact/">Contact us</a><a href="/terms/">Terms &amp; Conditions</a><a href="/privacy/">Privacy Policy</a></div>
-          <div className="rm-footer-group"><strong>Get started</strong><a href="/signup">Create your shop</a><a href="/login">Sign in</a><a href="#features">Features</a></div>
+      <footer className="rm-footer rm-home-footer">
+        <div className="rm-container rm-footer-inner">
+          <div className="rm-home-footer-grid">
+            <div className="rm-home-footer-brand">
+              <Brand />
+              <p>The tools to bring your business online. Create your storefront, manage your products and orders, and grow your business from one place.</p>
+            </div>
+            <div className="rm-home-footer-group"><strong>Platform</strong><a href="#features">Features</a><a href="#how-it-works">How it works</a><a href="/signup">Create your shop</a><a href="/login">Sign in</a></div>
+            <div className="rm-home-footer-group"><strong>Company</strong><a href="/contact/">Contact us</a><a href="/terms/">Terms &amp; Conditions</a><a href="/privacy/">Privacy Policy</a></div>
+            <div className="rm-home-footer-group rm-home-footer-contact"><strong>Get in touch</strong><a href="mailto:support@dasmarket.co.ke">support@dasmarket.co.ke</a><a href="tel:+254758884861">+254 758 884 861</a><a href="https://wa.me/254758884861" target="_blank" rel="noreferrer">WhatsApp support <ArrowRight size={12}/></a><span>Kenya</span></div>
+          </div>
+          <div className="rm-footer-bottom"><span className="rm-footer-copy">© 2026 DASMARKET. All rights reserved.</span><div className="rm-home-footer-bottom-links"><a className="rm-back-top" href="#top">Back to top <ArrowRight size={12}/></a></div></div>
         </div>
-        <div className="rm-footer-bottom"><span className="rm-footer-copy">© 2026 DASMARKET. All rights reserved.</span><a className="rm-back-top" href="#top">Back to top <ArrowRight size={12}/></a></div>
-      </div></footer>
+      </footer>
     </div>
   );
 }
