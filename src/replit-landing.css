@@ -1210,3 +1210,114 @@
   .rm-page-shell .rm-hero-copy>p { font-size:13px; }
   .rm-page-shell .rm-hero-ctas .rm-button { font-size:12px; padding-inline:14px; }
 }
+
+
+/* Final responsive typography and layout pass for phones, tablets and desktops. */
+.rm-page-shell,
+.rm-page-shell * { box-sizing:border-box; }
+.rm-page-shell { width:100%; max-width:100%; overflow-x:clip; }
+.rm-page-shell .rm-container { width:min(1200px, calc(100% - 64px)); margin-inline:auto; }
+.rm-page-shell .rm-hero-grid,
+.rm-page-shell .rm-section-intro,
+.rm-page-shell .rm-domain-layout,
+.rm-page-shell .rm-feature-layout,
+.rm-page-shell .rm-faq-layout,
+.rm-page-shell .rm-dashboard-showcase { min-width:0; }
+.rm-page-shell .rm-hero h1 { font-size:clamp(38px, 4.2vw, 58px) !important; line-height:1.08; }
+.rm-page-shell .rm-section h2,
+.rm-page-shell .rm-section-intro h2,
+.rm-page-shell .rm-domain-copy h2,
+.rm-page-shell .rm-trust-intro h2,
+.rm-page-shell .rm-faq-heading h2 { font-size:clamp(26px, 3vw, 38px); line-height:1.14; }
+.rm-page-shell .rm-nav { gap:18px; min-width:0; }
+.rm-page-shell .rm-nav-links { gap:clamp(10px, 1.35vw, 20px); }
+.rm-page-shell .rm-nav-links a,
+.rm-page-shell .rm-nav-login { font-size:clamp(11px, .85vw, 13px); white-space:nowrap; }
+.rm-page-shell .rm-nav-actions { flex-shrink:0; }
+.rm-page-shell .rm-hero-copy,
+.rm-page-shell .rm-section-intro > *,
+.rm-page-shell .rm-domain-layout > *,
+.rm-page-shell .rm-feature-layout > *,
+.rm-page-shell .rm-faq-layout > *,
+.rm-page-shell .rm-dashboard-showcase > * { min-width:0; }
+.rm-page-shell img { max-width:100%; }
+
+@media (min-width:681px) and (max-width:1100px) {
+  .rm-page-shell .rm-container { width:calc(100% - 48px); }
+  .rm-page-shell .rm-nav { height:68px; }
+  .rm-page-shell .rm-nav-links { display:none; position:absolute; top:68px; left:24px; right:24px; padding:12px 18px; background:#202e43; border:1px solid rgba(255,255,255,.16); border-radius:0 0 10px 10px; flex-direction:column; align-items:stretch; gap:0; }
+  .rm-page-shell .rm-nav-links.rm-open { display:flex; }
+  .rm-page-shell .rm-nav-links a { padding:12px 4px; border-bottom:1px solid rgba(255,255,255,.12); font-size:14px; }
+  .rm-page-shell .rm-mobile-toggle { display:block; padding:7px; }
+  .rm-page-shell .rm-hero { min-height:0; padding:126px 0 52px; }
+  .rm-page-shell .rm-hero h1 { font-size:clamp(38px, 4.5vw, 50px) !important; }
+  .rm-page-shell .rm-hero-stage { min-height:340px; }
+  .rm-page-shell .rm-domain-layout,
+  .rm-page-shell .rm-feature-layout { grid-template-columns:minmax(0,1fr); gap:28px; }
+  .rm-page-shell .rm-domain-art { min-height:300px; }
+  .rm-page-shell .rm-feature-heading { position:static; }
+  .rm-page-shell .rm-trust-row { grid-template-columns:24px 36px minmax(0,1fr); }
+  .rm-page-shell .rm-trust-row > p { grid-column:3; }
+  .rm-page-shell .rm-faq-layout { grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr); gap:26px; }
+}
+
+@media (max-width:680px) {
+  .rm-page-shell .rm-container { width:calc(100% - 32px); }
+  .rm-page-shell .rm-hero { padding:108px 0 38px; min-height:0; }
+  .rm-page-shell .rm-hero h1 { font-size:clamp(29px, 8.2vw, 36px) !important; line-height:1.12; letter-spacing:-.04em; max-width:100%; }
+  .rm-page-shell .rm-hero-copy > p { font-size:13px; line-height:1.55; margin:13px 0 17px; }
+  .rm-page-shell .rm-hero-kicker { font-size:9px; margin-bottom:12px; }
+  .rm-page-shell .rm-hero-note { font-size:10px; }
+  .rm-page-shell .rm-hero-ctas { gap:8px; }
+  .rm-page-shell .rm-hero-ctas .rm-button { min-height:42px; padding:0 12px; font-size:11px; }
+  .rm-page-shell .rm-section { padding:30px 0 !important; }
+  .rm-page-shell .rm-section h2,
+  .rm-page-shell .rm-section-intro h2,
+  .rm-page-shell .rm-domain-copy h2,
+  .rm-page-shell .rm-trust-intro h2,
+  .rm-page-shell .rm-faq-heading h2,
+  .rm-page-shell .rm-feature-heading h2 { font-size:clamp(23px, 6.2vw, 27px) !important; line-height:1.18; letter-spacing:-.03em; }
+  .rm-page-shell .rm-section-intro > p,
+  .rm-page-shell .rm-domain-copy > p,
+  .rm-page-shell .rm-trust-intro > p,
+  .rm-page-shell .rm-faq-heading > p,
+  .rm-page-shell .rm-feature-heading > p,
+  .rm-page-shell .rm-storefront-copy p { font-size:12px; line-height:1.55; }
+  .rm-page-shell .rm-step h3,
+  .rm-page-shell .rm-tools-grid h3,
+  .rm-page-shell .rm-trust-row-title h3,
+  .rm-page-shell .rm-feature-row h3 { font-size:14px; line-height:1.35; }
+  .rm-page-shell .rm-step p,
+  .rm-page-shell .rm-tools-grid p,
+  .rm-page-shell .rm-trust-row > p,
+  .rm-page-shell .rm-faq-answer,
+  .rm-page-shell .rm-feature-row p { font-size:11px; line-height:1.55; }
+  .rm-page-shell .rm-faq-question { font-size:12px; line-height:1.4; }
+  .rm-page-shell .rm-final-cta h2 { font-size:clamp(25px, 7vw, 29px) !important; line-height:1.15; }
+  .rm-page-shell .rm-final-cta p { font-size:12px; line-height:1.55; }
+  .rm-page-shell .rm-nav { height:60px; }
+  .rm-page-shell .rm-nav .rm-brand { font-size:15px; gap:7px; }
+  .rm-page-shell .rm-nav .rm-brand-mark { width:27px; height:27px; font-size:16px; }
+  .rm-page-shell .rm-nav-actions { gap:8px; }
+  .rm-page-shell .rm-nav-actions .rm-button { min-height:36px; padding:0 10px; font-size:10px; }
+  .rm-page-shell .rm-nav-links { top:60px; }
+  .rm-page-shell .rm-domain-layout,
+  .rm-page-shell .rm-feature-layout,
+  .rm-page-shell .rm-faq-layout { grid-template-columns:minmax(0,1fr); gap:18px; }
+  .rm-page-shell .rm-domain-art { min-height:250px; }
+  .rm-page-shell .rm-feature-heading { position:static; }
+  .rm-page-shell .rm-trust-row { grid-template-columns:22px 32px minmax(0,1fr); gap:8px; }
+  .rm-page-shell .rm-trust-row-icon { width:32px; height:32px; }
+  .rm-page-shell .rm-dashboard-showcase { grid-template-columns:minmax(0,1fr); padding:14px; gap:16px; }
+  .rm-page-shell .rm-dashboard-showcase-copy h3 { font-size:22px; }
+  .rm-page-shell .rm-dashboard-photo { transform:none; }
+  .rm-page-shell .rm-dashboard-photo img { height:190px; }
+  .rm-page-shell .rm-footer-inner { flex-wrap:wrap; align-items:flex-start; }
+  .rm-page-shell .rm-footer-links { flex-wrap:wrap; gap:10px 14px; }
+}
+@media (max-width:360px) {
+  .rm-page-shell .rm-container { width:calc(100% - 26px); }
+  .rm-page-shell .rm-hero h1 { font-size:28px !important; }
+  .rm-page-shell .rm-nav .rm-brand { font-size:14px; }
+  .rm-page-shell .rm-nav-actions .rm-button { padding:0 8px; }
+}
