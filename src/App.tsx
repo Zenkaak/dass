@@ -5,6 +5,7 @@ import { storefrontCategories } from './storefrontCatalog';
 import { marketplaceFaqs } from './marketplaceFaqs';
 import { AuthPage } from './AuthPage';
 import ReplitLandingPage from './ReplitLandingPage';
+import PlatformSeoPage, { isPlatformSeoPath } from './PlatformSeoPage';
 
 
 const StorefrontFlow = lazy(()=>import('./StorefrontFlow').then(m=>({default:m.StorefrontFlow})));
@@ -572,6 +573,7 @@ export default function App() {
   }
   if (tenantSubdomain) return <MerchantStore slug={tenantSubdomain} initialBuyerPage={path||'store'} />;
   if (isCustomDomain) return <MerchantStore slug="" initialBuyerPage={path||'store'} />;
+  if (isPlatformHost && isPlatformSeoPath(path)) return <PlatformSeoPage slug={path} />;
   if (!path) return <LandingPage />;
   if (path === 'signup') return <Deferred><AuthPage initial="signup" /></Deferred>;
   if (path === 'login') return <Deferred><AuthPage initial="login" /></Deferred>;
