@@ -1749,3 +1749,56 @@
  .rm-home-final { padding:42px 0 !important; }
  .rm-home-footer-top { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
+
+
+/* Homepage composition aligned more closely to Reatech360's live product-led layout. */
+.rm-home-simple { background:#fff; color:#17283c; }
+.rm-home-simple .rm-nav-wrap { position:relative; background:#fff; border-bottom:1px solid #e7ebf0; backdrop-filter:none; }
+.rm-home-simple .rm-nav { height:70px; }
+.rm-home-simple .rm-brand { color:#17283c; font-size:20px; }
+.rm-home-simple .rm-brand-mark { background:#2469df; color:#fff; }
+.rm-home-simple .rm-nav-links a { color:#46566a; }
+.rm-home-simple .rm-nav-links a:hover { color:#17283c; }
+.rm-home-simple .rm-nav-login { color:#26384d; }
+.rm-home-simple .rm-home-hero { background:#f5f7fa !important; color:#17283c !important; padding:76px 0 62px !important; }
+.rm-home-simple .rm-home-hero:before { display:none !important; }
+.rm-home-simple .rm-home-hero .rm-hero-copy { max-width:800px !important; }
+.rm-home-simple .rm-home-hero .rm-hero-kicker { color:#52647a; }
+.rm-home-simple .rm-home-hero .rm-kicker-dot { background:#2469df; box-shadow:0 0 0 5px rgba(36,105,223,.12); }
+.rm-home-simple .rm-home-hero h1 { color:#17283c !important; font-size:clamp(48px,5.4vw,70px) !important; letter-spacing:-.055em; }
+.rm-home-simple .rm-home-hero .rm-hero-copy>p { color:#5b6b7e !important; max-width:670px !important; }
+.rm-home-simple .rm-home-hero .rm-button-outline { color:#25384e; border-color:#c8d1dc; }
+.rm-home-simple .rm-home-hero .rm-button-outline:hover { background:#e9eef5; }
+.rm-home-simple .rm-home-proof { color:#52647a; }
+.rm-home-simple .rm-home-proof svg { color:#27845e; }
+.rm-home-facts { background:#fff; border-top:1px solid #e7ebf0; border-bottom:1px solid #e7ebf0; }
+.rm-home-facts-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); }
+.rm-home-facts-grid>div { display:flex; flex-direction:column; gap:6px; padding:22px 20px 22px 0; }
+.rm-home-facts-grid>div+div { border-left:1px solid #e7ebf0; padding-left:20px; }
+.rm-home-facts-grid strong { color:#17283c; font:700 15px var(--app-font-display); }
+.rm-home-facts-grid span { color:#6a788a; font-size:11px; line-height:1.5; }
+.rm-home-simple .rm-home-features { padding:66px 0 !important; }
+.rm-home-simple .rm-home-feature-grid { grid-template-columns:repeat(3,minmax(0,1fr)); border-top:1px solid #e0e6ed; }
+.rm-home-simple .rm-home-feature { padding:24px 22px 24px 0; }
+.rm-home-simple .rm-home-feature:nth-child(3n+2),.rm-home-simple .rm-home-feature:nth-child(3n+3) { border-left:1px solid #e0e6ed; padding-left:22px; }
+.rm-home-simple .rm-home-feature:nth-child(n+4) { border-top:1px solid #e0e6ed; }
+.rm-home-simple .rm-home-workspace { background:#f5f7fa; }
+.rm-home-simple .rm-home-workspace-image { box-shadow:0 14px 38px rgba(20,42,70,.08); }
+.rm-home-simple .rm-home-final { background:#17283c; }
+.rm-home-simple .rm-home-final h2,.rm-home-simple .rm-home-final p { color:#fff; }
+@media(max-width:900px) {
+ .rm-home-facts-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .rm-home-facts-grid>div:nth-child(3) { border-left:0; padding-left:0; border-top:1px solid #e7ebf0; }
+ .rm-home-facts-grid>div:nth-child(4) { border-top:1px solid #e7ebf0; }
+}
+@media(max-width:680px) {
+ .rm-home-simple .rm-nav-wrap { position:relative; }
+ .rm-home-simple .rm-home-hero { padding:54px 0 44px !important; }
+ .rm-home-simple .rm-home-hero h1 { font-size:clamp(40px,10.5vw,54px) !important; }
+ .rm-home-simple .rm-home-feature-grid { grid-template-columns:1fr; }
+ .rm-home-simple .rm-home-feature,.rm-home-simple .rm-home-feature:nth-child(3n+2),.rm-home-simple .rm-home-feature:nth-child(3n+3) { padding:20px 0; border-left:0; }
+ .rm-home-simple .rm-home-feature:nth-child(n+2) { border-top:1px solid #e0e6ed; }
+ .rm-home-facts-grid>div { padding:16px 12px 16px 0; }
+ .rm-home-facts-grid>div+div { padding-left:12px; }
+ .rm-home-facts-grid>div:nth-child(3) { padding-left:0; }
+}
