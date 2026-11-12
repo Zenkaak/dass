@@ -68,14 +68,20 @@ export function ReplitLandingPage() {
           <div className="rm-cta-actions"><a className="rm-button rm-button-coral" href="/signup">Create your shop <ArrowRight size={15}/></a><a className="rm-button rm-button-outline" href="/login">Sign in</a></div>
         </div></section>
       </main>
-      <footer className="rm-footer"><div className="rm-container rm-footer-inner">
-        <div className="rm-footer-top rm-home-footer-top"><Brand/>
-          <div className="rm-footer-contact"><strong>Contact</strong><a href="mailto:support@dasmarket.co.ke">support@dasmarket.co.ke</a><a href="tel:+254758884861">+254 758 884 861</a><a href="https://wa.me/254758884861" target="_blank" rel="noreferrer">WhatsApp</a></div>
-          <div className="rm-footer-group"><strong>Company</strong><a href="/contact/">Contact us</a><a href="/terms/">Terms &amp; Conditions</a><a href="/privacy/">Privacy Policy</a></div>
-          <div className="rm-footer-group"><strong>Get started</strong><a href="/signup">Create your shop</a><a href="/login">Sign in</a><a href="#features">Features</a></div>
+      <footer className="rm-footer rm-home-footer">
+        <div className="rm-container rm-footer-inner">
+          <div className="rm-home-footer-grid">
+            <div className="rm-home-footer-brand">
+              <Brand />
+              <p>The tools to bring your business online. Create your storefront, manage your products and orders, and grow your business from one place.</p>
+            </div>
+            <div className="rm-home-footer-group"><strong>Platform</strong><a href="#features">Features</a><a href="#how-it-works">How it works</a><a href="/signup">Create your shop</a><a href="/login">Sign in</a></div>
+            <div className="rm-home-footer-group"><strong>Company</strong><a href="/contact/">Contact us</a><a href="/terms/">Terms &amp; Conditions</a><a href="/privacy/">Privacy Policy</a></div>
+            <div className="rm-home-footer-group rm-home-footer-contact"><strong>Get in touch</strong><a href="mailto:support@dasmarket.co.ke">support@dasmarket.co.ke</a><a href="tel:+254758884861">+254 758 884 861</a><a href="https://wa.me/254758884861" target="_blank" rel="noreferrer">WhatsApp support <ArrowRight size={12}/></a><span>Kenya</span></div>
+          </div>
+          <div className="rm-footer-bottom"><span className="rm-footer-copy">© 2026 DASMARKET. All rights reserved.</span><div className="rm-home-footer-bottom-links"><a href="/terms/">Terms</a><a href="/privacy/">Privacy</a><a className="rm-back-top" href="#top">Back to top <ArrowRight size={12}/></a></div></div>
         </div>
-        <div className="rm-footer-bottom"><span className="rm-footer-copy">© 2026 DASMARKET. All rights reserved.</span><a className="rm-back-top" href="#top">Back to top <ArrowRight size={12}/></a></div>
-      </div></footer>
+      </footer>
     </div>
   );
 }
