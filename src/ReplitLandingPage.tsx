@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import './replit-landing.css';
-import { ArrowDown, ArrowRight, ArrowUp, CheckCircle2, CircleHelp, Globe2, Menu, Plus, ShoppingBag, Sparkles, Store, X, ShieldCheck, MessageCircle, FileText } from 'lucide-react';
+import { ArrowRight, ArrowUp, CheckCircle2, CircleHelp, Globe2, Menu, Plus, ShoppingBag, Sparkles, Store, X, ShieldCheck, MessageCircle, FileText } from 'lucide-react';
 
 const faqs = [
   { q: 'How do I create a shop?', a: 'Create a seller account, choose a shop name and follow the setup steps in your dashboard. Add your products and prepare your storefront before sharing it with customers.' },
@@ -85,7 +85,7 @@ export function ReplitLandingPage() {
               </ul>
               <div className="rm-hero-ctas rm-reveal rm-reveal-delay-2">
                 <a className="rm-button rm-button-coral" href="/signup" data-testid="button-start-shop">Create your shop <ArrowRight size={15} /></a>
-                <a className="rm-button rm-button-outline" href="#how-it-works" data-testid="button-see-how">See how it works <ArrowDown size={14} /></a>
+                <a className="rm-button rm-button-outline" href="/login" data-testid="button-hero-sign-in">Sign in <ArrowRight size={14} /></a>
               </div>
             </div>
           </div>
