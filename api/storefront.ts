@@ -46,7 +46,7 @@ export default async function handler(req:any,res:any){
   }
   if(!slug)return send(res,400,{error:'Shop slug is required'});
   // Enforce trial and paid-period expiry on every storefront request, including custom shop domains.
-  await sql`UPDATE public.tenants t SET status='past_due',updated_at=now() WHERE t.slug=${slug} AND t.status IN ('trial','active') AND EXISTS (SELECT 1 FROM public.subscriptions s WHERE s.tenant_id=t.id AND ((s.status='trialing' AND COALESCE(s.trial_ends_at,s.current_period_end)<=now()) OR (s.status='active' AND s.current_period_end<=now())))`;
+  await sql`UPDATE public.tenants t SET status='past_due',updated_at=now() WHERE t.slug=${slug} AND t.status IN ('trial','active') AND NOT EXISTS (SELECT 1 FROM public.subscriptions s WHERE s.tenant_id=t.id AND ((s.status='trialing' AND COALESCE(s.trial_ends_at,s.current_period_end)>now()) OR (s.status='active' AND s.current_period_end>now())))`;
   const requestedLimit=Math.max(1,Math.min(60,Number(req.query?.limit)||35));
   const requestedOffset=Math.max(0,Number(req.query?.offset)||0);
   const requestedSearch=String(req.query?.search||'').trim().slice(0,120);
