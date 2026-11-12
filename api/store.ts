@@ -453,12 +453,19 @@ export default async function handler(req:any,res:any){
    const paymentId=crypto.randomUUID();
    const inserted=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result) VALUES(${tenantId},${order.id},'mpesa_daraja',${paymentPhone},${amount},'KES','initiated',${paymentId},${JSON.stringify({paymentMethod:method,source:'buyer_payment_retry'})}::jsonb) RETURNING id`;
    try{
+    await reserveInventory(sql,String(inserted[0].id));
     const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dass-gamma.vercel.app'))).replace(/\/$/,'')+'/api/payments?action=daraja-callback';
     const stk=await startStk(payment,order,paymentPhone,amount/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):order.order_number.slice(-12),callbackUrl);
     await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({paymentMethod:method,source:'buyer_payment_retry',merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${inserted[0].id}`;
     return send(res,200,{ok:true,checkoutRequestId:stk.checkoutId,message:'M-PESA prompt sent. Enter your PIN to complete payment.'});
    }catch(e:any){
-    await sql`UPDATE public.payments SET status='failed',provider_result=${JSON.stringify({paymentMethod:method,source:'buyer_payment_retry',error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${inserted[0].id}`;
+    if(isAmbiguousStkSubmission(e)){
+     await sql`UPDATE public.payments SET status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paymentMethod:method,source:'buyer_payment_retry',stkSubmissionAmbiguous:true,manualReviewRequired:true,error:String(e?.message||'STK submission response was lost')})}::jsonb,updated_at=now() WHERE id=${inserted[0].id}`;
+     await sql`UPDATE public.inventory_reservations SET expires_at=now()+interval '30 minutes',updated_at=now() WHERE payment_id=${inserted[0].id} AND status='active'`;
+     return send(res,202,{ok:true,paymentStatus:'pending',manualReviewRequired:true,message:'Safaricom did not return a confirmation. Do not retry yet; this payment is being held for review to avoid duplicate prompts.'});
+    }
+    await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paymentMethod:method,source:'buyer_payment_retry',error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${inserted[0].id}`;
+    await releaseInventory(sql,String(inserted[0].id));
     console.error('Buyer payment retry failed',e?.message||e);return send(res,502,{error:e?.message||'Could not start the M-PESA payment prompt.'});
    }
   }
@@ -594,12 +601,19 @@ export default async function handler(req:any,res:any){
    const idem=idempotency||crypto.randomUUID();
    const p=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result) VALUES(${tenantId},${o[0].id},'mpesa_daraja',${paymentPhone},${payableTotal},'KES','initiated',${idem},${JSON.stringify({paymentMethod:method})}::jsonb) RETURNING id`;
    try{
+    await reserveInventory(sql,String(p[0].id));
     const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dass-gamma.vercel.app'))).replace(/\/$/,'')+'/api/payments?action=daraja-callback';
     const stk=await startStk(payment,o[0],paymentPhone,payableTotal/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):orderNo.slice(-12),callbackUrl);
     await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({paymentMethod:method,source:'buyer_checkout',merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
     return send(res,201,{ok:true,orderId:o[0].id,orderNumber:o[0].order_number,paymentStatus:'pending',checkoutRequestId:stk.checkoutId,chatToken:customerChatToken,subtotal:total/100,discount:discountMinor/100,total:(total-discountMinor)/100,couponCode:couponCode||null,message:'M-PESA prompt sent. Enter your PIN on your phone to complete payment.'});
    }catch(e:any){
-    await sql`UPDATE public.payments SET status='failed',provider_result=${JSON.stringify({paymentMethod:method,source:'buyer_checkout',error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
+    if(isAmbiguousStkSubmission(e)){
+     await sql`UPDATE public.payments SET status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paymentMethod:method,source:'buyer_checkout',stkSubmissionAmbiguous:true,manualReviewRequired:true,error:String(e?.message||'STK submission response was lost')})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
+     await sql`UPDATE public.inventory_reservations SET expires_at=now()+interval '30 minutes',updated_at=now() WHERE payment_id=${p[0].id} AND status='active'`;
+     return send(res,202,{ok:true,orderId:o[0].id,orderNumber:o[0].order_number,paymentStatus:'pending',manualReviewRequired:true,chatToken:customerChatToken,subtotal:total/100,discount:discountMinor/100,total:(total-discountMinor)/100,couponCode:couponCode||null,message:'Safaricom did not return a confirmation. Do not retry yet; this payment is being held for review to avoid duplicate prompts.'});
+    }
+    await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paymentMethod:method,source:'buyer_checkout',error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
+    await releaseInventory(sql,String(p[0].id));
     console.error('Daraja STK initiation failed',e?.message||e);
     return send(res,502,{error:e?.message||'Could not start M-PESA payment. No payment was confirmed.',orderNumber:o[0].order_number,chatToken:customerChatToken});
    }
@@ -826,13 +840,20 @@ export default async function handler(req:any,res:any){
    const idempotency=crypto.randomUUID();
    const p=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result) VALUES(${me.tenant_id},${order.id},'mpesa_daraja',${phone},${amount},'KES','initiated',${idempotency},${JSON.stringify({paymentMethod:method,source:'merchant_order_prompt'})}::jsonb) RETURNING id`;
    try{
+    await reserveInventory(sql,String(p[0].id));
     const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dass-gamma.vercel.app'))).replace(/\/$/,'')+'/api/payments?action=daraja-callback';
     const stk=await startStk(payment,order,phone,amount/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):order.order_number.slice(-12),callbackUrl);
     await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({paymentMethod:method,source:'merchant_order_prompt',merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
     await audit(sql,me.tenant_id,me.user_id,'order.payment_prompt.sent','order',order.id,{paymentMethod:method,amountMinor:amount});
     return send(res,200,{ok:true,checkoutRequestId:stk.checkoutId,message:'M-PESA prompt sent for KES '+(amount/100).toLocaleString('en-KE')+'. Ask the customer to enter their M-PESA PIN.'});
    }catch(e:any){
-    await sql`UPDATE public.payments SET status='failed',provider_result=${JSON.stringify({paymentMethod:method,source:'merchant_order_prompt',error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
+    if(isAmbiguousStkSubmission(e)){
+     await sql`UPDATE public.payments SET status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paymentMethod:method,source:'merchant_order_prompt',stkSubmissionAmbiguous:true,manualReviewRequired:true,error:String(e?.message||'STK submission response was lost')})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
+     await sql`UPDATE public.inventory_reservations SET expires_at=now()+interval '30 minutes',updated_at=now() WHERE payment_id=${p[0].id} AND status='active'`;
+     return send(res,202,{ok:true,paymentStatus:'pending',manualReviewRequired:true,message:'Safaricom did not return a confirmation. Do not send another prompt yet; this payment is being held for review.'});
+    }
+    await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paymentMethod:method,source:'merchant_order_prompt',error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
+    await releaseInventory(sql,String(p[0].id));
     console.error('Order STK prompt failed',e?.message||e);return send(res,502,{error:e?.message||'Could not send the M-PESA prompt.'});
    }
   }
