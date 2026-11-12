@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { ArrowRight, CheckCircle2, Globe2, LayoutDashboard, ShieldCheck, Store } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Globe2, LayoutDashboard } from 'lucide-react';
 
 type SeoPage = {
   title: string; description: string; heading: string; intro: string; eyebrow: string;
