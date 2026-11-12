@@ -8,10 +8,10 @@ type SeoPage = {
 };
 const pages: Record<string, SeoPage> = {
   'create-online-store': {
-    title: 'Create an Online Store in Kenya | DASMARKET',
-    description: 'Set up a branded online store with DASMARKET. Add products, manage orders, configure payments and share your shop with customers.',
+    title: 'Online Store Builder in Kenya | DASMARKET',
+    description: 'Create an online shop in Kenya with DASMARKET. Build your branded online store, add products, manage orders, configure supported payments and share your shop with customers.',
     eyebrow: 'START SELLING ONLINE',
-    heading: 'Create an online store that is ready for business.',
+    heading: 'Create an online shop in Kenya with your own branded storefront.',
     intro: 'DASMARKET gives Kenyan businesses a practical way to establish a dedicated online shop without having to build an ecommerce system from the ground up. Set up your seller account, organise your products and publish a storefront customers can visit from their phones or computers.',
     sections: [
       { heading: 'A shop built around your business', body: 'Your storefront is the public home of your business online. Present your own products, prices, images and shop information in one place. Customers can browse your catalogue, add items to a cart and place orders through your shop.' },
@@ -25,10 +25,10 @@ const pages: Record<string, SeoPage> = {
     ]
   },
   'ecommerce-platform': {
-    title: 'Ecommerce Platform for Kenyan Businesses | DASMARKET',
-    description: 'Run your online business with DASMARKET: a branded storefront, product catalogue, order management, checkout and seller tools in one platform.',
+    title: 'Ecommerce Platform in Kenya for Businesses | DASMARKET',
+    description: 'DASMARKET is an ecommerce platform for Kenyan businesses. Run a branded online store, manage products and orders, connect your own domain and configure seller payments.',
     eyebrow: 'ONE PLATFORM FOR YOUR SHOP',
-    heading: 'An ecommerce platform for the way your business sells.',
+    heading: 'An ecommerce platform for Kenyan businesses that want their own shop.',
     intro: 'DASMARKET brings the customer-facing shop and the seller tools behind it into one connected platform. It is designed for retailers, wholesalers, independent brands and growing businesses that want to sell through their own online storefront.',
     sections: [
       { heading: 'From product catalogue to customer order', body: 'Publish a catalogue with product descriptions, images, prices and stock information. Customers use your storefront to browse and place orders, while you review those orders in your seller workspace.' },
@@ -42,10 +42,10 @@ const pages: Record<string, SeoPage> = {
     ]
   },
   'sell-online-with-mpesa': {
-    title: 'Sell Online with M-PESA | DASMARKET',
-    description: 'Set up an online shop with payment options for your customers. Configure supported M-PESA merchant details and manage orders with DASMARKET.',
+    title: 'M-PESA Payments for Online Shops in Kenya | DASMARKET',
+    description: 'Sell online in Kenya with a branded shop and supported M-PESA merchant payment options. Configure your Till or Paybill and manage customer orders with DASMARKET.',
     eyebrow: 'PAYMENTS FOR YOUR ONLINE SHOP',
-    heading: 'Make it easier for customers to pay for online orders.',
+    heading: 'Sell online in Kenya with supported M-PESA merchant payments.',
     intro: 'A useful online shop needs more than a product page. Customers need a clear checkout, and sellers need to know whether a payment has been confirmed. DASMARKET connects your storefront, order workflow and configured payment options in one place.',
     sections: [
       { heading: 'Configure your merchant payment details', body: 'Set up the payment destination for your shop in seller settings. Supported M-PESA merchant configurations can use the relevant Till or Paybill details. The payment route depends on the merchant details and options configured for your shop.' },
@@ -59,8 +59,8 @@ const pages: Record<string, SeoPage> = {
     ]
   },
   'custom-domain-online-store': {
-    title: 'Connect a Custom Domain to Your Online Store | DASMARKET',
-    description: 'Give your DASMARKET shop a web address that matches your brand. Start with a shop subdomain and connect a domain you own from your seller dashboard.',
+    title: 'Custom Domain for Your Online Store | DASMARKET',
+    description: 'Connect a custom domain to your DASMARKET online shop. Start with a shop subdomain, then use a domain you own to build your brand online.',
     eyebrow: 'YOUR BRAND, YOUR WEB ADDRESS',
     heading: 'Connect your own domain to your online shop.',
     intro: 'A domain that matches your business name makes your shop easier to recognise and share. With DASMARKET, you can begin with the shop address provided during setup and connect a domain you own when you are ready.',
@@ -76,8 +76,8 @@ const pages: Record<string, SeoPage> = {
     ]
   },
   'online-store-management': {
-    title: 'Online Store and Order Management for Sellers | DASMARKET',
-    description: 'Manage products, stock, orders, delivery details, payment settings and shop policies from one DASMARKET seller workspace.',
+    title: 'Online Store Management for Sellers | DASMARKET',
+    description: 'Manage your online store from one seller dashboard. Update products and stock, process orders, review payments, coordinate delivery and manage shop policies.',
     eyebrow: 'RUN YOUR SHOP DAY TO DAY',
     heading: 'Manage products, orders and shop operations in one workspace.',
     intro: 'Launching a storefront is only the beginning. A business also needs a reliable way to keep its catalogue current, review orders, coordinate delivery and maintain clear information for customers. DASMARKET brings these everyday shop tasks into one seller workspace.',

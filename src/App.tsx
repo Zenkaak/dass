@@ -559,6 +559,16 @@ function PlatformAdmin(){
 export default function App() {
   const path = window.location.pathname.replace(/^\/+|\/+$/g, '');
   const hostname = window.location.hostname.toLowerCase();
+  useEffect(() => {
+    const privateRoute = ["login", "signup", "reset-password", "dashboard", "platform-admin"].includes(path) || path.startsWith("dashboard/");
+    if (privateRoute) {
+      document.title = path === "signup" ? "Create your seller account | DASMARKET" : path === "login" ? "Sign in | DASMARKET" : "Account | DASMARKET";
+      let robots = document.head.querySelector('meta[name="robots"]') as HTMLMetaElement | null;
+      if (!robots) { robots = document.createElement("meta"); robots.name = "robots"; document.head.appendChild(robots); }
+      robots.content = "noindex,follow";
+      document.head.querySelector('link[rel="canonical"]')?.remove();
+    }
+  }, [path]);
   const tenantSubdomain = hostname.endsWith('.dasmarket.co.ke') && !['www','app','mambu'].includes(hostname.split('.')[0]) ? hostname.split('.')[0] : '';
   const isPlatformHost=hostname==='dasmarket.co.ke'||hostname==='www.dasmarket.co.ke'||hostname==='app.dasmarket.co.ke'||hostname==='mambu.dasmarket.co.ke'||hostname.endsWith('.vercel.app')||hostname==='localhost'||hostname==='127.0.0.1';
   const isCustomDomain=!isPlatformHost&&!tenantSubdomain;
