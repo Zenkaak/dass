@@ -27,15 +27,15 @@ export function ReplitLandingPage() {
             <div className="rm-hero-kicker rm-eyebrow"><span className="rm-kicker-dot" /> YOUR BUSINESS, ONLINE</div>
             <h1 className="rm-display" id="hero-title">Your online shop.<br />All in one place.</h1>
             <p>Create a professional online store for your business. Showcase your products, manage orders and accept payments through the options configured for your shop.</p>
-            <div className="rm-hero-ctas"><a className="rm-button rm-button-coral" href="/signup" data-testid="button-start-shop">Create your shop <ArrowRight size={15} /></a><a className="rm-button rm-button-outline" href="/login" data-testid="button-hero-sign-in">Sign in <ArrowRight size={14} /></a></div>
             <div className="rm-home-proof"><span><CheckCircle2 size={15}/> Your own branded storefront</span><span><CheckCircle2 size={15}/> Products and orders in one workspace</span><span><CheckCircle2 size={15}/> Connect a domain you own</span></div>
+            <div className="rm-hero-ctas"><a className="rm-button rm-button-coral" href="/signup" data-testid="button-start-shop">Create your shop <ArrowRight size={15} /></a><a className="rm-button rm-button-outline" href="/login" data-testid="button-hero-sign-in">Sign in <ArrowRight size={14} /></a></div>
           </div></div>
         </section>
         <section className="rm-home-facts" aria-label="DASMARKET platform highlights"><div className="rm-container rm-home-facts-grid">
-          <div><strong>Your brand</strong><span>A storefront that represents your business</span></div>
-          <div><strong>One workspace</strong><span>Products, orders and shop settings together</span></div>
-          <div><strong>Flexible checkout</strong><span>Payment options configured for your shop</span></div>
-          <div><strong>Your domain</strong><span>Use your shop address or connect your own</span></div>
+          <div><span className="rm-home-fact-icon"><Store size={19}/></span><span className="rm-home-fact-copy"><strong>Your brand</strong><span>A storefront that represents your business</span></span></div>
+          <div><span className="rm-home-fact-icon"><PackageCheck size={19}/></span><span className="rm-home-fact-copy"><strong>One workspace</strong><span>Products, orders and shop settings together</span></span></div>
+          <div><span className="rm-home-fact-icon"><CreditCard size={19}/></span><span className="rm-home-fact-copy"><strong>Flexible checkout</strong><span>Payment options configured for your shop</span></span></div>
+          <div><span className="rm-home-fact-icon"><Globe2 size={19}/></span><span className="rm-home-fact-copy"><strong>Your domain</strong><span>Use your shop address or connect your own</span></span></div>
         </div></section>
         <section className="rm-section rm-home-features" id="features"><div className="rm-container">
           <div className="rm-home-section-heading"><div className="rm-eyebrow rm-section-label">EVERYTHING INCLUDED</div><h2>The tools to run your shop, already in one place.</h2><p>From the first product listing to the completed customer order, manage the work from one seller account.</p></div>
