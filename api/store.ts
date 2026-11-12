@@ -404,7 +404,7 @@ export default async function handler(req:any,res:any){
     FROM public.payments p
     LEFT JOIN public.payment_configs pc ON pc.tenant_id=p.tenant_id
     LEFT JOIN public.platform_payment_methods pm ON pm.method=CASE WHEN p.provider_result->>'paymentMethod'='paybill' THEN 'paybill' ELSE 'till' END
-    WHERE p.status IN ('initiated','pending') AND p.created_at<=now()-interval '20 minutes'
+    WHERE p.status IN ('initiated','pending') AND p.provider_result->>'source' IS DISTINCT FROM 'seller_subscription' AND p.created_at<=now()-interval '20 minutes'
       AND p.provider_checkout_id IS NOT NULL
       AND NOT EXISTS (SELECT 1 FROM public.inventory_reservations ir WHERE ir.payment_id=p.id AND ir.status='active' AND ir.expires_at>now())
     ORDER BY p.created_at ASC LIMIT 30`;
