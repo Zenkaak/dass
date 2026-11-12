@@ -1468,3 +1468,151 @@
     grid-template-columns:minmax(260px,.7fr) minmax(0,1.3fr) !important;
   }
 }
+
+
+/* Desktop composition rebuilt around the content actually rendered by ReplitLandingPage. */
+@media (min-width:1101px) {
+  .rm-page-shell .rm-container {
+    width:calc(100% - clamp(72px, 7vw, 144px)) !important;
+    max-width:1600px !important;
+  }
+  /* Hero is text-only: use the full row rather than reserving a phantom preview column. */
+  .rm-page-shell .rm-hero {
+    min-height:0 !important;
+    padding:132px 0 82px !important;
+  }
+  .rm-page-shell .rm-hero-grid {
+    display:block !important;
+    width:100%;
+  }
+  .rm-page-shell .rm-hero-copy {
+    width:100% !important;
+    max-width:none !important;
+    padding:0 !important;
+  }
+  .rm-page-shell .rm-hero-kicker { margin-bottom:18px !important; }
+  .rm-page-shell .rm-hero h1 {
+    max-width:1120px !important;
+    font-size:clamp(54px,4.15vw,72px) !important;
+    line-height:1.02 !important;
+  }
+  .rm-page-shell .rm-hero-copy>p {
+    max-width:880px !important;
+    margin:20px 0 24px !important;
+    font-size:17px !important;
+  }
+  .rm-page-shell .rm-hero-benefits {
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    max-width:1180px;
+    gap:18px !important;
+    margin:0 0 28px !important;
+  }
+  .rm-page-shell .rm-hero-benefits li {
+    min-height:48px;
+    padding:12px 15px;
+    border:1px solid rgba(255,255,255,.2);
+    border-radius:8px;
+    background:rgba(12,25,40,.2);
+    font-size:13px !important;
+  }
+
+  /* Intro markup contains one populated column, so don't allocate a second empty one. */
+  .rm-page-shell .rm-section-intro,
+  .rm-page-shell .rm-trust-intro {
+    display:block !important;
+    margin:0 0 26px !important;
+  }
+  .rm-page-shell .rm-section-intro>div,
+  .rm-page-shell .rm-trust-intro>div {
+    width:100%;
+    max-width:1100px;
+  }
+  .rm-page-shell .rm-section-intro h2,
+  .rm-page-shell .rm-trust-intro h2 {
+    max-width:1050px !important;
+  }
+  .rm-page-shell .rm-section {
+    padding:52px 0 !important;
+  }
+  .rm-page-shell .rm-steps-grid {
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  }
+  .rm-page-shell .rm-step {
+    min-height:180px !important;
+  }
+
+  /* Domain section also has no right-hand illustration in its actual JSX. */
+  .rm-page-shell .rm-domain-layout {
+    display:block !important;
+  }
+  .rm-page-shell .rm-domain-copy {
+    width:100% !important;
+    max-width:1400px !important;
+  }
+  .rm-page-shell .rm-domain-copy h2 {
+    max-width:1050px !important;
+  }
+  .rm-page-shell .rm-domain-copy>p {
+    max-width:900px !important;
+  }
+  .rm-page-shell .rm-domain-journey {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 36px minmax(0,1fr);
+    align-items:center;
+    gap:14px;
+    width:100%;
+    max-width:1400px !important;
+    margin:26px 0 !important;
+  }
+  .rm-page-shell .rm-domain-journey-line {
+    width:36px;
+    height:1px;
+    margin:0;
+    border-left:0;
+    border-top:1px dashed #9db4d8;
+  }
+  .rm-page-shell .rm-domain-stage {
+    min-height:104px;
+  }
+
+  .rm-page-shell .rm-dashboard-showcase {
+    grid-template-columns:minmax(340px,.72fr) minmax(0,1.28fr) !important;
+    gap:40px !important;
+    padding:34px !important;
+  }
+  .rm-page-shell .rm-dashboard-showcase-copy {
+    max-width:500px !important;
+  }
+  .rm-page-shell .rm-dashboard-photo img {
+    height:clamp(340px,25vw,440px) !important;
+  }
+
+  .rm-page-shell .rm-trust-section {
+    padding:54px 0 !important;
+  }
+  .rm-page-shell .rm-trust-list {
+    width:100%;
+  }
+  .rm-page-shell .rm-trust-row {
+    grid-template-columns:34px 44px minmax(260px,.85fr) minmax(300px,1.15fr) !important;
+    gap:22px !important;
+    padding:22px 0 !important;
+  }
+  .rm-page-shell .rm-trust-row-title h3 {
+    font-size:18px !important;
+  }
+  .rm-page-shell .rm-trust-row>p {
+    max-width:650px;
+    font-size:14px !important;
+  }
+  .rm-page-shell .rm-faq-layout {
+    grid-template-columns:minmax(340px,.7fr) minmax(0,1.3fr) !important;
+    gap:72px !important;
+  }
+  .rm-page-shell .rm-final-cta {
+    padding:56px 0 !important;
+  }
+  .rm-page-shell .rm-footer {
+    padding:20px 0 !important;
+  }
+}
