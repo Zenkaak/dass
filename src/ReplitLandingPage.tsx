@@ -76,8 +76,8 @@ export function ReplitLandingPage() {
           <div className="rm-container rm-hero-grid">
             <div className="rm-hero-copy">
               <div className="rm-hero-kicker rm-eyebrow rm-reveal"><span className="rm-kicker-dot" /> A home for the things you make</div>
-              <h1 className="rm-display rm-reveal rm-reveal-delay" id="hero-title">Your online shop.<br />Managed in one place.</h1>
-              <p className="rm-reveal rm-reveal-delay-2">Launch a branded online store, manage orders and products, and connect your own domain—all from one seller account.</p>
+              <h1 className="rm-display rm-reveal rm-reveal-delay" id="hero-title">Create an online shop in Kenya.<br />Managed in one place.</h1>
+              <p className="rm-reveal rm-reveal-delay-2">Build a branded ecommerce website, manage products and orders, connect your own domain, and configure supported M-PESA merchant payments from one seller account.</p>
               <ul className="rm-hero-benefits rm-reveal rm-reveal-delay-2">
                 <li><CheckCircle2 size={16} /> A branded online storefront</li>
                 <li><CheckCircle2 size={16} /> A shop address included</li>
