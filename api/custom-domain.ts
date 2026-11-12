@@ -12,6 +12,11 @@ function vercelConfig(){const token=env('VERCEL_API_TOKEN')||env('VERCEL_TOKEN')
 async function vercel(path:string,method='GET',body?:any){const c=vercelConfig(),url=new URL('https://api.vercel.com'+path);url.searchParams.set('teamId',c.team);const response=await fetch(url.toString(),{method,headers:{Authorization:'Bearer '+c.token,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});const raw=await response.text();let data:any={};try{data=raw?JSON.parse(raw):{}}catch{}if(!response.ok){const error=String(data.error?.message||data.message||'Vercel domain request failed').slice(0,300);throw Error('VERCEL_API_'+response.status+':'+error)}return data}
 function dnsInstructions(host:string,config:any={}){const labels=host.split('.'),isApex=labels.length===2||(labels.length===3&&['co','com','org','net','ac','go','or','ne','me'].includes(labels[1]));if(isApex){const recommended=Array.isArray(config.recommendedIPv4)?config.recommendedIPv4.find((item:any)=>item.rank===1)?.value:undefined;const values=Array.isArray(recommended)&&recommended.length?recommended:['216.198.79.1','64.29.17.1'];return values.map((value:string)=>({type:'A',name:'@',value}));}const recommended=Array.isArray(config.recommendedCNAME)?config.recommendedCNAME.find((item:any)=>item.rank===1)?.value:undefined;return [{type:'CNAME',name:labels.slice(0,-2).join('.'),value:String(recommended||'cname.vercel-dns.com').replace(/\.$/,'')}]}
 async function domainConfig(host:string){try{return await vercel('/v6/domains/'+encodeURIComponent(host)+'/config','GET')}catch{return {misconfigured:true}}}
+function adminHost(host:string){return 'adm.'+host}
+async function ensureProjectDomain(host:string){const project=vercelConfig().project;try{return await vercel('/v10/projects/'+encodeURIComponent(project)+'/domains','POST',{name:host})}catch(error:any){if(!/already|409|domain is already|assigned/i.test(String(error.message)))throw error;return await vercel('/v9/projects/'+encodeURIComponent(project)+'/domains/'+encodeURIComponent(host),'GET')}}
+async function inspectDomain(host:string){const project=vercelConfig().project;const item=await vercel('/v9/projects/'+encodeURIComponent(project)+'/domains/'+encodeURIComponent(host),'GET');const config=await domainConfig(host),domain=item.domain||item;return {verified:Boolean(domain.verified),configured:config.misconfigured===false,config,verification:Array.isArray(domain.verification)?domain.verification:[]}}
+function combinedDns(host:string,rootConfig:any,admConfig:any){return [...dnsInstructions(host,rootConfig).map((r:any)=>({...r,purpose:'Storefront'})),...dnsInstructions(adminHost(host),admConfig).map((r:any)=>({...r,purpose:'Seller dashboard'}))]}
+function combinedChallenges(...items:any[]){const all=items.flatMap(x=>Array.isArray(x)?x:[]),seen=new Set<string>();return all.filter((r:any)=>{const k=[r.type,r.domain||r.name,r.value||r.key].join('|');if(seen.has(k))return false;seen.add(k);return true})}
 export default async function handler(req:any,res:any){
  res.setHeader('Cache-Control','no-store');
  if(!['GET','POST','DELETE'].includes(req.method)){res.setHeader('Allow','GET, POST, DELETE');return send(res,405,{error:'Method not allowed'})}
@@ -22,45 +27,41 @@ export default async function handler(req:any,res:any){
   if(req.method==='GET'){
    const rows=await sql`SELECT hostname,is_primary,verified_at,status,verification_data,last_checked_at,created_at FROM public.domains WHERE tenant_id=${me.tenant_id} AND hostname NOT LIKE '%.dasmarket.co.ke' ORDER BY is_primary DESC,created_at DESC`;
    const domains=[];
-   for(const r of rows){let verified=false,verification=r.verification_data||{};try{const projectDomain=await vercel('/v9/projects/'+encodeURIComponent(vercelConfig().project)+'/domains/'+encodeURIComponent(r.hostname),'GET');const configStatus=await domainConfig(r.hostname);verified=Boolean((projectDomain.domain||projectDomain).verified)&&configStatus.misconfigured===false;verification={...verification,config:configStatus};}catch{verified=false;}
+   for(const r of rows){const saved=r.verification_data||{},admin=String(saved.adminHostname||adminHost(r.hostname));let root:any,adm:any;
+    try{root=await inspectDomain(r.hostname);adm=await inspectDomain(admin)}catch{root={verified:false,configured:false,config:{misconfigured:true},verification:[]};adm={verified:false,configured:false,config:{misconfigured:true},verification:[]}}
+    const verified=root.verified&&root.configured&&adm.verified&&adm.configured,verification={...saved,adminHostname:admin,config:root.config,adminConfig:adm.config};
     await sql`UPDATE public.domains SET verified_at=CASE WHEN ${verified} THEN COALESCE(verified_at,now()) ELSE NULL END,status=${verified?'active':'pending'},verification_data=${JSON.stringify(verification)}::jsonb,last_checked_at=now(),updated_at=now() WHERE tenant_id=${me.tenant_id} AND hostname=${r.hostname}`;
-    domains.push({hostname:r.hostname,isPrimary:r.is_primary,verified,verifiedAt:verified?(r.verified_at||new Date().toISOString()):null,status:verified?'active':'pending',verification,lastCheckedAt:r.last_checked_at});}
+    domains.push({hostname:r.hostname,adminHostname:admin,isPrimary:r.is_primary,verified,storefrontVerified:root.verified&&root.configured,adminVerified:adm.verified&&adm.configured,verifiedAt:verified?(r.verified_at||new Date().toISOString()):null,status:verified?'active':'pending',verification,lastCheckedAt:r.last_checked_at});}
    return send(res,200,{domains});
   }
   const body=req.body||{},hostname=cleanHost(String(body.hostname||body.domain||''));
   if(req.method==='POST'&&String(body.action||'')==='verify'){
    if(!hostname)return send(res,400,{error:'Select a domain to verify.'});
-   const existing=await sql`SELECT hostname FROM public.domains WHERE tenant_id=${me.tenant_id} AND hostname=${hostname} AND hostname NOT LIKE '%.dasmarket.co.ke' LIMIT 1`;if(!existing.length)return send(res,404,{error:'Custom domain not found.'});
-   const config=vercelConfig();let verified:any;
-   try{verified=await vercel('/v9/projects/'+encodeURIComponent(config.project)+'/domains/'+encodeURIComponent(hostname)+'/verify','POST',{})}
-   catch(error:any){const current=await vercel('/v9/projects/'+encodeURIComponent(config.project)+'/domains/'+encodeURIComponent(hostname),'GET');verified=current}
-   const domain=verified.domain||verified,ownershipVerified=Boolean(domain.verified),configStatus=await domainConfig(hostname),configured=configStatus.misconfigured===false;
-   const ok=ownershipVerified&&configured,challenges=Array.isArray(domain.verification)?domain.verification:[];
-   await sql`UPDATE public.domains SET verified_at=CASE WHEN ${ok} THEN COALESCE(verified_at,now()) ELSE NULL END,status=${ok?'active':'pending'},verification_data=${JSON.stringify({verification:challenges,config:configStatus})}::jsonb,last_checked_at=now(),updated_at=now() WHERE tenant_id=${me.tenant_id} AND hostname=${hostname}`;
-   return send(res,200,{ok:true,verified:ok,ownershipVerified,configured,domain:hostname,status:ok?'active':'pending',challenge:challenges,dns:{records:dnsInstructions(hostname,configStatus)},message:ok?'Domain is connected and DNS is correctly pointing to this shop. SSL provisioning may take a few minutes.':!ownershipVerified?'Domain ownership is not verified yet. Complete any TXT verification record shown below, then try again.':'Domain ownership is verified, but its DNS is not pointing to this shop yet. Add the DNS record below, wait for it to update, then verify again.'});
+   const existing=await sql`SELECT hostname,verification_data FROM public.domains WHERE tenant_id=${me.tenant_id} AND hostname=${hostname} AND hostname NOT LIKE '%.dasmarket.co.ke' LIMIT 1`;if(!existing.length)return send(res,404,{error:'Custom domain not found.'});
+   const admin=adminHost(hostname),project=vercelConfig().project;await ensureProjectDomain(hostname);await ensureProjectDomain(admin);
+   for(const host of [hostname,admin]){try{await vercel('/v9/projects/'+encodeURIComponent(project)+'/domains/'+encodeURIComponent(host)+'/verify','POST',{})}catch{}}
+   const [root,adm]=await Promise.all([inspectDomain(hostname),inspectDomain(admin)]),ok=root.verified&&root.configured&&adm.verified&&adm.configured;
+   const challenges=combinedChallenges(root.verification,adm.verification),verification={...(existing[0].verification_data||{}),adminHostname:admin,verification:challenges,config:root.config,adminConfig:adm.config};
+   await sql`UPDATE public.domains SET verified_at=CASE WHEN ${ok} THEN COALESCE(verified_at,now()) ELSE NULL END,status=${ok?'active':'pending'},verification_data=${JSON.stringify(verification)}::jsonb,last_checked_at=now(),updated_at=now() WHERE tenant_id=${me.tenant_id} AND hostname=${hostname}`;
+   return send(res,200,{ok:true,verified:ok,storefrontVerified:root.verified&&root.configured,adminVerified:adm.verified&&adm.configured,domain:hostname,adminHostname:admin,status:ok?'active':'pending',challenge:challenges,dns:{records:combinedDns(hostname,root.config,adm.config)},message:ok?'Both your storefront and seller dashboard domains are connected. SSL provisioning may take a few minutes.':!root.verified||!root.configured?'The storefront is still pending DNS or ownership verification. Check the DNS records below.':'The storefront is ready, but the adm seller-dashboard record is still pending. Check the adm record below, then verify once more.'});
   }
   if(req.method==='POST'){
    if(!hostname)return send(res,400,{error:'Enter a valid public domain, for example www.yourshop.com.'});
-   const owned=await sql`SELECT tenant_id FROM public.domains WHERE hostname=${hostname} LIMIT 1`;if(owned.length&&owned[0].tenant_id!==me.tenant_id)return send(res,409,{error:'This domain is already connected to another shop.'});
-   const config=vercelConfig();
-   let added:any;
-   try{added=await vercel('/v10/projects/'+encodeURIComponent(config.project)+'/domains','POST',{name:hostname})}
-   catch(error:any){if(!String(error.message).includes('already')&&!String(error.message).includes('409'))throw error;added=await vercel('/v9/projects/'+encodeURIComponent(config.project)+'/domains/'+encodeURIComponent(hostname),'GET')}
-   const verify=Array.isArray(added.verification)?added.verification:[],dns=added.config||{};
-   const domain=added.domain||added;
-   const configStatus=await domainConfig(hostname),connected=Boolean(domain.verified)&&configStatus.misconfigured===false;
-   await sql`INSERT INTO public.domains(tenant_id,hostname,is_primary,verified_at,status,verification_data,last_checked_at,updated_at) VALUES(${me.tenant_id},${hostname},false,${connected?new Date().toISOString():null},${connected?'active':'pending'},${JSON.stringify({verification:verify,config:configStatus})}::jsonb,now(),now()) ON CONFLICT(hostname) DO UPDATE SET verified_at=CASE WHEN ${connected} THEN COALESCE(public.domains.verified_at,now()) ELSE NULL END,status=${connected?'active':'pending'},verification_data=EXCLUDED.verification_data,last_checked_at=now(),updated_at=now() WHERE public.domains.tenant_id=EXCLUDED.tenant_id`;
+   const admin=adminHost(hostname),owned=await sql`SELECT tenant_id FROM public.domains WHERE hostname IN (${hostname},${admin}) LIMIT 1`;if(owned.length&&owned[0].tenant_id!==me.tenant_id)return send(res,409,{error:'This domain or its adm subdomain is already connected to another shop.'});
+   const rootAdded=await ensureProjectDomain(hostname),adminAdded=await ensureProjectDomain(admin);
+   const [rootConfig,admConfig]=await Promise.all([domainConfig(hostname),domainConfig(admin)]),rootDomain=rootAdded.domain||rootAdded,admDomain=adminAdded.domain||adminAdded;
+   const connected=Boolean(rootDomain.verified)&&rootConfig.misconfigured===false&&Boolean(admDomain.verified)&&admConfig.misconfigured===false;
+   const challenges=combinedChallenges(rootAdded.verification,adminAdded.verification),verification={adminHostname:admin,verification:challenges,config:rootConfig,adminConfig:admConfig};
+   await sql`INSERT INTO public.domains(tenant_id,hostname,is_primary,verified_at,status,verification_data,last_checked_at,updated_at) VALUES(${me.tenant_id},${hostname},false,${connected?new Date().toISOString():null},${connected?'active':'pending'},${JSON.stringify(verification)}::jsonb,now(),now()) ON CONFLICT(hostname) DO UPDATE SET verified_at=CASE WHEN ${connected} THEN COALESCE(public.domains.verified_at,now()) ELSE NULL END,status=${connected?'active':'pending'},verification_data=EXCLUDED.verification_data,last_checked_at=now(),updated_at=now() WHERE public.domains.tenant_id=EXCLUDED.tenant_id`;
    const rows=await sql`SELECT hostname,is_primary,verified_at,status,verification_data FROM public.domains WHERE tenant_id=${me.tenant_id} AND hostname=${hostname} LIMIT 1`;
-   return send(res,200,{ok:true,domain:{hostname,isPrimary:Boolean(rows[0]?.is_primary),verified:Boolean(rows[0]?.verified_at),status:rows[0]?.status||'pending',verification:rows[0]?.verification_data||{}},dns:{...dns,records:dnsInstructions(hostname,configStatus)},challenge:verify,message:connected?'Domain is already correctly configured and connected to this shop.':'Domain added. Complete the DNS setup below, then click Verify domain.'});
+   return send(res,200,{ok:true,domain:{hostname,adminHostname:admin,isPrimary:Boolean(rows[0]?.is_primary),verified:Boolean(rows[0]?.verified_at),status:rows[0]?.status||'pending',verification:rows[0]?.verification_data||{}},dns:{records:combinedDns(hostname,rootConfig,admConfig)},challenge:challenges,message:connected?'Both storefront and seller dashboard domains are already connected.':'Domain added. Add every DNS record below, then click Verify domain once to check both addresses.'});
   }
-
   if(req.method==='DELETE'){
    if(!hostname)return send(res,400,{error:'Select a domain to disconnect.'});
    const existing=await sql`SELECT hostname FROM public.domains WHERE tenant_id=${me.tenant_id} AND hostname=${hostname} AND hostname NOT LIKE '%.dasmarket.co.ke' LIMIT 1`;if(!existing.length)return send(res,404,{error:'Custom domain not found.'});
-   const config=vercelConfig();
-   try{await vercel('/v9/projects/'+encodeURIComponent(config.project)+'/domains/'+encodeURIComponent(hostname),'DELETE')}catch(error:any){if(!String(error.message).includes('404'))throw error}
+   const project=vercelConfig().project;for(const host of [hostname,adminHost(hostname)]){try{await vercel('/v9/projects/'+encodeURIComponent(project)+'/domains/'+encodeURIComponent(host),'DELETE')}catch(error:any){if(!String(error.message).includes('404'))throw error}}
    await sql`DELETE FROM public.domains WHERE tenant_id=${me.tenant_id} AND hostname=${hostname}`;
-   return send(res,200,{ok:true,message:'Custom domain disconnected. Your DASMARKET subdomain remains active.'});
+   return send(res,200,{ok:true,message:'Storefront and adm seller-dashboard domains disconnected. Your DASMARKET subdomain remains active.'});
   }
 
   return send(res,400,{error:'Unsupported domain action.'});
