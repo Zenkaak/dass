@@ -21,7 +21,11 @@ export default async function handler(req:any,res:any){
   await sql`ALTER TABLE public.domains ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'pending', ADD COLUMN IF NOT EXISTS verification_data jsonb NOT NULL DEFAULT '{}'::jsonb, ADD COLUMN IF NOT EXISTS last_checked_at timestamptz, ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now()`;
   if(req.method==='GET'){
    const rows=await sql`SELECT hostname,is_primary,verified_at,status,verification_data,last_checked_at,created_at FROM public.domains WHERE tenant_id=${me.tenant_id} AND hostname NOT LIKE '%.dasmarket.co.ke' ORDER BY is_primary DESC,created_at DESC`;
-   return send(res,200,{domains:rows.map((r:any)=>({hostname:r.hostname,isPrimary:r.is_primary,verified:Boolean(r.verified_at),verifiedAt:r.verified_at,status:r.status|| (r.verified_at?'active':'pending'),verification:r.verification_data||{},lastCheckedAt:r.last_checked_at}))});
+   const domains=[];
+   for(const r of rows){let verified=false,verification=r.verification_data||{};try{const projectDomain=await vercel('/v9/projects/'+encodeURIComponent(vercelConfig().project)+'/domains/'+encodeURIComponent(r.hostname),'GET');const configStatus=await domainConfig(r.hostname);verified=Boolean((projectDomain.domain||projectDomain).verified)&&!configStatus.misconfigured;verification={...verification,config:configStatus};}catch{verified=false;}
+    await sql`UPDATE public.domains SET verified_at=CASE WHEN ${verified} THEN COALESCE(verified_at,now()) ELSE NULL END,status=${verified?'active':'pending'},verification_data=${JSON.stringify(verification)}::jsonb,last_checked_at=now(),updated_at=now() WHERE tenant_id=${me.tenant_id} AND hostname=${r.hostname}`;
+    domains.push({hostname:r.hostname,isPrimary:r.is_primary,verified,verifiedAt:verified?(r.verified_at||new Date().toISOString()):null,status:verified?'active':'pending',verification,lastCheckedAt:r.last_checked_at});}
+   return send(res,200,{domains});
   }
   const body=req.body||{},hostname=cleanHost(String(body.hostname||body.domain||''));
   if(req.method==='POST'&&String(body.action||'')==='verify'){
