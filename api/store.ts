@@ -346,8 +346,10 @@ export default async function handler(req:any,res:any){
    if(resultCode!==0){
     const terminalStatus=resultCode===1032||resultCode===4999?'cancelled':'failed';
     await sql`UPDATE public.payments SET status=${terminalStatus},provider_result=${JSON.stringify({...((p.provider_result&&typeof p.provider_result==='object')?p.provider_result:{}),callback:cb,resultCode,resultDescription:String(cb.ResultDesc||'')})}::jsonb,updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
-    await releaseInventory(sql,String(p.id));
-    await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'payment_update',terminalStatus==='cancelled'?'Payment cancelled':'Payment failed','Payment for your order was '+terminalStatus+'.');
+    if(p.provider_result?.source!=='seller_subscription'){
+     await releaseInventory(sql,String(p.id));
+     if(p.order_id)await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'payment_update',terminalStatus==='cancelled'?'Payment cancelled':'Payment failed','Payment for your order was '+terminalStatus+'.');
+    }
     return send(res,200,{ResultCode:0,ResultDesc:terminalStatus==='cancelled'?'Customer cancelled payment':'Payment failure recorded'});
    }
    // Daraja's independent STK query confirmed success. Validate callback
@@ -361,6 +363,19 @@ export default async function handler(req:any,res:any){
     if(!Number.isFinite(amount)||!receipt||!phone||Math.round(amount*100)!==Number(p.amount_minor)||phone!==expectedPhone){
      console.error('Daraja successful callback did not match payment record',{paymentId:p.id,checkout,amountMinor:Number.isFinite(amount)?Math.round(amount*100):null,expectedAmountMinor:Number(p.amount_minor),phoneMatched:phone===expectedPhone,hasReceipt:!!receipt});
      return send(res,200,{ResultCode:0,ResultDesc:'Callback received; payment details require review'});
+    }
+    if(p.provider_result?.source==='seller_subscription'){
+     const meta=p.provider_result||{},planId=String(meta.planId||''),intervalDays=Number(meta.intervalDays);
+     if(!/^[0-9a-f-]{36}$/i.test(planId)||![30,90,180,365].includes(intervalDays))return send(res,200,{ResultCode:0,ResultDesc:'Payment received; subscription details require admin review'});
+     await sql`UPDATE public.payments SET status='succeeded',provider_receipt=${receipt},provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({callback:cb,callbackResultCode:resultCode})}::jsonb,verified_at=now(),updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
+     const existing=await sql`SELECT id FROM public.subscriptions WHERE tenant_id=${p.tenant_id} ORDER BY created_at DESC LIMIT 1`;
+     if(existing.length){
+      await sql`UPDATE public.subscriptions SET plan_id=${planId},status='active',trial_ends_at=NULL,current_period_start=now(),current_period_end=now()+make_interval(days=>${intervalDays}),provider_payment_id=${p.id},updated_at=now() WHERE id=${existing[0].id}`;
+     }else{
+      await sql`INSERT INTO public.subscriptions(tenant_id,plan_id,status,trial_ends_at,current_period_start,current_period_end,provider_payment_id) VALUES(${p.tenant_id},${planId},'active',NULL,now(),now()+make_interval(days=>${intervalDays}),${p.id})`;
+     }
+     await sql`UPDATE public.tenants SET status='active',updated_at=now() WHERE id=${p.tenant_id} AND status IN ('trial','past_due')`;
+     return send(res,200,{ResultCode:0,ResultDesc:'Subscription payment verified and activated'});
     }
     await sql`SELECT public.consume_inventory_reservations(${p.id})`;
     const settlement=await sql`WITH wanted AS (SELECT product_id,SUM(quantity)::integer AS quantity FROM public.order_items WHERE tenant_id=${p.tenant_id} AND order_id=${p.order_id} AND product_id IS NOT NULL GROUP BY product_id), payment_mark AS (UPDATE public.payments SET status='succeeded',provider_receipt=${receipt},provider_result=(COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({callback:cb,callbackResultCode:resultCode})}::jsonb),verified_at=now(),updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending') RETURNING id,tenant_id,order_id), stock_update AS (UPDATE public.products pr SET stock_quantity=CASE WHEN pr.stock_quantity IS NULL THEN NULL ELSE pr.stock_quantity-w.quantity END,updated_at=now() FROM wanted w,payment_mark pm WHERE pr.id=w.product_id AND pr.tenant_id=${p.tenant_id} AND (pr.stock_quantity IS NULL OR pr.stock_quantity>=w.quantity) AND NOT EXISTS (SELECT 1 FROM public.inventory_reservations ir WHERE ir.payment_id=pm.id) RETURNING pr.id), inventory_finalize AS (UPDATE public.payments p2 SET provider_result=p2.provider_result||jsonb_build_object('inventoryApplied',(EXISTS(SELECT 1 FROM public.inventory_reservations ir WHERE ir.payment_id=p2.id AND ir.status='consumed') OR ((SELECT COUNT(*) FROM stock_update)=(SELECT COUNT(*) FROM wanted) AND NOT EXISTS(SELECT 1 FROM public.inventory_reservations ir WHERE ir.payment_id=p2.id))),'inventoryIssue',CASE WHEN EXISTS(SELECT 1 FROM public.inventory_reservations ir WHERE ir.payment_id=p2.id) AND NOT EXISTS(SELECT 1 FROM public.inventory_reservations ir WHERE ir.payment_id=p2.id AND ir.status='consumed') THEN 'Payment confirmed after stock reservation was released. Seller review required.' WHEN (SELECT COUNT(*) FROM stock_update)=(SELECT COUNT(*) FROM wanted) THEN NULL ELSE 'Payment confirmed, but stock changed during checkout. Seller review required.' END),updated_at=now() FROM payment_mark pm WHERE p2.id=pm.id RETURNING p2.id,p2.tenant_id,p2.order_id), queued AS (INSERT INTO public.payment_reconciliation_jobs(payment_id,tenant_id,order_id,status) SELECT id,tenant_id,order_id,'pending' FROM inventory_finalize ON CONFLICT(payment_id) DO NOTHING RETURNING id) SELECT (SELECT COUNT(*) FROM wanted)::integer AS wanted_count,(SELECT COUNT(*) FROM inventory_finalize)::integer AS payment_count,(SELECT COUNT(*) FROM stock_update)::integer AS stock_count,(SELECT COUNT(*) FROM queued)::integer AS queued_count`;
@@ -940,6 +955,49 @@ export default async function handler(req:any,res:any){
    const row=await sql`INSERT INTO public.support_tickets(tenant_id,user_id,ticket_number,subject,category,priority,message) VALUES(${me.tenant_id},${me.user_id},${ticket},${subject},${category},'normal',${message}) RETURNING id,ticket_number,subject,status,created_at`;
    await audit(sql,me.tenant_id,me.user_id,'support.ticket.created','ticket',row[0].id,{ticketNumber:ticket,category});
    return send(res,201,{ticket:row[0]});
+  }
+  if(req.method==='GET'&&action==='subscription'){
+   const [subs,plans,config]=await Promise.all([
+    sql`SELECT s.id,s.status,s.trial_ends_at,s.current_period_start,s.current_period_end,s.updated_at,p.id AS plan_id,p.code,p.name,p.description,p.price_minor,p.currency,p.interval_days,p.features FROM public.subscriptions s JOIN public.subscription_plans p ON p.id=s.plan_id WHERE s.tenant_id=${me.tenant_id} ORDER BY s.created_at DESC LIMIT 1`,
+    sql`SELECT id,code,name,description,price_minor,currency,interval_days,is_featured,features FROM public.subscription_plans WHERE is_active=true ORDER BY sort_order,price_minor`,
+    sql`SELECT setting_value FROM public.platform_settings WHERE setting_key='subscription_payment' LIMIT 1`
+   ]);
+   const cfg=config[0]?.setting_value||{};
+   return send(res,200,{subscription:subs[0]||null,plans,payment:{configured:!!(cfg.method&&cfg.destination),method:cfg.method||null}});
+  }
+  if(req.method==='POST'&&action==='subscription-stk'){
+   const b=req.body||{},planId=String(b.planId||''),phone=normalizePhone(b.phone);
+   if(!/^[0-9a-f-]{36}$/i.test(planId)||!phone)return send(res,400,{error:'Choose a plan and enter a valid Kenyan M-PESA phone number.'});
+   const [plans,subs,settings]=await Promise.all([
+    sql`SELECT id,name,price_minor,currency,interval_days FROM public.subscription_plans WHERE id=${planId} AND is_active=true LIMIT 1`,
+    sql`SELECT id,status FROM public.subscriptions WHERE tenant_id=${me.tenant_id} ORDER BY created_at DESC LIMIT 1`,
+    sql`SELECT setting_value FROM public.platform_settings WHERE setting_key='subscription_payment' LIMIT 1`
+   ]);
+   if(!plans.length)return send(res,404,{error:'That subscription plan is no longer available.'});
+   if(!settings[0]?.setting_value?.method||!settings[0]?.setting_value?.destination)return send(res,503,{error:'DASMARKET subscription M-PESA collection is not configured yet.'});
+   const cfg=settings[0].setting_value,method=cfg.method==='paybill'?'paybill':'till',key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');
+   const credentials=await sql`SELECT shortcode,environment,encrypted_credentials FROM public.platform_payment_methods WHERE method=${method} LIMIT 1`;
+   if(!credentials.length||!credentials[0].encrypted_credentials?.data)return send(res,503,{error:'The selected DASMARKET Daraja credentials have not been configured in admin payment settings.'});
+   let secret:any;try{secret=decryptBundle(credentials[0].encrypted_credentials,key,'platform')}catch(e:any){console.error('Subscription Daraja credentials could not be decrypted',e?.message||e);return send(res,503,{error:'DASMARKET M-PESA credentials could not be loaded securely.'});}
+   const payment={...secret,shortcode:credentials[0].shortcode,environment:credentials[0].environment,partyB:String(cfg.destination),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};
+   if(payment.environment!=='production')return send(res,503,{error:'Subscription STK is disabled while the selected Daraja credentials are in sandbox.'});
+   if(!payment.consumerKey||!payment.consumerSecret||!payment.passkey||!payment.shortcode)return send(res,503,{error:'Complete the selected platform Daraja credentials before accepting subscription payments.'});
+   const prior=await sql`SELECT id,status FROM public.payments WHERE tenant_id=${me.tenant_id} AND provider='mpesa_daraja' AND provider_result->>'source'='seller_subscription' AND status IN ('initiated','pending') ORDER BY created_at DESC LIMIT 1`;
+   if(prior.length)return send(res,409,{error:'A subscription payment is already awaiting confirmation. Check your M-PESA messages before requesting another prompt.'});
+   const plan=plans[0],sub=subs[0]||null,amount=Number(plan.price_minor);
+   if(!Number.isSafeInteger(amount)||amount<1)return send(res,400,{error:'This plan does not have a payable price.'});
+   const paymentId=crypto.randomUUID(),meta={source:'seller_subscription',paymentMethod:method,planId:plan.id,intervalDays:plan.interval_days,subscriptionId:sub?.id||null};
+   const inserted=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result) VALUES(${me.tenant_id},NULL,'mpesa_daraja',${phone},${amount},'KES','initiated',${paymentId},${JSON.stringify(meta)}::jsonb) RETURNING id`;
+   try{
+    const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/payments?action=daraja-callback';
+    const stk=await startStk(payment,{order_number:'SUB-'+String(inserted[0].id).slice(0,8).toUpperCase()},phone,amount/100,method==='paybill'?(cfg.accountReference||'DASMARKET'):'DASMARKET',callbackUrl);
+    await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({...meta,merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${inserted[0].id}`;
+    await audit(sql,me.tenant_id,me.user_id,'subscription.payment_prompt.sent','subscription',sub?.id||me.tenant_id,{planId:plan.id,amountMinor:amount,method});
+    return send(res,200,{ok:true,checkoutRequestId:stk.checkoutId,paymentId:inserted[0].id,message:'M-PESA prompt sent for KSh '+(amount/100).toLocaleString('en-KE')+'. Enter your M-PESA PIN to complete the subscription.'});
+   }catch(e:any){
+    await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({error:String(e?.message||e).slice(0,500)})}::jsonb,updated_at=now() WHERE id=${inserted[0].id}`;
+    return send(res,502,{error:String(e?.message||'M-PESA could not start the payment prompt.')});
+   }
   }
   if(req.method==='GET'&&action==='profile'){
    const rows=await sql`SELECT display_name,email,phone,avatar_url FROM public.users WHERE id=${me.user_id} LIMIT 1`;
