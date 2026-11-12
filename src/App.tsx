@@ -4,6 +4,7 @@ import { unzipSync } from 'fflate';
 import { Activity, CreditCard, Check, ArrowRight, ArrowUpRight, Bell, Heart, Star, ChevronRight, CircleAlert, Download, HelpCircle, LayoutDashboard, LogOut, Menu, X, MessageCircle, Package, Plus, RefreshCw, Search, Send, Settings, Globe, ShieldCheck, ShoppingBag, ShoppingCart, UserRound, Store, Wallet, WalletCards, Home, FileText, TicketPercent } from 'lucide-react';
 import { storefrontCategories } from './storefrontCatalog';
 import { marketplaceFaqs } from './marketplaceFaqs';
+import './customer-commerce.css';
 import { AuthPage } from './AuthPage';
 import ReplitLandingPage from './ReplitLandingPage';
 import PlatformSeoPage, { isPlatformSeoPath } from './PlatformSeoPage';
@@ -598,7 +599,6 @@ export default function App() {
   const tenantSubdomain = hostname.endsWith('.dasmarket.co.ke') && !['www','app','mambu'].includes(hostname.split('.')[0]) ? hostname.split('.')[0] : '';
   const isPlatformHost=hostname==='dasmarket.co.ke'||hostname==='www.dasmarket.co.ke'||hostname==='app.dasmarket.co.ke'||hostname==='mambu.dasmarket.co.ke'||hostname.endsWith('.vercel.app')||hostname==='localhost'||hostname==='127.0.0.1';
   const isCustomDomain=!isPlatformHost&&!tenantSubdomain;
-  useEffect(()=>{if(tenantSubdomain||(!['','dashboard','login','signup','reset-password','platform-admin'].includes(path)&&!path.startsWith('dashboard/')))import('./customer-commerce.css').catch(()=>{});},[tenantSubdomain,path]);
   // Warm the storefront UI chunks while the shop data request is in flight.
   useEffect(()=>{if(tenantSubdomain){import('./StorefrontFlow').catch(()=>{});import('./BuyerAuthPage').catch(()=>{});}},[tenantSubdomain]);
   useEffect(()=>{if(hostname==='mambu.dasmarket.co.ke'||path==='dashboard'||path.startsWith('dashboard/')||path==='platform-admin')import('./mambu-admin.css').catch(()=>{});},[hostname,path]);
