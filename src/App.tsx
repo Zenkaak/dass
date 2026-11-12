@@ -558,7 +558,7 @@ function PlatformAdmin(){
 }
 export default function App() {
   const path = window.location.pathname.replace(/^\/+|\/+$/g, '');
-  const hostname = window.location.hostname.toLowerCase();
+  const hostname = window.location.hostname.toLowerCase();\n  useEffect(() => {\n    const privateRoute = ["login", "signup", "reset-password", "dashboard", "platform-admin"].includes(path) || path.startsWith("dashboard/");\n    if (privateRoute) {\n      document.title = path === "signup" ? "Create your seller account | DASMARKET" : path === "login" ? "Sign in | DASMARKET" : "Account | DASMARKET";\n      let robots = document.head.querySelector("meta[name=\\"robots\\"]") as HTMLMetaElement | null;\n      if (!robots) { robots = document.createElement("meta"); robots.name = "robots"; document.head.appendChild(robots); }\n      robots.content = "noindex,follow";\n      document.head.querySelector("link[rel=\\"canonical\\"]")?.remove();\n    }\n  }, [path]);
   const tenantSubdomain = hostname.endsWith('.dasmarket.co.ke') && !['www','app','mambu'].includes(hostname.split('.')[0]) ? hostname.split('.')[0] : '';
   const isPlatformHost=hostname==='dasmarket.co.ke'||hostname==='www.dasmarket.co.ke'||hostname==='app.dasmarket.co.ke'||hostname==='mambu.dasmarket.co.ke'||hostname.endsWith('.vercel.app')||hostname==='localhost'||hostname==='127.0.0.1';
   const isCustomDomain=!isPlatformHost&&!tenantSubdomain;
