@@ -1117,24 +1117,7 @@ export function StorefrontFlow({
 
   if (view === 'store') return null;
   const pageContent = view === 'cart' ? renderCart() : view === 'checkout/delivery' ? (lines.length ? renderCheckoutDelivery() : renderCart()) : view === 'checkout/payment' ? (lines.length ? renderCheckoutPayment() : renderCart()) : view === 'checkout/review' ? (lines.length ? renderReview() : renderCart()) : view === 'checkout/processing' ? renderPaymentProcessing() : view === 'checkout/complete' ? renderSuccess() : view === 'orders' || view.startsWith('orders/') ? renderOrders() : view === 'order-detail' ? renderOrderDetail() : view === 'order-tracking' ? renderTracking() : view === 'account' ? renderAccount() : view === 'profile' ? renderProfile() : renderAccountSection() || (<section className="customer-flow"><FlowHeading title="Shopping assistant" onBack={() => onNavigate('store')} /><div className="customer-panel customer-account-detail"><Search size={24} /><p>{accountSectionCopy.assistant.description}</p><button type="button" className="customer-secondary-button" onClick={() => onNavigate('store')}>Back to the store</button></div></section>);
-  // The storefront-level marketplace header is the single buyer navigation surface for every route.
-  // Do not mount a second sticky nav here: nested sticky bars overlapped the account/cart content
-  // and intercepted taps on mobile.
-  const accountWorkspaceViews = new Set(['orders','order-detail','order-tracking','inbox','wishlist','recently-viewed','address-book','vouchers','reviews','profile','notifications','my-reports','report-shop','followed-shops','newsletter','notification-settings','public-profile','account-management','close-account','assistant']);
-  const showAccountNavigation = accountWorkspaceViews.has(view) || view.startsWith('orders/');
-  const accountNavigation = (
-    <aside className="buyer-account-navigation" aria-label="My account navigation">
-      <button type="button" className="buyer-account-nav-home" onClick={() => onNavigate('account')}><UserRound size={18}/><span><strong>My account</strong><small>Account overview</small></span><ChevronRight size={16}/></button>
-      {accountGroups.map(group => <section className="buyer-account-nav-group" key={group.title}>
-        <h2>{group.title}</h2>
-        {group.links.map(link => <button type="button" key={link.view} className={'buyer-account-nav-link'+((view===link.view || (link.view==='orders' && (view==='order-detail'||view==='order-tracking'||view.startsWith('orders/'))))?' active':'')} aria-current={view===link.view?'page':undefined} onClick={() => onNavigate(link.view)}>
-          <link.icon size={16}/><span>{link.label}</span><ChevronRight size={14}/>
-        </button>)}
-      </section>)}
-      <button type="button" className="buyer-account-nav-signout" onClick={onSignOut}><LogOut size={16}/>Sign out</button>
-    </aside>
-  );
-  return <div className={'customer-workspace-shell'+(showAccountNavigation?' buyer-account-workspace':'')}>
-    {showAccountNavigation ? <div className="buyer-account-layout">{accountNavigation}<div className="buyer-account-content">{pageContent}</div></div> : pageContent}
-  </div>;
+  // Each account destination is its own full-screen page. Navigation lives on the account overview;
+  // individual pages use their own back action instead of a persistent sub-tab rail.
+  return <div className="customer-workspace-shell">{pageContent}</div>;
 }
