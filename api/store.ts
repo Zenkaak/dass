@@ -29,7 +29,7 @@ async function notifyBuyer(sql:any,tenantId:string,buyerPhone:string,orderId:str
 async function notifyOrderBuyer(sql:any,tenantId:string,orderId:string,type:string,title:string,detail:string){const rows=await sql`SELECT customer_phone FROM public.orders WHERE id=${orderId} AND tenant_id=${tenantId} LIMIT 1`;if(rows.length)await notifyBuyer(sql,tenantId,rows[0].customer_phone,orderId,type,title,detail);}
 async function reserveInventory(sql:any,paymentId:string){try{const rows=await sql`SELECT public.reserve_inventory_for_payment(${paymentId}) AS reserved`;if(rows[0]?.reserved===false)throw Error('INVENTORY_RESERVATION_UNAVAILABLE');}catch(error:any){if(String(error?.message||'').includes('OUT_OF_STOCK'))throw Error('OUT_OF_STOCK');throw error;}}
 async function releaseInventory(sql:any,paymentId:string){await sql`SELECT public.release_inventory_reservations(${paymentId})`;}
-function isAmbiguousStkSubmission(error:any){const message=String(error?.message||error);return error?.name==='AbortError'||error?.name==='TimeoutError'||error?.name==='TypeError'||/fetch failed|socket|network|timed out|ECONNRESET|EAI_AGAIN|ENOTFOUND|unreadable STK response/i.test(message);}
+function isAmbiguousStkSubmission(error:any){return error?.stkSubmissionAmbiguous===true;}
 
 async function reconcilePaymentJob(sql:any,jobId:string){
  try{
@@ -103,9 +103,16 @@ function timestamp(){const d=new Date();return d.getUTCFullYear()+String(d.getUT
 async function startStk(c:any,order:any,phone:string,amount:number,reference:string,callbackUrl:string){
  const {host,accessToken}=await darajaToken(c),stamp=timestamp(),shortcode=String(c.shortcode),type=c.accountType;
  const payload:any={BusinessShortCode:shortcode,Password:darajaPassword(shortcode,c.passkey,stamp),Timestamp:stamp,TransactionType:type,Amount:Math.max(1,Math.round(amount)),PartyA:phone.replace('+',''),PartyB:String(c.partyB||shortcode),PhoneNumber:phone.replace('+',''),CallBackURL:callbackUrl,AccountReference:String(reference).slice(0,12),TransactionDesc:'Order '+order.order_number};
- const r=await fetch(host+'/mpesa/stkpush/v1/processrequest',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify(payload)});
- const d:any=await r.json();if(!r.ok||!d.CheckoutRequestID||String(d.ResponseCode)!=='0')throw Error(d.errorMessage||d.ResponseDescription||'Safaricom did not accept the STK request.');
- return {checkoutId:d.CheckoutRequestID,merchantRequestId:d.MerchantRequestID,response:d};
+ let response:any;
+ try{response=await fetch(host+'/mpesa/stkpush/v1/processrequest',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(payload)});}
+ catch(error:any){const ambiguous:any=Error('Safaricom connection was interrupted after the STK request was submitted.');ambiguous.stkSubmissionAmbiguous=true;ambiguous.cause=error;throw ambiguous;}
+ let data:any;
+ try{data=await response.json();}
+ catch(error:any){const ambiguous:any=Error('Safaricom returned an unreadable STK response. Check for an M-PESA prompt before retrying.');ambiguous.stkSubmissionAmbiguous=true;ambiguous.cause=error;throw ambiguous;}
+ if(response.status>=500){const ambiguous:any=Error('Safaricom returned a server error after the STK request was submitted (HTTP '+response.status+').');ambiguous.stkSubmissionAmbiguous=true;throw ambiguous;}
+ if(!response.ok||String(data.ResponseCode)!=='0')throw Error(data.errorMessage||data.ResponseDescription||'Safaricom did not accept the STK request.');
+ if(!data.CheckoutRequestID){const ambiguous:any=Error('Safaricom accepted the STK request but did not return its checkout reference. Do not retry yet.');ambiguous.stkSubmissionAmbiguous=true;throw ambiguous;}
+ return {checkoutId:data.CheckoutRequestID,merchantRequestId:data.MerchantRequestID,response:data};
 }
 
 function paymentDarajaCredentials(p:any,key:string){
