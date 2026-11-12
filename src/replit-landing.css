@@ -1802,3 +1802,9 @@
  .rm-home-facts-grid>div+div { padding-left:12px; }
  .rm-home-facts-grid>div:nth-child(3) { padding-left:0; }
 }
+
+@media(max-width:680px) {
+ .rm-home-simple .rm-mobile-toggle { color:#17283c !important; }
+ .rm-home-simple .rm-nav-links { background:#fff; border:1px solid #e7ebf0; box-shadow:0 12px 24px rgba(20,42,70,.08); }
+ .rm-home-simple .rm-nav-links a { color:#35465b; }
+}
