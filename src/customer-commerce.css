@@ -5880,3 +5880,30 @@
  .seller-domains-panel .seller-domain-copy span{display:none}
  .seller-domains-panel .seller-domain-copy svg{width:11px;height:11px}
 }
+
+
+/* Custom-domain DNS table: use the full card width and keep every value visible. */
+.seller-domains-panel .seller-domain-dns{width:100%!important;max-width:none!important;box-sizing:border-box!important;padding:22px!important}
+.seller-domains-panel .seller-domain-table-wrap{display:block!important;width:100%!important;max-width:100%!important;overflow:visible!important}
+.seller-domains-panel .seller-domain-table{width:100%!important;min-width:0!important;table-layout:fixed!important;border-collapse:collapse!important}
+.seller-domains-panel .seller-domain-table th:nth-child(1){width:14%!important}
+.seller-domains-panel .seller-domain-table th:nth-child(2){width:28%!important}
+.seller-domains-panel .seller-domain-table th:nth-child(3){width:58%!important}
+.seller-domains-panel .seller-domain-table td{min-width:0!important;padding:12px 10px!important;vertical-align:middle!important}
+.seller-domains-panel .seller-domain-table code{display:block!important;width:100%!important;max-width:100%!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere!important;word-break:break-word!important}
+.seller-domains-panel .seller-domain-value-cell{display:flex!important;align-items:center!important;gap:8px!important;width:100%!important;min-width:0!important}
+.seller-domains-panel .seller-domain-value-cell .seller-domain-value{flex:1 1 auto!important;min-width:0!important}
+.seller-domains-panel .seller-domain-value-cell .seller-domain-copy{flex:0 0 30px!important;width:30px!important;min-width:30px!important;height:30px!important;padding:6px!important}
+.seller-domains-panel .seller-domain-value-cell .seller-domain-copy span{display:none!important}
+.seller-domains-panel .seller-domain-steps{display:none!important}
+@media(max-width:700px){
+ .seller-domains-panel .seller-domain-dns{padding:14px!important;margin-left:0!important;margin-right:0!important;width:100%!important}
+ .seller-domains-panel .seller-domain-table th{padding:9px 6px!important;font-size:9px!important;white-space:normal!important}
+ .seller-domains-panel .seller-domain-table th:nth-child(1){width:16%!important}
+ .seller-domains-panel .seller-domain-table th:nth-child(2){width:28%!important}
+ .seller-domains-panel .seller-domain-table th:nth-child(3){width:56%!important}
+ .seller-domains-panel .seller-domain-table td{padding:10px 6px!important;font-size:10px!important}
+ .seller-domains-panel .seller-domain-table code{font-size:9px!important;line-height:1.45!important}
+ .seller-domains-panel .seller-domain-value-cell{gap:4px!important;align-items:flex-start!important}
+ .seller-domains-panel .seller-domain-value-cell .seller-domain-copy{flex-basis:26px!important;width:26px!important;min-width:26px!important;height:26px!important;padding:5px!important}
+}
