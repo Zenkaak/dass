@@ -6678,3 +6678,14 @@ button,input,select,textarea{font:inherit;}
 .customer-policy-document-foot{overflow-wrap:anywhere}
 @media(min-width:900px){.customer-policy-document-body{padding:26px 30px}.customer-policy-document-contact{padding:15px 30px}}
 @media(max-width:600px){.customer-policy-document{border-radius:12px}.customer-policy-document-head{gap:8px;flex-wrap:wrap}.customer-policy-document-badge{white-space:normal}.customer-policy-document-body p{font-size:13px;line-height:1.8}}
+
+
+.seller-domain-table-wrap{width:100%;overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:14px 0}
+.seller-domain-table{width:100%;min-width:620px;border-collapse:collapse;text-align:left;background:rgba(8,13,23,.32)}
+.seller-domain-table th{padding:11px 12px;background:rgba(130,170,255,.09);color:#b8c8e4;font-size:10px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.seller-domain-table td{padding:12px;border-top:1px solid var(--line);vertical-align:middle;color:var(--muted);font-size:12px}
+.seller-domain-type{display:inline-flex;min-width:40px;justify-content:center;padding:4px 7px;border-radius:5px;background:rgba(130,170,255,.12);color:#b8d0ff;font-size:10px;font-weight:800}
+.seller-domain-table code{font:11px/1.5 ui-monospace,SFMono-Regular,monospace;color:#dce7f8;overflow-wrap:anywhere}
+.seller-domain-table .seller-domain-value{display:block;max-width:440px;white-space:normal}
+.seller-domain-copy{display:inline-flex;align-items:center;gap:5px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:rgba(130,170,255,.07);color:#c8d9f5;font:600 11px inherit;cursor:pointer;white-space:nowrap}
+.seller-domain-copy:hover{border-color:rgba(130,170,255,.45);background:rgba(130,170,255,.13)}
