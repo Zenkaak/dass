@@ -203,6 +203,8 @@ export default async function handler(req:any,res:any){
  try{
   const sql=db();
   action=String(req.query?.action||req.body?.action||'');
+  const requestedShopSlug=String(req.method==='GET'?req.query?.slug:(req.body?.slug||req.query?.slug)||'').toLowerCase().trim();
+  if(requestedShopSlug)await sql`UPDATE public.tenants t SET status='past_due',updated_at=now() WHERE t.slug=${requestedShopSlug} AND t.status IN ('trial','active') AND EXISTS (SELECT 1 FROM public.subscriptions s WHERE s.tenant_id=t.id AND ((s.status='trialing' AND COALESCE(s.trial_ends_at,s.current_period_end)<=now()) OR (s.status='active' AND s.current_period_end<=now())))`;
   if(['buyer-account-data','buyer-delivery-preference','buyer-follow-shop','buyer-wishlist','buyer-newsletter','buyer-close-account'].includes(action)){
    const b=req.body||{},slug=String(req.method==='GET'?req.query?.slug:b.slug||'').toLowerCase().trim();
    const shops=await sql`SELECT id,slug,name FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
