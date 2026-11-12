@@ -1681,3 +1681,48 @@
 @media (max-width:680px) {
   .rm-page-shell .rm-hero-dashboard-preview { display:none; }
 }
+
+
+/* Tighten desktop hero: keep the headline and dashboard preview visually balanced. */
+@media (min-width:1101px) {
+  .rm-page-shell .rm-hero {
+    min-height:0 !important;
+    padding:112px 0 44px !important;
+  }
+  .rm-page-shell .rm-hero-grid {
+    grid-template-columns:minmax(0,1fr) minmax(0,1.04fr) !important;
+    align-items:center !important;
+    gap:clamp(24px,3vw,48px) !important;
+  }
+  .rm-page-shell .rm-hero-copy {
+    max-width:700px !important;
+    padding:0 !important;
+  }
+  .rm-page-shell .rm-hero-kicker { margin-bottom:14px !important; }
+  .rm-page-shell .rm-hero h1 {
+    max-width:690px !important;
+    font-size:clamp(44px,3.45vw,58px) !important;
+    line-height:1.02 !important;
+  }
+  .rm-page-shell .rm-hero-copy>p {
+    max-width:560px !important;
+    margin:15px 0 18px !important;
+    font-size:15px !important;
+    line-height:1.55 !important;
+  }
+  .rm-page-shell .rm-hero-benefits {
+    gap:7px !important;
+    margin:0 0 20px !important;
+  }
+  .rm-page-shell .rm-hero-benefits li { font-size:12px !important; }
+  .rm-page-shell .rm-hero-dashboard-preview {
+    width:100%;
+    max-width:690px;
+    justify-self:end;
+    padding:9px 9px 34px;
+    transform:perspective(1500px) rotateY(-2deg);
+  }
+  .rm-page-shell .rm-hero-dashboard-preview>img {
+    height:clamp(260px,22vw,320px) !important;
+  }
+}
