@@ -1321,3 +1321,99 @@
   .rm-page-shell .rm-nav .rm-brand { font-size:14px; }
   .rm-page-shell .rm-nav-actions .rm-button { padding:0 8px; }
 }
+
+
+/* Desktop-first layout correction: use available screen width and remove excess whitespace. */
+@media (min-width:1101px) {
+  .rm-page-shell .rm-container {
+    width:calc(100% - clamp(64px, 8vw, 160px));
+    max-width:1480px;
+  }
+  .rm-page-shell .rm-hero {
+    min-height:590px;
+    padding:124px 0 48px;
+  }
+  .rm-page-shell .rm-hero-grid {
+    grid-template-columns:minmax(0,1fr);
+    gap:0;
+  }
+  .rm-page-shell .rm-hero-copy {
+    max-width:900px;
+    padding:0;
+  }
+  .rm-page-shell .rm-hero h1 {
+    max-width:900px;
+    font-size:clamp(46px,4.1vw,62px) !important;
+    line-height:1.04;
+  }
+  .rm-page-shell .rm-hero-copy>p {
+    max-width:680px;
+    font-size:15px;
+    line-height:1.55;
+    margin:18px 0 22px;
+  }
+  .rm-page-shell .rm-section {
+    padding:clamp(54px,5vw,76px) 0;
+  }
+  .rm-page-shell .rm-section-intro {
+    grid-template-columns:minmax(0,1.1fr) minmax(280px,.9fr);
+    gap:clamp(32px,4vw,64px);
+    margin-bottom:32px;
+  }
+  .rm-page-shell .rm-section h2,
+  .rm-page-shell .rm-section-intro h2,
+  .rm-page-shell .rm-domain-copy h2,
+  .rm-page-shell .rm-trust-intro h2,
+  .rm-page-shell .rm-faq-heading h2 {
+    font-size:clamp(32px,2.8vw,44px);
+    line-height:1.1;
+  }
+  .rm-page-shell .rm-section-intro>p,
+  .rm-page-shell .rm-domain-copy>p,
+  .rm-page-shell .rm-trust-intro>p {
+    max-width:600px;
+    font-size:14px;
+    line-height:1.6;
+  }
+  .rm-page-shell .rm-steps-grid {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+  .rm-page-shell .rm-step {
+    min-height:210px;
+    padding-top:22px;
+    padding-bottom:22px;
+  }
+  .rm-page-shell .rm-domain-layout {
+    grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);
+    gap:clamp(38px,5vw,80px);
+  }
+  .rm-page-shell .rm-domain-art { min-height:340px; }
+  .rm-page-shell .rm-feature-layout {
+    grid-template-columns:minmax(280px,.7fr) minmax(0,1.3fr);
+    gap:clamp(42px,5vw,76px);
+  }
+  .rm-page-shell .rm-feature-heading { position:static; }
+  .rm-page-shell .rm-faq-layout {
+    grid-template-columns:minmax(300px,.75fr) minmax(0,1.25fr);
+    gap:clamp(42px,5vw,76px);
+  }
+  .rm-page-shell .rm-dashboard-showcase {
+    grid-template-columns:minmax(300px,.72fr) minmax(0,1.28fr);
+    gap:clamp(34px,4vw,64px);
+    padding:clamp(28px,3vw,44px);
+  }
+  .rm-page-shell .rm-dashboard-photo img {
+    height:clamp(300px,27vw,420px);
+  }
+  .rm-page-shell .rm-trust-layout {
+    grid-template-columns:minmax(300px,.75fr) minmax(0,1.25fr);
+    gap:clamp(42px,5vw,76px);
+  }
+  .rm-page-shell .rm-final-cta { padding:64px 0 68px; }
+  .rm-page-shell .rm-cta-inner { gap:48px; }
+  .rm-page-shell .rm-footer { padding:22px 0; }
+}
+@media (min-width:1440px) {
+  .rm-page-shell .rm-container { max-width:1560px; }
+  .rm-page-shell .rm-hero { min-height:620px; }
+}
