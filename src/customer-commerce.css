@@ -5598,3 +5598,55 @@
   .dispute-create-modal-backdrop .dispute-new-file-list,
   .dispute-create-modal-backdrop .dispute-file-picker{grid-column:1}
 }
+
+
+/* Compact buyer report dialog typography and footprint. */
+.dispute-create-modal-backdrop{padding:16px}
+.dispute-create-modal-backdrop .dispute-create-page{
+  width:min(680px,100%)!important;max-height:min(82dvh,760px);
+  padding:18px 20px!important;border-radius:14px!important;gap:0 14px;
+}
+.dispute-create-modal-backdrop .dispute-create-heading{
+  gap:12px;margin-bottom:13px;padding-bottom:12px;
+}
+.dispute-create-modal-backdrop .dispute-create-heading small{
+  font-size:10px!important;letter-spacing:.08em;
+}
+.dispute-create-modal-backdrop .dispute-create-heading strong{
+  display:block;font-size:18px!important;line-height:1.25;
+}
+.dispute-create-modal-backdrop .dispute-create-heading p{
+  margin:4px 0 0;font-size:12px!important;line-height:1.4;
+}
+.dispute-create-modal-backdrop .dispute-create-page>label{
+  display:block;margin:0 0 11px;font-size:12px!important;line-height:1.35;
+}
+.dispute-create-modal-backdrop .dispute-create-page>label input,
+.dispute-create-modal-backdrop .dispute-create-page>label select,
+.dispute-create-modal-backdrop .dispute-create-page>label textarea{
+  margin-top:5px;font-size:13px!important;line-height:1.4;
+}
+.dispute-create-modal-backdrop .dispute-create-page>label small,
+.dispute-create-modal-backdrop .dispute-file-picker small{
+  font-size:10px!important;line-height:1.35;
+}
+.dispute-create-modal-backdrop .dispute-create-page textarea{
+  min-height:92px;max-height:150px;padding:9px 10px!important;
+}
+.dispute-create-modal-backdrop .dispute-file-picker{padding:10px!important}
+.dispute-create-modal-backdrop .dispute-new-file-list{gap:6px}
+.dispute-create-modal-backdrop .dispute-create-actions{gap:8px;margin-top:5px}
+.dispute-create-modal-backdrop .dispute-create-actions button,
+.dispute-create-modal-backdrop .dispute-create-heading button{
+  min-height:36px;padding:8px 13px!important;font-size:12px!important;
+}
+@media(max-width:700px){
+  .dispute-create-modal-backdrop{padding:0}
+  .dispute-create-modal-backdrop .dispute-create-page{
+    width:100%!important;max-height:88dvh;
+    padding:15px 14px calc(13px + env(safe-area-inset-bottom))!important;
+    border-radius:15px 15px 0 0!important;
+  }
+  .dispute-create-modal-backdrop .dispute-create-heading strong{font-size:17px!important}
+  .dispute-create-modal-backdrop .dispute-create-page>label{margin-bottom:9px}
+}
