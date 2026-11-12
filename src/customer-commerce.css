@@ -5650,3 +5650,50 @@
   .dispute-create-modal-backdrop .dispute-create-heading strong{font-size:17px!important}
   .dispute-create-modal-backdrop .dispute-create-page>label{margin-bottom:9px}
 }
+
+
+/* Every storefront destination except the shop homepage is a true full-screen
+   page. Keep the homepage's marketplace/sidebar layout unchanged. */
+.store-page.is-fullscreen-route{
+  position:fixed!important;inset:0!important;z-index:9000!important;
+  width:100%!important;height:100dvh!important;min-height:100dvh!important;
+  margin:0!important;padding:0!important;overflow-x:hidden!important;overflow-y:auto!important;
+  overscroll-behavior-y:contain;background:#f5f7fa!important;
+}
+.store-page.is-fullscreen-route .market-sidebar,
+.store-page.is-fullscreen-route .market-sidebar-scrim,
+.store-page.is-fullscreen-route .ds-store-footer,
+.store-page.is-fullscreen-route .store-whatsapp-float{display:none!important}
+.store-page.is-fullscreen-route .ds-store-route-head{
+  position:sticky!important;top:0!important;z-index:80!important;
+  width:100%!important;max-width:none!important;margin:0!important;
+}
+.store-page.is-fullscreen-route .customer-flow{
+  box-sizing:border-box;width:100%!important;max-width:none!important;
+  min-height:calc(100dvh - 68px);margin:0!important;
+  padding:clamp(18px,2.5vw,34px) clamp(16px,3vw,48px) 48px!important;
+}
+.store-page.is-fullscreen-route .customer-account-page{max-width:none!important}
+.store-page.is-fullscreen-route .customer-account-groups{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+.store-page.is-fullscreen-route .market-main,
+.store-page.is-fullscreen-route .market-product-detail-route,
+.store-page.is-fullscreen-route .ds-store-collection-page{
+  box-sizing:border-box;width:100%!important;max-width:none!important;
+  min-height:calc(100dvh - 68px);margin:0!important;
+}
+.store-page.is-fullscreen-route .market-product-detail-route{
+  padding:22px clamp(16px,3vw,48px) 48px!important;
+}
+.store-page.is-fullscreen-route .market-product-detail-main{
+  grid-template-columns:minmax(0,1fr) minmax(320px,.9fr);
+}
+@media(max-width:760px){
+  .store-page.is-fullscreen-route .customer-flow{
+    min-height:calc(100dvh - 58px);padding:16px 14px 32px!important;
+  }
+  .store-page.is-fullscreen-route .customer-account-groups{grid-template-columns:1fr}
+  .store-page.is-fullscreen-route .market-product-detail-route{padding:14px 12px 30px!important}
+  .store-page.is-fullscreen-route .market-product-detail-main{grid-template-columns:1fr}
+}
