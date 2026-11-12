@@ -66,7 +66,7 @@ export default async function handler(req:any,res:any){
     SELECT p.* FROM public.products p JOIN target_tenant t ON t.id=p.tenant_id
     WHERE p.is_active=true
       AND (${requestedSearch}='' OR concat_ws(' ',p.name,p.description,p.sku,COALESCE(p.metadata->>'category',''),p.product_type) ILIKE ${searchPattern})
-      AND (${requestedCategory}='' OR EXISTS (SELECT 1 FROM unnest(string_to_array(${requestedCategory},'|')) AS selected(value) WHERE COALESCE(p.metadata->>'category',CASE WHEN p.product_type='data_bundle' THEN 'Data bundles' WHEN p.product_type='digital' THEN 'Digital products' ELSE 'Shop products' END) ILIKE '%'||selected.value||'%'))
+      AND (${requestedCategory}='' OR EXISTS (SELECT 1 FROM unnest(string_to_array(${requestedCategory},'|')) AS selected(value) WHERE lower(COALESCE(p.metadata->>'category',CASE WHEN p.product_type='data_bundle' THEN 'Data bundles' WHEN p.product_type='digital' THEN 'Digital products' ELSE 'Shop products' END))=lower(selected.value)))
       AND (cardinality(${requestedIds}::uuid[])=0 OR p.id=ANY(${requestedIds}::uuid[]))
       AND (${requestedProductKey}='' OR p.sku=${requestedProductKey} OR p.id::text=${requestedProductKey})
   ), product_page_base AS (
