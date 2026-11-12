@@ -212,7 +212,7 @@ export function ReplitLandingPage() {
         <div className="rm-container rm-footer-inner">
           <Brand footer />
           <div className="rm-footer-copy">© 2026 DASMARKET. All rights reserved.</div>
-          <div className="rm-footer-links"><a href="#how-it-works" data-testid="link-footer-how">How it works</a><a href="#domains" data-testid="link-footer-domains">Domains</a><a href="#trust-safety">Trust &amp; Safety</a><a href="#faq" data-testid="link-footer-faq">FAQ</a></div>
+          <div className="rm-footer-links"><a href="#how-it-works" data-testid="link-footer-how">How it works</a><a href="#domains" data-testid="link-footer-domains">Domains</a><a href="#trust-safety">Trust &amp; Safety</a><a href="#faq" data-testid="link-footer-faq">FAQ</a><a href="/create-online-store">Create an online store</a><a href="/ecommerce-platform">Ecommerce platform</a><a href="/sell-online-with-mpesa">Online payments</a><a href="/custom-domain-online-store">Custom domains</a><a href="/online-store-management">Store management</a></div>
           <a className="rm-back-top" href="#top" data-testid="link-back-to-top">Back to top <ArrowUp size={12} /></a>
         </div>
       </footer>
