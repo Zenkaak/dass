@@ -1,0 +1,76 @@
+name: Clean up merged PR branches
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "List eligible branches without deleting them"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: merged-branch-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete branches whose pull requests were merged
+        env:
+          GH_TOKEN: ${{ secrets.GH_BRANCH_CLEANUP_TOKEN }}
+          REPO: Zenkaak/dass
+          DRY_RUN: ${{ inputs.dry_run }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${GH_TOKEN:-}" ]]; then
+            echo "::error::GH_BRANCH_CLEANUP_TOKEN is missing."
+            exit 1
+          fi
+
+          mapfile -t branches < <(
+            gh api --paginate --jq '.[] | select(.merged_at != null and .head.repo.full_name == "Zenkaak/dass") | .head.ref' \
+              "repos/${REPO}/pulls?state=closed&per_page=100" | sort -u
+          )
+
+          deleted=0
+          skipped=0
+          {
+            echo "## Merged branch cleanup"
+            echo
+            echo "- Repository: ${REPO}"
+            echo "- Dry run: ${DRY_RUN}"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          for branch in "${branches[@]}"; do
+            if [[ -z "$branch" || "$branch" == "main" ]]; then
+              ((skipped+=1))
+              continue
+            fi
+
+            # Delete only same-repository heads attached to a merged pull request.
+            ref="heads/$branch"
+            if [[ "$DRY_RUN" == "true" ]]; then
+              echo "Would delete: $branch"
+              echo "- Would delete: `$branch`" >> "$GITHUB_STEP_SUMMARY"
+            else
+              gh api --method DELETE "repos/${REPO}/git/refs/${ref}"
+              echo "Deleted: $branch"
+              echo "- Deleted: `$branch`" >> "$GITHUB_STEP_SUMMARY"
+              ((deleted+=1))
+            fi
+          done
+
+          {
+            echo
+            echo "- Deleted this run: ${deleted}"
+            echo "- Skipped protected/empty refs: ${skipped}"
+            echo "- Eligible merged-PR branches found: ${#branches[@]}"
+          } >> "$GITHUB_STEP_SUMMARY"
