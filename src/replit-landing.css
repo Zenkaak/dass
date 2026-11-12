@@ -1096,3 +1096,42 @@
 .rm-nav .rm-brand{gap:11px;color:#fff;font-family:var(--app-font-display);font-size:20px;font-weight:850;letter-spacing:-.055em}
 .rm-nav .rm-brand-mark{width:34px;height:34px;display:grid;place-items:center;flex:none;border-radius:11px;background:#ff781b;color:#fff;font:800 21px/1 var(--app-font-display);transform:none;box-shadow:0 2px 5px rgba(15,28,44,.14)}
 .rm-nav-actions{gap:0}
+
+
+/* Desktop and laptop responsive pass: balanced type scale and no empty hero column. */
+.rm-page-shell { width:100%; overflow-x:clip; }
+.rm-container { width:min(1200px, calc(100% - clamp(36px, 6vw, 88px))); }
+.rm-hero { min-height:min(680px, 88svh); padding:clamp(132px, 13vw, 158px) 0 68px; }
+.rm-hero-grid { grid-template-columns:minmax(0, 1fr); gap:0; }
+.rm-hero-copy { width:100%; max-width:790px; }
+.rm-hero h1 { max-width:760px; font-size:clamp(42px, 4.6vw, 66px); line-height:1.04; letter-spacing:-.05em; }
+.rm-hero-copy>p { max-width:560px; font-size:clamp(14px, 1.15vw, 16px); line-height:1.65; }
+.rm-section h2,
+.rm-section-intro h2,
+.rm-domain-copy h2,
+.rm-trust-intro h2,
+.rm-faq-heading h2 { font-size:clamp(28px, 3.15vw, 42px); line-height:1.12; }
+.rm-section-intro { gap:clamp(24px, 4vw, 48px); }
+.rm-nav-links { gap:clamp(13px, 1.8vw, 26px); }
+.rm-nav-links a,.rm-nav-login { font-size:clamp(11px, .95vw, 13px); }
+.rm-nav .rm-brand { font-size:clamp(16px, 1.45vw, 20px); }
+.rm-trust-row { grid-template-columns:30px 40px minmax(180px,.9fr) minmax(220px,1.1fr); gap:clamp(10px, 1.4vw, 16px); }
+.rm-faq-layout { grid-template-columns:minmax(230px,.8fr) minmax(0,1.2fr); gap:clamp(28px, 5vw, 60px); }
+.rm-dashboard-showcase { grid-template-columns:minmax(250px,.78fr) minmax(0,1.22fr); }
+
+@media (min-width:681px) and (max-width:1100px) {
+  .rm-container { width:calc(100% - 48px); }
+  .rm-nav { height:70px; }
+  .rm-nav-links { gap:12px; }
+  .rm-nav-links a,.rm-nav-login { font-size:11px; }
+  .rm-nav .rm-brand { font-size:16px; gap:8px; }
+  .rm-nav .rm-brand-mark { width:29px; height:29px; font-size:18px; }
+  .rm-hero { min-height:610px; padding-top:132px; }
+  .rm-hero h1 { font-size:clamp(40px, 5vw, 54px); max-width:660px; }
+  .rm-section-intro { grid-template-columns:minmax(0,1fr) minmax(220px,.75fr); }
+  .rm-trust-row { grid-template-columns:24px 36px minmax(150px,.9fr) minmax(170px,1.1fr); gap:10px; }
+  .rm-trust-row-title h3 { font-size:14px; }
+  .rm-trust-row>p { font-size:11px; }
+  .rm-faq-layout { gap:28px; }
+  .rm-dashboard-showcase { grid-template-columns:minmax(220px,.8fr) minmax(0,1.2fr); gap:24px; }
+}
