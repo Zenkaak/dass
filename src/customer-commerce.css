@@ -5818,3 +5818,65 @@
  .seller-domains-panel .seller-domain-table code{font-size:8px}
  .seller-domains-panel .seller-domain-copy{font-size:8px}
 }
+
+
+/* Custom-domain setup refresh: compact instructions and a mobile-safe DNS table. */
+.seller-domains-panel .seller-domain-dns{
+  margin:20px 0 0;padding:22px!important;border:1px solid #e2e9ef!important;
+  border-radius:15px!important;background:#fff!important;color:#263746!important;
+  box-shadow:0 5px 22px rgba(24,45,62,.045);
+}
+.seller-domains-panel .seller-domain-dns-heading{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:18px;
+  padding-bottom:17px;border-bottom:1px solid #edf1f4;
+}
+.seller-domains-panel .seller-domain-eyebrow{display:block;margin-bottom:6px;color:#718394;font-size:9px;font-weight:850;letter-spacing:.13em}
+.seller-domains-panel .seller-domain-dns-heading h3{margin:0;color:#1e3445!important;font-size:20px!important;line-height:1.25;font-weight:800}
+.seller-domains-panel .seller-domain-dns-heading p{margin:7px 0 0;color:#647687!important;font-size:12px;line-height:1.5}
+.seller-domains-panel .seller-domain-record-count{flex:0 0 auto;padding:6px 10px;border:1px solid #e3eaf0;border-radius:20px;background:#f7f9fb;color:#536779;font-size:10px;font-weight:750}
+.seller-domains-panel .seller-domain-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0 20px}
+.seller-domains-panel .seller-domain-steps>div{display:flex;align-items:flex-start;gap:9px;min-width:0;padding:12px;border:1px solid #e8edf1;border-radius:10px;background:#fafcfd}
+.seller-domains-panel .seller-domain-steps>div>span{width:23px;height:23px;flex:0 0 23px;display:grid;place-items:center;border-radius:50%;background:#eaf2f8;color:#28516c;font-size:11px;font-weight:850}
+.seller-domains-panel .seller-domain-steps p{min-width:0;margin:0;display:grid;gap:4px}
+.seller-domains-panel .seller-domain-steps strong{color:#304657;font-size:11px;font-weight:800}
+.seller-domains-panel .seller-domain-steps small{color:#718292;font-size:10px;line-height:1.45}
+.seller-domains-panel .seller-domain-records-title{display:flex;align-items:center;justify-content:space-between;margin:0 0 9px}
+.seller-domains-panel .seller-domain-records-title>div{display:grid;gap:3px}
+.seller-domains-panel .seller-domain-records-title strong{color:#253b4c;font-size:13px;font-weight:850}
+.seller-domains-panel .seller-domain-records-title small{color:#718292;font-size:10px;line-height:1.4}
+.seller-domains-panel .seller-domain-table-wrap{overflow:hidden;border:1px solid #e5ebf0;border-radius:10px}
+.seller-domains-panel .seller-domain-table{width:100%;table-layout:fixed;border-collapse:collapse;background:#fff!important;color:#263746!important}
+.seller-domains-panel .seller-domain-table thead tr{background:#f3f6f8!important}
+.seller-domains-panel .seller-domain-table th{padding:10px 11px;background:#f3f6f8!important;color:#536777!important;font-size:9px;font-weight:850;letter-spacing:.055em;text-transform:uppercase}
+.seller-domains-panel .seller-domain-table th:nth-child(1){width:14%}
+.seller-domains-panel .seller-domain-table th:nth-child(2){width:27%}
+.seller-domains-panel .seller-domain-table th:nth-child(3){width:45%}
+.seller-domains-panel .seller-domain-table th:nth-child(4){width:14%}
+.seller-domains-panel .seller-domain-table td{padding:11px;background:#fff!important;color:#344957!important;border-bottom:1px solid #edf1f4!important;font-size:11px;line-height:1.4;vertical-align:middle;overflow-wrap:anywhere;word-break:break-word}
+.seller-domains-panel .seller-domain-table tr:last-child td{border-bottom:0!important}
+.seller-domains-panel .seller-domain-table code{display:block;max-width:100%;padding:0;background:transparent!important;color:#263f51!important;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;line-height:1.45;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+.seller-domains-panel .seller-domain-type{display:inline-flex;min-width:48px;min-height:25px;align-items:center;justify-content:center;padding:4px 6px;border-radius:6px;background:#edf5f2;color:#176044!important;font-size:9px;font-weight:900;white-space:nowrap}
+.seller-domains-panel .seller-domain-copy{min-height:29px;padding:5px 7px;display:inline-flex;align-items:center;justify-content:center;gap:4px;border:1px solid #dce5eb!important;border-radius:6px;background:#fff!important;color:#38566a!important;font-size:9px;font-weight:800;white-space:nowrap;cursor:pointer}
+.seller-domains-panel .seller-domain-copy svg{width:11px;height:11px;flex:0 0 auto}
+.seller-domains-panel .seller-domain-dns-footnote{display:flex;align-items:flex-start;gap:8px;margin-top:12px;color:#738392}
+.seller-domains-panel .seller-domain-dns-footnote svg{flex:0 0 auto;margin-top:1px;color:#6d8799}
+.seller-domains-panel .seller-domain-dns-footnote p{margin:0;color:#718292!important;font-size:10px;line-height:1.5}
+@media(max-width:700px){
+ .seller-domains-panel .seller-domain-dns{padding:14px!important;border-radius:12px!important}
+ .seller-domains-panel .seller-domain-dns-heading h3{font-size:16px!important}
+ .seller-domains-panel .seller-domain-dns-heading p{font-size:11px}
+ .seller-domains-panel .seller-domain-steps{grid-template-columns:1fr;gap:7px;margin:12px 0 16px}
+ .seller-domains-panel .seller-domain-steps>div{padding:9px 10px}
+ .seller-domains-panel .seller-domain-steps small{font-size:10px}
+ .seller-domains-panel .seller-domain-table th{padding:8px 5px;font-size:8px;letter-spacing:0}
+ .seller-domains-panel .seller-domain-table th:nth-child(1){width:16%}
+ .seller-domains-panel .seller-domain-table th:nth-child(2){width:26%}
+ .seller-domains-panel .seller-domain-table th:nth-child(3){width:46%}
+ .seller-domains-panel .seller-domain-table th:nth-child(4){width:12%}
+ .seller-domains-panel .seller-domain-table td{padding:9px 5px;font-size:9px}
+ .seller-domains-panel .seller-domain-table code{font-size:8px;line-height:1.4}
+ .seller-domains-panel .seller-domain-type{min-width:0;min-height:23px;padding:4px 5px;font-size:8px}
+ .seller-domains-panel .seller-domain-copy{width:25px;min-width:25px;min-height:25px;padding:4px;border-radius:6px}
+ .seller-domains-panel .seller-domain-copy span{display:none}
+ .seller-domains-panel .seller-domain-copy svg{width:11px;height:11px}
+}
