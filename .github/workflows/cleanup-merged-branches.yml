@@ -39,6 +39,16 @@ jobs:
               "repos/${REPO}/pulls?state=closed&per_page=100" | sort -u
           )
 
+          mapfile -t open_branches < <(
+            gh api --paginate --jq '.[] | select(.head.repo.full_name == "Zenkaak/dass") | .head.ref' \
+              "repos/${REPO}/pulls?state=open&per_page=100" | sort -u
+          )
+
+          declare -A open_branch_set=()
+          for open_branch in "${open_branches[@]}"; do
+            open_branch_set["$open_branch"]=1
+          done
+
           deleted=0
           skipped=0
           {
@@ -56,15 +66,28 @@ jobs:
             fi
 
             # Delete only same-repository heads attached to a merged pull request.
+            if [[ -n "${open_branch_set[$branch]:-}" ]]; then
+              echo "Skipped branch with an open pull request: $branch"
+              echo "- Skipped (open PR): `$branch`" >> "$GITHUB_STEP_SUMMARY"
+              ((skipped+=1))
+              continue
+            fi
+
             ref="heads/$branch"
             if [[ "$DRY_RUN" == "true" ]]; then
               echo "Would delete: $branch"
               echo "- Would delete: `$branch`" >> "$GITHUB_STEP_SUMMARY"
             else
-              gh api --method DELETE "repos/${REPO}/git/refs/${ref}"
-              echo "Deleted: $branch"
-              echo "- Deleted: `$branch`" >> "$GITHUB_STEP_SUMMARY"
-              ((deleted+=1))
+              if gh api "repos/${REPO}/git/refs/${ref}" >/dev/null 2>&1; then
+                gh api --method DELETE "repos/${REPO}/git/refs/${ref}"
+                echo "Deleted: $branch"
+                echo "- Deleted: `$branch`" >> "$GITHUB_STEP_SUMMARY"
+                ((deleted+=1))
+              else
+                echo "Skipped missing ref: $branch"
+                echo "- Skipped (ref already absent): `$branch`" >> "$GITHUB_STEP_SUMMARY"
+                ((skipped+=1))
+              fi
             fi
           done
 
