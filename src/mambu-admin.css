@@ -603,3 +603,66 @@
 .mambu-plan-feature-options label{display:flex;align-items:center;gap:7px;font-size:11px;color:#536176}
 .mambu-plan-feature-options input{accent-color:#d97716}
 @media(max-width:600px){.mambu-plan-settings form{align-items:flex-start;gap:12px}.mambu-plan-commission{border-left:0;padding:0}.mambu-plan-settings form>button{width:100%}.mambu-plan-form-grid{grid-template-columns:1fr}.mambu-plan-description{grid-column:auto}.mambu-plan-editor{padding:14px}.mambu-plan-primary{font-size:11px;padding:9px 10px}}
+
+
+/* Seller subscription plan review UI */
+.seller-subscriptions{max-width:1240px;margin:0 auto 36px;color:#243247}
+.seller-subscriptions .seller-page-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin:4px 0 20px}
+.seller-sub-eyebrow{display:block;color:#a66a17;font-size:10px;font-weight:800;letter-spacing:.13em;margin-bottom:7px}
+.seller-subscriptions .seller-page-heading h2{font-size:24px;line-height:1.2;margin:0 0 6px;color:#1f2d40}
+.seller-subscriptions .seller-page-heading p{font-size:13px;color:#718096;margin:0}
+.seller-sub-status{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border:1px solid #e5eaf0;border-radius:30px;background:#fff;color:#65748a;font-size:10px;font-weight:700;white-space:nowrap}
+.seller-sub-status i{width:7px;height:7px;border-radius:50%;background:#d69a35}
+.seller-sub-trial{display:flex;align-items:center;gap:14px;padding:17px 19px;border:1px solid #f0dfbd;background:linear-gradient(110deg,#fffaf0,#fff 72%);border-radius:13px;margin-bottom:14px}
+.seller-sub-trial-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:11px;background:#fff0d2;color:#a96a12;flex:none}
+.seller-sub-trial>div:nth-child(2){flex:1}
+.seller-sub-trial strong{font-size:14px;color:#29384a}
+.seller-sub-trial p{font-size:11px;color:#788394;margin:4px 0 0;line-height:1.5}
+.seller-sub-trial-tag{font-size:10px;font-weight:800;letter-spacing:.06em;color:#95600f;background:#ffedc9;padding:7px 10px;border-radius:7px;white-space:nowrap}
+.seller-sub-benefits{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:25px}
+.seller-sub-benefits>div{display:flex;align-items:center;gap:11px;padding:12px 15px;border:1px solid #e9edf2;border-radius:10px;background:#fff}
+.seller-sub-benefits strong{font-size:21px;color:#1e344e}
+.seller-sub-benefits span{font-size:10px;color:#778397;line-height:1.35}
+.seller-sub-period-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:14px}
+.seller-sub-period-head h3{font-size:16px;margin:0;color:#27364a}
+.seller-sub-period-head p{font-size:11px;color:#8792a2;margin:4px 0 0}
+.seller-sub-periods{display:flex;gap:4px;padding:4px;background:#edf1f5;border-radius:9px}
+.seller-sub-periods button{border:0;background:transparent;border-radius:7px;padding:9px 13px;font-size:10px;font-weight:700;color:#66758a;cursor:pointer}
+.seller-sub-periods button.active{background:#fff;color:#a9650e;box-shadow:0 1px 4px #17283c18}
+.seller-sub-plan-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:stretch}
+.seller-sub-plan{position:relative;display:flex;flex-direction:column;min-width:0;padding:17px 15px 15px;background:#fff;border:1px solid #e3e8ef;border-radius:12px;box-shadow:0 3px 12px #20334a08}
+.seller-sub-plan.featured{border-color:#e2b66e;box-shadow:0 6px 22px #b7791c12}
+.seller-sub-plan.selected{outline:2px solid #d18a27;outline-offset:1px}
+.seller-sub-popular{position:absolute;right:12px;top:-9px;padding:4px 8px;border-radius:20px;background:#d48a25;color:#fff;font-size:8px;font-weight:900;letter-spacing:.08em}
+.seller-sub-plan-top{display:flex;justify-content:space-between;align-items:flex-start;gap:5px}
+.seller-sub-plan-top h3{font-size:17px;margin:0 0 4px;color:#26364a}
+.seller-sub-plan-top>div>span{font-size:9px;color:#8994a3}
+.seller-sub-selected{display:inline-flex;align-items:center;gap:3px;color:#2d8a60;font-size:9px;font-weight:700;white-space:nowrap}
+.seller-sub-plan-description{font-size:10px;line-height:1.5;color:#788597;min-height:45px;margin:13px 0 10px}
+.seller-sub-price{display:flex;align-items:baseline;gap:5px;flex-wrap:wrap}
+.seller-sub-price strong{font-size:23px;letter-spacing:-.04em;color:#1d2e43}
+.seller-sub-price span{font-size:9px;color:#8792a2}
+.seller-sub-period-note{font-size:9px;color:#7d8999;margin:5px 0 13px;min-height:13px}
+.seller-sub-select{width:100%;border:1px solid #d9e0e8;border-radius:7px;background:#fff;color:#34465c;padding:9px 8px;font-size:10px;font-weight:800;cursor:pointer}
+.seller-sub-select.selected{background:#263b54;border-color:#263b54;color:#fff}
+.seller-sub-feature-heading{font-size:9px;font-weight:800;color:#536176;text-transform:uppercase;letter-spacing:.08em;margin:17px 0 9px}
+.seller-sub-plan ul{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.seller-sub-plan li{display:flex;align-items:flex-start;gap:7px;font-size:10px;line-height:1.35;color:#68778a}
+.seller-sub-plan li svg{flex:none;color:#29946a}
+.seller-sub-selection{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:15px 17px;margin-top:17px;border:1px solid #e4eaf0;border-radius:11px;background:#f8fafc}
+.seller-sub-selection>div{display:grid;gap:4px}
+.seller-sub-selection span{font-size:8px;font-weight:900;letter-spacing:.1em;color:#9a6b27}
+.seller-sub-selection strong{font-size:13px;color:#2a3b50}
+.seller-sub-selection small{font-size:10px;color:#8390a0}
+.seller-sub-selection button{border:1px solid #d5dee8;border-radius:7px;background:#fff;color:#45566b;padding:9px 12px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap}
+.seller-sub-comparison{overflow-x:auto;margin-top:10px;border:1px solid #e5eaf0;border-radius:10px;background:#fff}
+.seller-sub-comparison table{border-collapse:collapse;width:100%;min-width:600px;font-size:10px}
+.seller-sub-comparison th,.seller-sub-comparison td{padding:11px 13px;border-bottom:1px solid #edf0f4;text-align:left;color:#68778a}
+.seller-sub-comparison thead th{background:#f7f9fb;color:#31445b}
+.seller-sub-comparison tbody th{font-weight:700;color:#43546a}
+.seller-sub-footnote{display:flex;align-items:flex-start;gap:9px;margin-top:17px;padding:12px 14px;border-radius:9px;background:#f1f7f4;color:#32805d}
+.seller-sub-footnote svg{flex:none;margin-top:1px}
+.seller-sub-footnote p{font-size:10px;line-height:1.55;color:#617b6d;margin:0}
+.seller-sub-review-note{font-size:9px;color:#929baa;margin:10px 0 0}
+@media(max-width:1050px){.seller-sub-plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.seller-subscriptions .seller-page-heading{align-items:flex-start;flex-direction:column}.seller-sub-status{align-self:flex-start}.seller-sub-trial{align-items:flex-start;flex-wrap:wrap;padding:14px}.seller-sub-trial>div:nth-child(2){min-width:calc(100% - 60px)}.seller-sub-trial-tag{margin-left:56px}.seller-sub-benefits{gap:6px}.seller-sub-benefits>div{padding:9px 7px;gap:6px;align-items:flex-start;flex-direction:column}.seller-sub-benefits strong{font-size:18px}.seller-sub-benefits span{font-size:9px}.seller-sub-period-head{align-items:flex-start;flex-direction:column}.seller-sub-periods{width:100%;overflow-x:auto}.seller-sub-periods button{flex:1;padding:9px 7px;white-space:nowrap}.seller-sub-plan-grid{grid-template-columns:1fr}.seller-sub-plan-description{min-height:0}.seller-sub-selection{align-items:flex-start;flex-direction:column}.seller-sub-selection button{width:100%}}
