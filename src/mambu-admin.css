@@ -565,3 +565,41 @@
   .seller-notice-row.dispute-notice-compact time{grid-column:2!important;grid-row:auto!important;padding-top:0!important;font-size:10.5px!important}
   .seller-notice-arrow{display:none!important}
 }
+
+
+.mambu-plan-primary{display:inline-flex;align-items:center;gap:7px;border:0;border-radius:9px;background:#d97716;color:#fff;padding:10px 14px;font-size:12px;font-weight:750;cursor:pointer}
+.mambu-plan-settings{background:#fff;border:1px solid #e7ebf0;border-radius:12px;padding:15px 17px;margin:15px 0;max-width:920px}
+.mambu-plan-settings form{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.mambu-plan-settings form>div{flex:1;min-width:180px}
+.mambu-plan-settings b,.mambu-plan-settings small{display:block}
+.mambu-plan-settings form>div b,.mambu-plan-commission b{font-size:12px;color:#29384a}
+.mambu-plan-settings small{font-size:10px;color:#8792a2;margin-top:4px}
+.mambu-plan-settings label{display:flex;align-items:center;gap:7px;font-size:11px;color:#59677b}
+.mambu-plan-settings label input{width:65px;height:36px;border:1px solid #dce3eb;border-radius:7px;padding:6px 8px;font:inherit}
+.mambu-plan-commission{padding:7px 13px;border-left:1px solid #e8edf2}
+.mambu-plan-commission strong{display:block;color:#16804c;font-size:18px;margin-top:3px}
+.mambu-plan-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:13px;margin:16px 0}
+.mambu-plan-card{background:#fff;border:1px solid #e5eaf0;border-radius:12px;padding:17px;min-width:0}
+.mambu-plan-card.featured{border:2px solid #e5a04d;padding:16px}
+.mambu-plan-card-top{display:flex;align-items:center;justify-content:space-between;min-height:22px}
+.mambu-plan-card-top>em{font-size:9px;font-style:normal;font-weight:800;color:#a65d13;background:#fff4e6;padding:5px 8px;border-radius:20px}
+.mambu-plan-card h3{font-size:17px;margin:14px 0 5px;color:#263449}
+.mambu-plan-card>p{font-size:11px;color:#8490a0;line-height:1.5;min-height:34px}
+.mambu-plan-card>strong{display:block;font-size:22px;color:#1e2b3d;margin:13px 0}
+.mambu-plan-card>strong small{font-size:10px;color:#8792a2;font-weight:500}
+.mambu-plan-features{display:flex;flex-wrap:wrap;gap:6px;min-height:55px}
+.mambu-plan-features span{font-size:9px;text-transform:capitalize;color:#536176;background:#f3f6f9;border-radius:6px;padding:5px 7px}
+.mambu-plan-actions{display:flex;gap:7px;margin-top:15px;padding-top:12px;border-top:1px solid #edf0f4}
+.mambu-plan-actions button{flex:1}
+.mambu-plan-editor{background:#fff;border:1px solid #e3e8ef;border-radius:13px;padding:18px;margin:18px 0;max-width:920px;box-shadow:0 10px 30px #1c2d4210}
+.mambu-plan-editor-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:15px}
+.mambu-plan-editor-head h3{font-size:16px;margin:0;color:#29384a}
+.mambu-plan-editor-head p{font-size:11px;color:#8792a2;margin:5px 0}
+.mambu-plan-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.mambu-plan-form-grid label{display:flex;flex-direction:column;gap:6px;font-size:10px;font-weight:700;color:#526174}
+.mambu-plan-form-grid input,.mambu-plan-form-grid select,.mambu-plan-form-grid textarea{box-sizing:border-box;width:100%;border:1px solid #dce3eb;border-radius:8px;padding:9px 10px;background:#fff;color:#253247;font:inherit;font-size:12px}
+.mambu-plan-description{grid-column:1/-1}
+.mambu-plan-feature-options{display:flex;flex-wrap:wrap;gap:12px 18px;margin:15px 0}
+.mambu-plan-feature-options label{display:flex;align-items:center;gap:7px;font-size:11px;color:#536176}
+.mambu-plan-feature-options input{accent-color:#d97716}
+@media(max-width:600px){.mambu-plan-settings form{align-items:flex-start;gap:12px}.mambu-plan-commission{border-left:0;padding:0}.mambu-plan-settings form>button{width:100%}.mambu-plan-form-grid{grid-template-columns:1fr}.mambu-plan-description{grid-column:auto}.mambu-plan-editor{padding:14px}.mambu-plan-primary{font-size:11px;padding:9px 10px}}
