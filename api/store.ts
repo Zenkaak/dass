@@ -979,11 +979,12 @@ export default async function handler(req:any,res:any){
    return send(res,201,{ticket:row[0]});
   }
   if(req.method==='GET'&&action==='subscription'){
-   const [subs,plans,config,lastPayment]=await Promise.all([
+   const [subs,plans,config,lastPayment,trialConfig]=await Promise.all([
     sql`SELECT s.id,s.status,s.trial_ends_at,s.current_period_start,s.current_period_end,s.updated_at,p.id AS plan_id,p.code,p.name,p.description,p.price_minor,p.currency,p.interval_days,p.features FROM public.subscriptions s JOIN public.subscription_plans p ON p.id=s.plan_id WHERE s.tenant_id=${me.tenant_id} ORDER BY s.created_at DESC LIMIT 1`,
     sql`SELECT id,code,name,description,price_minor,currency,interval_days,is_featured,features FROM public.subscription_plans WHERE is_active=true ORDER BY sort_order,price_minor`,
     sql`SELECT setting_value FROM public.platform_settings WHERE setting_key='subscription_payment' LIMIT 1`,
-    sql`SELECT id,status,amount_minor,provider_receipt,created_at FROM public.payments WHERE tenant_id=${me.tenant_id} AND provider_result->>'source'='seller_subscription' ORDER BY created_at DESC LIMIT 1`
+    sql`SELECT id,status,amount_minor,provider_receipt,created_at FROM public.payments WHERE tenant_id=${me.tenant_id} AND provider_result->>'source'='seller_subscription' ORDER BY created_at DESC LIMIT 1`,
+    sql`SELECT COALESCE((setting_value->>'trial_days')::int,7) AS trial_days FROM public.platform_settings WHERE setting_key='subscription' LIMIT 1`
    ]);
    let currentSubscription=subs[0]||null;
    // Legacy shops created before subscription rollout receive a one-time trial on first billing access.
@@ -1004,7 +1005,7 @@ export default async function handler(req:any,res:any){
     }
    }
    const cfg=config[0]?.setting_value||{};
-   return send(res,200,{subscription:currentSubscription,plans,payment:{configured:!!(cfg.method&&cfg.destination),method:cfg.method||null},lastPayment:lastPayment[0]?{...lastPayment[0],amount:Number(lastPayment[0].amount_minor)/100}:null});
+   return send(res,200,{subscription:currentSubscription,plans,trialDays:Math.max(0,Math.min(30,Number(trialConfig[0]?.trial_days??7))),payment:{configured:!!(cfg.method&&cfg.destination),method:cfg.method||null},lastPayment:lastPayment[0]?{...lastPayment[0],amount:Number(lastPayment[0].amount_minor)/100}:null});
   }
   if(req.method==='POST'&&action==='subscription-stk'){
    const b=req.body||{},planId=String(b.planId||''),phone=normalizePhone(b.phone);
