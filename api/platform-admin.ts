@@ -98,6 +98,14 @@ export default async function handler(req:any,res:any){
    const rows=await sql`SELECT a.id,a.action,a.resource_type,a.resource_id,a.metadata,a.created_at,u.display_name AS actor_name,u.phone AS actor_phone,t.name AS shop_name FROM public.audit_logs a LEFT JOIN public.users u ON u.id=a.actor_user_id LEFT JOIN public.tenants t ON t.id=a.tenant_id ORDER BY a.created_at DESC LIMIT 500`;
    return send(res,200,{records:rows});
   }
+  if(req.method==='GET'&&String(req.query?.action||'')==='plans'){
+   const [plans,settings]=await Promise.all([
+    sql`SELECT id,code,name,description,price_minor,currency,interval_days,is_active,is_featured,sort_order,features,created_at FROM public.subscription_plans ORDER BY sort_order ASC,price_minor ASC`,
+    sql`SELECT setting_value FROM public.platform_settings WHERE setting_key='subscription' LIMIT 1`
+   ]);
+   const config=settings[0]?.setting_value||{trial_days:7,sales_commission_bps:0};
+   return send(res,200,{plans,settings:{trial_days:Number(config.trial_days??7),sales_commission_bps:0}});
+  }
   if(req.method==='GET'&&String(req.query?.action||'')==='complaints'){
    const rows=await sql`SELECT c.id,c.buyer_name,c.buyer_phone,c.issue_type,c.details,c.payment_made,c.payment_amount_minor,c.payment_reference,c.status,c.admin_notes,c.created_at,c.updated_at,c.product_id,t.id AS tenant_id,t.name AS shop_name,t.slug,t.status AS shop_status,t.ban_reason,t.ban_expires_at,s.contact_phone AS shop_contact_phone,s.contact_email AS shop_contact_email,s.whatsapp_number AS shop_whatsapp,o.id AS order_id,o.order_number,o.status AS order_status,o.delivery_status,o.total_minor AS order_total_minor,o.delivery_method,o.delivery_county,o.delivery_sub_county,o.delivery_estate,o.delivery_address,o.delivery_directions,o.customer_name AS order_buyer_name,o.customer_phone AS order_buyer_phone,o.customer_email AS order_buyer_email,p.name AS product_name,p.slug AS product_slug,sc.full_name AS buyer_full_name,sc.email AS buyer_email,sc.alternative_phone AS buyer_alternative_phone,sc.phone_verified_at AS buyer_phone_verified_at,sc.is_banned AS buyer_is_banned,sc.banned_until AS buyer_banned_until,u.display_name AS seller_name,u.phone AS seller_phone,u.email AS seller_email,COALESCE((SELECT json_agg(json_build_object('id',a.id,'fileName',a.file_name,'contentType',a.content_type,'sizeBytes',a.size_bytes,'scanStatus',a.scan_status)) FROM public.shop_complaint_attachments a WHERE a.complaint_id=c.id AND a.upload_status='ready'),'[]'::json) AS attachments,COALESCE((SELECT json_agg(json_build_object('id',pay.id,'receipt',pay.provider_receipt,'status',pay.status,'amount_minor',pay.amount_minor,'created_at',pay.created_at) ORDER BY pay.created_at DESC) FROM public.payments pay WHERE pay.order_id=o.id AND pay.tenant_id=o.tenant_id),'[]'::json) AS order_payments FROM public.shop_complaints c JOIN public.tenants t ON t.id=c.tenant_id LEFT JOIN public.sites s ON s.tenant_id=t.id LEFT JOIN public.orders o ON o.id=c.order_id AND o.tenant_id=c.tenant_id LEFT JOIN public.products p ON p.id=c.product_id AND p.tenant_id=c.tenant_id LEFT JOIN public.store_customers sc ON sc.tenant_id=c.tenant_id AND right(regexp_replace(sc.phone,'[^0-9]','','g'),9)=right(regexp_replace(c.buyer_phone,'[^0-9]','','g'),9) LEFT JOIN public.users u ON u.id=t.created_by ORDER BY c.created_at DESC LIMIT 500`;
    return send(res,200,{complaints:rows.map((r:any)=>({...r,paymentAmount:r.payment_amount_minor==null?null:Number(r.payment_amount_minor)/100}))});
@@ -161,6 +169,31 @@ export default async function handler(req:any,res:any){
    const tenantId=['edit_shop','edit_seller','shop_access'].includes(action)?id:(action==='ban_buyer'?(await sql`SELECT tenant_id FROM public.store_customers WHERE id=${id} LIMIT 1`)[0]?.tenant_id:null);
    await sql`INSERT INTO public.audit_logs(tenant_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${tenantId},${users[0].id},${'platform.'+action},${action.replace('edit_','')},${id},${JSON.stringify({changedFields:Object.keys(v).filter(k=>!['action','id'].includes(k))})}::jsonb)`;
    return send(res,200,{ok:true,record:updated[0]});
+  }
+  if(req.method==='POST'&&req.body?.action==='save_subscription_plan'){
+   const v=req.body||{},id=String(v.id||''),code=String(v.code||'').trim().toLowerCase(),name=String(v.name||'').trim().slice(0,80),description=String(v.description||'').trim().slice(0,1000),price=Number(v.price_minor),interval=Number(v.interval_days),sort=Number(v.sort_order??100);
+   if(id&&!/^[0-9a-f-]{36}$/i.test(id))return send(res,400,{error:'Invalid plan identifier.'});
+   if(!/^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/.test(code)||!name)return send(res,400,{error:'Enter a plan name and a unique code using lowercase letters, numbers or hyphens.'});
+   if(!Number.isSafeInteger(price)||price<0||![30,90,180,365].includes(interval)||!Number.isInteger(sort)||sort<0||sort>10000)return send(res,400,{error:'Enter a valid price, billing period and display order.'});
+   const features=v.features&&typeof v.features==='object'&&!Array.isArray(v.features)?v.features:{};
+   const active=v.is_active===true||v.is_active==='true',featured=v.is_featured===true||v.is_featured==='true';
+   let saved:any[];
+   if(id){
+    saved=await sql`UPDATE public.subscription_plans SET code=${code},name=${name},description=${description},price_minor=${price},currency='KES',interval_days=${interval},is_active=${active},is_featured=${featured},sort_order=${sort},features=${JSON.stringify(features)}::jsonb WHERE id=${id} RETURNING id,code,name,description,price_minor,currency,interval_days,is_active,is_featured,sort_order,features`;
+   }else{
+    saved=await sql`INSERT INTO public.subscription_plans(code,name,description,price_minor,currency,interval_days,is_active,is_featured,sort_order,features) VALUES(${code},${name},${description},${price},'KES',${interval},${active},${featured},${sort},${JSON.stringify(features)}::jsonb) RETURNING id,code,name,description,price_minor,currency,interval_days,is_active,is_featured,sort_order,features`;
+   }
+   if(!saved.length)return send(res,404,{error:'Subscription plan not found.'});
+   await sql`INSERT INTO public.audit_logs(actor_user_id,action,resource_type,resource_id,metadata) VALUES(${users[0].id},'platform.subscription_plan.saved','subscription_plan',${saved[0].id},${JSON.stringify({code,name,price_minor:price,interval_days:interval,is_active:active,is_featured:featured})}::jsonb)`;
+   return send(res,200,{ok:true,plan:saved[0]});
+  }
+  if(req.method==='POST'&&req.body?.action==='save_subscription_settings'){
+   const trialDays=Number(req.body?.trial_days);
+   if(!Number.isInteger(trialDays)||trialDays<0||trialDays>30)return send(res,400,{error:'Trial period must be between 0 and 30 days.'});
+   const config={trial_days:trialDays,sales_commission_bps:0};
+   await sql`INSERT INTO public.platform_settings(setting_key,setting_value,updated_at) VALUES('subscription',${JSON.stringify(config)}::jsonb,now()) ON CONFLICT(setting_key) DO UPDATE SET setting_value=EXCLUDED.setting_value,updated_at=now()`;
+   await sql`INSERT INTO public.audit_logs(actor_user_id,action,resource_type,resource_id,metadata) VALUES(${users[0].id},'platform.subscription_settings.updated','platform_setting','subscription',${JSON.stringify(config)}::jsonb)`;
+   return send(res,200,{ok:true,settings:config});
   }
   if(req.method==='POST'&&req.body?.action==='complaint_restrict'){
    const id=String(req.body?.id||''),target=String(req.body?.target||''),days=Number(req.body?.durationDays||0),reason=String(req.body?.reason||'').trim().slice(0,1500);
