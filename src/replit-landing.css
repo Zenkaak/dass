@@ -1135,3 +1135,78 @@
   .rm-faq-layout { gap:28px; }
   .rm-dashboard-showcase { grid-template-columns:minmax(220px,.8fr) minmax(0,1.2fr); gap:24px; }
 }
+
+
+/* Mobile typography correction: scale headings to phone widths and prevent oversized text. */
+@media (max-width:680px) {
+  .rm-page-shell .rm-container { width:calc(100% - 32px); }
+  .rm-page-shell .rm-nav { height:64px; }
+  .rm-page-shell .rm-nav .rm-brand { font-size:17px; gap:8px; }
+  .rm-page-shell .rm-nav .rm-brand-mark { width:29px; height:29px; font-size:18px; }
+  .rm-page-shell .rm-nav-actions { gap:10px; }
+  .rm-page-shell .rm-nav-login { font-size:12px; }
+  .rm-page-shell .rm-hero {
+    min-height:0;
+    padding:112px 0 48px;
+    background-position:58% center;
+  }
+  .rm-page-shell .rm-hero-copy { padding:0; max-width:100%; }
+  .rm-page-shell .rm-hero-kicker { gap:8px; margin-bottom:16px; font-size:10px; line-height:1.45; }
+  .rm-page-shell .rm-eyebrow { font-size:9px; letter-spacing:.09em; }
+  .rm-page-shell .rm-hero h1 {
+    max-width:100%;
+    font-size:clamp(34px, 9.2vw, 43px) !important;
+    line-height:1.08;
+    letter-spacing:-.045em;
+    overflow-wrap:normal;
+  }
+  .rm-page-shell .rm-hero-copy>p {
+    max-width:100%;
+    margin:16px 0 20px;
+    font-size:14px;
+    line-height:1.6;
+  }
+  .rm-page-shell .rm-hero-ctas { gap:10px; }
+  .rm-page-shell .rm-hero-ctas .rm-button { min-height:46px; font-size:13px; }
+  .rm-page-shell .rm-hero-note { margin-top:15px; font-size:11px; line-height:1.5; }
+  .rm-page-shell .rm-section-intro h2,
+  .rm-page-shell .rm-domain-copy h2,
+  .rm-page-shell .rm-trust-intro h2,
+  .rm-page-shell .rm-faq-heading h2,
+  .rm-page-shell .rm-feature-heading h2,
+  .rm-page-shell .rm-section h2 {
+    font-size:clamp(24px, 6.8vw, 29px) !important;
+    line-height:1.16;
+    letter-spacing:-.035em;
+  }
+  .rm-page-shell .rm-section-intro>p,
+  .rm-page-shell .rm-domain-copy>p,
+  .rm-page-shell .rm-trust-intro>p,
+  .rm-page-shell .rm-faq-heading>p,
+  .rm-page-shell .rm-feature-heading>p {
+    font-size:13px;
+    line-height:1.6;
+  }
+  .rm-page-shell .rm-step h3,
+  .rm-page-shell .rm-tools-grid h3,
+  .rm-page-shell .rm-trust-row-title h3 { font-size:15px; line-height:1.35; }
+  .rm-page-shell .rm-step p,
+  .rm-page-shell .rm-tools-grid p,
+  .rm-page-shell .rm-trust-row>p,
+  .rm-page-shell .rm-faq-answer { font-size:12px; line-height:1.6; }
+  .rm-page-shell .rm-faq-question { font-size:13px; line-height:1.45; }
+  .rm-page-shell .rm-final-cta h2 {
+    font-size:clamp(27px, 7.5vw, 32px) !important;
+    line-height:1.12;
+  }
+  .rm-page-shell .rm-final-cta p { font-size:13px; line-height:1.6; }
+  .rm-page-shell .rm-footer-links a,
+  .rm-page-shell .rm-footer-copy { font-size:11px; line-height:1.5; }
+}
+@media (max-width:380px) {
+  .rm-page-shell .rm-container { width:calc(100% - 28px); }
+  .rm-page-shell .rm-nav .rm-brand { font-size:15px; }
+  .rm-page-shell .rm-hero h1 { font-size:32px !important; }
+  .rm-page-shell .rm-hero-copy>p { font-size:13px; }
+  .rm-page-shell .rm-hero-ctas .rm-button { font-size:12px; padding-inline:14px; }
+}
