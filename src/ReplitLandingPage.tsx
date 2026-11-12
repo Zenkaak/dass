@@ -88,17 +88,6 @@ export function ReplitLandingPage() {
                 <a className="rm-button rm-button-outline" href="#how-it-works" data-testid="button-see-how">See how it works <ArrowDown size={14} /></a>
               </div>
             </div>
-            <div className="rm-hero-dashboard-preview" aria-label="Preview of the DASMARKET seller dashboard">
-              <div className="rm-hero-preview-browser">
-                <span></span><span></span><span></span>
-                <b>Seller workspace · DASMARKET</b>
-              </div>
-              <img src="/images/Manage%20Your%20Shop%20in%20One%20Workspace.png" alt="Demo of the DASMARKET seller dashboard on a desktop screen" fetchPriority="high" />
-              <div className="rm-hero-preview-caption">
-                <span><i></i> YOUR BUSINESS, IN ONE PLACE</span>
-                <strong>Orders · Products · Sales · Settings</strong>
-              </div>
-            </div>
           </div>
         </section>
 
