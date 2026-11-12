@@ -5236,3 +5236,78 @@
 .market-payment-poll-status{font-weight:650;color:#9a580d;margin:18px 0}
 .market-payment-processing .customer-preview-note{display:flex;align-items:flex-start;justify-content:center;gap:8px;line-height:1.5}
 @media(max-width:560px){.market-payment-processing{padding:24px 12px}.market-payment-processing-card{grid-template-columns:1fr;gap:12px}.market-payment-processing-card>div{display:grid;grid-template-columns:112px minmax(0,1fr);align-items:center}.market-payment-processing-card strong{font-size:13px}}
+
+
+/* Policy documents open as a dedicated full-screen reading surface, above storefront navigation. */
+.customer-policy-fullscreen{
+  position:fixed!important;
+  inset:0!important;
+  z-index:10000!important;
+  width:100%!important;
+  max-width:none!important;
+  height:100vh!important;
+  height:100dvh!important;
+  min-height:100vh!important;
+  margin:0!important;
+  padding:clamp(14px,2.4vw,30px) clamp(14px,4vw,48px) max(24px,env(safe-area-inset-bottom))!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior:contain;
+  background:#f5f7f9!important;
+  color:#172033!important;
+  -webkit-overflow-scrolling:touch;
+}
+.customer-policy-fullscreen>.customer-flow-heading{
+  position:sticky;
+  top:0;
+  z-index:2;
+  width:100%;
+  max-width:1100px;
+  margin:0 auto 18px!important;
+  padding:10px 0 14px;
+  background:#f5f7f9;
+  border-bottom:1px solid #e3e8ed;
+}
+.customer-policy-fullscreen>.customer-flow-heading h1{
+  font-size:clamp(20px,2.4vw,30px);
+}
+.customer-policy-fullscreen>.customer-policy-document{
+  width:100%;
+  max-width:1100px;
+  margin:0 auto!important;
+  padding:clamp(18px,3vw,36px)!important;
+  border:1px solid #e4e9ee;
+  border-radius:16px;
+  background:#fff;
+  box-shadow:0 8px 32px rgba(20,35,50,.06);
+}
+.customer-policy-fullscreen .customer-policy-document-body{
+  max-width:900px;
+  margin-inline:auto;
+}
+@media(max-width:600px){
+  .customer-policy-fullscreen{
+    padding:0 0 max(18px,env(safe-area-inset-bottom))!important;
+  }
+  .customer-policy-fullscreen>.customer-flow-heading{
+    min-height:60px;
+    margin:0!important;
+    padding:calc(8px + env(safe-area-inset-top)) 14px 10px!important;
+    gap:10px;
+    background:#fff;
+    border-bottom:1px solid #e7ebef;
+  }
+  .customer-policy-fullscreen>.customer-flow-heading h1{
+    font-size:18px;
+    line-height:1.25;
+  }
+  .customer-policy-fullscreen>.customer-policy-document{
+    width:100%;
+    max-width:none;
+    margin:0!important;
+    padding:18px 15px 24px!important;
+    border:0;
+    border-radius:0;
+    box-shadow:none;
+  }
+}
