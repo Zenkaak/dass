@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import './replit-landing.css';
-import { ArrowRight, CheckCircle2, CreditCard, Globe2, Menu, ShoppingBag, Store, X } from 'lucide-react';
+import { ArrowRight, CheckCircle2, CreditCard, Globe2, Menu, PackageCheck, ShoppingBag, Store, Truck, X } from 'lucide-react';
 
 function Brand() {
   return <a className="rm-brand" href="/" aria-label="DASMARKET home"><span className="rm-brand-mark" aria-hidden="true">D</span><span>DASMARKET</span></a>;
@@ -31,13 +31,21 @@ export function ReplitLandingPage() {
             <div className="rm-home-proof"><span><CheckCircle2 size={15}/> Your own branded storefront</span><span><CheckCircle2 size={15}/> Products and orders in one workspace</span><span><CheckCircle2 size={15}/> Connect a domain you own</span></div>
           </div></div>
         </section>
+        <section className="rm-home-facts" aria-label="DASMARKET platform highlights"><div className="rm-container rm-home-facts-grid">
+          <div><strong>Your brand</strong><span>A storefront that represents your business</span></div>
+          <div><strong>One workspace</strong><span>Products, orders and shop settings together</span></div>
+          <div><strong>Flexible checkout</strong><span>Payment options configured for your shop</span></div>
+          <div><strong>Your domain</strong><span>Use your shop address or connect your own</span></div>
+        </div></section>
         <section className="rm-section rm-home-features" id="features"><div className="rm-container">
-          <div className="rm-home-section-heading"><div className="rm-eyebrow rm-section-label">THE DASMARKET PLATFORM</div><h2>Everything you need to run your online shop.</h2><p>One straightforward workspace for your storefront and day-to-day selling.</p></div>
+          <div className="rm-home-section-heading"><div className="rm-eyebrow rm-section-label">EVERYTHING INCLUDED</div><h2>The tools to run your shop, already in one place.</h2><p>From the first product listing to the completed customer order, manage the work from one seller account.</p></div>
           <div className="rm-home-feature-grid">
-            <article className="rm-home-feature"><span className="rm-home-feature-icon"><Store size={21}/></span><h3>Your online storefront</h3><p>Present your business with your shop name, products and brand identity.</p></article>
-            <article className="rm-home-feature"><span className="rm-home-feature-icon"><ShoppingBag size={21}/></span><h3>Products &amp; orders</h3><p>Add products, manage stock and keep customer orders organised.</p></article>
-            <article className="rm-home-feature"><span className="rm-home-feature-icon"><CreditCard size={21}/></span><h3>Checkout &amp; payments</h3><p>Configure supported payment options for customers shopping in your store.</p></article>
-            <article className="rm-home-feature"><span className="rm-home-feature-icon"><Globe2 size={21}/></span><h3>Your own domain</h3><p>Start with your shop address and connect a domain you already own.</p></article>
+            <article className="rm-home-feature"><span className="rm-home-feature-icon"><Store size={21}/></span><h3>Your storefront</h3><p>Give your business a branded shop customers can browse on any device.</p></article>
+            <article className="rm-home-feature"><span className="rm-home-feature-icon"><ShoppingBag size={21}/></span><h3>Products &amp; inventory</h3><p>Publish product details, photos, prices and stock in one catalogue.</p></article>
+            <article className="rm-home-feature"><span className="rm-home-feature-icon"><PackageCheck size={21}/></span><h3>Order management</h3><p>Keep customer orders and fulfilment progress organised in your workspace.</p></article>
+            <article className="rm-home-feature"><span className="rm-home-feature-icon"><CreditCard size={21}/></span><h3>Payments</h3><p>Offer the payment methods enabled and configured for your shop.</p></article>
+            <article className="rm-home-feature"><span className="rm-home-feature-icon"><Truck size={21}/></span><h3>Delivery details</h3><p>Collect customer delivery information as part of the checkout process.</p></article>
+            <article className="rm-home-feature"><span className="rm-home-feature-icon"><Globe2 size={21}/></span><h3>Custom domain</h3><p>Start with your shop address and connect a domain you own.</p></article>
           </div>
         </div></section>
         <section className="rm-section rm-home-workspace"><div className="rm-container rm-home-workspace-grid">
