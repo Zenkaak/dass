@@ -27,9 +27,13 @@ async function seller(sql:any,req:any){
 async function audit(sql:any,tenantId:string,actorId:string,action:string,type:string,id:string|null,metadata:any={}){await sql`INSERT INTO public.audit_logs(tenant_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${tenantId},${actorId},${action},${type},${id},${JSON.stringify(metadata)}::jsonb)`}
 async function notifyBuyer(sql:any,tenantId:string,buyerPhone:string,orderId:string|null,type:string,title:string,detail:string,complaintId:string|null=null){if(!buyerPhone)return;await sql`INSERT INTO public.buyer_notifications(tenant_id,buyer_phone,order_id,complaint_id,notification_type,title,detail) VALUES(${tenantId},${buyerPhone},${orderId},${complaintId},${type},${title},${detail})`;}
 async function notifyOrderBuyer(sql:any,tenantId:string,orderId:string,type:string,title:string,detail:string){const rows=await sql`SELECT customer_phone FROM public.orders WHERE id=${orderId} AND tenant_id=${tenantId} LIMIT 1`;if(rows.length)await notifyBuyer(sql,tenantId,rows[0].customer_phone,orderId,type,title,detail);}
+async function reserveInventory(sql:any,paymentId:string){try{const rows=await sql`SELECT public.reserve_inventory_for_payment(${paymentId}) AS reserved`;if(rows[0]?.reserved===false)throw Error('INVENTORY_RESERVATION_UNAVAILABLE');}catch(error:any){if(String(error?.message||'').includes('OUT_OF_STOCK'))throw Error('OUT_OF_STOCK');throw error;}}
+async function releaseInventory(sql:any,paymentId:string){await sql`SELECT public.release_inventory_reservations(${paymentId})`;}
+function isAmbiguousStkSubmission(error:any){return error?.stkSubmissionAmbiguous===true;}
+
 async function reconcilePaymentJob(sql:any,jobId:string){
  try{
-  const result=await sql`WITH claimed AS (UPDATE public.payment_reconciliation_jobs SET status='completed',attempts=attempts+1,processed_at=now(),updated_at=now(),last_error=NULL WHERE id=${jobId} AND status='pending' RETURNING id,tenant_id,order_id), order_update AS (UPDATE public.orders o SET status='confirmed',updated_at=now() FROM claimed j WHERE o.id=j.order_id AND o.tenant_id=j.tenant_id AND o.status='pending' RETURNING o.id), payment_notice AS (INSERT INTO public.buyer_notifications(tenant_id,buyer_phone,order_id,notification_type,title,detail) SELECT j.tenant_id,o.customer_phone,j.order_id,'payment_update','Payment confirmed','Your M-PESA payment was confirmed.' FROM claimed j JOIN public.orders o ON o.id=j.order_id AND o.tenant_id=j.tenant_id WHERE NULLIF(o.customer_phone,'') IS NOT NULL RETURNING id), order_notice AS (INSERT INTO public.buyer_notifications(tenant_id,buyer_phone,order_id,notification_type,title,detail) SELECT j.tenant_id,o.customer_phone,j.order_id,'order_update','Order confirmed','Your order has been confirmed by the shop.' FROM claimed j JOIN public.orders o ON o.id=j.order_id AND o.tenant_id=j.tenant_id WHERE NULLIF(o.customer_phone,'') IS NOT NULL RETURNING id), coupon_update AS (UPDATE public.store_coupons c SET used_count=c.used_count+1,updated_at=now() FROM claimed j JOIN public.orders o ON o.id=j.order_id AND o.tenant_id=j.tenant_id WHERE o.coupon_code IS NOT NULL AND c.tenant_id=j.tenant_id AND c.code=o.coupon_code RETURNING c.id), callback_update AS (UPDATE public.payment_configs pc SET callback_verified_at=now() FROM claimed j WHERE pc.tenant_id=j.tenant_id RETURNING pc.tenant_id) SELECT (SELECT COUNT(*) FROM claimed)::integer AS claimed,(SELECT COUNT(*) FROM order_update)::integer AS orders_updated,(SELECT COUNT(*) FROM payment_notice)::integer AS payment_notifications,(SELECT COUNT(*) FROM order_notice)::integer AS order_notifications,(SELECT COUNT(*) FROM coupon_update)::integer AS coupons_updated,(SELECT COUNT(*) FROM callback_update)::integer AS configs_updated`;
+  const result=await sql`WITH claimed AS (UPDATE public.payment_reconciliation_jobs SET status='completed',attempts=attempts+1,processed_at=now(),updated_at=now(),last_error=NULL WHERE id=${jobId} AND status='pending' RETURNING id,tenant_id,order_id,payment_id), order_update AS (UPDATE public.orders o SET status='confirmed',updated_at=now() FROM claimed j JOIN public.payments p ON p.id=j.payment_id WHERE o.id=j.order_id AND o.tenant_id=j.tenant_id AND o.status='pending' AND COALESCE(p.provider_result->>'inventoryIssue','')='' RETURNING o.id), payment_notice AS (INSERT INTO public.buyer_notifications(tenant_id,buyer_phone,order_id,notification_type,title,detail) SELECT j.tenant_id,o.customer_phone,j.order_id,'payment_update',CASE WHEN COALESCE(p.provider_result->>'inventoryIssue','')<>'' THEN 'Payment received — stock review required' ELSE 'Payment confirmed' END,CASE WHEN COALESCE(p.provider_result->>'inventoryIssue','')<>'' THEN 'Your M-PESA payment was confirmed, but stock changed during checkout. The shop must review availability before dispatch.' ELSE 'Your M-PESA payment was confirmed.' END FROM claimed j JOIN public.orders o ON o.id=j.order_id AND o.tenant_id=j.tenant_id JOIN public.payments p ON p.id=j.payment_id WHERE NULLIF(o.customer_phone,'') IS NOT NULL RETURNING id), order_notice AS (INSERT INTO public.buyer_notifications(tenant_id,buyer_phone,order_id,notification_type,title,detail) SELECT j.tenant_id,o.customer_phone,j.order_id,'order_update','Order confirmed','Your order has been confirmed by the shop.' FROM claimed j JOIN public.orders o ON o.id=j.order_id AND o.tenant_id=j.tenant_id JOIN public.payments p ON p.id=j.payment_id WHERE NULLIF(o.customer_phone,'') IS NOT NULL AND COALESCE(p.provider_result->>'inventoryIssue','')='' RETURNING id), coupon_update AS (UPDATE public.store_coupons c SET used_count=c.used_count+1,updated_at=now() FROM claimed j JOIN public.orders o ON o.id=j.order_id AND o.tenant_id=j.tenant_id JOIN public.payments p ON p.id=j.payment_id WHERE o.coupon_code IS NOT NULL AND c.tenant_id=j.tenant_id AND c.code=o.coupon_code AND COALESCE(p.provider_result->>'inventoryIssue','')='' RETURNING c.id), callback_update AS (UPDATE public.payment_configs pc SET callback_verified_at=now() FROM claimed j WHERE pc.tenant_id=j.tenant_id RETURNING pc.tenant_id) SELECT (SELECT COUNT(*) FROM claimed)::integer AS claimed,(SELECT COUNT(*) FROM order_update)::integer AS orders_updated,(SELECT COUNT(*) FROM payment_notice)::integer AS payment_notifications,(SELECT COUNT(*) FROM order_notice)::integer AS order_notifications,(SELECT COUNT(*) FROM coupon_update)::integer AS coupons_updated,(SELECT COUNT(*) FROM callback_update)::integer AS configs_updated`;
   return Number(result[0]?.claimed||0)>0;
  }catch(error:any){
   const message=String(error?.message||'Reconciliation failed').slice(0,1000);
@@ -99,15 +103,31 @@ function timestamp(){const d=new Date();return d.getUTCFullYear()+String(d.getUT
 async function startStk(c:any,order:any,phone:string,amount:number,reference:string,callbackUrl:string){
  const {host,accessToken}=await darajaToken(c),stamp=timestamp(),shortcode=String(c.shortcode),type=c.accountType;
  const payload:any={BusinessShortCode:shortcode,Password:darajaPassword(shortcode,c.passkey,stamp),Timestamp:stamp,TransactionType:type,Amount:Math.max(1,Math.round(amount)),PartyA:phone.replace('+',''),PartyB:String(c.partyB||shortcode),PhoneNumber:phone.replace('+',''),CallBackURL:callbackUrl,AccountReference:String(reference).slice(0,12),TransactionDesc:'Order '+order.order_number};
- const r=await fetch(host+'/mpesa/stkpush/v1/processrequest',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify(payload)});
- const d:any=await r.json();if(!r.ok||!d.CheckoutRequestID||String(d.ResponseCode)!=='0')throw Error(d.errorMessage||d.ResponseDescription||'Safaricom did not accept the STK request.');
- return {checkoutId:d.CheckoutRequestID,merchantRequestId:d.MerchantRequestID,response:d};
+ let response:any;
+ try{response=await fetch(host+'/mpesa/stkpush/v1/processrequest',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(payload)});}
+ catch(error:any){const ambiguous:any=Error('Safaricom connection was interrupted after the STK request was submitted.');ambiguous.stkSubmissionAmbiguous=true;ambiguous.cause=error;throw ambiguous;}
+ let data:any;
+ try{data=await response.json();}
+ catch(error:any){const ambiguous:any=Error('Safaricom returned an unreadable STK response. Check for an M-PESA prompt before retrying.');ambiguous.stkSubmissionAmbiguous=true;ambiguous.cause=error;throw ambiguous;}
+ if(response.status>=500){const ambiguous:any=Error('Safaricom returned a server error after the STK request was submitted (HTTP '+response.status+').');ambiguous.stkSubmissionAmbiguous=true;throw ambiguous;}
+ if(!response.ok||String(data.ResponseCode)!=='0')throw Error(data.errorMessage||data.ResponseDescription||'Safaricom did not accept the STK request.');
+ if(!data.CheckoutRequestID){const ambiguous:any=Error('Safaricom accepted the STK request but did not return its checkout reference. Do not retry yet.');ambiguous.stkSubmissionAmbiguous=true;throw ambiguous;}
+ return {checkoutId:data.CheckoutRequestID,merchantRequestId:data.MerchantRequestID,response:data};
+}
+
+function paymentDarajaCredentials(p:any,key:string){
+ const method=p.provider_result?.paymentMethod==='paybill'?'paybill':'till';
+ const sellerBundle=p.encrypted_credentials?.ciphertext?decryptBundle(p.encrypted_credentials,key,'seller'):null;
+ const seller=sellerBundle?.credentialsByType?.[method]||(sellerBundle?.consumerKey?{...sellerBundle,shortcode:p.shortcode,environment:p.environment}:null);
+ if(seller?.consumerKey&&seller?.consumerSecret&&seller?.passkey)return {...seller,shortcode:seller.shortcode||p.shortcode,environment:seller.environment||p.environment};
+ if(p.central_credentials?.data){const central=decryptBundle(p.central_credentials,key,'platform');return {...central,shortcode:p.central_shortcode,environment:p.central_environment};}
+ throw Error('Daraja verification credentials are unavailable.');
 }
 async function verifyStk(c:any,checkoutId:string){
  const {host,accessToken}=await darajaToken(c),stamp=timestamp(),shortcode=String(c.shortcode);
  const payload={BusinessShortCode:shortcode,Password:darajaPassword(shortcode,c.passkey,stamp),Timestamp:stamp,CheckoutRequestID:checkoutId};
  const r=await fetch(host+'/mpesa/stkpushquery/v1/query',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify(payload)});
- const d:any=await r.json();if(!r.ok)throw Error('Safaricom payment verification query failed.');
+ const d:any=await r.json();if(!r.ok||String(d.ResponseCode)!=='0')throw Error('Safaricom payment verification query failed.');
  return d;
 }
 function productOut(p:any,includeMetadata=false){
@@ -128,12 +148,24 @@ export default async function handler(req:any,res:any){
  try{
   const sql=db();
   action=String(req.query?.action||req.body?.action||'');
-  if(['buyer-account-data','buyer-follow-shop','buyer-wishlist','buyer-newsletter','buyer-close-account'].includes(action)){
+  if(['buyer-account-data','buyer-delivery-preference','buyer-follow-shop','buyer-wishlist','buyer-newsletter','buyer-close-account'].includes(action)){
    const b=req.body||{},slug=String(req.method==='GET'?req.query?.slug:b.slug||'').toLowerCase().trim();
    const shops=await sql`SELECT id,slug,name FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
    if(!shops.length)return send(res,404,{error:'Shop not found.'});
    const buyer=await buyerSession(sql,req,shops[0].id);if(!buyer)return send(res,401,{error:'Sign in to manage your buyer account.'});
    const userId=buyer.user_id;if(!userId)return send(res,403,{error:'This legacy buyer session must be refreshed. Sign in again to continue.'});
+   if(action==='buyer-delivery-preference'&&req.method==='GET'){
+    const rows=await sql`SELECT delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,updated_at FROM public.buyer_delivery_preferences_by_shop WHERE tenant_id=${shops[0].id} AND buyer_user_id=${userId} LIMIT 1`;
+    const r=rows[0];return send(res,200,{preference:r?{deliveryMethod:r.delivery_method,deliveryCounty:r.delivery_county||'',deliverySubCounty:r.delivery_sub_county||'',deliveryEstate:r.delivery_estate||'',deliveryAddress:r.delivery_address||'',deliveryDirections:r.delivery_directions||'',pickupStation:r.pickup_station||'',updatedAt:r.updated_at}:null});
+   }
+   if(action==='buyer-delivery-preference'&&req.method==='POST'){
+    const b=req.body||{},method=String(b.deliveryMethod||'').trim(),county=String(b.deliveryCounty||'').trim().slice(0,80),subCounty=String(b.deliverySubCounty||'').trim().slice(0,100),estate=String(b.deliveryEstate||'').trim().slice(0,160),address=String(b.deliveryAddress||'').trim().slice(0,300),directions=String(b.deliveryDirections||'').trim().slice(0,500),pickup=String(b.pickupStation||'').trim().slice(0,200);
+    if(!['home','pickup'].includes(method))return send(res,400,{error:'Choose a valid delivery method.'});
+    if(!county||!subCounty||!estate||!address||(method==='pickup'&&!pickup))return send(res,400,{error:'Complete the county, sub-county, estate, physical address and pickup point where required.'});
+    const rows=await sql`INSERT INTO public.buyer_delivery_preferences_by_shop(tenant_id,buyer_user_id,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,updated_at) VALUES(${shops[0].id},${userId},${method},${county},${subCounty},${estate},${address},${directions||null},${pickup||null},now()) ON CONFLICT(tenant_id,buyer_user_id) DO UPDATE SET delivery_method=EXCLUDED.delivery_method,delivery_county=EXCLUDED.delivery_county,delivery_sub_county=EXCLUDED.delivery_sub_county,delivery_estate=EXCLUDED.delivery_estate,delivery_address=EXCLUDED.delivery_address,delivery_directions=EXCLUDED.delivery_directions,pickup_station=EXCLUDED.pickup_station,updated_at=now() RETURNING delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,updated_at`;
+    const r=rows[0];return send(res,200,{ok:true,preference:{deliveryMethod:r.delivery_method,deliveryCounty:r.delivery_county,deliverySubCounty:r.delivery_sub_county,deliveryEstate:r.delivery_estate,deliveryAddress:r.delivery_address,deliveryDirections:r.delivery_directions||'',pickupStation:r.pickup_station||'',updatedAt:r.updated_at}});
+   }
+
    if(req.method==='GET'&&action==='buyer-account-data'){
     const [follows,wishlist,newsletter,closure]=await Promise.all([
      sql`SELECT t.id,t.slug,t.name FROM public.buyer_shop_follows f JOIN public.tenants t ON t.id=f.followed_tenant_id WHERE f.buyer_user_id=${userId} AND t.status IN ('trial','active') ORDER BY f.created_at DESC LIMIT 100`,
@@ -254,6 +286,7 @@ export default async function handler(req:any,res:any){
   if(req.method==='POST'&&action==='daraja-callback'){
    const cb=req.body?.Body?.stkCallback||{},checkout=String(cb.CheckoutRequestID||''),resultCode=Number(cb.ResultCode);
    if(!checkout)return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
+   if(!Number.isFinite(resultCode))return send(res,400,{ResultCode:1,ResultDesc:'Invalid callback result code'});
    const rows=await sql`SELECT p.id,p.tenant_id,p.order_id,p.phone,p.amount_minor,p.status,p.provider_result,pc.shortcode,pc.party_b,pc.account_type,pc.environment,pc.encrypted_credentials,pc.payout_method,pc.account_reference,pc.till_party_b,pc.paybill_party_b,pc.default_payout_method,pm.shortcode AS central_shortcode,pm.environment AS central_environment,pm.encrypted_credentials AS central_credentials FROM public.payments p LEFT JOIN public.payment_configs pc ON pc.tenant_id=p.tenant_id LEFT JOIN public.platform_payment_methods pm ON pm.method=CASE WHEN p.provider_result->>'paymentMethod'='paybill' THEN 'paybill' ELSE 'till' END WHERE p.provider_checkout_id=${checkout} LIMIT 1`;
    if(!rows.length)return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
    const p=rows[0];if(p.status==='succeeded')return send(res,200,{ResultCode:0,ResultDesc:'Already processed'});
@@ -261,7 +294,8 @@ export default async function handler(req:any,res:any){
    // when credential decryption or a verification API is unavailable.
    if(resultCode!==0){
     const terminalStatus=resultCode===1032?'cancelled':'failed';
-    await sql`UPDATE public.payments SET status=${terminalStatus},provider_result=${JSON.stringify({...((p.provider_result&&typeof p.provider_result==='object')?p.provider_result:{}),callback:cb,resultCode,resultDescription:String(cb.ResultDesc||'')})}::jsonb,updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
+    await sql`UPDATE public.payments SET status=${terminalStatus},provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({callback:cb,resultCode,resultDescription:String(cb.ResultDesc||'')})}::jsonb,updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
+    await releaseInventory(sql,String(p.id));
     await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'payment_update',terminalStatus==='cancelled'?'Payment cancelled':'Payment failed','Payment for your order was '+terminalStatus+'.');
     return send(res,200,{ResultCode:0,ResultDesc:terminalStatus==='cancelled'?'Customer cancelled payment':'Payment failure recorded'});
    }
@@ -278,8 +312,30 @@ export default async function handler(req:any,res:any){
     const meta=cb.CallbackMetadata?.Item||[],val=(n:string)=>meta.find((x:any)=>x.Name===n)?.Value;
     const amount=Number(val('Amount')??checked.Amount),receipt=String(val('MpesaReceiptNumber')??checked.MpesaReceiptNumber??''),phone=String(val('PhoneNumber')??checked.PhoneNumber??'');
     if(!receipt||Math.round(amount*100)!==Number(p.amount_minor)||phone.replace(/^\+/, '')!==String(p.phone).replace(/^\+/,''))throw Error('Callback details do not match the pending order.');
-    const settlement=await sql`WITH wanted AS (SELECT product_id,SUM(quantity)::integer AS quantity FROM public.order_items WHERE tenant_id=${p.tenant_id} AND order_id=${p.order_id} AND product_id IS NOT NULL GROUP BY product_id), eligible AS (SELECT COUNT(*)::integer AS count FROM wanted w JOIN public.products pr ON pr.id=w.product_id AND pr.tenant_id=${p.tenant_id} WHERE pr.stock_quantity IS NULL OR pr.stock_quantity>=w.quantity), payment_mark AS (UPDATE public.payments SET status='succeeded',provider_receipt=${receipt},provider_result=(${JSON.stringify({...((p.provider_result&&typeof p.provider_result==='object')?p.provider_result:{}),callback:cb,query:checked})}::jsonb || jsonb_build_object('inventoryApplied',(SELECT COUNT(*) FROM wanted)=0 OR (SELECT count FROM eligible)=(SELECT COUNT(*) FROM wanted),'inventoryIssue',CASE WHEN (SELECT COUNT(*) FROM wanted)=0 OR (SELECT count FROM eligible)=(SELECT COUNT(*) FROM wanted) THEN NULL ELSE 'Payment confirmed, but stock changed during checkout. Seller review required.' END)),verified_at=now(),updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending') RETURNING id,tenant_id,order_id), stock_update AS (UPDATE public.products pr SET stock_quantity=CASE WHEN pr.stock_quantity IS NULL THEN NULL ELSE pr.stock_quantity-w.quantity END,updated_at=now() FROM wanted w,payment_mark pm,eligible e WHERE pr.id=w.product_id AND pr.tenant_id=${p.tenant_id} AND (SELECT COUNT(*) FROM wanted)>0 AND e.count=(SELECT COUNT(*) FROM wanted) AND (pr.stock_quantity IS NULL OR pr.stock_quantity>=w.quantity) RETURNING pr.id), queued AS (INSERT INTO public.payment_reconciliation_jobs(payment_id,tenant_id,order_id,status) SELECT id,tenant_id,order_id,'pending' FROM payment_mark ON CONFLICT(payment_id) DO NOTHING RETURNING id) SELECT (SELECT COUNT(*) FROM wanted)::integer AS wanted_count,(SELECT count FROM eligible)::integer AS eligible_count,(SELECT COUNT(*) FROM payment_mark)::integer AS payment_count,(SELECT COUNT(*) FROM stock_update)::integer AS stock_count,(SELECT COUNT(*) FROM queued)::integer AS queued_count`;
-    if(Number(settlement[0]?.payment_count||0)===0)return send(res,200,{ResultCode:0,ResultDesc:'Already processed'});if(Number(settlement[0]?.stock_count||0)!==Number(settlement[0]?.wanted_count||0))console.error('Verified payment needs seller inventory review',{orderId:p.order_id,tenantId:p.tenant_id});
+    let inventoryIssue='';
+    const reservationRows=await sql`SELECT status FROM public.inventory_reservations WHERE payment_id=${p.id} ORDER BY created_at ASC`;
+    if(!reservationRows.length){
+     try{await reserveInventory(sql,String(p.id));}
+     catch(stockError:any){inventoryIssue='Payment confirmed, but stock could not be reserved. Seller review required.';console.error('Verified payment has no available stock reservation',{paymentId:p.id,error:String(stockError?.message||stockError)});}
+    }else if(!reservationRows.some((r:any)=>r.status==='active'||r.status==='consumed')){
+     inventoryIssue='Payment confirmed after its stock reservation was released. Seller review required.';
+    }
+    if(!inventoryIssue){
+     const active=await sql`SELECT id FROM public.inventory_reservations WHERE payment_id=${p.id} AND status='active' LIMIT 1`;
+     if(active.length)await sql`SELECT public.consume_inventory_reservations(${p.id})`;
+    }
+    const settlement=await sql`WITH payment_mark AS (
+      UPDATE public.payments SET status='succeeded',provider_receipt=${receipt},
+       provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({callback:cb,query:checked,inventoryApplied:!inventoryIssue,inventoryIssue:inventoryIssue||null})}::jsonb,
+       verified_at=now(),updated_at=now()
+      WHERE id=${p.id} AND status IN ('initiated','pending') RETURNING id,tenant_id,order_id
+     ), queued AS (
+      INSERT INTO public.payment_reconciliation_jobs(payment_id,tenant_id,order_id,status)
+      SELECT id,tenant_id,order_id,'pending' FROM payment_mark
+      ON CONFLICT(payment_id) DO NOTHING RETURNING id
+     ) SELECT (SELECT COUNT(*) FROM payment_mark)::integer AS payment_count,(SELECT COUNT(*) FROM queued)::integer AS queued_count`
+    if(Number(settlement[0]?.payment_count||0)===0)return send(res,200,{ResultCode:0,ResultDesc:'Already processed'});
+    if(inventoryIssue)await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'payment_update','Payment received — stock review required',inventoryIssue);
     const jobRows=await sql`SELECT id FROM public.payment_reconciliation_jobs WHERE payment_id=${p.id} LIMIT 1`;if(jobRows.length){try{await reconcilePaymentJob(sql,String(jobRows[0].id));}catch(reconcileError:any){console.error('Verified payment queued for later reconciliation',{paymentId:p.id,error:String(reconcileError?.message||reconcileError)});}}
    }catch(err:any){console.error('Daraja callback verification failed',err?.message||err);return send(res,503,{ResultCode:1,ResultDesc:'Payment verification is temporarily unavailable. Retry required.'});}
    return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
@@ -338,6 +394,46 @@ export default async function handler(req:any,res:any){
    return send(res,200,{ok:true,created:rows.length,total:totals.reduce((n:number,r:any)=>n+Number(r.total||0),0),categories:totals,message:rows.length?rows.length+' test products added.':'The test catalogue is already complete.'});
   }
 
+
+  if(req.method==='GET'&&action==='customer-payment-status'){
+   const slug=String(req.query?.slug||'').toLowerCase().trim(),orderId=String(req.query?.orderId||'').trim();
+   if(!slug||!orderId)return send(res,400,{error:'Shop and order reference are required.'});
+   const shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
+   if(!shops.length)return send(res,404,{error:'Shop not found.'});
+   const tenantId=shops[0].id,buyer=await buyerSession(sql,req,tenantId);
+   if(!buyer)return send(res,401,{error:'Sign in to check this payment.'});
+   const owned=await sql`SELECT id,order_number FROM public.orders WHERE id=${orderId} AND tenant_id=${tenantId} AND right(regexp_replace(customer_phone,'[^0-9]','','g'),9)=right(regexp_replace(${buyer.phone},'[^0-9]','','g'),9) LIMIT 1`;
+   if(!owned.length)return send(res,404,{error:'Order not found for this buyer.'});
+   const payments=await sql`SELECT id,status,provider_checkout_id,provider_receipt,provider_result FROM public.payments WHERE tenant_id=${tenantId} AND order_id=${orderId} ORDER BY created_at DESC LIMIT 1`;
+   if(!payments.length)return send(res,200,{orderId,paymentStatus:'unpaid',terminal:true});
+   const payment=payments[0];
+   if(['succeeded','failed','cancelled','reversed'].includes(String(payment.status)))return send(res,200,{orderId,paymentStatus:payment.status,receipt:payment.provider_receipt||null,terminal:true});
+   if(!payment.provider_checkout_id)return send(res,200,{orderId,paymentStatus:payment.status||'pending',terminal:false,queryAvailable:false,manualReviewRequired:Boolean(payment.provider_result?.manualReviewRequired||payment.provider_result?.stkSubmissionAmbiguous),message:payment.provider_result?.manualReviewRequired?'Payment request status is unclear. Please do not retry; the shop is reviewing the request.':'Payment request is being checked.'});
+   try{
+    const config=await sql`SELECT p.provider_result,pc.shortcode,pc.environment,pc.encrypted_credentials,pc.payout_method,pc.default_payout_method,pc.party_b,pc.till_party_b,pc.paybill_party_b,pc.account_reference,pm.shortcode AS central_shortcode,pm.environment AS central_environment,pm.encrypted_credentials AS central_credentials
+     FROM public.payments p LEFT JOIN public.payment_configs pc ON pc.tenant_id=p.tenant_id
+     LEFT JOIN public.platform_payment_methods pm ON pm.method=CASE WHEN p.provider_result->>'paymentMethod'='paybill' THEN 'paybill' ELSE 'till' END
+     WHERE p.id=${payment.id} AND p.tenant_id=${tenantId} LIMIT 1`;
+    if(!config.length)throw Error('Payment configuration could not be loaded.');
+    const verification=await verifyStk(paymentDarajaCredentials(config[0],env('DASNET_CREDENTIALS_ENCRYPTION_KEY')),String(payment.provider_checkout_id));
+    const resultCode=String(verification.ResultCode??'');
+    if(resultCode==='4999'||!resultCode){
+     await sql`UPDATE public.payments SET provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({queryResultCode:resultCode||null,queryResultDescription:String(verification.ResultDesc||'The transaction is still under processing')})}::jsonb,updated_at=now() WHERE id=${payment.id} AND status IN ('initiated','pending')`;
+     return send(res,200,{orderId,paymentStatus:'pending',receipt:null,terminal:false,queryAvailable:true,message:'Waiting for payment confirmation…'});
+    }
+    if(resultCode&&resultCode!=='0'){
+     const terminalStatus=resultCode==='1032'?'cancelled':'failed';
+     await sql`UPDATE public.payments SET status=${terminalStatus},provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({queryResultCode:resultCode,queryResultDescription:String(verification.ResultDesc||'')})}::jsonb,updated_at=now() WHERE id=${payment.id} AND status IN ('initiated','pending')`;
+     await releaseInventory(sql,String(payment.id));
+     return send(res,200,{orderId,paymentStatus:terminalStatus,receipt:null,terminal:true,message:String(verification.ResultDesc||'Safaricom did not complete the payment.')});
+    }
+    return send(res,200,{orderId,paymentStatus:'pending',receipt:null,terminal:false,queryAvailable:true,message:'Safaricom processed the request; waiting for the verified payment receipt callback.'});
+   }catch(queryError:any){
+    console.error('Buyer payment status query failed',{paymentId:payment.id,error:String(queryError?.message||queryError)});
+    return send(res,200,{orderId,paymentStatus:payment.status||'pending',receipt:null,terminal:false,queryAvailable:false,message:'Still checking with Safaricom.'});
+   }
+  }
+
   if(req.method==='GET'&&action==='customer-orders'){
    const slug=String(req.query?.slug||'').toLowerCase().trim();
    const shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
@@ -389,12 +485,19 @@ export default async function handler(req:any,res:any){
    const paymentId=crypto.randomUUID();
    const inserted=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result) VALUES(${tenantId},${order.id},'mpesa_daraja',${paymentPhone},${amount},'KES','initiated',${paymentId},${JSON.stringify({paymentMethod:method,source:'buyer_payment_retry'})}::jsonb) RETURNING id`;
    try{
+    await reserveInventory(sql,String(inserted[0].id));
     const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dass-gamma.vercel.app'))).replace(/\/$/,'')+'/api/payments?action=daraja-callback';
     const stk=await startStk(payment,order,paymentPhone,amount/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):order.order_number.slice(-12),callbackUrl);
     await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({paymentMethod:method,source:'buyer_payment_retry',merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${inserted[0].id}`;
     return send(res,200,{ok:true,checkoutRequestId:stk.checkoutId,message:'M-PESA prompt sent. Enter your PIN to complete payment.'});
    }catch(e:any){
-    await sql`UPDATE public.payments SET status='failed',provider_result=${JSON.stringify({paymentMethod:method,source:'buyer_payment_retry',error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${inserted[0].id}`;
+    if(isAmbiguousStkSubmission(e)){
+     await sql`UPDATE public.payments SET status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paymentMethod:method,source:'buyer_payment_retry',stkSubmissionAmbiguous:true,manualReviewRequired:true,error:String(e?.message||'STK submission response was lost')})}::jsonb,updated_at=now() WHERE id=${inserted[0].id}`;
+     await sql`UPDATE public.inventory_reservations SET expires_at=now()+interval '30 minutes',updated_at=now() WHERE payment_id=${inserted[0].id} AND status='active'`;
+     return send(res,202,{ok:true,paymentStatus:'pending',manualReviewRequired:true,message:'Safaricom did not return a confirmation. Do not retry yet; this payment is being held for review to avoid duplicate prompts.'});
+    }
+    await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paymentMethod:method,source:'buyer_payment_retry',error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${inserted[0].id}`;
+    await releaseInventory(sql,String(inserted[0].id));
     console.error('Buyer payment retry failed',e?.message||e);return send(res,502,{error:e?.message||'Could not start the M-PESA payment prompt.'});
    }
   }
@@ -530,12 +633,19 @@ export default async function handler(req:any,res:any){
    const idem=idempotency||crypto.randomUUID();
    const p=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result) VALUES(${tenantId},${o[0].id},'mpesa_daraja',${paymentPhone},${payableTotal},'KES','initiated',${idem},${JSON.stringify({paymentMethod:method})}::jsonb) RETURNING id`;
    try{
+    await reserveInventory(sql,String(p[0].id));
     const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dass-gamma.vercel.app'))).replace(/\/$/,'')+'/api/payments?action=daraja-callback';
     const stk=await startStk(payment,o[0],paymentPhone,payableTotal/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):orderNo.slice(-12),callbackUrl);
     await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({paymentMethod:method,source:'buyer_checkout',merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
     return send(res,201,{ok:true,orderId:o[0].id,orderNumber:o[0].order_number,paymentStatus:'pending',checkoutRequestId:stk.checkoutId,chatToken:customerChatToken,subtotal:total/100,discount:discountMinor/100,total:(total-discountMinor)/100,couponCode:couponCode||null,message:'M-PESA prompt sent. Enter your PIN on your phone to complete payment.'});
    }catch(e:any){
-    await sql`UPDATE public.payments SET status='failed',provider_result=${JSON.stringify({paymentMethod:method,source:'buyer_checkout',error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
+    if(isAmbiguousStkSubmission(e)){
+     await sql`UPDATE public.payments SET status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paymentMethod:method,source:'buyer_checkout',stkSubmissionAmbiguous:true,manualReviewRequired:true,error:String(e?.message||'STK submission response was lost')})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
+     await sql`UPDATE public.inventory_reservations SET expires_at=now()+interval '30 minutes',updated_at=now() WHERE payment_id=${p[0].id} AND status='active'`;
+     return send(res,202,{ok:true,orderId:o[0].id,orderNumber:o[0].order_number,paymentStatus:'pending',manualReviewRequired:true,chatToken:customerChatToken,subtotal:total/100,discount:discountMinor/100,total:(total-discountMinor)/100,couponCode:couponCode||null,message:'Safaricom did not return a confirmation. Do not retry yet; this payment is being held for review to avoid duplicate prompts.'});
+    }
+    await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paymentMethod:method,source:'buyer_checkout',error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
+    await releaseInventory(sql,String(p[0].id));
     console.error('Daraja STK initiation failed',e?.message||e);
     return send(res,502,{error:e?.message||'Could not start M-PESA payment. No payment was confirmed.',orderNumber:o[0].order_number,chatToken:customerChatToken});
    }
@@ -762,13 +872,20 @@ export default async function handler(req:any,res:any){
    const idempotency=crypto.randomUUID();
    const p=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result) VALUES(${me.tenant_id},${order.id},'mpesa_daraja',${phone},${amount},'KES','initiated',${idempotency},${JSON.stringify({paymentMethod:method,source:'merchant_order_prompt'})}::jsonb) RETURNING id`;
    try{
+    await reserveInventory(sql,String(p[0].id));
     const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||('https://'+(env('VERCEL_URL')||'dass-gamma.vercel.app'))).replace(/\/$/,'')+'/api/payments?action=daraja-callback';
     const stk=await startStk(payment,order,phone,amount/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):order.order_number.slice(-12),callbackUrl);
     await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({paymentMethod:method,source:'merchant_order_prompt',merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
     await audit(sql,me.tenant_id,me.user_id,'order.payment_prompt.sent','order',order.id,{paymentMethod:method,amountMinor:amount});
     return send(res,200,{ok:true,checkoutRequestId:stk.checkoutId,message:'M-PESA prompt sent for KES '+(amount/100).toLocaleString('en-KE')+'. Ask the customer to enter their M-PESA PIN.'});
    }catch(e:any){
-    await sql`UPDATE public.payments SET status='failed',provider_result=${JSON.stringify({paymentMethod:method,source:'merchant_order_prompt',error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
+    if(isAmbiguousStkSubmission(e)){
+     await sql`UPDATE public.payments SET status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paymentMethod:method,source:'merchant_order_prompt',stkSubmissionAmbiguous:true,manualReviewRequired:true,error:String(e?.message||'STK submission response was lost')})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
+     await sql`UPDATE public.inventory_reservations SET expires_at=now()+interval '30 minutes',updated_at=now() WHERE payment_id=${p[0].id} AND status='active'`;
+     return send(res,202,{ok:true,paymentStatus:'pending',manualReviewRequired:true,message:'Safaricom did not return a confirmation. Do not send another prompt yet; this payment is being held for review.'});
+    }
+    await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paymentMethod:method,source:'merchant_order_prompt',error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
+    await releaseInventory(sql,String(p[0].id));
     console.error('Order STK prompt failed',e?.message||e);return send(res,502,{error:e?.message||'Could not send the M-PESA prompt.'});
    }
   }

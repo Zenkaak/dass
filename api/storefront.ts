@@ -35,7 +35,15 @@ export default async function handler(req:any,res:any){
  if(req.method!=='GET'){res.setHeader('Allow','GET');return send(res,405,{error:'Method not allowed'});}
  try{
   const sql=db();
-  const slug=String(req.query?.slug||'').toLowerCase().trim();
+  let slug=String(req.query?.slug||'').toLowerCase().trim();
+  const host=String(req.headers['x-forwarded-host']||req.headers.host||'').split(',')[0].trim().split(':')[0].toLowerCase();
+  const customHost=Boolean(host&&host!=='dasmarket.co.ke'&&host!=='www.dasmarket.co.ke'&&!host.endsWith('.dasmarket.co.ke')&&!host.endsWith('.vercel.app')&&host!=='localhost'&&host!=='127.0.0.1');
+  if(customHost){
+   const mapped=await sql`SELECT t.slug FROM public.domains d JOIN public.tenants t ON t.id=d.tenant_id WHERE lower(d.hostname)=${host} AND d.verified_at IS NOT NULL AND COALESCE(d.status,'active')='active' AND t.status IN ('trial','active') LIMIT 1`;
+   const mappedSlug=String(mapped[0]?.slug||'');
+   if(!mappedSlug||(slug&&slug!==mappedSlug))return send(res,404,{error:'This domain is not connected to this shop.'});
+   slug=mappedSlug;res.setHeader('Cache-Control','private, no-store, max-age=0');
+  }
   if(!slug)return send(res,400,{error:'Shop slug is required'});
    // Expire moderation only for the requested shop; never scan/update every tenant on every API call.
   await sql`UPDATE public.tenants SET status=COALESCE(NULLIF(status_before_ban,'banned'),'active'),status_before_ban=NULL,ban_reason=NULL,ban_expires_at=NULL,updated_at=now() WHERE slug=${slug} AND status='banned' AND ban_expires_at IS NOT NULL AND ban_expires_at<=now()`;

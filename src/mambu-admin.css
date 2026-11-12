@@ -565,3 +565,19 @@
   .seller-notice-row.dispute-notice-compact time{grid-column:2!important;grid-row:auto!important;padding-top:0!important;font-size:10.5px!important}
   .seller-notice-arrow{display:none!important}
 }
+
+
+/* Consistent, professional platform-admin record detail surfaces. */
+.mambu-record-drawer{width:min(620px,100%)}
+.mambu-record-drawer>header{position:sticky;top:0;z-index:2;background:#fff;align-items:flex-start;gap:14px}
+.mambu-record-drawer>header small{font-size:9px;font-weight:800;letter-spacing:1.2px;color:#9a6a35}
+.mambu-record-drawer>header h2{font-size:18px;line-height:1.3;overflow-wrap:anywhere}
+.mambu-record-drawer>header p{font-size:11px;color:#8390a2;margin:5px 0 0}
+.mambu-record-drawer .mambu-drawer-body{padding:18px 22px 28px}
+.mambu-record-drawer .mambu-drawer-body section{padding:18px 0;border-top:1px solid #e9eef3}
+.mambu-record-drawer .mambu-drawer-body section:first-child{border-top:0}
+.mambu-record-drawer .mambu-drawer-body h4{font-size:11px;letter-spacing:.45px;text-transform:uppercase;color:#34445b;margin-bottom:12px}
+.mambu-edit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 14px}
+.mambu-edit-field{min-width:0;font-size:10px;font-weight:700;color:#526176}
+.mambu-edit-field input,.mambu-edit-field select,.mambu-edit-field textarea{width:100%;box-sizing:border-box;border:1px solid #dce4ec;border-radius:9px;background:#fbfcfe;padding:10px 11px;margin-top:6px;color:#243247;font:inherit;font-size:12px;line-height:1.4;outline:none}
+.mambu-edit-field input:focus,.mambu-edit-field select:focus,.mambu-edit-field textarea:focus{border-color:#d68a3c;box-shadow:0 0 0 3px rgba(214,138,60,.12);background:#fff}
