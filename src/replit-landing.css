@@ -1664,3 +1664,7 @@
 .rm-footer-bottom{display:flex;align-items:center;justify-content:space-between;gap:20px;border-top:1px solid rgba(255,255,255,.12);padding-top:18px}
 @media(max-width:900px){.rm-footer-top{grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}}
 @media(max-width:600px){.rm-footer-top{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 18px}.rm-footer-top>.rm-brand{grid-column:1/-1}.rm-footer-bottom{align-items:flex-start}.rm-footer-copy{width:auto;order:initial}}
+
+
+/* Keep the DASMARKET D logo mark upright. */
+.rm-page-shell .rm-brand-mark { transform:none !important; }
