@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import './replit-landing.css';
-import { ArrowDown, ArrowRight, ArrowUp, CheckCircle2, CircleHelp, Globe2, Menu, Plus, ShoppingBag, Sparkles, Store, X, ShieldCheck, MessageCircle, FileText } from 'lucide-react';
+import { ArrowRight, ArrowUp, CheckCircle2, CircleHelp, Globe2, Menu, Plus, ShoppingBag, Sparkles, Store, X, ShieldCheck, MessageCircle, FileText } from 'lucide-react';
 
 const faqs = [
   { q: 'How do I create a shop?', a: 'Create a seller account, choose a shop name and follow the setup steps in your dashboard. Add your products and prepare your storefront before sharing it with customers.' },
