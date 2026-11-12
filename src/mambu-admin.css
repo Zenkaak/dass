@@ -676,3 +676,26 @@
 .seller-sub-plan-grid .seller-sub-plan ul{padding-left:0;list-style:none}.seller-sub-plan-grid .seller-sub-plan li{display:flex;align-items:center;gap:8px}.seller-sub-plan-grid .seller-sub-plan li svg{flex:none;color:#13804b}
 .mambu-table-wrap{overflow:auto;border:1px solid #e7eaf0;border-radius:12px;background:#fff;margin:12px 0 24px}.mambu-table-wrap .mambu-table{width:100%;border-collapse:collapse;min-width:760px}.mambu-table-wrap .mambu-table th,.mambu-table-wrap .mambu-table td{padding:12px 14px;border-bottom:1px solid #edf0f4;text-align:left;font-size:12px}.mambu-table-wrap .mambu-table th{background:#f8f9fb;color:#667085;font-weight:800}.mambu-table-wrap .mambu-table td small{display:block;color:#8992a2;margin-top:3px}
 @media(max-width:640px){.seller-sub-overview{align-items:flex-start;flex-direction:column}.seller-sub-overview button{width:100%;justify-content:center}.seller-sub-payment-status{align-items:flex-start;flex-direction:column}.seller-sub-checkout{align-items:stretch;flex-direction:column}.seller-sub-checkout button{width:100%}.seller-sub-current-price{white-space:normal}}
+
+
+/* Subscription plan editors are viewport-level dialogs, never inline page sections. */
+.mambu-plan-editor{position:fixed;inset:0;z-index:12000;margin:0;max-width:none;width:auto;height:auto;min-height:0;padding:22px;box-sizing:border-box;border:0;border-radius:0;background:#101827a8;display:flex;align-items:center;justify-content:center;overflow-y:auto;overscroll-behavior:contain;box-shadow:none}
+.mambu-plan-editor>form{width:min(760px,100%);max-height:min(88vh,900px);overflow-y:auto;overscroll-behavior:contain;background:#fff;border:1px solid #e3e8ef;border-radius:15px;padding:22px;box-shadow:0 24px 80px #07142655}
+.mambu-plan-editor-head{position:sticky;top:-22px;z-index:2;background:#fff;padding:0 0 12px}
+.seller-sub-checkout-overlay{position:fixed;inset:0;z-index:12000;display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;background:#101827a8;overflow-y:auto;overscroll-behavior:contain}
+.seller-sub-checkout-modal{width:min(440px,100%);max-height:min(88vh,760px);overflow-y:auto;box-sizing:border-box;padding:22px;background:#fff;border:1px solid #e6eaf0;border-radius:16px;box-shadow:0 24px 80px #07142655;color:#243247}
+.seller-sub-checkout-modal>header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
+.seller-sub-checkout-modal>header span{font-size:9px;font-weight:850;letter-spacing:.12em;color:#a66a20}
+.seller-sub-checkout-modal>header h3{margin:5px 0 0;font-size:20px;color:#1d2b40}
+.seller-sub-checkout-modal>header button{width:34px;height:34px;border:0;border-radius:9px;background:#f1f4f7;color:#475569;font-size:23px;line-height:1;cursor:pointer}
+.seller-sub-checkout-plan{display:grid;grid-template-columns:auto 1fr;align-items:baseline;gap:5px 8px;padding:15px;margin-bottom:17px;border:1px solid #e7ebf0;border-radius:11px;background:#f8fafc}
+.seller-sub-checkout-plan strong{font-size:23px;color:#18283e}
+.seller-sub-checkout-plan span{font-size:11px;color:#64748b}
+.seller-sub-checkout-plan small{grid-column:1/-1;font-size:11px;color:#78869a}
+.seller-sub-checkout-modal>label{display:grid;gap:7px;margin:0 0 13px;font-size:12px;font-weight:750;color:#394456}
+.seller-sub-checkout-modal>label input{height:44px;box-sizing:border-box;padding:0 12px;border:1px solid #d8dde6;border-radius:8px;font:inherit;font-size:13px}
+.seller-sub-pay-button{width:100%;min-height:46px;border:0;border-radius:9px;background:#f2b900;color:#211b08;font-size:13px;font-weight:850;cursor:pointer}
+.seller-sub-pay-button:disabled{opacity:.55;cursor:not-allowed}
+.seller-sub-modal-warning{margin:10px 0 0;color:#9b5b16;font-size:11px;line-height:1.5}
+.seller-sub-modal-note{margin:13px 0 0;color:#8390a0;font-size:10px;line-height:1.5}
+@media(max-width:600px){.mambu-plan-editor{padding:10px;align-items:center}.mambu-plan-editor>form{max-height:92vh;padding:15px;border-radius:12px}.mambu-plan-editor-head{top:-15px}.seller-sub-checkout-overlay{padding:10px;align-items:center}.seller-sub-checkout-modal{max-height:92vh;padding:17px;border-radius:13px}}
