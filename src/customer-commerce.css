@@ -5758,3 +5758,18 @@
  .store-page.is-account-route .buyer-account-content .customer-flow-heading h1{font-size:19px!important}
  .store-page.is-account-route .customer-account-detail .customer-contact-fields{grid-template-columns:1fr}
 }
+
+
+/* Internal storefront destinations are standalone screens: no marketplace top bar or drawer.
+   Only the storefront homepage retains the global marketplace navigation. */
+.store-page.is-fullscreen-route .ds-store-route-head{display:none!important}
+.store-page.is-fullscreen-route{padding-top:0!important}
+.store-page.is-fullscreen-route .customer-flow,
+.store-page.is-fullscreen-route .market-main,
+.store-page.is-fullscreen-route .market-product-detail-route,
+.store-page.is-fullscreen-route .ds-store-collection-page{min-height:100dvh!important}
+.store-page.is-fullscreen-route .customer-flow{padding-top:clamp(18px,2.8vw,34px)!important}
+.store-page.is-fullscreen-route .buyer-account-navigation{display:none!important}
+.store-page.is-fullscreen-route .buyer-account-layout{display:block!important;min-height:100dvh!important}
+.store-page.is-fullscreen-route .buyer-account-content{min-height:100dvh!important}
+.store-page.is-fullscreen-route .buyer-account-content>.customer-flow{min-height:100dvh!important}
