@@ -103,11 +103,20 @@ async function startStk(c:any,order:any,phone:string,amount:number,reference:str
  const d:any=await r.json();if(!r.ok||!d.CheckoutRequestID||String(d.ResponseCode)!=='0')throw Error(d.errorMessage||d.ResponseDescription||'Safaricom did not accept the STK request.');
  return {checkoutId:d.CheckoutRequestID,merchantRequestId:d.MerchantRequestID,response:d};
 }
+
+function paymentDarajaCredentials(p:any,key:string){
+ const method=p.provider_result?.paymentMethod==='paybill'?'paybill':'till';
+ const sellerBundle=p.encrypted_credentials?.ciphertext?decryptBundle(p.encrypted_credentials,key,'seller'):null;
+ const seller=sellerBundle?.credentialsByType?.[method]||(sellerBundle?.consumerKey?{...sellerBundle,shortcode:p.shortcode,environment:p.environment}:null);
+ if(seller?.consumerKey&&seller?.consumerSecret&&seller?.passkey)return {...seller,shortcode:seller.shortcode||p.shortcode,environment:seller.environment||p.environment};
+ if(p.central_credentials?.data){const central=decryptBundle(p.central_credentials,key,'platform');return {...central,shortcode:p.central_shortcode,environment:p.central_environment};}
+ throw Error('Daraja verification credentials are unavailable.');
+}
 async function verifyStk(c:any,checkoutId:string){
  const {host,accessToken}=await darajaToken(c),stamp=timestamp(),shortcode=String(c.shortcode);
  const payload={BusinessShortCode:shortcode,Password:darajaPassword(shortcode,c.passkey,stamp),Timestamp:stamp,CheckoutRequestID:checkoutId};
  const r=await fetch(host+'/mpesa/stkpushquery/v1/query',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify(payload)});
- const d:any=await r.json();if(!r.ok)throw Error('Safaricom payment verification query failed.');
+ const d:any=await r.json();if(!r.ok||String(d.ResponseCode)!=='0')throw Error('Safaricom payment verification query failed.');
  return d;
 }
 function productOut(p:any,includeMetadata=false){
@@ -128,12 +137,24 @@ export default async function handler(req:any,res:any){
  try{
   const sql=db();
   action=String(req.query?.action||req.body?.action||'');
-  if(['buyer-account-data','buyer-follow-shop','buyer-wishlist','buyer-newsletter','buyer-close-account'].includes(action)){
+  if(['buyer-account-data','buyer-delivery-preference','buyer-follow-shop','buyer-wishlist','buyer-newsletter','buyer-close-account'].includes(action)){
    const b=req.body||{},slug=String(req.method==='GET'?req.query?.slug:b.slug||'').toLowerCase().trim();
    const shops=await sql`SELECT id,slug,name FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
    if(!shops.length)return send(res,404,{error:'Shop not found.'});
    const buyer=await buyerSession(sql,req,shops[0].id);if(!buyer)return send(res,401,{error:'Sign in to manage your buyer account.'});
    const userId=buyer.user_id;if(!userId)return send(res,403,{error:'This legacy buyer session must be refreshed. Sign in again to continue.'});
+   if(action==='buyer-delivery-preference'&&req.method==='GET'){
+    const rows=await sql`SELECT delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,updated_at FROM public.buyer_delivery_preferences WHERE buyer_user_id=${userId} LIMIT 1`;
+    const r=rows[0];return send(res,200,{preference:r?{deliveryMethod:r.delivery_method,deliveryCounty:r.delivery_county||'',deliverySubCounty:r.delivery_sub_county||'',deliveryEstate:r.delivery_estate||'',deliveryAddress:r.delivery_address||'',deliveryDirections:r.delivery_directions||'',pickupStation:r.pickup_station||'',updatedAt:r.updated_at}:null});
+   }
+   if(action==='buyer-delivery-preference'&&req.method==='POST'){
+    const b=req.body||{},method=String(b.deliveryMethod||'').trim(),county=String(b.deliveryCounty||'').trim().slice(0,80),subCounty=String(b.deliverySubCounty||'').trim().slice(0,100),estate=String(b.deliveryEstate||'').trim().slice(0,160),address=String(b.deliveryAddress||'').trim().slice(0,300),directions=String(b.deliveryDirections||'').trim().slice(0,500),pickup=String(b.pickupStation||'').trim().slice(0,200);
+    if(!['home','pickup'].includes(method))return send(res,400,{error:'Choose a valid delivery method.'});
+    if(!county||!subCounty||!estate||!address||(method==='pickup'&&!pickup))return send(res,400,{error:'Complete the county, sub-county, estate, physical address and pickup point where required.'});
+    const rows=await sql`INSERT INTO public.buyer_delivery_preferences(buyer_user_id,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,updated_at) VALUES(${userId},${method},${county},${subCounty},${estate},${address},${directions||null},${pickup||null},now()) ON CONFLICT(buyer_user_id) DO UPDATE SET delivery_method=EXCLUDED.delivery_method,delivery_county=EXCLUDED.delivery_county,delivery_sub_county=EXCLUDED.delivery_sub_county,delivery_estate=EXCLUDED.delivery_estate,delivery_address=EXCLUDED.delivery_address,delivery_directions=EXCLUDED.delivery_directions,pickup_station=EXCLUDED.pickup_station,updated_at=now() RETURNING delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,updated_at`;
+    const r=rows[0];return send(res,200,{ok:true,preference:{deliveryMethod:r.delivery_method,deliveryCounty:r.delivery_county,deliverySubCounty:r.delivery_sub_county,deliveryEstate:r.delivery_estate,deliveryAddress:r.delivery_address,deliveryDirections:r.delivery_directions||'',pickupStation:r.pickup_station||'',updatedAt:r.updated_at}});
+   }
+
    if(req.method==='GET'&&action==='buyer-account-data'){
     const [follows,wishlist,newsletter,closure]=await Promise.all([
      sql`SELECT t.id,t.slug,t.name FROM public.buyer_shop_follows f JOIN public.tenants t ON t.id=f.followed_tenant_id WHERE f.buyer_user_id=${userId} AND t.status IN ('trial','active') ORDER BY f.created_at DESC LIMIT 100`,
@@ -336,6 +357,45 @@ export default async function handler(req:any,res:any){
    }
    const totals=await sql`SELECT metadata->>'test_parent_category' AS category,count(*)::int AS total FROM public.products WHERE tenant_id=${me.tenant_id} AND metadata->>'test_product'='true' GROUP BY metadata->>'test_parent_category' ORDER BY metadata->>'test_parent_category'`;
    return send(res,200,{ok:true,created:rows.length,total:totals.reduce((n:number,r:any)=>n+Number(r.total||0),0),categories:totals,message:rows.length?rows.length+' test products added.':'The test catalogue is already complete.'});
+  }
+
+
+  if(req.method==='GET'&&action==='customer-payment-status'){
+   const slug=String(req.query?.slug||'').toLowerCase().trim(),orderId=String(req.query?.orderId||'').trim();
+   if(!slug||!orderId)return send(res,400,{error:'Shop and order reference are required.'});
+   const shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
+   if(!shops.length)return send(res,404,{error:'Shop not found.'});
+   const tenantId=shops[0].id,buyer=await buyerSession(sql,req,tenantId);
+   if(!buyer)return send(res,401,{error:'Sign in to check this payment.'});
+   const owned=await sql`SELECT id,order_number FROM public.orders WHERE id=${orderId} AND tenant_id=${tenantId} AND right(regexp_replace(customer_phone,'[^0-9]','','g'),9)=right(regexp_replace(${buyer.phone},'[^0-9]','','g'),9) LIMIT 1`;
+   if(!owned.length)return send(res,404,{error:'Order not found for this buyer.'});
+   const payments=await sql`SELECT id,status,provider_checkout_id,provider_receipt,provider_result FROM public.payments WHERE tenant_id=${tenantId} AND order_id=${orderId} ORDER BY created_at DESC LIMIT 1`;
+   if(!payments.length)return send(res,200,{orderId,paymentStatus:'unpaid',terminal:true});
+   const payment=payments[0];
+   if(['succeeded','failed','cancelled','reversed'].includes(String(payment.status)))return send(res,200,{orderId,paymentStatus:payment.status,receipt:payment.provider_receipt||null,terminal:true});
+   if(!payment.provider_checkout_id)return send(res,200,{orderId,paymentStatus:payment.status||'pending',terminal:false,queryAvailable:false});
+   try{
+    const config=await sql`SELECT p.provider_result,pc.shortcode,pc.environment,pc.encrypted_credentials,pc.payout_method,pc.default_payout_method,pc.party_b,pc.till_party_b,pc.paybill_party_b,pc.account_reference,pm.shortcode AS central_shortcode,pm.environment AS central_environment,pm.encrypted_credentials AS central_credentials
+     FROM public.payments p LEFT JOIN public.payment_configs pc ON pc.tenant_id=p.tenant_id
+     LEFT JOIN public.platform_payment_methods pm ON pm.method=CASE WHEN p.provider_result->>'paymentMethod'='paybill' THEN 'paybill' ELSE 'till' END
+     WHERE p.id=${payment.id} AND p.tenant_id=${tenantId} LIMIT 1`;
+    if(!config.length)throw Error('Payment configuration could not be loaded.');
+    const verification=await verifyStk(paymentDarajaCredentials(config[0],env('DASNET_CREDENTIALS_ENCRYPTION_KEY')),String(payment.provider_checkout_id));
+    const resultCode=String(verification.ResultCode??'');
+    if(resultCode==='4999'||!resultCode){
+     await sql`UPDATE public.payments SET provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({queryResultCode:resultCode||null,queryResultDescription:String(verification.ResultDesc||'The transaction is still under processing')})}::jsonb,updated_at=now() WHERE id=${payment.id} AND status IN ('initiated','pending')`;
+     return send(res,200,{orderId,paymentStatus:'pending',receipt:null,terminal:false,queryAvailable:true,message:'Waiting for payment confirmation…'});
+    }
+    if(resultCode&&resultCode!=='0'){
+     const terminalStatus=resultCode==='1032'?'cancelled':'failed';
+     await sql`UPDATE public.payments SET status=${terminalStatus},provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({queryResultCode:resultCode,queryResultDescription:String(verification.ResultDesc||'')})}::jsonb,updated_at=now() WHERE id=${payment.id} AND status IN ('initiated','pending')`;
+     return send(res,200,{orderId,paymentStatus:terminalStatus,receipt:null,terminal:true,message:String(verification.ResultDesc||'Safaricom did not complete the payment.')});
+    }
+    return send(res,200,{orderId,paymentStatus:'pending',receipt:null,terminal:false,queryAvailable:true,message:'Safaricom processed the request; waiting for the verified payment receipt callback.'});
+   }catch(queryError:any){
+    console.error('Buyer payment status query failed',{paymentId:payment.id,error:String(queryError?.message||queryError)});
+    return send(res,200,{orderId,paymentStatus:payment.status||'pending',receipt:null,terminal:false,queryAvailable:false,message:'Still checking with Safaricom.'});
+   }
   }
 
   if(req.method==='GET'&&action==='customer-orders'){
