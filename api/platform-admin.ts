@@ -98,6 +98,16 @@ export default async function handler(req:any,res:any){
    const rows=await sql`SELECT a.id,a.action,a.resource_type,a.resource_id,a.metadata,a.created_at,u.display_name AS actor_name,u.phone AS actor_phone,t.name AS shop_name FROM public.audit_logs a LEFT JOIN public.users u ON u.id=a.actor_user_id LEFT JOIN public.tenants t ON t.id=a.tenant_id ORDER BY a.created_at DESC LIMIT 500`;
    return send(res,200,{records:rows});
   }
+  if(req.method==='GET'&&String(req.query?.action||'')==='subscription-payment'){
+   const [settings,credentials,transactions]=await Promise.all([
+    sql`SELECT setting_value FROM public.platform_settings WHERE setting_key='subscription_payment' LIMIT 1`,
+    sql`SELECT method,shortcode,environment,encrypted_credentials FROM public.platform_payment_methods ORDER BY method`,
+    sql`SELECT p.id,p.tenant_id,p.phone,p.amount_minor,p.currency,p.status,p.provider_receipt,p.created_at,p.verified_at,p.provider_result,t.name AS shop_name,t.slug FROM public.payments p JOIN public.tenants t ON t.id=p.tenant_id WHERE p.provider_result->>'source'='seller_subscription' ORDER BY p.created_at DESC LIMIT 100`
+   ]);
+   const cfg=settings[0]?.setting_value||{},methods:any={till:{configured:false,shortcode:'',environment:'production'},paybill:{configured:false,shortcode:'',environment:'production'}};
+   for(const row of credentials){const secret=row.encrypted_credentials||{};methods[row.method]={configured:!!(secret.data&&row.shortcode),shortcode:row.shortcode||'',environment:row.environment||'production'};}
+   return send(res,200,{settings:{method:cfg.method||'till',destination:cfg.destination||'',accountReference:cfg.accountReference||''},methods,transactions:transactions.map((p:any)=>({...p,amount:Number(p.amount_minor)/100,planId:p.provider_result?.planId||'',paymentMethod:p.provider_result?.paymentMethod||'till'}))});
+  }
   if(req.method==='GET'&&String(req.query?.action||'')==='plans'){
    const [plans,settings]=await Promise.all([
     sql`SELECT id,code,name,description,price_minor,currency,interval_days,is_active,is_featured,sort_order,features,created_at FROM public.subscription_plans ORDER BY sort_order ASC,price_minor ASC`,
@@ -169,6 +179,18 @@ export default async function handler(req:any,res:any){
    const tenantId=['edit_shop','edit_seller','shop_access'].includes(action)?id:(action==='ban_buyer'?(await sql`SELECT tenant_id FROM public.store_customers WHERE id=${id} LIMIT 1`)[0]?.tenant_id:null);
    await sql`INSERT INTO public.audit_logs(tenant_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${tenantId},${users[0].id},${'platform.'+action},${action.replace('edit_','')},${id},${JSON.stringify({changedFields:Object.keys(v).filter(k=>!['action','id'].includes(k))})}::jsonb)`;
    return send(res,200,{ok:true,record:updated[0]});
+  }
+  if(req.method==='POST'&&req.body?.action==='save_subscription_payment'){
+   const method=String(req.body?.method||'')==='paybill'?'paybill':'till',destination=String(req.body?.destination||'').replace(/\\s/g,'').slice(0,20),accountReference=String(req.body?.accountReference||'').trim().slice(0,32);
+   if(!/^\\d{5,12}$/.test(destination))return send(res,400,{error:'Enter a valid 5–12 digit '+(method==='paybill'?'PayBill':'Till')+' number.'});
+   if(method==='paybill'&&!/^[A-Za-z0-9-]{1,32}$/.test(accountReference))return send(res,400,{error:'Enter the PayBill account number/reference.'});
+   const credential=await sql`SELECT shortcode,environment,encrypted_credentials FROM public.platform_payment_methods WHERE method=${method} LIMIT 1`;
+   if(!credential.length||!credential[0].shortcode||!credential[0].encrypted_credentials?.data)return send(res,409,{error:'Configure the matching '+(method==='paybill'?'PayBill':'Till / Buy Goods')+' Daraja credentials under Payment settings first.'});
+   if(credential[0].environment!=='production')return send(res,409,{error:'Subscription collections require production Daraja credentials.'});
+   const config={method,destination,accountReference:method==='paybill'?accountReference:'DASMARKET'};
+   await sql`INSERT INTO public.platform_settings(setting_key,setting_value,updated_at) VALUES('subscription_payment',${JSON.stringify(config)}::jsonb,now()) ON CONFLICT(setting_key) DO UPDATE SET setting_value=EXCLUDED.setting_value,updated_at=now()`;
+   await sql`INSERT INTO public.audit_logs(actor_user_id,action,resource_type,resource_id,metadata) VALUES(${users[0].id},'platform.subscription_payment.updated','platform_setting','subscription_payment',${JSON.stringify({method,destination,accountReference:config.accountReference})}::jsonb)`;
+   return send(res,200,{ok:true,settings:config});
   }
   if(req.method==='POST'&&req.body?.action==='save_subscription_plan'){
    const v=req.body||{},id=String(v.id||''),code=String(v.code||'').trim().toLowerCase(),name=String(v.name||'').trim().slice(0,80),description=String(v.description||'').trim().slice(0,1000),price=Number(v.price_minor),interval=Number(v.interval_days),sort=Number(v.sort_order??100);
