@@ -3,7 +3,14 @@ import './replit-landing.css';
 import { ArrowRight, CheckCircle2, CreditCard, Globe2, Menu, PackageCheck, ShoppingBag, Store, Truck, X } from 'lucide-react';
 
 function Brand() {
-  return <a className="rm-brand" href="/" aria-label="DASMARKET home"><span className="rm-brand-mark" aria-hidden="true">D</span><span>DASMARKET</span></a>;
+  return <a className="rm-brand" href="/" aria-label="DASMARKET home">
+    <svg className="rm-brand-logo" viewBox="0 0 40 40" role="img" aria-label="DASMARKET logo">
+      <rect x="1" y="1" width="38" height="38" rx="10" fill="#fff"/>
+      <path d="M10 9h9.2c7.1 0 11.8 4.3 11.8 11s-4.7 11-11.8 11H10V9Zm8.7 16.9c4.1 0 6.6-2.1 6.6-5.9s-2.5-5.9-6.6-5.9h-2.9v11.8h2.9Z" fill="#2469df"/>
+      <path d="M29 8h3v9h-3z" fill="#f5a623"/>
+    </svg>
+    <span className="rm-brand-word">DASMARKET</span>
+  </a>;
 }
 
 export function ReplitLandingPage() {
