@@ -38,13 +38,17 @@ async function seller(sql:any,req:any){
 async function productCapacity(sql:any,tenantId:string,requested:number){
  const subs=await sql`SELECT s.status,s.trial_ends_at,s.current_period_end,p.features FROM public.subscriptions s JOIN public.subscription_plans p ON p.id=s.plan_id WHERE s.tenant_id=${tenantId} ORDER BY s.created_at DESC LIMIT 1`;
  const sub=subs[0];
- if(!sub)return {ok:false,error:'Your shop has no active subscription or free trial. Choose a plan to continue.',code:'SUBSCRIPTION_REQUIRED'};
+ if(!sub){await sql`UPDATE public.tenants SET status='past_due',updated_at=now() WHERE id=${tenantId} AND status IN ('trial','active')`;return {ok:false,error:'Your shop has no active subscription or free trial. Choose a plan to continue.',code:'SUBSCRIPTION_REQUIRED'};}
  const expiry=sub.status==='trialing'?sub.trial_ends_at:sub.status==='active'?sub.current_period_end:null;
- if(!['trialing','active'].includes(String(sub.status))||!expiry||new Date(expiry).getTime()<=Date.now())return {ok:false,error:'Your free trial or subscription has expired. Choose a paid plan to reconnect your shop.',code:'SUBSCRIPTION_EXPIRED'};
+ if(!['trialing','active'].includes(String(sub.status))||!expiry||new Date(expiry).getTime()<=Date.now()){
+  await sql`UPDATE public.tenants SET status='past_due',updated_at=now() WHERE id=${tenantId} AND status IN ('trial','active')`;
+  return {ok:false,error:'Your free trial or subscription has expired. Choose a paid plan to reconnect your shop.',code:'SUBSCRIPTION_EXPIRED'};
+ }
  const rawLimit=sub.features?.product_limit,limit=rawLimit===undefined||rawLimit===null?50:Number(rawLimit);
+ if(!Number.isInteger(limit)||limit<0)return {ok:false,error:'This subscription plan has an invalid product limit. Contact DASMARKET support.',code:'INVALID_PRODUCT_LIMIT'};
  const countRows=await sql`SELECT count(*)::int AS total FROM public.products WHERE tenant_id=${tenantId}`;
  const total=Number(countRows[0]?.total||0);
- if(Number.isFinite(limit)&&limit>0&&total+requested>limit)return {ok:false,error:'You have reached your '+limit+'-product limit ('+total+' currently listed). Upgrade your subscription to add more products.',code:'PRODUCT_LIMIT_REACHED',limit,total,requested};
+ if(limit>0&&total+requested>limit)return {ok:false,error:'You have reached your '+limit+'-product limit ('+total+' currently listed). Upgrade your subscription to add more products.',code:'PRODUCT_LIMIT_REACHED',limit,total,requested};
  return {ok:true,limit,total,requested};
 }
 async function audit(sql:any,tenantId:string,actorId:string,action:string,type:string,id:string|null,metadata:any={}){await sql`INSERT INTO public.audit_logs(tenant_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${tenantId},${actorId},${action},${type},${id},${JSON.stringify(metadata)}::jsonb)`}
@@ -981,8 +985,26 @@ export default async function handler(req:any,res:any){
     sql`SELECT setting_value FROM public.platform_settings WHERE setting_key='subscription_payment' LIMIT 1`,
     sql`SELECT id,status,amount_minor,provider_receipt,created_at FROM public.payments WHERE tenant_id=${me.tenant_id} AND provider_result->>'source'='seller_subscription' ORDER BY created_at DESC LIMIT 1`
    ]);
+   let currentSubscription=subs[0]||null;
+   // Legacy shops created before subscription rollout receive a one-time trial on first billing access.
+   // New registrations already receive their trial in api/auth.ts, so their original registration clock is preserved.
+   if(!currentSubscription){
+    const [trialCfg,defaultPlan]=await Promise.all([
+     sql`SELECT COALESCE((setting_value->>'trial_days')::int,7) AS trial_days FROM public.platform_settings WHERE setting_key='subscription' LIMIT 1`,
+     sql`SELECT id FROM public.subscription_plans WHERE is_active=true ORDER BY sort_order ASC,price_minor ASC LIMIT 1`
+    ]);
+    if(defaultPlan.length){
+     const days=Math.max(0,Math.min(30,Number(trialCfg[0]?.trial_days??7)));
+     const trialEnd=days>0?new Date(Date.now()+days*86400000).toISOString():null;
+     await sql`INSERT INTO public.subscriptions(tenant_id,plan_id,status,trial_ends_at,current_period_start,current_period_end)
+      SELECT ${me.tenant_id},${defaultPlan[0].id},${days>0?'trialing':'past_due'},${trialEnd},now(),${trialEnd}
+      WHERE NOT EXISTS(SELECT 1 FROM public.subscriptions WHERE tenant_id=${me.tenant_id})`;
+     const refreshed=await sql`SELECT s.id,s.status,s.trial_ends_at,s.current_period_start,s.current_period_end,s.updated_at,p.id AS plan_id,p.code,p.name,p.description,p.price_minor,p.currency,p.interval_days,p.features FROM public.subscriptions s JOIN public.subscription_plans p ON p.id=s.plan_id WHERE s.tenant_id=${me.tenant_id} ORDER BY s.created_at DESC LIMIT 1`;
+     currentSubscription=refreshed[0]||null;
+    }
+   }
    const cfg=config[0]?.setting_value||{};
-   return send(res,200,{subscription:subs[0]||null,plans,payment:{configured:!!(cfg.method&&cfg.destination),method:cfg.method||null},lastPayment:lastPayment[0]?{...lastPayment[0],amount:Number(lastPayment[0].amount_minor)/100}:null});
+   return send(res,200,{subscription:currentSubscription,plans,payment:{configured:!!(cfg.method&&cfg.destination),method:cfg.method||null},lastPayment:lastPayment[0]?{...lastPayment[0],amount:Number(lastPayment[0].amount_minor)/100}:null});
   }
   if(req.method==='POST'&&action==='subscription-stk'){
    const b=req.body||{},planId=String(b.planId||''),phone=normalizePhone(b.phone);
