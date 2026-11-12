@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { unzipSync } from 'fflate';
-import { Activity, ArrowRight, ArrowUpRight, Bell, Heart, Star, ChevronRight, CircleAlert, Download, HelpCircle, LayoutDashboard, LogOut, Menu, X, MapPin, ScanLine, ThumbsUp, Flag, MessageCircle, Package, Plus, RefreshCw, Search, Send, Settings, ShieldCheck, ShoppingBag, ShoppingCart, UserRound, Store, Wallet, WalletCards, Home, FileText, TicketPercent } from 'lucide-react';
+import { Activity, ArrowRight, ArrowUpRight, Bell, Heart, Star, ChevronRight, CircleAlert, Download, HelpCircle, LayoutDashboard, LogOut, Menu, X, MapPin, ScanLine, Flag, MessageCircle, Package, Plus, RefreshCw, Search, Send, Settings, ShieldCheck, ShoppingBag, ShoppingCart, UserRound, Store, Wallet, WalletCards, Home, FileText, TicketPercent } from 'lucide-react';
 import { storefrontCategories } from './storefrontCatalog';
 import ReplitLandingPage from './ReplitLandingPage';
 import { marketplaceFaqs } from './marketplaceFaqs';
