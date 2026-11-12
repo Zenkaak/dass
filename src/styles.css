@@ -6667,3 +6667,14 @@ button,input,select,textarea{font:inherit;}
 .customer-policy-document-body p:last-child{border-bottom:0;padding-bottom:0}
 .customer-policy-document-foot{padding:12px 20px;border-top:1px solid #edf0f4;background:#fbfcfd;color:#8792a1;font-size:10px;line-height:1.6}
 @media(max-width:600px){.customer-policy-document-head{padding:14px;align-items:flex-start}.customer-policy-document-contact{padding:12px 14px;align-items:flex-start;flex-direction:column;gap:9px}.customer-policy-document-body{padding:14px}.customer-policy-document-foot{padding:11px 14px}}
+
+
+/* Policy documents remain readable on narrow screens and wide desktop layouts. */
+.customer-policy-document{width:100%;max-width:1040px;margin-inline:auto;min-width:0}
+.customer-policy-document-brand,.customer-policy-document-brand div,.customer-policy-document-contact a{min-width:0}
+.customer-policy-document-brand strong,.customer-policy-document-contact a,.customer-policy-document-contact span{overflow-wrap:anywhere;word-break:break-word}
+.customer-policy-document-body{max-width:900px;margin-inline:auto}
+.customer-policy-document-body p{font-size:13px;line-height:1.85;overflow-wrap:anywhere}
+.customer-policy-document-foot{overflow-wrap:anywhere}
+@media(min-width:900px){.customer-policy-document-body{padding:26px 30px}.customer-policy-document-contact{padding:15px 30px}}
+@media(max-width:600px){.customer-policy-document{border-radius:12px}.customer-policy-document-head{gap:8px;flex-wrap:wrap}.customer-policy-document-badge{white-space:normal}.customer-policy-document-body p{font-size:13px;line-height:1.8}}
