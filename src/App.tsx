@@ -587,7 +587,7 @@ export default function App() {
   const path = window.location.pathname.replace(/^\/+|\/+$/g, '');
   const hostname = window.location.hostname.toLowerCase();
   useEffect(() => {
-    const privateRoute = ["login", "signup", "reset-password", "dashboard", "platform-admin"].includes(path) || path.startsWith("dashboard/");
+    const privateRoute = hostname.startsWith("adm.") || ["login", "signup", "reset-password", "dashboard", "platform-admin"].includes(path) || path.startsWith("dashboard/");
     if (privateRoute) {
       document.title = path === "signup" ? "Create your seller account | DASMARKET" : path === "login" ? "Sign in | DASMARKET" : "Account | DASMARKET";
       let robots = document.head.querySelector('meta[name="robots"]') as HTMLMetaElement | null;
@@ -602,7 +602,7 @@ export default function App() {
   const isAdminCustomHost=hostname.startsWith('adm.')&&isCustomDomain;
   // Warm the storefront UI chunks while the shop data request is in flight.
   useEffect(()=>{if(tenantSubdomain){import('./StorefrontFlow').catch(()=>{});import('./BuyerAuthPage').catch(()=>{});}},[tenantSubdomain]);
-  useEffect(()=>{if(hostname==='mambu.dasmarket.co.ke'||path==='dashboard'||path.startsWith('dashboard/')||path==='platform-admin')import('./mambu-admin.css').catch(()=>{});},[hostname,path]);
+  useEffect(()=>{if(hostname==='mambu.dasmarket.co.ke'||hostname.startsWith('adm.')||path==='dashboard'||path.startsWith('dashboard/')||path==='platform-admin')import('./mambu-admin.css').catch(()=>{});},[hostname,path]);
   if (hostname === 'mambu.dasmarket.co.ke') {
     if (path === 'login') return <Deferred><AuthPage initial="login" /></Deferred>;
     if (path === 'reset-password') return <Deferred><AuthPage initial="reset" /></Deferred>;
