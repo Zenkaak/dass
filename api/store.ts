@@ -327,19 +327,18 @@ export default async function handler(req:any,res:any){
    if(!checkout)return send(res,400,{ResultCode:1,ResultDesc:'Missing checkout reference'});
    if(!Number.isFinite(resultCode))return send(res,400,{ResultCode:1,ResultDesc:'Invalid callback result code'});
    const rows=await sql`SELECT p.id,p.tenant_id,p.order_id,p.phone,p.amount_minor,p.status,p.provider_result,pc.shortcode,pc.party_b,pc.account_type,pc.environment,pc.encrypted_credentials,pc.payout_method,pc.account_reference,pc.till_party_b,pc.paybill_party_b,pc.default_payout_method,pm.shortcode AS central_shortcode,pm.environment AS central_environment,pm.encrypted_credentials AS central_credentials FROM public.payments p LEFT JOIN public.payment_configs pc ON pc.tenant_id=p.tenant_id LEFT JOIN public.platform_payment_methods pm ON pm.method=CASE WHEN p.provider_result->>'paymentMethod'='paybill' THEN 'paybill' ELSE 'till' END WHERE p.provider_checkout_id=${checkout} LIMIT 1`;
-   if(!rows.length)return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
-   const p=rows[0];if(p.status==='succeeded')return send(res,200,{ResultCode:0,ResultDesc:'Already processed'});
-   // Safaricom may return generic STK-query code 4999 for a cancelled prompt.
-   // A cancellation callback is a terminal negative outcome; only success needs
-   // independent STK verification and receipt/amount/phone matching.
-   if(resultCode===1032){
-    await sql`UPDATE public.payments SET status='cancelled',provider_result=(COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({callback:cb,resultCode,callbackOnly:true,resultDescription:String(cb.ResultDesc||'Customer cancelled payment')})}::jsonb),updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
-    await releaseInventory(sql,String(p.id));
-    await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'payment_update','Payment cancelled','The M-PESA prompt was cancelled. You can retry payment from your order.');
-    return send(res,200,{ResultCode:0,ResultDesc:'Customer cancellation recorded'});
+   if(!rows.length){
+    // STK callbacks can arrive before the request handler commits CheckoutRequestID.
+    // Do not acknowledge an unmatched callback: a retry can resolve it after the
+    // payment row has been updated. Reconciliation remains the fallback if no retry arrives.
+    console.warn('Daraja callback arrived before its payment reference was persisted',{checkout});
+    return send(res,503,{ResultCode:1,ResultDesc:'Payment reference is not available yet. Please retry this callback.'});
    }
+   const p=rows[0];if(p.status==='succeeded')return send(res,200,{ResultCode:0,ResultDesc:'Already processed'});
    // Public callbacks are notifications, not proof. Independently query Daraja
-   // before applying either successful or failed/cancelled payment state.
+   // before applying ANY successful, failed, or cancelled payment state. In
+   // particular, never release inventory based only on an untrusted cancellation
+   // callback; Safaricom's STK query must confirm the same result code first.
    let darajaResult:any;
    try{const credentials=paymentDarajaCredentials(p,env('DASNET_CREDENTIALS_ENCRYPTION_KEY'));darajaResult=await verifyStk(credentials,checkout);}
    catch(verificationError:any){console.error('Daraja callback query could not verify payment',{paymentId:p.id,error:String(verificationError?.message||verificationError)});return send(res,503,{ResultCode:1,ResultDesc:'Independent payment verification is temporarily unavailable. Retry callback.'});}
