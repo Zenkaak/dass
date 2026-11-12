@@ -3522,3 +3522,19 @@
 .chat-attachments strong{font-size:11px}
 .chat-attachments button{font-size:11px;min-width:0;overflow-wrap:anywhere}
 @media(max-width:600px){.store-chat-panel{padding:14px;border-radius:15px}.store-chat-heading{align-items:flex-start}.store-chat-heading h2{font-size:18px}.store-chat-live{font-size:10px;padding:6px 8px}.store-chat-compose{grid-template-columns:minmax(0,1fr);gap:7px}.store-chat-compose input{min-height:42px;font-size:13px}.store-chat-compose .button{width:100%;min-height:42px;font-size:12px}.chat-file-upload{font-size:11px}.chat-file-upload small{font-size:10px}}
+
+
+/* Buyer payment verification interstitial */
+.market-payment-processing{max-width:650px;margin:0 auto;padding:clamp(22px,4vw,42px);text-align:center}
+.market-payment-processing h1{margin:10px 0 8px;font-size:clamp(24px,4vw,34px);line-height:1.12;letter-spacing:-.04em}
+.market-payment-processing-copy{margin:0 auto 22px;max-width:460px;color:#667788;font-size:14px;line-height:1.55}
+.market-payment-processing-icon{width:58px;height:58px;margin:0 auto 18px;border:4px solid #e8edf2;border-top-color:#e47a13;border-radius:50%;animation:market-payment-spin .9s linear infinite}
+.market-payment-processing-icon span{display:block}
+.market-payment-processing-card{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0;padding:17px;text-align:left}
+.market-payment-processing-card>div{min-width:0;display:grid;gap:6px}
+.market-payment-processing-card small{font-size:9px;font-weight:800;letter-spacing:.08em;color:#7b8996}
+.market-payment-processing-card strong{font-size:13px;overflow-wrap:anywhere;color:#1b2c3b}
+.market-payment-poll-status{margin:16px 0;font-size:14px;font-weight:700;color:#263b4d}
+.market-payment-preference-note{margin:10px 0;padding:10px 12px;border-radius:9px;background:#f4f7fa;color:#637383;font-size:11px}
+@keyframes market-payment-spin{to{transform:rotate(360deg)}}
+@media(max-width:560px){.market-payment-processing-card{grid-template-columns:1fr;gap:10px}.market-payment-processing-card>div{grid-template-columns:110px minmax(0,1fr);align-items:center}.market-payment-processing-card small{font-size:8px}}
