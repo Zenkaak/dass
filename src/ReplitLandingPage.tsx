@@ -79,7 +79,7 @@ export function ReplitLandingPage() {
             <div className="rm-home-footer-group"><strong>Company</strong><a href="/contact/">Contact us</a><a href="/terms/">Terms &amp; Conditions</a><a href="/privacy/">Privacy Policy</a></div>
             <div className="rm-home-footer-group rm-home-footer-contact"><strong>Get in touch</strong><a href="mailto:support@dasmarket.co.ke">support@dasmarket.co.ke</a><a href="tel:+254758884861">+254 758 884 861</a><a href="https://wa.me/254758884861" target="_blank" rel="noreferrer">WhatsApp support <ArrowRight size={12}/></a><span>Kenya</span></div>
           </div>
-          <div className="rm-footer-bottom"><span className="rm-footer-copy">© 2026 DASMARKET. All rights reserved.</span><div className="rm-home-footer-bottom-links"><a href="/terms/">Terms</a><a href="/privacy/">Privacy</a><a className="rm-back-top" href="#top">Back to top <ArrowRight size={12}/></a></div></div>
+          <div className="rm-footer-bottom"><span className="rm-footer-copy">© 2026 DASMARKET. All rights reserved.</span><div className="rm-home-footer-bottom-links"><a className="rm-back-top" href="#top">Back to top <ArrowRight size={12}/></a></div></div>
         </div>
       </footer>
     </div>
