@@ -198,6 +198,9 @@ export default async function handler(req:any,res:any){
    if(!/^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/.test(code)||!name)return send(res,400,{error:'Enter a plan name and a unique code using lowercase letters, numbers or hyphens.'});
    if(!Number.isSafeInteger(price)||price<0||![30,90,180,365].includes(interval)||!Number.isInteger(sort)||sort<0||sort>10000)return send(res,400,{error:'Enter a valid price, billing period and display order.'});
    const features=v.features&&typeof v.features==='object'&&!Array.isArray(v.features)?v.features:{};
+   const productLimit=Number(features.product_limit??50),staffLimit=Number(features.staff_limit??1);
+   if(!Number.isInteger(productLimit)||productLimit<0||!Number.isInteger(staffLimit)||staffLimit<1)return send(res,400,{error:'Product limit must be zero (unlimited) or a positive whole number; staff accounts must be at least one.'});
+   features.product_limit=productLimit;features.staff_limit=staffLimit;
    const active=v.is_active===true||v.is_active==='true',featured=v.is_featured===true||v.is_featured==='true';if(featured&&!active)return send(res,400,{error:'Only an active plan can be featured.'});if(featured){if(id)await sql`UPDATE public.subscription_plans SET is_featured=false WHERE id<>${id}`;else await sql`UPDATE public.subscription_plans SET is_featured=false WHERE is_featured=true`;}
    let saved:any[];
    if(id){
