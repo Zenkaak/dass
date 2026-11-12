@@ -1,5 +1,5 @@
-export function defaultTerms(name:string){return \`1. ABOUT THE SHOP AND THESE TERMS
-This online shop is operated by \${name} (the “Seller”). These terms explain the conditions that apply when you browse this shop, place an order or communicate with the Seller. Please read them together with the product listing, checkout summary, delivery information, Returns & Refunds Policy, Privacy Policy and the mandatory DASMARKET platform notices displayed separately on this storefront.
+export function defaultTerms(name:string){return `1. ABOUT THE SHOP AND THESE TERMS
+This online shop is operated by ${name} (the “Seller”). These terms explain the conditions that apply when you browse this shop, place an order or communicate with the Seller. Please read them together with the product listing, checkout summary, delivery information, Returns & Refunds Policy, Privacy Policy and the mandatory DASMARKET platform notices displayed separately on this storefront.
 
 2. THE SELLER AND DASMARKET
 The Seller independently operates this shop and is responsible for its products, descriptions, prices, stock, order acceptance, packaging, fulfilment, delivery, after-sales service, warranties, returns and refunds. DASMARKET supplies technology and marketplace tools that enable the shop to operate online. Unless a service is expressly identified as being supplied by DASMARKET, the contract for a purchase is between the buyer and the Seller. Nothing in these terms removes any responsibility that applicable law places on DASMARKET for its own services, conduct or obligations.
@@ -38,9 +38,9 @@ Please contact the Seller first with the order number, a clear description of th
 The Seller may update shop-specific terms to reflect changes in products or operations. Updated terms should be published clearly and should not retrospectively remove rights already accrued or override mandatory DASMARKET notices. The version displayed when an order is placed is the relevant shop version, subject always to applicable law.
 
 14. GOVERNING LAW AND CONSUMER RIGHTS
-These terms are intended for use in Kenya and are subject to applicable Kenyan law. If any provision is unenforceable, the remaining provisions continue to apply to the extent permitted. Nothing in these terms limits a statutory consumer right or other legal protection that cannot lawfully be waived.\`; }
-export function defaultPrivacy(name:string){return \`1. WHO IS RESPONSIBLE FOR YOUR INFORMATION
-This shop is operated by \${name} (the “Seller”). The Seller is responsible for personal information it collects directly or receives in connection with orders, enquiries, delivery, returns and after-sales support. DASMARKET separately processes information required to provide, secure and maintain the marketplace platform. The mandatory DASMARKET platform privacy notice displayed below this shop policy also applies.
+These terms are intended for use in Kenya and are subject to applicable Kenyan law. If any provision is unenforceable, the remaining provisions continue to apply to the extent permitted. Nothing in these terms limits a statutory consumer right or other legal protection that cannot lawfully be waived.`; }
+export function defaultPrivacy(name:string){return `1. WHO IS RESPONSIBLE FOR YOUR INFORMATION
+This shop is operated by ${name} (the “Seller”). The Seller is responsible for personal information it collects directly or receives in connection with orders, enquiries, delivery, returns and after-sales support. DASMARKET separately processes information required to provide, secure and maintain the marketplace platform. The mandatory DASMARKET platform privacy notice displayed below this shop policy also applies.
 
 2. INFORMATION THE SHOP MAY RECEIVE
 Depending on how you use the shop, the Seller may receive your name, telephone number, email address, delivery address and instructions, order contents, payment reference or status, messages, return or complaint details and information you choose to provide. The Seller should only request information reasonably necessary for the relevant transaction or service. Do not send payment PINs, passwords, card security codes or one-time verification codes.
@@ -87,9 +87,9 @@ Some platform or service providers may process information in locations outside 
 The Seller may update this policy when its practices or legal requirements change. Material changes should be published on this storefront. The current version explains the Seller’s practices at the time you use the shop, without reducing rights provided by law.
 
 12. CONTACT AND QUESTIONS
-For questions, access or correction requests relating to information held by this shop, contact \${name} using the phone/WhatsApp or email details displayed at the top of this policy. For DASMARKET platform privacy enquiries, contact support@dasmarket.co.ke. Please do not include passwords, PINs or one-time codes in a privacy request.\`; }
-export function defaultReturns(name:string){return \`1. CONTACT THE SHOP BEFORE RETURNING AN ITEM
-All return, exchange, repair and refund requests must be raised with \${name} using the contact details shown on this storefront. Include your order number, the product concerned, the date received and a clear description of the issue. Do not send an item to an address that the Seller has not confirmed.
+For questions, access or correction requests relating to information held by this shop, contact ${name} using the phone/WhatsApp or email details displayed at the top of this policy. For DASMARKET platform privacy enquiries, contact support@dasmarket.co.ke. Please do not include passwords, PINs or one-time codes in a privacy request.`; }
+export function defaultReturns(name:string){return `1. CONTACT THE SHOP BEFORE RETURNING AN ITEM
+All return, exchange, repair and refund requests must be raised with ${name} using the contact details shown on this storefront. Include your order number, the product concerned, the date received and a clear description of the issue. Do not send an item to an address that the Seller has not confirmed.
 
 2. WHEN TO RAISE A REQUEST
 Contact the Seller as soon as reasonably possible after discovering that an item is damaged, defective, incomplete, incorrect, unsafe or materially different from its description. If an order has not arrived within the stated delivery estimate, contact the Seller for an update. Any statutory time limits and consumer rights under applicable Kenyan law continue to apply.
@@ -116,9 +116,9 @@ If you need to cancel an order, contact the Seller immediately. Cancellation may
 This policy is a general shop procedure and does not replace mandatory consumer protections. Where this policy conflicts with a right or remedy that cannot lawfully be excluded, the applicable law prevails.
 
 10. CUSTOMER SUPPORT
-For assistance, contact \${name} using the shop phone/WhatsApp or email shown on this page. Keep your order confirmation, payment reference and relevant messages until the matter is resolved.\`; }
-export function defaultDelivery(name:string){return \`1. DELIVERY AND COLLECTION OPTIONS
-\${name} will make available the delivery or collection methods shown at checkout or confirmed directly with the buyer. Availability may depend on the product, destination, stock location and practical delivery arrangements. Please review the available method before completing payment.
+For assistance, contact ${name} using the shop phone/WhatsApp or email shown on this page. Keep your order confirmation, payment reference and relevant messages until the matter is resolved.`; }
+export function defaultDelivery(name:string){return `1. DELIVERY AND COLLECTION OPTIONS
+${name} will make available the delivery or collection methods shown at checkout or confirmed directly with the buyer. Availability may depend on the product, destination, stock location and practical delivery arrangements. Please review the available method before completing payment.
 
 2. DELIVERY AREAS
 The Seller should confirm the counties, towns, estates or other locations it can serve. If your destination is outside the available area, contact the Seller before placing the order. The Seller must not accept payment for a delivery arrangement it cannot reasonably fulfil without first explaining the limitation and agreeing an alternative.
@@ -145,4 +145,4 @@ Where collection is offered, the Seller will confirm the collection point, opera
 If an order is delayed, damaged in transit or reported missing, contact the Seller using the details on this page and provide the order number. The Seller is responsible for coordinating with its delivery partner and keeping the buyer informed. Nothing in this policy removes obligations imposed on the Seller by applicable consumer law.
 
 10. CONTACT AND DELIVERY QUESTIONS
-For delivery estimates, coverage, collection arrangements or an order that has not arrived, contact \${name} using the phone/WhatsApp or email shown on this page. Please have your order number available.\`; }
+For delivery estimates, coverage, collection arrangements or an order that has not arrived, contact ${name} using the phone/WhatsApp or email shown on this page. Please have your order number available.`; }
