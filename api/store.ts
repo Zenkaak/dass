@@ -27,7 +27,7 @@ async function seller(sql:any,req:any){
 async function audit(sql:any,tenantId:string,actorId:string,action:string,type:string,id:string|null,metadata:any={}){await sql`INSERT INTO public.audit_logs(tenant_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${tenantId},${actorId},${action},${type},${id},${JSON.stringify(metadata)}::jsonb)`}
 async function notifyBuyer(sql:any,tenantId:string,buyerPhone:string,orderId:string|null,type:string,title:string,detail:string,complaintId:string|null=null){if(!buyerPhone)return;await sql`INSERT INTO public.buyer_notifications(tenant_id,buyer_phone,order_id,complaint_id,notification_type,title,detail) VALUES(${tenantId},${buyerPhone},${orderId},${complaintId},${type},${title},${detail})`;}
 async function notifyOrderBuyer(sql:any,tenantId:string,orderId:string,type:string,title:string,detail:string){const rows=await sql`SELECT customer_phone FROM public.orders WHERE id=${orderId} AND tenant_id=${tenantId} LIMIT 1`;if(rows.length)await notifyBuyer(sql,tenantId,rows[0].customer_phone,orderId,type,title,detail);}
-async function reserveInventory(sql:any,paymentId:string){try{await sql`SELECT public.reserve_inventory_for_payment(${paymentId})`;}catch(error:any){if(String(error?.message||'').includes('OUT_OF_STOCK'))throw Error('OUT_OF_STOCK');throw error;}}
+async function reserveInventory(sql:any,paymentId:string){try{const rows=await sql`SELECT public.reserve_inventory_for_payment(${paymentId}) AS reserved`;if(rows[0]?.reserved===false)throw Error('INVENTORY_RESERVATION_UNAVAILABLE');}catch(error:any){if(String(error?.message||'').includes('OUT_OF_STOCK'))throw Error('OUT_OF_STOCK');throw error;}}
 async function releaseInventory(sql:any,paymentId:string){await sql`SELECT public.release_inventory_reservations(${paymentId})`;}
 function isAmbiguousStkSubmission(error:any){const message=String(error?.message||error);return error?.name==='AbortError'||error?.name==='TimeoutError'||error?.name==='TypeError'||/fetch failed|socket|network|timed out|ECONNRESET|EAI_AGAIN|ENOTFOUND|unreadable STK response/i.test(message);}
 
@@ -279,6 +279,7 @@ export default async function handler(req:any,res:any){
   if(req.method==='POST'&&action==='daraja-callback'){
    const cb=req.body?.Body?.stkCallback||{},checkout=String(cb.CheckoutRequestID||''),resultCode=Number(cb.ResultCode);
    if(!checkout)return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
+   if(!Number.isFinite(resultCode))return send(res,400,{ResultCode:1,ResultDesc:'Invalid callback result code'});
    const rows=await sql`SELECT p.id,p.tenant_id,p.order_id,p.phone,p.amount_minor,p.status,p.provider_result,pc.shortcode,pc.party_b,pc.account_type,pc.environment,pc.encrypted_credentials,pc.payout_method,pc.account_reference,pc.till_party_b,pc.paybill_party_b,pc.default_payout_method,pm.shortcode AS central_shortcode,pm.environment AS central_environment,pm.encrypted_credentials AS central_credentials FROM public.payments p LEFT JOIN public.payment_configs pc ON pc.tenant_id=p.tenant_id LEFT JOIN public.platform_payment_methods pm ON pm.method=CASE WHEN p.provider_result->>'paymentMethod'='paybill' THEN 'paybill' ELSE 'till' END WHERE p.provider_checkout_id=${checkout} LIMIT 1`;
    if(!rows.length)return send(res,200,{ResultCode:0,ResultDesc:'Accepted'});
    const p=rows[0];if(p.status==='succeeded')return send(res,200,{ResultCode:0,ResultDesc:'Already processed'});
@@ -400,7 +401,7 @@ export default async function handler(req:any,res:any){
    if(!payments.length)return send(res,200,{orderId,paymentStatus:'unpaid',terminal:true});
    const payment=payments[0];
    if(['succeeded','failed','cancelled','reversed'].includes(String(payment.status)))return send(res,200,{orderId,paymentStatus:payment.status,receipt:payment.provider_receipt||null,terminal:true});
-   if(!payment.provider_checkout_id)return send(res,200,{orderId,paymentStatus:payment.status||'pending',terminal:false,queryAvailable:false});
+   if(!payment.provider_checkout_id)return send(res,200,{orderId,paymentStatus:payment.status||'pending',terminal:false,queryAvailable:false,manualReviewRequired:Boolean(payment.provider_result?.manualReviewRequired||payment.provider_result?.stkSubmissionAmbiguous),message:payment.provider_result?.manualReviewRequired?'Payment request status is unclear. Please do not retry; the shop is reviewing the request.':'Payment request is being checked.'});
    try{
     const config=await sql`SELECT p.provider_result,pc.shortcode,pc.environment,pc.encrypted_credentials,pc.payout_method,pc.default_payout_method,pc.party_b,pc.till_party_b,pc.paybill_party_b,pc.account_reference,pm.shortcode AS central_shortcode,pm.environment AS central_environment,pm.encrypted_credentials AS central_credentials
      FROM public.payments p LEFT JOIN public.payment_configs pc ON pc.tenant_id=p.tenant_id
@@ -416,6 +417,7 @@ export default async function handler(req:any,res:any){
     if(resultCode&&resultCode!=='0'){
      const terminalStatus=resultCode==='1032'?'cancelled':'failed';
      await sql`UPDATE public.payments SET status=${terminalStatus},provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({queryResultCode:resultCode,queryResultDescription:String(verification.ResultDesc||'')})}::jsonb,updated_at=now() WHERE id=${payment.id} AND status IN ('initiated','pending')`;
+     await releaseInventory(sql,String(payment.id));
      return send(res,200,{orderId,paymentStatus:terminalStatus,receipt:null,terminal:true,message:String(verification.ResultDesc||'Safaricom did not complete the payment.')});
     }
     return send(res,200,{orderId,paymentStatus:'pending',receipt:null,terminal:false,queryAvailable:true,message:'Safaricom processed the request; waiting for the verified payment receipt callback.'});
