@@ -85,7 +85,7 @@ export function ReplitLandingPage() {
               </ul>
               <div className="rm-hero-ctas rm-reveal rm-reveal-delay-2">
                 <a className="rm-button rm-button-coral" href="/signup" data-testid="button-start-shop">Create your shop <ArrowRight size={15} /></a>
-                <a className="rm-button rm-button-outline" href="#how-it-works" data-testid="button-see-how">See how it works <ArrowDown size={14} /></a>
+                <a className="rm-button rm-button-outline" href="/login" data-testid="button-hero-sign-in">Sign in <ArrowRight size={14} /></a>
               </div>
             </div>
           </div>
