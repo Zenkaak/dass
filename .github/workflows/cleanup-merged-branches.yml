@@ -39,10 +39,20 @@ jobs:
             exit 1
           fi
 
-          mapfile -t branches < <(
-            gh api --paginate --jq '.[] | select(.merged_at != null and .head.repo.full_name == "Zenkaak/dass") | .head.ref' \
-              "repos/${REPO}/pulls?state=closed&per_page=100" | sort -u
+          # Explicitly reviewed as redundant against current main; never add a branch
+          # here without inspecting its complete diff and confirming its work is present.
+          reviewed_redundant_branches=(
+            "backup/main-before-branch-cleanup-2026-11-12"
+            "bingw-style-seller-dashboard"
+            "fix/payout-readiness-status"
+            "improve-order-chat-payment-and-admin-details"
           )
+
+          mapfile -t merged_branches < <(
+            gh api --paginate --jq '.[] | select(.merged_at != null and .head.repo.full_name == "Zenkaak/dass") | .head.ref' \
+              "repos/${REPO}/pulls?state=closed&per_page=100"
+          )
+          mapfile -t branches < <(printf '%s\n' "${merged_branches[@]}" "${reviewed_redundant_branches[@]}" | sed '/^$/d' | sort -u)
 
           mapfile -t open_branches < <(
             gh api --paginate --jq '.[] | select(.head.repo.full_name == "Zenkaak/dass") | .head.ref' \
