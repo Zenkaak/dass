@@ -181,8 +181,8 @@ export default async function handler(req:any,res:any){
    return send(res,200,{ok:true,record:updated[0]});
   }
   if(req.method==='POST'&&req.body?.action==='save_subscription_payment'){
-   const method=String(req.body?.method||'')==='paybill'?'paybill':'till',destination=String(req.body?.destination||'').replace(/\\s/g,'').slice(0,20),accountReference=String(req.body?.accountReference||'').trim().slice(0,32);
-   if(!/^\\d{5,12}$/.test(destination))return send(res,400,{error:'Enter a valid 5–12 digit '+(method==='paybill'?'PayBill':'Till')+' number.'});
+   const method=String(req.body?.method||'')==='paybill'?'paybill':'till',destination=String(req.body?.destination||'').replace(/\s/g,'').slice(0,20),accountReference=String(req.body?.accountReference||'').trim().slice(0,32);
+   if(!/^\d{5,12}$/.test(destination))return send(res,400,{error:'Enter a valid 5–12 digit '+(method==='paybill'?'PayBill':'Till')+' number.'});
    if(method==='paybill'&&!/^[A-Za-z0-9-]{1,32}$/.test(accountReference))return send(res,400,{error:'Enter the PayBill account number/reference.'});
    const credential=await sql`SELECT shortcode,environment,encrypted_credentials FROM public.platform_payment_methods WHERE method=${method} LIMIT 1`;
    if(!credential.length||!credential[0].shortcode||!credential[0].encrypted_credentials?.data)return send(res,409,{error:'Configure the matching '+(method==='paybill'?'PayBill':'Till / Buy Goods')+' Daraja credentials under Payment settings first.'});
