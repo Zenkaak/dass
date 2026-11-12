@@ -2311,3 +2311,8 @@
   }
   .rm-home-simple .rm-home-footer-bottom-links { width:100%; justify-content:space-between; gap:12px; }
 }
+
+/* DASMARKET homepage brand lockup */
+.rm-brand-logo{display:block;width:36px;height:36px;flex:0 0 36px}
+.rm-brand-word{display:inline-block;letter-spacing:-.055em}
+@media(max-width:640px){.rm-brand-logo{width:32px;height:32px;flex-basis:32px}.rm-brand{gap:8px}}
