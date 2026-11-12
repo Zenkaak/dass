@@ -702,3 +702,9 @@
 
 
 .seller-store-summary i.expired{color:#b42318;background:#fff0ed;padding:3px 7px;border-radius:6px;font-style:normal}
+
+
+/* Subscription collection settings are an inline settings panel, not a dialog. */
+.mambu-subscription-destination-panel{background:#fff;border:1px solid #e3e8ef;border-radius:13px;padding:18px;margin:18px 0;max-width:920px;box-shadow:0 10px 30px #1c2d4210}
+.mambu-subscription-destination-panel .mambu-plan-editor-head{position:static;z-index:auto;background:transparent;padding:0;margin-bottom:15px}
+@media(max-width:600px){.mambu-subscription-destination-panel{padding:14px}}
