@@ -16,7 +16,6 @@ import {
   UserRound,
   WalletCards,
   Flag,
-  LogOut,
   TicketPercent,
   Phone,
   Mail,
