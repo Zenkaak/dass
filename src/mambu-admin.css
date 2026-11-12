@@ -699,3 +699,6 @@
 .seller-sub-modal-warning{margin:10px 0 0;color:#9b5b16;font-size:11px;line-height:1.5}
 .seller-sub-modal-note{margin:13px 0 0;color:#8390a0;font-size:10px;line-height:1.5}
 @media(max-width:600px){.mambu-plan-editor{padding:10px;align-items:center}.mambu-plan-editor>form{max-height:92vh;padding:15px;border-radius:12px}.mambu-plan-editor-head{top:-15px}.seller-sub-checkout-overlay{padding:10px;align-items:center}.seller-sub-checkout-modal{max-height:92vh;padding:17px;border-radius:13px}}
+
+
+.seller-store-summary i.expired{color:#b42318;background:#fff0ed;padding:3px 7px;border-radius:6px;font-style:normal}
