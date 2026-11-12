@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FileText, TicketPercent, Save, Plus, Trash2, Store, ShieldCheck, Truck, RotateCcw, Phone, Mail, Eye, PencilLine, CheckCircle2 } from 'lucide-react';
+import { defaultTerms, defaultPrivacy, defaultReturns, defaultDelivery } from './shopPolicyDefaults';
 
 type Props = { section: 'policies'|'coupons'; shopName?:string; shopWhatsappNumber?:string; shopContactEmail?:string; onNotice?: (message:string)=>void };
 async function responseData(r:Response){const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Request failed.');return d;}
