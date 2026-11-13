@@ -103,16 +103,24 @@ function decryptBundle(blob:any,key:string,kind:'seller'|'platform') {
  const d=crypto.createDecipheriv('aes-256-gcm',raw,iv);d.setAuthTag(tag);
  return JSON.parse(Buffer.concat([d.update(data),d.final()]).toString('utf8'));
 }
+const darajaTokenCache=new Map<string,{accessToken:string,expiresAt:number}>();
 async function darajaToken(c:any){
  const host=c.environment==='sandbox'?'https://sandbox.safaricom.co.ke':'https://api.safaricom.co.ke';
  const auth=Buffer.from(c.consumerKey+':'+c.consumerSecret).toString('base64');
+ const cacheKey=hash(host+':'+auth),cached=darajaTokenCache.get(cacheKey);
+ if(cached&&cached.expiresAt>Date.now()+30000)return {host,accessToken:cached.accessToken};
  let lastError:any=null;
  // OAuth is a safe GET: retry short-lived DNS/socket/5xx failures before starting STK.
  for(let attempt=1;attempt<=3;attempt++){
   try{
    const r=await fetch(host+'/oauth/v1/generate?grant_type=client_credentials',{headers:{Authorization:'Basic '+auth,Accept:'application/json'},signal:AbortSignal.timeout(12000)});
    const raw=await r.text();let d:any={};try{d=raw?JSON.parse(raw):{};}catch{throw Error('Daraja authentication returned an unreadable response (HTTP '+r.status+').');}
-   if(r.ok&&d.access_token)return {host,accessToken:d.access_token};
+   if(r.ok&&d.access_token){
+    const expiresIn=Math.max(60,Number(d.expires_in)||3600);
+    if(darajaTokenCache.size>200)darajaTokenCache.clear();
+    darajaTokenCache.set(cacheKey,{accessToken:String(d.access_token),expiresAt:Date.now()+Math.max(30,expiresIn-60)*1000});
+    return {host,accessToken:d.access_token};
+   }
    const message=String(d.error_description||d.errorMessage||d.error||'');
    if(r.status>=500&&attempt<3){lastError=Error('Daraja OAuth temporarily unavailable (HTTP '+r.status+').');continue;}
    throw Error(message||'Daraja authentication failed (HTTP '+r.status+'). Check the selected credentials and environment.');
@@ -177,7 +185,7 @@ async function startStk(c:any,order:any,phone:string,amount:number,reference:str
 async function verifyStk(c:any,checkoutId:string){
  const {host,accessToken}=await darajaToken(c),stamp=timestamp(),shortcode=String(c.shortcode);
  const payload={BusinessShortCode:shortcode,Password:darajaPassword(shortcode,c.passkey,stamp),Timestamp:stamp,CheckoutRequestID:checkoutId};
- const r=await fetch(host+'/mpesa/stkpushquery/v1/query',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify(payload)});
+ const r=await fetch(host+'/mpesa/stkpushquery/v1/query',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(10000)});
  const d:any=await r.json();if(!r.ok||String(d.ResponseCode)!=='0')throw Error('Safaricom payment verification query failed.');
  return d;
 }
