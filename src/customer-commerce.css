@@ -6011,3 +6011,47 @@
 .market-payment-processing.is-paid .market-payment-processing-icon::after{content:'✓';width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:#238447;color:#fff;font-size:22px;font-weight:800}
 .market-payment-processing.is-paid .market-payment-poll-status{color:#247344}
 @media(max-width:600px){.market-checkout-payment-dialog{width:min(320px,calc(100% - 28px));padding:14px}}
+
+/* Unified buyer account workspace and always-available route to the shop home. */
+.buyer-account-workspace{width:100%;min-height:65vh;padding:0 0 28px;background:#f6f8fa}
+.buyer-account-routebar{position:sticky;top:0;z-index:35;min-height:54px;width:min(100%,1120px);margin:0 auto;padding:8px 20px;display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.96);border-bottom:1px solid #e8edf1;backdrop-filter:blur(12px)}
+.buyer-account-routebar button{min-height:36px;display:inline-flex;align-items:center;gap:8px;padding:0 12px;border:1px solid #e3e9ee;border-radius:9px;background:#fff;color:#344b5d;font-size:12px;font-weight:800;cursor:pointer}
+.buyer-account-routebar .buyer-account-home-link{background:#fff7ed;border-color:#f2d7b9;color:#a9570b}
+.buyer-account-routebar .buyer-account-overview-link{border-color:transparent;background:transparent}
+.buyer-account-route-divider{color:#a8b3bc;font-size:13px}
+.buyer-account-workspace .customer-flow{width:min(100% - 36px,1080px);max-width:1080px;margin:24px auto 44px}
+.buyer-account-workspace .customer-flow-heading{min-height:66px;margin:0 0 16px;padding:12px 0;border-bottom:1px solid #e5eaee;background:transparent}
+.buyer-account-workspace .customer-flow-heading h1,.buyer-account-workspace .customer-flow-heading h2{color:#1c3446;font-size:clamp(20px,2.4vw,26px);font-weight:850;letter-spacing:-.025em}
+.buyer-account-workspace .customer-flow-heading button{border:1px solid #e1e7ec;border-radius:9px;background:#fff;color:#455b6c}
+.buyer-account-workspace .customer-panel,.buyer-account-workspace .customer-empty-state,.buyer-account-workspace .buyer-order-panel{border:1px solid #e7edf1;border-radius:14px;background:#fff;box-shadow:0 5px 18px rgba(25,48,66,.035)}
+.buyer-account-workspace .customer-account-detail{max-width:none;padding:22px 24px;color:#536777;font-size:13px;line-height:1.65}
+.buyer-account-workspace .customer-account-detail h2,.buyer-account-workspace .customer-panel h2{margin:0 0 12px;color:#233c4e;font-size:16px;font-weight:850}
+.buyer-account-workspace .customer-account-page{max-width:1080px}
+.buyer-account-workspace .customer-account-welcome{min-height:116px;padding:20px 22px;border:1px solid #f2e0cd;border-radius:14px;background:linear-gradient(110deg,#fff5e9,#fff)}
+.buyer-account-workspace .customer-account-welcome h1{font-size:clamp(19px,2.5vw,25px);font-weight:850;letter-spacing:-.03em}
+.buyer-account-workspace .buyer-account-orders-shortcut{min-height:70px;margin:0 0 16px;padding:13px 18px;border:1px solid #e7edf1;border-radius:13px;background:#fff;box-shadow:0 5px 18px rgba(25,48,66,.035)}
+.buyer-account-workspace .customer-account-groups{gap:16px}
+.buyer-account-workspace .customer-account-groups>.customer-panel{overflow:hidden;padding:0}
+.buyer-account-workspace .customer-account-group-title{padding:17px 18px 11px;color:#8b98a2;font-size:10px;letter-spacing:.12em}
+.buyer-account-workspace .customer-account-link{min-height:54px;padding:12px 18px;border-top:1px solid #edf1f4;font-size:13px;font-weight:650}
+.buyer-account-workspace .customer-account-link svg:first-child{width:18px;height:18px}
+.buyer-account-workspace .customer-account-link:hover{background:#fff8f0}
+.buyer-account-workspace .customer-order-card,.buyer-account-workspace .buyer-my-order-card{border:1px solid #e8edf1;border-radius:12px;background:#fff}
+.buyer-account-workspace .customer-empty-state{padding:34px 22px;text-align:center}
+.buyer-account-workspace .customer-flow-actions{gap:10px;flex-wrap:wrap}
+.buyer-account-workspace .customer-primary-button,.buyer-account-workspace .customer-secondary-button{min-height:42px;border-radius:9px;font-size:12px;font-weight:800}
+.store-home-shortcut{position:fixed;left:14px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:1250;min-height:44px;padding:0 15px;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid #f0d5b9;border-radius:999px;background:#fff;color:#a9570b;box-shadow:0 7px 24px rgba(24,43,58,.16);font-size:12px;font-weight:850;cursor:pointer}
+.store-home-shortcut:active,.buyer-account-routebar button:active{transform:translateY(1px)}
+@media(max-width:760px){
+ .buyer-account-workspace{padding-bottom:18px}
+ .buyer-account-routebar{min-height:50px;padding:7px 13px}
+ .buyer-account-workspace .customer-flow{width:100%;margin:0 auto 28px;padding:0 14px}
+ .buyer-account-workspace .customer-flow-heading{min-height:58px;margin:0 -14px 13px;padding:10px 14px;background:#fff}
+ .buyer-account-workspace .customer-account-welcome{gap:12px;padding:16px}
+ .buyer-account-workspace .customer-account-welcome>span{width:46px;height:46px;flex:0 0 46px}
+ .buyer-account-workspace .customer-account-welcome>.customer-secondary-button{margin-left:auto;padding:0 10px}
+ .buyer-account-workspace .customer-account-detail{padding:17px}
+ .buyer-account-workspace .customer-account-groups{gap:12px}
+ .buyer-account-workspace .customer-account-link{min-height:51px;padding:11px 15px}
+ .store-home-shortcut{left:10px;bottom:calc(12px + env(safe-area-inset-bottom));min-height:42px;padding:0 13px}
+}
