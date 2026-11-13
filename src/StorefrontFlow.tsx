@@ -1139,7 +1139,7 @@ export function StorefrontFlow({
     'address-book','vouchers','reviews','notifications','my-reports','report-shop','followed-shops',
     'newsletter','notification-settings','public-profile','account-management','close-account','assistant',
   ]);
-  const showProductDiscovery = buyerDashboardViews.has(view) || view.startsWith('orders/') || view.startsWith('my-reports/');
+  const showProductDiscovery = buyerDashboardViews.has(view) || view.startsWith('orders/');
   const viewedCategories = new Set(recentlyViewedProducts.map(product => String(product.category || '').toLowerCase()).filter(Boolean));
   const discoveryProducts = products
     .filter(product => product.stockQuantity !== 0)
