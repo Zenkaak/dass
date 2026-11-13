@@ -80,10 +80,13 @@ async function sendEmailVerification(sql:any,userId:string,email:string,name:str
  await sql`UPDATE public.seller_email_verification_tokens SET used_at=now() WHERE user_id=${userId} AND used_at IS NULL`;
  await sql`INSERT INTO public.seller_email_verification_tokens(user_id,token_hash,expires_at) VALUES(${userId},${tokenHash},now()+interval '30 minutes')`;
  const base=env('APP_URL').replace(/\/$/,'')||'https://dasmarket.co.ke',url=base+'/api/auth?action=verify-email&token='+encodeURIComponent(raw);
- const safeName=escapeEmailHtml(name||'there'),safeUrl=escapeEmailHtml(url);
- const html='<div style="font-family:Arial,sans-serif;background:#f5f7fa;padding:28px 12px;color:#202124"><div style="max-width:560px;margin:auto;background:#fff;border:1px solid #eaecf0;border-radius:14px;padding:30px"><strong style="font-size:18px">DASMARKET</strong><h1 style="font-size:23px;margin:26px 0 12px">Verify your email address</h1><p>Hello '+safeName+',</p><p>Confirm this email address to finish securing your DASMARKET account. This one-time link expires in 30 minutes and can only be used once.</p><p style="margin:28px 0"><a href="'+safeUrl+'" style="display:inline-block;background:#f5c400;color:#171717;text-decoration:none;font-weight:700;padding:13px 20px;border-radius:8px">Verify email address</a></p><p style="font-size:12px;color:#667085">If the button does not work, copy this link into your browser:<br>'+safeUrl+'</p><p style="font-size:12px;color:#667085">If you did not create this account, ignore this email.</p><p style="font-size:12px;color:#667085">Powered by DASMARKET</p></div></div>';
- const text='Hello '+(name||'there')+',\n\nVerify your DASMARKET email address using this one-time link (expires in 30 minutes):\n'+url+'\n\nIf you did not create this account, ignore this email.';
- const result=await sendTransactionalEmail({to:email,subject:'Verify your DASMARKET email address',html,text,idempotencyKey:'seller-email-verification-'+userId+'-'+tokenHash.slice(0,16)});
+ const mail=brandedEmail('DASMARKET','Verify your email address','Hello '+(name||'there')+', confirm this email address to finish securing your DASMARKET account. This one-time link expires in 30 minutes and can only be used once. If you did not create this account, you can ignore this email.',{},{
+  buttonLabel:'Verify email address',
+  buttonUrl:url,
+  preheader:'Confirm your email address to finish securing your DASMARKET account.',
+  supportEmail:'support@dasnet.co.ke'
+ });
+ const result=await sendTransactionalEmail({to:email,subject:'Verify your DASMARKET email address',...mail,idempotencyKey:'seller-email-verification-'+userId+'-'+tokenHash.slice(0,16)});
  return {sent:!!result.sent,limited:false};
 }
 
