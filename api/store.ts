@@ -70,6 +70,23 @@ async function notifyBuyer(sql:any,tenantId:string,buyerPhone:string,orderId:str
  }
 }
 async function notifyOrderBuyer(sql:any,tenantId:string,orderId:string,type:string,title:string,detail:string){const rows=await sql`SELECT customer_phone FROM public.orders WHERE id=${orderId} AND tenant_id=${tenantId} LIMIT 1`;if(rows.length)await notifyBuyer(sql,tenantId,rows[0].customer_phone,orderId,type,title,detail);}
+async function orderEmailItems(sql:any,tenantId:string,orderId:string){
+ const rows=await sql`SELECT oi.product_name,oi.quantity,oi.line_total_minor,oi.unit_price_minor,p.images FROM public.order_items oi LEFT JOIN public.products p ON p.id=oi.product_id AND p.tenant_id=oi.tenant_id WHERE oi.tenant_id=${tenantId} AND oi.order_id=${orderId} ORDER BY oi.created_at ASC LIMIT 8`;
+ return rows.map((row:any)=>{
+  let images:any[]=Array.isArray(row.images)?row.images:[];
+  if(typeof row.images==='string'){try{const parsed=JSON.parse(row.images);images=Array.isArray(parsed)?parsed:[]}catch{images=[]}}
+  const first=images[0],raw=typeof first==='string'?first:String(first?.url||first?.src||first?.publicUrl||first?.public_url||first?.key||first?.path||'');
+  const imageUrl=raw.startsWith('neon-object:')?storageUrl(raw.slice(12),'GET'):raw.startsWith('s3://')?storageUrl(raw.slice(5).replace(/^documents\\//,''),'GET'):/^https?:\\/\\//i.test(raw)?raw:'';
+  const total=(Number(row.line_total_minor??(Number(row.unit_price_minor||0)*Number(row.quantity||1)))/100).toLocaleString('en-KE',{style:'currency',currency:'KES'});
+  return {name:String(row.product_name||'Product'),quantity:Math.max(1,Number(row.quantity)||1),lineTotal:total,imageUrl};
+ });
+}
+function shopEmailOrderUrl(slug:string,orderNumber:string,seller=false){
+ const host=String(slug||'').toLowerCase().replace(/[^a-z0-9-]/g,'');
+ if(!host)return 'https://dasmarket.co.ke';
+ const base='https://'+host+'.dasmarket.co.ke';
+ return seller?base+'/dashboard/'+encodeURIComponent(orderNumber):base+'/orders';
+}
 
 async function reserveInventory(sql:any,paymentId:string){
  try{await sql`SELECT public.reserve_inventory_for_payment(${paymentId})`;}catch(error:any){if(String(error?.message||'').includes('OUT_OF_STOCK'))throw Error('OUT_OF_STOCK');throw error;}
@@ -103,16 +120,16 @@ async function reconcilePaymentJob(sql:any,jobId:string){
    try{
     await sql`CREATE TABLE IF NOT EXISTS public.tenant_email_configs (tenant_id uuid PRIMARY KEY REFERENCES public.tenants(id) ON DELETE CASCADE,encrypted_config jsonb NOT NULL,from_email text NOT NULL,reply_to_email text NOT NULL,notification_email text,enabled boolean NOT NULL DEFAULT true,updated_at timestamptz NOT NULL DEFAULT now())`;
     await sql`ALTER TABLE public.tenant_email_configs ADD COLUMN IF NOT EXISTS notification_email text`;
-    const details=await sql`SELECT j.tenant_id,o.order_number,o.customer_name,o.customer_email,o.total_minor,p.provider_receipt,t.name AS shop_name,COALESCE(NULLIF(ec.notification_email,''),NULLIF(u.email,''),NULLIF(ec.reply_to_email,'')) AS seller_email FROM public.payment_reconciliation_jobs j JOIN public.orders o ON o.id=j.order_id AND o.tenant_id=j.tenant_id JOIN public.payments p ON p.id=j.payment_id AND p.tenant_id=j.tenant_id JOIN public.tenants t ON t.id=j.tenant_id LEFT JOIN public.users u ON u.id=t.created_by LEFT JOIN public.tenant_email_configs ec ON ec.tenant_id=t.id AND ec.enabled=true WHERE j.id=${jobId} LIMIT 1`;
+    const details=await sql`SELECT j.tenant_id,j.order_id,o.order_number,o.customer_name,o.customer_email,o.total_minor,p.provider_receipt,t.name AS shop_name,t.slug AS shop_slug,COALESCE(NULLIF(ec.notification_email,''),NULLIF(u.email,''),NULLIF(ec.reply_to_email,'')) AS seller_email FROM public.payment_reconciliation_jobs j JOIN public.orders o ON o.id=j.order_id AND o.tenant_id=j.tenant_id JOIN public.payments p ON p.id=j.payment_id AND p.tenant_id=j.tenant_id JOIN public.tenants t ON t.id=j.tenant_id LEFT JOIN public.users u ON u.id=t.created_by LEFT JOIN public.tenant_email_configs ec ON ec.tenant_id=t.id AND ec.enabled=true WHERE j.id=${jobId} LIMIT 1`;
     const order=details[0];
-    const name=String(order?.customer_name||'Customer'),shop=String(order?.shop_name||'the shop'),number=String(order?.order_number||''),amount=(Number(order?.total_minor||0)/100).toLocaleString('en-KE',{style:'currency',currency:'KES'}),receipt=String(order?.provider_receipt||'');
+    const name=String(order?.customer_name||'Customer'),shop=String(order?.shop_name||'the shop'),number=String(order?.order_number||''),amount=(Number(order?.total_minor||0)/100).toLocaleString('en-KE',{style:'currency',currency:'KES'}),receipt=String(order?.provider_receipt||''),emailItems=await orderEmailItems(sql,String(order.tenant_id||''),String(order.order_id||'')),shopSlug=String(order?.shop_slug||'');
     if(order?.customer_email&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(order.customer_email))){
-     const message=brandedEmail(shop,'Payment confirmed','Hi '+name+', your payment has been confirmed. You can view your order and delivery updates from your buyer account.',{'Order number':number,'Total paid':amount,...(receipt?{'M-PESA receipt':receipt}:{})});
+     const message=brandedEmail(shop,'Payment confirmed','Hi '+name+', your payment has been confirmed. Your shop order details and delivery updates are ready to view.',{'Order number':number,'Total paid':amount,...(receipt?{'M-PESA receipt':receipt}:{})},{items:emailItems,buttonLabel:'View my order',buttonUrl:shopOrderEmailUrl(shopSlug,number)});
      await sendTenantTransactionalEmail(sql,String(order.tenant_id||''),{to:String(order.customer_email),subject:'Payment confirmed — order '+number,...message,idempotencyKey:'order-payment-confirmed-'+number});
     }
     if(order?.seller_email&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(order.seller_email))){
-     const sellerMail=brandedEmail(shop,'Payment received','A customer payment has been confirmed for an order in your shop.',{'Order number':number,'Customer':name,'Amount received':amount,...(receipt?{'M-PESA receipt':receipt}:{})});
-     await sendTenantTransactionalEmail(sql,String(order.tenant_id||''),{to:String(order.seller_email),subject:'Payment received — order '+number,...sellerMail,idempotencyKey:'seller-order-payment-confirmed-'+number});
+     const sellerMail=brandedEmail(shop,'Payment received','A customer payment has been confirmed for an order in your shop.',{'Order number':number,'Customer':name,'Amount received':amount,...(receipt?{'M-PESA receipt':receipt}:{})},{items:emailItems,buttonLabel:'Open order',buttonUrl:shopOrderEmailUrl(shopSlug,number,true)});
+     await sendTenantTransactionalEmail(sql,String(order.seller_email),{to:String(order.seller_email),subject:'Payment received — order '+number,...sellerMail,idempotencyKey:'seller-order-payment-confirmed-'+number});
     }
    }catch(emailError:any){console.error('Order confirmation email could not be sent',String(emailError?.message||emailError).slice(0,240));}
   }
@@ -957,15 +974,15 @@ export default async function handler(req:any,res:any){
    try{
     await sql`CREATE TABLE IF NOT EXISTS public.tenant_email_configs (tenant_id uuid PRIMARY KEY REFERENCES public.tenants(id) ON DELETE CASCADE,encrypted_config jsonb NOT NULL,from_email text NOT NULL,reply_to_email text NOT NULL,notification_email text,enabled boolean NOT NULL DEFAULT true,updated_at timestamptz NOT NULL DEFAULT now())`;
      await sql`ALTER TABLE public.tenant_email_configs ADD COLUMN IF NOT EXISTS notification_email text`;
-     const context=await sql`SELECT t.name AS shop_name,COALESCE(NULLIF(ec.notification_email,''),NULLIF(u.email,''),NULLIF(ec.reply_to_email,'')) AS seller_email FROM public.tenants t LEFT JOIN public.users u ON u.id=t.created_by LEFT JOIN public.tenant_email_configs ec ON ec.tenant_id=t.id AND ec.enabled=true WHERE t.id=${tenantId} LIMIT 1`;
-    const shopName=String(context[0]?.shop_name||'the shop'),safeTotal=(payableTotal/100).toLocaleString('en-KE',{style:'currency',currency:'KES'});
+     const context=await sql`SELECT t.name AS shop_name,t.slug,COALESCE(NULLIF(ec.notification_email,''),NULLIF(u.email,''),NULLIF(ec.reply_to_email,'')) AS seller_email FROM public.tenants t LEFT JOIN public.users u ON u.id=t.created_by LEFT JOIN public.tenant_email_configs ec ON ec.tenant_id=t.id AND ec.enabled=true WHERE t.id=${tenantId} LIMIT 1`;
+    const shopName=String(context[0]?.shop_name||'the shop'),shopSlug=String(context[0]?.slug||''),safeTotal=(payableTotal/100).toLocaleString('en-KE',{style:'currency',currency:'KES'}),emailItems=await orderEmailItems(sql,tenantId,String(o[0].id));
     if(customerEmail&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)){
-     const mail=brandedEmail(shopName,'We received your order','Hi '+name+', your order has been created. We will send another update when payment is confirmed.',{'Order number':orderNo,'Order total':safeTotal,'Payment status':'Awaiting M-PESA confirmation'});
+     const mail=brandedEmail(shopName,'We received your order','Hi '+name+', your order has been created. We will send another update when payment is confirmed.',{'Order number':orderNo,'Order total':safeTotal,'Payment status':'Awaiting M-PESA confirmation'},{items:emailItems,buttonLabel:'View my order',buttonUrl:shopOrderEmailUrl(shopSlug,orderNo)});
      await sendTenantTransactionalEmail(sql,tenantId,{to:customerEmail,subject:'Order received — '+orderNo,...mail,idempotencyKey:'order-received-'+o[0].id});
     }
     const sellerEmail=String(context[0]?.seller_email||'');
     if(sellerEmail&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sellerEmail)){
-     const mail=brandedEmail(shopName,'New order received','A new customer order has been placed. Sign in to your seller dashboard to review it.',{'Order number':orderNo,'Customer':name,'Order total':safeTotal,'Payment status':'Awaiting confirmation'});
+     const mail=brandedEmail(shopName,'New order received','A new customer order has been placed. Sign in to your seller dashboard to review it.',{'Order number':orderNo,'Customer':name,'Order total':safeTotal,'Payment status':'Awaiting confirmation'},{items:emailItems,buttonLabel:'Open order',buttonUrl:shopOrderEmailUrl(shopSlug,orderNo,true)});
      await sendTenantTransactionalEmail(sql,tenantId,{to:sellerEmail,subject:'New order — '+orderNo,...mail,idempotencyKey:'seller-new-order-'+o[0].id});
     }
    }catch(emailError:any){console.error('New order email notification failed',String(emailError?.message||emailError).slice(0,220));}
