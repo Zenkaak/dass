@@ -1016,7 +1016,7 @@ export function StorefrontFlow({
       return (
         <section className="customer-flow buyer-inbox-page">
           <FlowHeading title="Inbox & messages" onBack={() => onNavigate('account')} backLabel="My account" />
-          <div className="buyer-inbox-intro"><div><span className="buyer-section-kicker">PRIVATE SHOP MESSAGES</span><h2>Your conversations</h2><p>Only conversations where you or the seller has sent a message appear here. Orders do not automatically create chats.</p></div><span className="buyer-inbox-count">{chatThreads.length} {chatThreads.length===1?'conversation':'conversations'}</span></div>
+          <div className="buyer-inbox-intro"><div><span className="buyer-section-kicker">PRIVATE SHOP MESSAGES</span><h2>Your conversations</h2><p>Only conversations where you or the seller has sent at least one message appear here. Placing an order never creates a chat by itself.</p></div><span className="buyer-inbox-count">{chatThreads.length} {chatThreads.length===1?'conversation':'conversations'}</span></div>
           <div className="buyer-inbox-layout">
             <div className="customer-panel buyer-inbox-list">
               <div className="buyer-inbox-list-heading"><strong>Messages</strong><span>{chatThreads.length}</span></div>
@@ -1027,7 +1027,7 @@ export function StorefrontFlow({
                 </article>
               )) : <div className="buyer-inbox-empty"><span><MessageCircle size={25}/></span><strong>No messages yet</strong><p>Your inbox stays empty until you or the seller sends the first message. To start, open one of your orders and choose “Message seller”.</p><button type="button" className="customer-primary-button" onClick={()=>onNavigate('orders')}>View my orders</button></div>}
             </div>
-            {chatPanel || <div className="customer-panel buyer-inbox-placeholder"><span><MessageCircle size={28}/></span><h3>Select a conversation</h3><p>Choose an existing message thread to continue the conversation, or start one from an order.</p></div>}
+            {chatPanel || <div className="customer-panel buyer-inbox-placeholder"><span><MessageCircle size={28}/></span><h3>Select a conversation</h3><p>Choose a conversation started by you or the seller. To begin a new conversation, open an order and send the seller your first message.</p></div>}
           </div>
         </section>
       );
