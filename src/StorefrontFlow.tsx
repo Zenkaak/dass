@@ -603,7 +603,7 @@ export function StorefrontFlow({
 
   function openOrder(order: BuyerOrder, next: string) {
     setActiveOrderNumber(order.orderNumber);
-    if (next === 'inbox' && (order.chatToken || order.orderId)) onOpenChat?.(order.chatToken, order.orderNumber, order.orderId);
+    if (next === 'inbox') onOpenChat?.(order.chatToken || '', order.orderNumber, order.orderId);
     onNavigate(next);
   }
 
@@ -1046,7 +1046,7 @@ export function StorefrontFlow({
                   <div className="buyer-inbox-thread-avatar"><MessageCircle size={19}/></div>
                   <div className="buyer-inbox-thread-content"><div className="buyer-inbox-thread-top"><strong>{shopName}</strong><time>{thread.last_message_at?new Date(thread.last_message_at).toLocaleDateString('en-KE',{day:'numeric',month:'short'}):''}</time></div><span className="buyer-inbox-thread-order">Order #{thread.order_number}</span><p>{thread.last_message||'Conversation started'}</p><div className="buyer-inbox-thread-bottom"><span>Private conversation</span><button type="button" onClick={()=>onOpenChat?.('',thread.order_number,thread.order_id)}>Open messages <ArrowRight size={14}/></button></div></div>
                 </article>
-              )) : <div className="buyer-inbox-empty"><span><MessageCircle size={25}/></span><strong>No messages yet</strong><p>Your inbox stays empty until you or the seller sends the first message. To start, open one of your orders and choose “Message seller”.</p><button type="button" className="customer-primary-button" onClick={()=>onNavigate('orders')}>View my orders</button></div>}
+              )) : {chatPanel?<div className="buyer-inbox-empty buyer-inbox-empty-active"><span><MessageCircle size={25}/></span><strong>New conversation</strong><p>You’re ready to message the seller about this order. Send your first message in the conversation panel.</p></div>:<div className="buyer-inbox-empty"><span><MessageCircle size={25}/></span><strong>No messages yet</strong><p>Your inbox stays empty until you or the seller sends the first message. To start, open one of your orders and choose “Message seller”.</p><button type="button" className="customer-primary-button" onClick={()=>onNavigate('orders')}>View my orders</button></div>}}
             </div>
             {chatPanel || <div className="customer-panel buyer-inbox-placeholder"><span><MessageCircle size={28}/></span><h3>Select a conversation</h3><p>Choose a conversation started by you or the seller. To begin a new conversation, open an order and send the seller your first message.</p></div>}
           </div>
