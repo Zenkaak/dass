@@ -376,7 +376,7 @@ export default async function handler(req:any,res:any){
    if(resultCode!==0){
     const terminalStatus=resultCode===1032||resultCode===4999?'cancelled':'failed';
     await sql`UPDATE public.payments SET status=${terminalStatus},provider_result=${JSON.stringify({...((p.provider_result&&typeof p.provider_result==='object')?p.provider_result:{}),callback:cb,resultCode,resultDescription:String(cb.ResultDesc||'')})}::jsonb,updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
-    if(p.provider_result?.source!=='seller_subscription'){
+    if(!['seller_subscription','seller_lifetime_license'].includes(String(p.provider_result?.source||''))){
      await releaseInventory(sql,String(p.id));
      if(p.order_id)await notifyOrderBuyer(sql,p.tenant_id,p.order_id,'payment_update',terminalStatus==='cancelled'?'Payment cancelled':'Payment failed','Payment for your order was '+terminalStatus+'.');
     }
@@ -437,7 +437,7 @@ export default async function handler(req:any,res:any){
     FROM public.payments p
     LEFT JOIN public.payment_configs pc ON pc.tenant_id=p.tenant_id
     LEFT JOIN public.platform_payment_methods pm ON pm.method=CASE WHEN p.provider_result->>'paymentMethod'='paybill' THEN 'paybill' ELSE 'till' END
-    WHERE p.status IN ('initiated','pending') AND p.provider_result->>'source' IS DISTINCT FROM 'seller_subscription' AND p.created_at<=now()-interval '20 minutes'
+    WHERE p.status IN ('initiated','pending') AND p.provider_result->>'source' NOT IN ('seller_subscription','seller_lifetime_license') AND p.created_at<=now()-interval '20 minutes'
       AND p.provider_checkout_id IS NOT NULL
       AND NOT EXISTS (SELECT 1 FROM public.inventory_reservations ir WHERE ir.payment_id=p.id AND ir.status='active' AND ir.expires_at>now())
     ORDER BY p.created_at ASC LIMIT 30`;
