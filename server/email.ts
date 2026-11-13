@@ -101,7 +101,8 @@ function templateKind(heading:string,brand:string){
 function emailShell(brand:string,heading:string,intro:string,details:Record<string,string>,options:EmailTemplateOptions,platform:boolean){
  const kind=templateKind(heading,brand),safeBrand=escapeEmailHtml(brand),title=escapeEmailHtml(heading),message=escapeEmailHtml(intro);
  const buttonUrl=safeHttpUrl(options.buttonUrl),buttonLabel=escapeEmailHtml(options.buttonLabel||'View details');
- const accent=kind==='seller-payment'||kind==='payout'?'#07833b':kind==='admin-report'||kind==='low-stock'?'#e21b23':kind==='subscription'?'#6b20c9':kind==='message'?'#1d63df':'#0645ad';
+ const defaultAccent=kind==='seller-payment'||kind==='payout'?'#07833b':kind==='admin-report'||kind==='low-stock'?'#e21b23':kind==='subscription'?'#6b20c9':kind==='message'?'#1d63df':'#0645ad';
+ const accent=/^#[0-9a-f]{6}$/i.test(String(options.accentColor||''))?String(options.accentColor):defaultAccent;
  const logo=safeHttpUrl(options.logoUrl),productImage=safeHttpUrl(options.productImageUrl);
  const preheader=escapeEmailHtml(options.preheader||intro);
  const items=options.items||[];
@@ -132,7 +133,7 @@ function emailShell(brand:string,heading:string,intro:string,details:Record<stri
  const extra=kind==='order'?'<div style="margin:16px 0;padding:13px;background:#eaf2ff;border:1px solid #d8e6ff;border-radius:10px;text-align:center;font-size:13px;color:#102b63">🚚 &nbsp; <b>Estimated Delivery</b><br>1–3 working days</div>':kind==='shipped'?'<div style="margin:16px 0;padding:13px;background:#eaf2ff;border:1px solid #d8e6ff;border-radius:10px;text-align:center;font-size:13px;color:#102b63"><b>Track Your Order</b><br>Click the button below to track your delivery in real-time.</div>':kind==='low-stock'?'<div style="margin:12px 0;color:#d20d17;font-size:16px;font-weight:800;text-align:center">Only a few units left in stock</div>':kind==='subscription'?'<div style="margin:16px 0;padding:13px;background:#eee6ff;border-radius:11px;text-align:center;color:#381078;font-size:13px">📅 &nbsp; Your subscription details are listed below.</div>':'';
  const adminFooter=kind==='admin-report'?'<tr><td style="padding:16px;text-align:center;border-top:1px solid #e5eaf4;font-size:12px;color:#102b63;font-weight:800">DASMARKET Admin Panel</td></tr>':'';
  const support=String(options.supportEmail||'').trim();
- const supportRow=/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(support)?'<tr><td style="padding:12px 18px 2px;text-align:center;color:#53627d;font-size:11px">Need assistance? <a href="mailto:'+escapeEmailHtml(support)+'" style="color:#0645ad;text-decoration:underline">'+escapeEmailHtml(support)+'</a></td></tr>':'';
+ const supportRow=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(support)?'<tr><td style="padding:12px 18px 2px;text-align:center;color:#53627d;font-size:11px">Need assistance? <a href="mailto:'+escapeEmailHtml(support)+'" style="color:#0645ad;text-decoration:underline">'+escapeEmailHtml(support)+'</a></td></tr>':'';
  const footer='<tr><td style="padding:15px 18px;background:#062e78;text-align:center;color:#fff;font-size:12px;font-weight:800">'+(platform?'DASMARKET · Shop Smart. Live Better.':'Powered by DASMARKET')+' <span style="color:#ffbd00">♥</span></td></tr>';
  const social='<div style="padding:6px 0 12px;text-align:center;color:#092b70;font-size:14px;font-weight:800">f &nbsp; 𝕏 &nbsp; ▶ &nbsp; ♪</div>';
  const body='<tr><td style="padding:8px 26px 22px">'+(kind==='seller-order'||kind==='seller-payment'||kind==='message'||kind==='payout'||kind==='low-stock'||kind==='subscription'?'<p style="font-size:14px;font-weight:700;color:#081e57;margin:6px 0 10px">Hello '+escapeEmailHtml(String(details?.Shop||details?.Seller||brand||'there'))+',</p>':'')+detailsBlock+products+extra+cta+'</td></tr>';
