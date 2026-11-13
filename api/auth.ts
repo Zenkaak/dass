@@ -102,13 +102,14 @@ if(req.method==='POST'&&action==='change-password'){
  if(!validPassword(next))return send(res,400,{error:'Use at least 10 characters with letters and numbers.'});
  if(next!==confirm)return send(res,400,{error:'The new password and confirmation do not match.'});
  if(current===next)return send(res,400,{error:'Choose a password different from your current password.'});
- const sessions=await sql`SELECT u.id,u.password_hash,u.password_salt FROM public.auth_sessions s JOIN public.users u ON u.id=s.user_id WHERE s.token_hash=${hash(session)} AND s.expires_at>now() LIMIT 1`;
+ const sessions=await sql`SELECT u.id,u.email,u.display_name,u.password_hash,u.password_salt FROM public.auth_sessions s JOIN public.users u ON u.id=s.user_id WHERE s.token_hash=${hash(session)} AND s.expires_at>now() LIMIT 1`;
  const user=sessions[0];if(!user)return send(res,401,{error:'Your session has expired. Sign in again.'});
  if(!user.password_hash||!user.password_salt||!equal(pw(current,user.password_salt),user.password_hash))return send(res,400,{error:'Your current password is incorrect.'});
  const salt=crypto.randomBytes(16).toString('hex');
  await sql`UPDATE public.users SET password_hash=${pw(next,salt)},password_salt=${salt},updated_at=now() WHERE id=${user.id}`;
  await sql`DELETE FROM public.auth_sessions WHERE user_id=${user.id} AND token_hash<>${hash(session)}`;
  await sql`DELETE FROM public.store_customer_sessions WHERE customer_id IN (SELECT id FROM public.store_customers WHERE user_id=${user.id})`;
+ try{if(user.email){const mail=brandedEmail('DASMARKET','Your password was changed','The password for your DASMARKET seller account was successfully changed. If you did not make this change, contact DASMARKET support immediately.');await sendTransactionalEmail({to:String(user.email),subject:'DASMARKET password changed',...mail,idempotencyKey:'seller-password-changed-'+user.id+'-'+hash(salt).slice(0,12)});}}catch(emailError:any){console.error('Password change notification email failed',String(emailError?.message||emailError).slice(0,200));}
  return send(res,200,{ok:true,message:'Password changed. Other signed-in sessions have been closed.'});
 }
 if(req.method==='POST'&&action==='reset-password'){const p=phoneOf(b.phone),code=String(b.code||''),password=String(b.password||'');if(!p||!validPassword(password))return send(res,400,{error:'Enter a valid phone and password of at least 10 characters with letters and numbers.'});const users=await sql`SELECT id FROM public.users WHERE phone=${p} LIMIT 1`;if(!users.length||!await verify(sql,p,'password_reset',code))return send(res,400,{error:'Invalid or expired reset code.'});const salt=crypto.randomBytes(16).toString('hex');await sql`UPDATE public.users SET password_hash=${pw(password,salt)},password_salt=${salt},updated_at=now() WHERE id=${users[0].id}`;await sql`DELETE FROM public.auth_sessions WHERE user_id=${users[0].id}`;await sql`DELETE FROM public.store_customer_sessions WHERE customer_id IN (SELECT id FROM public.store_customers WHERE user_id=${users[0].id} OR phone=${p})`;return send(res,200,{ok:true,message:'Password reset. Sign in again.'})}
