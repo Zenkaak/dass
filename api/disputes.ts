@@ -29,7 +29,8 @@ async function actor(sql:any,req:any,tenantId:string){
   if(adminPhones.length){const a=await sql`SELECT u.id,u.display_name,u.phone FROM public.auth_sessions x JOIN public.users u ON u.id=x.user_id WHERE x.token_hash=${hash(global)} AND x.expires_at>now() LIMIT 1`;if(a.length&&adminPhones.includes(phoneOf(a[0].phone)))return {...a[0],role:'admin',senderRole:'admin',senderId:a[0].id,name:a[0].display_name||'DASNET Support'};}
  }
  const legacy=cookie(req,'das_buyer_session');
- const buyerToken=global||legacy;
+ const modernBuyer=cookie(req,'das_buyer_auth');
+ const buyerToken=modernBuyer||global||legacy;
  if(buyerToken){const b=await sql`SELECT c.id,c.full_name,c.phone,c.email,c.tenant_id FROM public.store_customers c LEFT JOIN public.auth_sessions a ON a.user_id=c.user_id AND a.token_hash=${hash(buyerToken)} AND a.expires_at>now() LEFT JOIN public.store_customer_sessions x ON x.customer_id=c.id AND x.token_hash=${hash(buyerToken)} AND x.expires_at>now() WHERE c.tenant_id=${tenantId} AND (a.user_id IS NOT NULL OR x.token_hash IS NOT NULL) AND c.is_banned=false AND (c.banned_until IS NULL OR c.banned_until<=now()) LIMIT 1`;if(b.length)return {...b[0],role:'buyer',senderRole:'buyer',senderId:b[0].id,name:b[0].full_name};}
  return null;
 }
