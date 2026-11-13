@@ -28,7 +28,7 @@ export function AuthPage({initial='signup'}:{initial?:Mode}) {
      {(mode==='login'||mode==='signup'&&step===4||mode==='reset'&&sent)&&<label>{mode==='reset'?'New password':'Password'}<input type="password" value={password} onChange={e=>setPassword(e.target.value)} required minLength={10} maxLength={128} autoComplete={mode==='login'?'current-password':'new-password'} placeholder="At least 10 characters"/></label>}
      {error&&<div className="auth-message error" role="alert">{error}</div>}{message&&<div className="auth-message success" role="status">{message}</div>}
      <div className="auth-form-actions">{mode==='signup'&&step>1&&<button type="button" className="auth-back-step" onClick={()=>setStep(s=>Math.max(1,s-1))}><ArrowLeft size={15}/> Back</button>}<button className="button primary auth-submit dm-auth-submit" disabled={busy}>{busy?'Please wait…':mode==='signup'?(step<3?'Continue':step===3?'Send verification code':'Create shop'):mode==='login'?'Sign in':sent?'Reset password':'Send reset code'} <ArrowRight size={16}/></button></div>
-    </form>
+    </form>}
     {(mode==='signup'||mode==='reset')&&sent&&<button className="auth-text-button" type="button" onClick={()=>{setSent(false);setCode('');setMessage('');setStep(3)}}>Change phone number</button>}
     {mode==='login'&&<button className="dm-auth-forgot" type="button" onClick={()=>changeMode('reset')}>Forgot your password?</button>}
     {mode==='reset'&&<button className="dm-auth-forgot" type="button" onClick={()=>changeMode('login')}>Back to sign in</button>}
