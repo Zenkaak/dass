@@ -68,6 +68,9 @@ export async function sendTenantTransactionalEmail(sql:any,tenantId:string,input
    }else{
     shopInput={...shopInput,html:shopInput.html.replace('<!--SHOP_LOGO_SLOT-->','')};
    }
+   const shopContactEmail=String(branding[0]?.contact_email||'').trim();
+   const shopSupportMarkup=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shopContactEmail)?'<tr><td style="padding:12px 18px 2px;text-align:center;color:#53627d;font-size:11px">For shop assistance, contact <a href="mailto:'+escapeEmailHtml(shopContactEmail)+'" style="color:#0645ad;text-decoration:underline">'+escapeEmailHtml(shopContactEmail)+'</a></td></tr>':'';
+   shopInput={...shopInput,html:shopInput.html.replace('<!--SHOP_SUPPORT_SLOT-->',shopSupportMarkup)};
   }catch(error:any){console.warn('Shop email branding lookup skipped',String(error?.message||error).slice(0,160));}
   if(row?.enabled&&row.encrypted_config?.ciphertext){
    const secret=decryptTenantEmailConfig(row.encrypted_config);
@@ -133,7 +136,7 @@ function emailShell(brand:string,heading:string,intro:string,details:Record<stri
  const extra=kind==='order'?'<div style="margin:16px 0;padding:13px;background:#eaf2ff;border:1px solid #d8e6ff;border-radius:10px;text-align:center;font-size:13px;color:#102b63">🚚 &nbsp; <b>Estimated Delivery</b><br>1–3 working days</div>':kind==='shipped'?'<div style="margin:16px 0;padding:13px;background:#eaf2ff;border:1px solid #d8e6ff;border-radius:10px;text-align:center;font-size:13px;color:#102b63"><b>Track Your Order</b><br>Click the button below to track your delivery in real-time.</div>':kind==='low-stock'?'<div style="margin:12px 0;color:#d20d17;font-size:16px;font-weight:800;text-align:center">Only a few units left in stock</div>':kind==='subscription'?'<div style="margin:16px 0;padding:13px;background:#eee6ff;border-radius:11px;text-align:center;color:#381078;font-size:13px">📅 &nbsp; Your subscription details are listed below.</div>':'';
  const adminFooter=kind==='admin-report'?'<tr><td style="padding:16px;text-align:center;border-top:1px solid #e5eaf4;font-size:12px;color:#102b63;font-weight:800">DASMARKET Admin Panel</td></tr>':'';
  const support=String(options.supportEmail||'').trim();
- const supportRow=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(support)?'<tr><td style="padding:12px 18px 2px;text-align:center;color:#53627d;font-size:11px">Need assistance? <a href="mailto:'+escapeEmailHtml(support)+'" style="color:#0645ad;text-decoration:underline">'+escapeEmailHtml(support)+'</a></td></tr>':'';
+ const supportRow=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(support)?'<tr><td style="padding:12px 18px 2px;text-align:center;color:#53627d;font-size:11px">Need assistance? <a href="mailto:'+escapeEmailHtml(support)+'" style="color:#0645ad;text-decoration:underline">'+escapeEmailHtml(support)+'</a></td></tr>':(platform?'':'<!--SHOP_SUPPORT_SLOT-->');
  const footer='<tr><td style="padding:15px 18px;background:#062e78;text-align:center;color:#fff;font-size:12px;font-weight:800">'+(platform?'DASMARKET · Shop Smart. Live Better.':'Powered by DASMARKET')+' <span style="color:#ffbd00">♥</span></td></tr>';
  const social='<div style="padding:6px 0 12px;text-align:center;color:#092b70;font-size:14px;font-weight:800">f &nbsp; 𝕏 &nbsp; ▶ &nbsp; ♪</div>';
  const body='<tr><td style="padding:8px 26px 22px">'+(kind==='seller-order'||kind==='seller-payment'||kind==='message'||kind==='payout'||kind==='low-stock'||kind==='subscription'?'<p style="font-size:14px;font-weight:700;color:#081e57;margin:6px 0 10px">Hello '+escapeEmailHtml(String(details?.Shop||details?.Seller||brand||'there'))+',</p>':'')+detailsBlock+products+extra+cta+'</td></tr>';
