@@ -457,7 +457,11 @@ export function StorefrontFlow({
           return;
         }
         if(data.providerResponded){setPaymentProviderResponded(true);setPaymentPollMessage('Safaricom has processed the request. Verifying the M-PESA receipt…');}
-        else setPaymentPollMessage(attempts>20?'Still waiting for Safaricom. We’ll keep checking automatically…':data.message||'Waiting for Safaricom payment confirmation…');
+        else if(attempts>=20){
+          finished=true;
+          setPaymentProviderResponded(false);
+          setPaymentPollMessage('We have not received a final result from Safaricom yet. Your order remains unpaid. Leave this page and check the order again shortly; do not submit another payment until its status is updated.');
+        }else setPaymentPollMessage(data.message||'Waiting for Safaricom payment confirmation…');
       }catch(error:any){
         if(live)setPaymentPollMessage('Connection interrupted. Retrying the payment check automatically…');
       }finally{requestInFlight=false;}
