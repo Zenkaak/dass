@@ -2,7 +2,7 @@ import storeHandler from './store.js';
 
 const MERCHANT_ACTIONS=new Set([
  'store-settings','coupons','coupon','payment-settings','payout-settings','subscription','subscription-stk',
- 'api-credentials','transactions','tickets','ticket','profile','settings',
+ 'api-credentials','email-credentials','email-test','transactions','tickets','ticket','profile','settings',
  'products','orders','product-image-upload','products-bulk','product',
  'product-status','order-chat','order-status','order-delivery-status',
  'products-test-seed'
