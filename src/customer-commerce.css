@@ -6288,3 +6288,11 @@
   .dm-auth-page.dm-auth-v3 .dm-auth-v3-wrap,.buyer-auth-page.buyer-auth-v2 .buyer-auth-v2-shell{padding-top:24px!important;padding-bottom:24px!important}
   .dm-auth-page.dm-auth-v3 .dm-auth-v3-heading{margin-bottom:12px!important}
 }
+
+
+/* Keep buyer recommendations attached directly to the end of each account page.
+   Account routes are otherwise viewport-height screens, which leaves a blank block
+   between short page content and the product rail. */
+.customer-workspace-shell.has-product-discovery{min-height:0!important}
+.customer-workspace-shell.has-product-discovery .customer-flow{min-height:0!important;margin-bottom:0!important;padding-bottom:0!important}
+.customer-workspace-shell.has-product-discovery .buyer-account-discovery{margin-top:0!important}
