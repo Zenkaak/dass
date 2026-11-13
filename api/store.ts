@@ -996,7 +996,8 @@ export default async function handler(req:any,res:any){
    if(!encryptionKey)return send(res,503,{error:'Secure credential storage is not configured. Contact DASMARKET support.'});
    if(action==='email-credentials'&&req.method==='POST'){
     const b=req.body||{},fromEmail=String(b.fromEmail||'').trim().toLowerCase(),replyToEmail=String(b.replyToEmail||'').trim().toLowerCase(),fromName=String(b.fromName||me.shop_name||'').trim().slice(0,100),notificationEmail=String(b.notificationEmail||'').trim().toLowerCase().slice(0,254);
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fromEmail)||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyToEmail))return send(res,400,{error:'Enter valid sender and reply-to email addresses.'});\n    if(notificationEmail&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notificationEmail))return send(res,400,{error:'Enter a valid order notification email address.'});
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fromEmail)||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyToEmail))return send(res,400,{error:'Enter valid sender and reply-to email addresses.'});
+    if(notificationEmail&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notificationEmail))return send(res,400,{error:'Enter a valid order notification email address.'});
     const current=await sql`SELECT encrypted_config FROM public.tenant_email_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
     let secret:any={};
     if(current[0]?.encrypted_config?.ciphertext){try{secret=decryptTenantEmailConfig(current[0].encrypted_config)}catch{return send(res,500,{error:'Saved Resend credentials could not be decrypted. Contact support before replacing them.'});}}
