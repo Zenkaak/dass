@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import crypto from 'node:crypto';
-import { sendTransactionalEmail, escapeEmailHtml } from '../src/server/email.js';
+import { sendTransactionalEmail, sendTenantTransactionalEmail, sendUsingResendConfig, brandedEmail, encryptTenantEmailConfig, decryptTenantEmailConfig, escapeEmailHtml } from '../src/server/email.js';
 
 // Keep a stack trace for legacy URL parser warnings so the originating dependency
 // can be identified and upgraded instead of hiding the warning.
@@ -952,6 +952,53 @@ export default async function handler(req:any,res:any){
    await sql`INSERT INTO public.payment_configs(tenant_id,provider,environment,party_b,account_reference,payout_method,account_type,till_party_b,paybill_party_b,default_payout_method,is_enabled) VALUES(${me.tenant_id},'mpesa_daraja','production',${partyB},${paybill?account:null},${method},${type},${till||null},${paybill||null},${method},true) ON CONFLICT(tenant_id) DO UPDATE SET party_b=EXCLUDED.party_b,account_reference=EXCLUDED.account_reference,payout_method=EXCLUDED.payout_method,account_type=EXCLUDED.account_type,till_party_b=COALESCE(EXCLUDED.till_party_b,payment_configs.till_party_b),paybill_party_b=COALESCE(EXCLUDED.paybill_party_b,payment_configs.paybill_party_b),default_payout_method=EXCLUDED.default_payout_method,updated_at=now()`;
    await audit(sql,me.tenant_id,me.user_id,'payout.destination.updated','payment_config',me.tenant_id,{defaultMethod:method,tillConfigured:!!till,paybillConfigured:!!paybill});
    return send(res,200,{ok:true,defaultPayoutMethod:method,accountType:type});
+  }
+  if(['email-credentials','email-test'].includes(action)){
+   await sql`CREATE TABLE IF NOT EXISTS public.tenant_email_configs (
+    tenant_id uuid PRIMARY KEY REFERENCES public.tenants(id) ON DELETE CASCADE,
+    encrypted_config jsonb NOT NULL,
+    from_email text NOT NULL,
+    reply_to_email text NOT NULL,
+    enabled boolean NOT NULL DEFAULT true,
+    updated_at timestamptz NOT NULL DEFAULT now()
+   )`;
+   if(req.method==='GET'&&action==='email-credentials'){
+    const rows=await sql`SELECT from_email,reply_to_email,enabled,updated_at FROM public.tenant_email_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
+    const row=rows[0];
+    return send(res,200,{configured:!!row?.enabled,fromEmail:row?.from_email||'',replyToEmail:row?.reply_to_email||'',updatedAt:row?.updated_at||null,apiKeyConfigured:!!row?.enabled});
+   }
+   if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner or admin can manage email credentials.'});
+   const encryptionKey=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');
+   if(!encryptionKey)return send(res,503,{error:'Secure credential storage is not configured. Contact DASMARKET support.'});
+   if(action==='email-credentials'&&req.method==='POST'){
+    const b=req.body||{},fromEmail=String(b.fromEmail||'').trim().toLowerCase(),replyToEmail=String(b.replyToEmail||'').trim().toLowerCase(),fromName=String(b.fromName||me.shop_name||'').trim().slice(0,100);
+    if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(fromEmail)||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(replyToEmail))return send(res,400,{error:'Enter valid sender and reply-to email addresses.'});
+    const current=await sql`SELECT encrypted_config FROM public.tenant_email_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
+    let secret:any={};
+    if(current[0]?.encrypted_config?.ciphertext){try{secret=decryptTenantEmailConfig(current[0].encrypted_config)}catch{return send(res,500,{error:'Saved Resend credentials could not be decrypted. Contact support before replacing them.'});}}
+    const supplied=String(b.apiKey||'').trim();
+    if(supplied){if(!/^re_[A-Za-z0-9_-]{10,}$/.test(supplied))return send(res,400,{error:'That does not look like a valid Resend API key.'});secret.apiKey=supplied;}
+    if(b.clearApiKey===true)secret.apiKey='';
+    if(!secret.apiKey)return send(res,400,{error:'Enter your Resend API key before saving.'});
+    secret.fromName=fromName;
+    const encrypted=encryptTenantEmailConfig(secret);
+    await sql`INSERT INTO public.tenant_email_configs(tenant_id,encrypted_config,from_email,reply_to_email,enabled,updated_at) VALUES(${me.tenant_id},${JSON.stringify(encrypted)}::jsonb,${fromEmail},${replyToEmail},true,now()) ON CONFLICT(tenant_id) DO UPDATE SET encrypted_config=EXCLUDED.encrypted_config,from_email=EXCLUDED.from_email,reply_to_email=EXCLUDED.reply_to_email,enabled=true,updated_at=now()`;
+    await audit(sql,me.tenant_id,me.user_id,'email.resend.credentials.updated','email_config',me.tenant_id,{fromEmail,replyToEmail,apiKeyStoredEncrypted:true});
+    return send(res,200,{ok:true,configured:true,fromEmail,replyToEmail,apiKeyConfigured:true,message:'Resend credentials encrypted and saved.'});
+   }
+   if(action==='email-test'&&req.method==='POST'){
+    const rows=await sql`SELECT encrypted_config,from_email,reply_to_email,enabled FROM public.tenant_email_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
+    if(!rows[0]?.enabled)return send(res,400,{error:'Save your Resend settings first.'});
+    const recipient=String(req.body?.to||'').trim().toLowerCase();
+    if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(recipient))return send(res,400,{error:'Enter a valid test recipient email address.'});
+    let secret:any;try{secret=decryptTenantEmailConfig(rows[0].encrypted_config)}catch{return send(res,500,{error:'Saved Resend credentials could not be decrypted.'});}
+    const test=brandedEmail(me.shop_name||'Your shop','Your email connection is working','This is a test email from your shop. Future customer notifications will use this sender.');
+    const result=await sendUsingResendConfig(String(secret.apiKey||''),rows[0].from_email,String(secret.fromName||me.shop_name||''),rows[0].reply_to_email,{to:recipient,subject:'Test email from '+(me.shop_name||'your shop'),...test});
+    if(!result.sent)return send(res,502,{error:'Resend rejected the test email. Check that your API key is valid and the sender domain is verified in Resend.'});
+    await audit(sql,me.tenant_id,me.user_id,'email.resend.test_sent','email_config',me.tenant_id,{recipient});
+    return send(res,200,{ok:true,message:'Test email accepted by Resend.',emailId:result.id});
+   }
+   return send(res,405,{error:'Method not allowed.'});
   }
   if(req.method==='GET'&&action==='api-credentials'){
    const rows=await sql`SELECT encrypted_credentials,shortcode,environment,account_type FROM public.payment_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
