@@ -443,9 +443,9 @@ function SellerSubscriptionsPanel({data,onRefresh,phone}:{data:any;onRefresh:()=
  const plans=(data?.plans||[]).filter((p:any)=>p.is_active!==false);
  const lifetimePlan=plans.find((p:any)=>p.code==='lifetime-license');
  const recurringPlans=plans.filter((p:any)=>p.code!=='lifetime-license');
- const ownsLifetime=current?.code==='lifetime-license';
  const trialDays=Math.max(0,Math.min(30,Number(data?.trialDays??7)));
  const current=data?.subscription;
+ const ownsLifetime=current?.code==='lifetime-license';
  const trialEnd=current?.trial_ends_at||current?.current_period_end;
  const trialRemaining=Math.max(0,new Date(trialEnd||0).getTime()-clock);
  const trialExpired=current?.status==='trialing'&&trialRemaining<=0;
