@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import crypto from 'node:crypto';
+import { sendTenantTransactionalEmail, brandedEmail } from '../server/email.js';
 const env=(k:string)=>(process.env[k]||'').trim();
 async function verifyGitHubOidc(token:string){
  try{
@@ -36,10 +37,18 @@ export default async function handler(req:any,res:any){
   const sql=neon(url);
   const expired=await sql`UPDATE public.shop_complaints SET dispute_status='escalated',status='under_review',dispute_escalated_at=now(),updated_at=now() WHERE dispute_status IN ('open','resolution_pending') AND dispute_deadline_at<=now() RETURNING id,tenant_id,buyer_phone`;
   for(const c of expired){
-   await sql`INSERT INTO public.dispute_notifications(tenant_id,complaint_id,recipient_role,recipient_phone,title,detail) VALUES(${c.tenant_id},${c.id},'buyer',${c.buyer_phone},'Dispute escalated to DASNET support','The one-hour resolution window has ended. DASNET support will review the case.')`;
-   const seller=await sql`SELECT created_by FROM public.tenants WHERE id=${c.tenant_id}`;
-   if(seller[0]?.created_by)await sql`INSERT INTO public.dispute_notifications(tenant_id,complaint_id,recipient_role,recipient_user_id,title,detail) VALUES(${c.tenant_id},${c.id},'seller',${seller[0].created_by},'Dispute escalated to DASNET support','The one-hour resolution window has ended. DASNET support will review the case.')`;
+   const title='Dispute escalated to DASNET support',detail='The one-hour resolution window has ended. DASMARKET support will review the case.';
+   await sql`INSERT INTO public.dispute_notifications(tenant_id,complaint_id,recipient_role,recipient_phone,title,detail) VALUES(${c.tenant_id},${c.id},'buyer',${c.buyer_phone},${title},${detail})`;
+   const seller=await sql`SELECT t.created_by,t.name AS shop_name,u.email AS seller_email,sc.email AS buyer_email FROM public.tenants t LEFT JOIN public.users u ON u.id=t.created_by LEFT JOIN public.store_customers sc ON sc.tenant_id=t.id AND right(regexp_replace(sc.phone,'[^0-9]','','g'),9)=right(regexp_replace(${c.buyer_phone},'[^0-9]','','g'),9) WHERE t.id=${c.tenant_id} LIMIT 1`;
+   if(seller[0]?.created_by)await sql`INSERT INTO public.dispute_notifications(tenant_id,complaint_id,recipient_role,recipient_user_id,title,detail) VALUES(${c.tenant_id},${c.id},'seller',${seller[0].created_by},${title},${detail})`;
    await sql`INSERT INTO public.dispute_notifications(tenant_id,complaint_id,recipient_role,title,detail) VALUES(${c.tenant_id},${c.id},'admin','Dispute requires support review','A dispute has reached its one-hour deadline.')`;
+   try{
+    const shop=String(seller[0]?.shop_name||'DASMARKET shop'),reference=String(c.id).slice(0,8).toUpperCase();
+    if(seller[0]?.buyer_email){const mail=brandedEmail(shop,title,detail,{'Report reference':reference});await sendTenantTransactionalEmail(sql,String(c.tenant_id),{to:String(seller[0].buyer_email),subject:title+' — '+reference,...mail,idempotencyKey:'dispute-cron-buyer-'+c.id});}
+    if(seller[0]?.seller_email){const mail=brandedEmail(shop,title,detail,{'Report reference':reference});await sendTenantTransactionalEmail(sql,String(c.tenant_id),{to:String(seller[0].seller_email),subject:title+' — '+reference,...mail,idempotencyKey:'dispute-cron-seller-'+c.id});}
+    const admins=(env('DAS_PLATFORM_ADMIN_EMAILS')||'').split(',').map((v:string)=>v.trim()).filter((v:string)=>/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(v));
+    for(const to of admins){const mail=brandedEmail('DASMARKET','Dispute requires support review','A dispute has reached its one-hour deadline and requires platform review.',{'Shop':shop,'Report reference':reference});await sendTenantTransactionalEmail(sql,String(c.tenant_id),{to,subject:'Dispute escalated — '+reference,...mail,idempotencyKey:'dispute-cron-admin-'+c.id+'-'+crypto.createHash('sha256').update(to).digest('hex').slice(0,8)});}
+   }catch(emailError:any){console.error('Dispute escalation email failed',String(emailError?.message||emailError).slice(0,200));}
   }
   return res.status(200).json({ok:true,escalated:expired.length});
  }catch(e:any){console.error('Dispute deadline cron',e?.message||e);return res.status(500).json({error:'Could not process dispute deadlines'});}
