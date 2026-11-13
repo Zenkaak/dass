@@ -6372,3 +6372,266 @@
  .buyer-global-routebar{padding:7px 12px!important}
  .ds-store-notification-popover{top:65px;right:10px}
 }
+
+
+/* Dedicated buyer report page — refined standalone case-intake layout. */
+.store-page.is-buyer-reports-route .disputes-workspace.disputes-create-route{
+  width:100%;
+}
+.store-page.is-buyer-reports-route .disputes-workspace.disputes-create-route .disputes-list-view{
+  width:100%;
+  padding:0;
+  background:transparent;
+}
+.store-page.is-buyer-reports-route .dispute-create-inline{
+  display:block;
+  width:min(100%,900px);
+  margin:0 auto;
+}
+.store-page.is-buyer-reports-route .dispute-new-form.dispute-create-page{
+  box-sizing:border-box;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:0 22px;
+  width:100%;
+  max-width:900px;
+  margin:0 auto;
+  padding:clamp(24px,4vw,42px);
+  border:1px solid #e4eaf0;
+  border-radius:22px;
+  background:#fff;
+  box-shadow:0 18px 52px rgba(24,42,58,.075);
+}
+.store-page.is-buyer-reports-route .dispute-create-heading{
+  grid-column:1/-1;
+  position:relative;
+  display:block;
+  margin:0 0 28px;
+  padding:0 110px 22px 0;
+  border-bottom:1px solid #edf1f4;
+}
+.store-page.is-buyer-reports-route .dispute-create-heading>div:before{
+  content:"SECURE SUPPORT REQUEST";
+  display:inline-flex;
+  align-items:center;
+  min-height:25px;
+  margin-bottom:10px;
+  padding:0 10px;
+  border:1px solid #d8e9df;
+  border-radius:999px;
+  background:#f0f8f3;
+  color:#217448;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.12em;
+}
+.store-page.is-buyer-reports-route .dispute-create-heading strong{
+  display:block;
+  margin:0 0 9px;
+  color:#172b3e;
+  font-size:clamp(24px,3vw,31px);
+  font-weight:850;
+  line-height:1.16;
+  letter-spacing:-.04em;
+}
+.store-page.is-buyer-reports-route .dispute-create-heading p{
+  max-width:590px;
+  margin:0;
+  color:#68798b;
+  font-size:13px;
+  line-height:1.7;
+}
+.store-page.is-buyer-reports-route .dispute-create-heading .dispute-create-cancel{
+  position:absolute;
+  top:0;
+  right:0;
+  min-height:38px;
+  padding:0 13px;
+  border:1px solid #e1e7ed;
+  border-radius:10px;
+  background:#fff;
+  color:#596b7c;
+  font-size:12px;
+  font-weight:750;
+}
+.store-page.is-buyer-reports-route .dispute-new-form>label:not(.dispute-file-picker){
+  display:grid;
+  align-content:start;
+  gap:9px;
+  min-width:0;
+  margin:0 0 22px;
+  color:#273b4f;
+  font-size:12px;
+  font-weight:800;
+}
+.store-page.is-buyer-reports-route .dispute-new-form>label:nth-of-type(3){
+  grid-column:1/-1;
+}
+.store-page.is-buyer-reports-route .dispute-new-form input:not([type=file]),
+.store-page.is-buyer-reports-route .dispute-new-form select,
+.store-page.is-buyer-reports-route .dispute-new-form textarea{
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  min-height:49px;
+  padding:12px 14px;
+  border:1px solid #dce4eb;
+  border-radius:11px;
+  background:#fbfcfd;
+  color:#203449;
+  font:inherit;
+  font-size:13px;
+  font-weight:500;
+  transition:border-color .15s,box-shadow .15s,background .15s;
+}
+.store-page.is-buyer-reports-route .dispute-new-form select{
+  appearance:auto;
+}
+.store-page.is-buyer-reports-route .dispute-new-form textarea{
+  min-height:176px;
+  padding:14px;
+  background:#fbfcfd;
+  line-height:1.65;
+  resize:vertical;
+}
+.store-page.is-buyer-reports-route .dispute-new-form input:focus,
+.store-page.is-buyer-reports-route .dispute-new-form select:focus,
+.store-page.is-buyer-reports-route .dispute-new-form textarea:focus{
+  border-color:#29915c;
+  outline:0;
+  background:#fff;
+  box-shadow:0 0 0 4px rgba(41,145,92,.11);
+}
+.store-page.is-buyer-reports-route .dispute-new-form>label>small{
+  color:#8996a3;
+  font-size:10px;
+  font-weight:500;
+  line-height:1.5;
+}
+.store-page.is-buyer-reports-route .dispute-new-form .dispute-file-picker{
+  grid-column:1/-1;
+  display:grid;
+  grid-template-columns:1fr auto;
+  align-items:center;
+  gap:12px 18px;
+  margin:0;
+  padding:19px;
+  border:1px dashed #b9cfc1;
+  border-radius:13px;
+  background:#f7fbf8;
+}
+.store-page.is-buyer-reports-route .dispute-new-form .dispute-file-picker>span{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  color:#28533d;
+  font-size:12px;
+  font-weight:850;
+}
+.store-page.is-buyer-reports-route .dispute-new-form .dispute-file-picker>span small{
+  color:#819187;
+  font-size:10px;
+  font-weight:550;
+}
+.store-page.is-buyer-reports-route .dispute-new-form .dispute-file-picker input{
+  max-width:260px;
+  color:#5d6d7b;
+  font-size:11px;
+}
+.store-page.is-buyer-reports-route .dispute-new-form .dispute-file-picker>small{
+  grid-column:1/-1;
+  color:#829187;
+  font-size:10px;
+}
+.store-page.is-buyer-reports-route .dispute-new-file-list{
+  grid-column:1/-1;
+  display:grid;
+  gap:8px;
+  margin-top:12px;
+}
+.store-page.is-buyer-reports-route .dispute-new-file-list>div{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+  padding:10px 12px;
+  border:1px solid #e7edf0;
+  border-radius:10px;
+  background:#fbfcfd;
+  color:#42566a;
+  font-size:11px;
+}
+.store-page.is-buyer-reports-route .dispute-new-file-list>div span{
+  flex:1;
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+.store-page.is-buyer-reports-route .dispute-create-actions{
+  grid-column:1/-1;
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:23px;
+  padding-top:20px;
+  border-top:1px solid #edf1f4;
+}
+.store-page.is-buyer-reports-route .dispute-create-actions button{
+  min-height:48px;
+  padding:0 23px;
+  border-radius:11px;
+  font-size:12px;
+  font-weight:850;
+}
+.store-page.is-buyer-reports-route .dispute-create-actions button:first-child{
+  min-width:180px;
+  border:1px solid #16834e;
+  background:#16834e;
+  color:#fff;
+  box-shadow:0 6px 15px rgba(22,131,78,.16);
+}
+.store-page.is-buyer-reports-route .dispute-create-actions button:first-child:hover:not(:disabled){background:#116d40}
+.store-page.is-buyer-reports-route .dispute-create-actions button.dispute-create-cancel{
+  border:1px solid #dfe6ec;
+  background:#fff;
+  color:#596b7c;
+}
+.store-page.is-buyer-reports-route .dispute-create-actions button:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+}
+.store-page.is-buyer-reports-route .disputes-alert{
+  width:min(100%,900px);
+  box-sizing:border-box;
+  margin:0 auto 14px;
+}
+@media(max-width:700px){
+  .store-page.is-buyer-reports-route .buyer-reports-fullscreen{padding:12px 12px 36px!important}
+  .store-page.is-buyer-reports-route .dispute-create-inline{width:100%}
+  .store-page.is-buyer-reports-route .dispute-new-form.dispute-create-page{
+    grid-template-columns:1fr;
+    gap:0;
+    padding:21px 17px;
+    border-radius:17px;
+  }
+  .store-page.is-buyer-reports-route .dispute-create-heading{
+    grid-column:1;
+    margin-bottom:21px;
+    padding:0 0 18px;
+  }
+  .store-page.is-buyer-reports-route .dispute-create-heading .dispute-create-cancel{
+    position:static;
+    margin-top:14px;
+  }
+  .store-page.is-buyer-reports-route .dispute-create-heading strong{font-size:24px}
+  .store-page.is-buyer-reports-route .dispute-new-form>label:not(.dispute-file-picker),
+  .store-page.is-buyer-reports-route .dispute-new-form>label:nth-of-type(3),
+  .store-page.is-buyer-reports-route .dispute-new-form .dispute-file-picker,
+  .store-page.is-buyer-reports-route .dispute-new-file-list,
+  .store-page.is-buyer-reports-route .dispute-create-actions{grid-column:1}
+  .store-page.is-buyer-reports-route .dispute-new-form>label:not(.dispute-file-picker){margin-bottom:18px}
+  .store-page.is-buyer-reports-route .dispute-new-form .dispute-file-picker{grid-template-columns:1fr;padding:15px}
+  .store-page.is-buyer-reports-route .dispute-new-form .dispute-file-picker input{max-width:100%}
+  .store-page.is-buyer-reports-route .dispute-new-form .dispute-file-picker>small{grid-column:1}
+  .store-page.is-buyer-reports-route .dispute-create-actions{display:grid;grid-template-columns:1fr;padding-top:17px}
+  .store-page.is-buyer-reports-route .dispute-create-actions button{width:100%;min-height:47px}
+}
