@@ -397,7 +397,7 @@ export default async function handler(req:any,res:any){
     console.warn('Daraja callback arrived before its payment reference was persisted',{checkout});
     return send(res,503,{ResultCode:1,ResultDesc:'Payment reference is not available yet. Please retry this callback.'});
    }
-   const p=rows[0];if(p.status==='succeeded')return send(res,200,{ResultCode:0,ResultDesc:'Already processed'});
+   const p=rows[0];if(p.status==='succeeded'){try{await sql`INSERT INTO public.payment_reconciliation_jobs(payment_id,tenant_id,order_id,status) VALUES(${p.id},${p.tenant_id},${p.order_id},'pending') ON CONFLICT(payment_id) DO NOTHING`;const pending=await sql`SELECT id FROM public.payment_reconciliation_jobs WHERE payment_id=${p.id} AND status='pending' LIMIT 1`;if(pending.length)await reconcilePaymentJob(sql,String(pending[0].id));}catch(replayError:any){console.error('Already-paid callback reconciliation failed',{paymentId:p.id,error:String(replayError?.message||replayError).slice(0,220)});}return send(res,200,{ResultCode:0,ResultDesc:'Already processed'});}
    // Public callbacks are notifications, not proof. Independently query Daraja
    // before applying ANY successful, failed, or cancelled payment state. In
    // particular, never release inventory based only on an untrusted cancellation
