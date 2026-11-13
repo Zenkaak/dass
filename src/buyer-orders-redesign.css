@@ -1,0 +1,169 @@
+/* Buyer order history — premium, shop-branded responsive redesign.
+   Presentation only: order state, filtering routes and actions remain in StorefrontFlow. */
+.buyer-my-orders-v2{
+  width:100%;min-width:0;max-width:1040px;margin:0 auto;padding-bottom:28px;
+  color:#172033;
+}
+.buyer-my-orders-v2>.customer-flow-heading{
+  min-height:48px;margin:0 0 18px;padding:0 0 12px;
+  display:flex;align-items:center;gap:12px;border-bottom:1px solid #edf0f4;
+}
+.buyer-my-orders-v2>.customer-flow-heading .customer-back-button{
+  min-height:38px;padding:8px 12px;border:1px solid #e4e9ef;border-radius:10px;
+  background:#fff;color:#536174;font-size:12px;font-weight:700;
+  box-shadow:0 2px 6px rgba(15,23,42,.035);
+}
+.buyer-my-orders-v2>.customer-flow-heading h1{
+  margin:0;color:#172033;font-size:20px;font-weight:850;letter-spacing:-.035em;
+}
+.buyer-my-orders-heading{
+  position:relative;overflow:hidden;margin:0 0 18px;padding:22px 24px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  border:1px solid #f0dfb7;border-radius:18px;
+  background:linear-gradient(115deg,#fffaf0 0%,#fff 58%,#fff8e8 100%);
+  box-shadow:0 8px 24px rgba(39,47,61,.045);
+}
+.buyer-my-orders-heading:after{
+  content:"";position:absolute;width:180px;height:180px;right:-70px;top:-105px;
+  border:24px solid rgba(221,165,50,.09);border-radius:50%;pointer-events:none;
+}
+.buyer-my-orders-heading>div{position:relative;z-index:1}
+.buyer-my-orders-heading .buyer-section-kicker{
+  display:inline-flex;align-items:center;gap:7px;color:#a36e0b;
+  font-size:10px;font-weight:850;letter-spacing:.14em;
+}
+.buyer-my-orders-heading .buyer-section-kicker:before{
+  content:"";width:18px;height:2px;border-radius:2px;background:#d69a25;
+}
+.buyer-my-orders-heading h2{
+  margin:7px 0 5px;color:#172033;font-size:27px;font-weight:900;
+  letter-spacing:-.055em;line-height:1.1;
+}
+.buyer-my-orders-heading p{margin:0;color:#687589;font-size:12px;line-height:1.55}
+.buyer-orders-total{
+  position:relative;z-index:1;flex:0 0 auto;min-width:90px;padding:11px 14px;
+  border:1px solid #f0dfb7;border-radius:13px;background:rgba(255,255,255,.82);
+  color:#8b620e;font-size:12px;font-weight:850;text-align:center;
+  box-shadow:0 3px 10px rgba(135,96,18,.06);
+}
+.buyer-my-orders-tabs{
+  position:sticky;top:0;z-index:4;margin:0 0 16px;padding:5px;
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;
+  border:1px solid #e7ebf0;border-radius:13px;background:rgba(248,250,252,.96);
+  box-shadow:0 5px 18px rgba(15,23,42,.045);backdrop-filter:blur(12px);
+}
+.buyer-my-orders-tabs button{
+  min-width:0;min-height:46px;padding:8px 10px;display:flex;align-items:center;
+  justify-content:center;gap:8px;border:1px solid transparent;border-radius:9px;
+  background:transparent;color:#687589;font-size:12px;font-weight:750;
+  transition:background .18s ease,border-color .18s ease,color .18s ease,box-shadow .18s ease;
+}
+.buyer-my-orders-tabs button b{
+  min-width:22px;height:22px;padding:0 6px;display:grid;place-items:center;
+  border-radius:99px;background:#e9edf2;color:#5c6878;font-size:10px;font-weight:850;
+}
+.buyer-my-orders-tabs button.is-active{
+  border-color:#f0dfb7;background:#fff;color:#8f620c;
+  box-shadow:0 2px 7px rgba(36,43,54,.07);
+}
+.buyer-my-orders-tabs button.is-active b{background:#fff2ce;color:#94640a}
+.buyer-my-orders-list{display:flex;flex-direction:column;gap:14px}
+.buyer-my-order-card{
+  position:relative;min-width:0;padding:0 19px;border:1px solid #e7ebf0;
+  border-radius:16px;background:#fff;box-shadow:0 4px 15px rgba(18,32,53,.045);
+  transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease;
+}
+.buyer-my-order-card:hover{border-color:#e4d3a9;box-shadow:0 9px 25px rgba(18,32,53,.075);transform:translateY(-1px)}
+.buyer-my-order-top{
+  min-height:76px;padding:15px 0;display:flex;align-items:center;
+  justify-content:space-between;gap:12px;border-bottom:1px solid #edf0f4;
+}
+.buyer-my-order-top>div{gap:4px}
+.buyer-my-order-top small,.buyer-my-order-bottom small{
+  color:#8994a4;font-size:9px;font-weight:850;letter-spacing:.11em;
+}
+.buyer-my-order-top strong{color:#1d2a3d;font-size:13px;font-weight:850;letter-spacing:.01em}
+.buyer-my-order-top>div>span{color:#8490a0;font-size:11px}
+.buyer-my-order-status{
+  padding:7px 11px;gap:7px;border:1px solid #f0dfb7;border-radius:99px;
+  background:#fff9ec;color:#95620b;font-size:10px;font-weight:800;white-space:nowrap;
+}
+.buyer-my-order-status i{width:7px;height:7px}
+.buyer-my-order-status.is-success{border-color:#ccebd8;background:#effaf3;color:#177245}
+.buyer-my-order-status.is-danger{border-color:#f2d2d0;background:#fff3f2;color:#b42318}
+.buyer-my-order-items{padding:8px 0}
+.buyer-my-order-item{
+  min-height:88px;grid-template-columns:66px minmax(0,1fr) auto;gap:13px;
+  border-bottom:1px solid #f0f2f5;
+}
+.buyer-my-order-item .customer-product-thumb{
+  width:62px;height:62px;border:1px solid #e9edf2;border-radius:11px;background:#f8fafc;
+}
+.buyer-my-order-item>div{gap:6px}
+.buyer-my-order-item>div strong{color:#273449;font-size:12px;font-weight:750;line-height:1.45}
+.buyer-my-order-item>div span{color:#8792a1;font-size:11px}
+.buyer-my-order-item>b{color:#1e2a3b;font-size:12px;font-weight:850}
+.buyer-my-order-more{margin:8px 0 4px;padding-left:79px;color:#7a8798;font-size:11px}
+.buyer-my-order-bottom{
+  min-height:74px;padding:13px 0;display:flex;align-items:center;
+  justify-content:space-between;gap:14px;border-top:1px solid #edf0f4;
+}
+.buyer-my-order-bottom>div:first-child{gap:5px}
+.buyer-my-order-bottom>div:first-child strong{color:#172033;font-size:18px;font-weight:900;letter-spacing:-.025em}
+.buyer-my-order-actions{gap:8px}
+.buyer-my-order-actions .customer-primary-button,.buyer-my-order-actions .customer-secondary-button{
+  min-height:40px;padding:9px 14px;border-radius:10px;font-size:11px;font-weight:800;
+}
+.buyer-my-order-actions .customer-primary-button{box-shadow:0 3px 8px rgba(178,127,20,.13)}
+.buyer-my-orders-empty{
+  min-height:250px;padding:40px 20px;border:1px dashed #d8e0e9;border-radius:17px;
+  background:linear-gradient(180deg,#fff 0%,#fbfcfe 100%);
+}
+.buyer-my-orders-empty>span{
+  width:58px;height:58px;margin-bottom:15px;border:1px solid #f0dfb7;
+  border-radius:17px;background:#fff8e7;color:#a26f0b;
+}
+.buyer-my-orders-empty h2{margin:0 0 8px;color:#1d2a3d;font-size:18px;font-weight:850}
+.buyer-my-orders-empty p{max-width:340px;color:#758195;font-size:12px;line-height:1.65}
+.buyer-my-orders-v2 .customer-orders-recommendations{margin-top:24px;padding-top:18px;border-top:1px solid #edf0f4}
+.buyer-my-orders-v2 .customer-orders-recommendations .customer-section-title h2{
+  color:#1d2a3d;font-size:17px;font-weight:850;letter-spacing:-.025em;
+}
+@media(max-width:650px){
+  .buyer-my-orders-v2{padding-bottom:20px}
+  .buyer-my-orders-v2>.customer-flow-heading{margin-bottom:12px}
+  .buyer-my-orders-v2>.customer-flow-heading h1{font-size:18px}
+  .buyer-my-orders-heading{margin-bottom:13px;padding:17px 15px;border-radius:15px}
+  .buyer-my-orders-heading h2{font-size:23px}
+  .buyer-my-orders-heading p{max-width:235px;font-size:11px}
+  .buyer-orders-total{min-width:70px;padding:9px 8px;font-size:10px}
+  .buyer-my-orders-tabs{top:0;margin-bottom:12px;padding:4px;gap:3px}
+  .buyer-my-orders-tabs button{min-height:43px;padding:7px 3px;gap:5px;font-size:10px}
+  .buyer-my-orders-tabs button b{min-width:19px;height:19px;font-size:9px}
+  .buyer-my-orders-list{gap:11px}
+  .buyer-my-order-card{padding:0 12px;border-radius:14px}
+  .buyer-my-order-top{min-height:69px;padding:12px 0;align-items:flex-start}
+  .buyer-my-order-top strong{font-size:12px}
+  .buyer-my-order-top>div>span{font-size:10px}
+  .buyer-my-order-status{max-width:46%;padding:6px 8px;font-size:9px;white-space:normal;text-align:center;justify-content:center}
+  .buyer-my-order-item{min-height:76px;grid-template-columns:54px minmax(0,1fr) auto;gap:9px}
+  .buyer-my-order-item .customer-product-thumb{width:52px;height:52px;border-radius:9px}
+  .buyer-my-order-item>div strong{font-size:11px}
+  .buyer-my-order-item>div span{font-size:10px}
+  .buyer-my-order-item>b{font-size:10px}
+  .buyer-my-order-more{padding-left:63px;font-size:10px}
+  .buyer-my-order-bottom{min-height:0;padding:12px 0;align-items:flex-start;flex-direction:column;gap:10px}
+  .buyer-my-order-bottom>div:first-child strong{font-size:17px}
+  .buyer-my-order-actions{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .buyer-my-order-actions .customer-primary-button,.buyer-my-order-actions .customer-secondary-button{width:100%;min-height:41px;padding:8px 6px;font-size:10px;justify-content:center}
+  .buyer-my-orders-empty{min-height:225px;padding:30px 14px}
+}
+@media(max-width:360px){
+  .buyer-my-orders-heading{align-items:flex-start}
+  .buyer-orders-total{min-width:62px;font-size:9px}
+  .buyer-my-orders-tabs button{font-size:9px}
+  .buyer-my-order-actions{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  .buyer-my-order-card,.buyer-my-orders-tabs button{transition:none}
+}
