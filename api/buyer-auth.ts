@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import crypto from 'node:crypto';
-import { sendTransactionalEmail, escapeEmailHtml } from '../src/server/email.js';
+import { sendTenantTransactionalEmail, brandedEmail } from '../src/server/email.js';
 
 const env=(k:string)=>(process.env[k]||'').trim();
 const hash=(s:string)=>crypto.createHash('sha256').update(s).digest('hex');
@@ -105,7 +105,7 @@ export default async function handler(req:any,res:any){
     SELECT p.* FROM profile p JOIN session s ON true
    `;
    if(!rows.length)return send(res,409,{error:'This phone could not be linked safely. Sign in to the existing DASNET account or contact support.'});
-   await recordSignals(sql,rows[0].id,phone,email,requestIp(req));cookie(res,token,604800);try{const safeName=escapeEmailHtml(name),safeShop=escapeEmailHtml(tenant.name);await sendTransactionalEmail({to:email,subject:'Welcome to '+tenant.name, text:'Hi '+name+', your buyer account for '+tenant.name+' is ready. You can now track orders and receive shop updates.',html:'<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#202124"><h2>Welcome to '+safeShop+'</h2><p>Hi '+safeName+',</p><p>Your buyer account is ready. You can now place orders, track deliveries and receive updates from the shop.</p><p style="color:#667085;font-size:13px">Powered by DASMARKET</p></div>'});}catch(emailError:any){console.error('Buyer welcome email could not be sent',String(emailError?.message||emailError).slice(0,200));}return send(res,201,{ok:true,customer:customer(rows[0])});
+   await recordSignals(sql,rows[0].id,phone,email,requestIp(req));cookie(res,token,604800);try{const welcome=brandedEmail(tenant.name,'Welcome to '+tenant.name,'Hi '+name+', your buyer account is ready. You can now place orders, track deliveries and receive updates from the shop.');await sendTenantTransactionalEmail(sql,tenantId,{to:email,subject:'Welcome to '+tenant.name,...welcome,idempotencyKey:'buyer-welcome-'+rows[0].id});}catch(emailError:any){console.error('Buyer welcome email could not be sent',String(emailError?.message||emailError).slice(0,200));}return send(res,201,{ok:true,customer:customer(rows[0])});
   }
   if(req.method==='POST'&&action==='login'){
    const phone=phoneOf(body.phone),password=String(body.password||'');if(!phone||!password)return send(res,400,{error:'Enter your mobile number and password.'});if(await restricted(sql,'buyer',phone,'',requestIp(req)))return send(res,403,{error:'This buyer identity is restricted. Contact DASNET support.'});
