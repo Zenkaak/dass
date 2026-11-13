@@ -85,7 +85,7 @@ function shopEmailOrderUrl(slug:string,orderNumber:string,seller=false){
  const host=String(slug||'').toLowerCase().replace(/[^a-z0-9-]/g,'');
  if(!host)return 'https://dasmarket.co.ke';
  const base='https://'+host+'.dasmarket.co.ke';
- return seller?'https://dasmarket.co.ke/dashboard/'+encodeURIComponent(orderNumber):base+'/orders';
+ return seller?'https://dasmarket.co.ke/dashboard/'+encodeURIComponent(orderNumber):base+'/order-detail?order='+encodeURIComponent(orderNumber);
 }
 
 async function reserveInventory(sql:any,paymentId:string){
