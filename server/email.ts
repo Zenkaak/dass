@@ -62,9 +62,11 @@ export async function sendTenantTransactionalEmail(sql:any,tenantId:string,input
    const configuredFrom=env('RESEND_FROM_EMAIL')||'DASMARKET <notifications@dasmarket.co.ke>';
    const senderAddress=configuredFrom.match(/<([^>]+)>/)?.[1]||configuredFrom;
    var shopFallbackFrom=shopLabel+' via DASMARKET <'+senderAddress+'>';
-   if(logo&&shopInput.html.includes('SHOP UPDATE')){
-    const logoMarkup='<img src="'+escapeEmailHtml(logo)+'" alt="Shop logo" width="150" style="display:block;max-width:150px;max-height:56px;object-fit:contain;border:0">';
-    shopInput={...shopInput,html:shopInput.html.replace(new RegExp('<span[^>]*>[^<]*</span>'),logoMarkup)};
+   if(logo&&shopInput.html.includes('<!--SHOP_LOGO_SLOT-->')){
+    const logoMarkup='<img src="'+escapeEmailHtml(logo)+'" alt="'+escapeEmailHtml(shopLabel)+' logo" width="34" height="34" style="display:inline-block;width:34px;height:34px;object-fit:contain;vertical-align:middle;border-radius:7px;border:1px solid #e5eaf3;background:#fff">';
+    shopInput={...shopInput,html:shopInput.html.replace('<!--SHOP_LOGO_SLOT-->',logoMarkup)};
+   }else{
+    shopInput={...shopInput,html:shopInput.html.replace('<!--SHOP_LOGO_SLOT-->','')};
    }
   }catch(error:any){console.warn('Shop email branding lookup skipped',String(error?.message||error).slice(0,160));}
   if(row?.enabled&&row.encrypted_config?.ciphertext){
