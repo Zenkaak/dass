@@ -259,7 +259,7 @@ export function StorefrontFlow({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mpesa');
   const [paymentModal,setPaymentModal]=useState<PaymentMethod|null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [paymentPollMessage,setPaymentPollMessage]=useState('Waiting for payment confirmation…');
+  const [paymentPollMessage,setPaymentPollMessage]=useState('Waiting for payment confirmation…');const [paymentProviderResponded,setPaymentProviderResponded]=useState(false);
   const [checkoutError, setCheckoutError] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('pickup');
   const [deliveryCounty, setDeliveryCounty] = useState('');
@@ -456,11 +456,13 @@ export function StorefrontFlow({
           }
           return;
         }
-        setPaymentPollMessage(attempts>20?'Still waiting for Safaricom. We’ll keep checking automatically…':data.message||'Waiting for Safaricom payment confirmation…');
+        if(data.providerResponded){setPaymentProviderResponded(true);setPaymentPollMessage('Safaricom has processed the request. Verifying the M-PESA receipt…');}
+        else setPaymentPollMessage(attempts>20?'Still waiting for Safaricom. We’ll keep checking automatically…':data.message||'Waiting for Safaricom payment confirmation…');
       }catch(error:any){
         if(live)setPaymentPollMessage('Connection interrupted. Retrying the payment check automatically…');
       }finally{requestInFlight=false;}
     };
+    setPaymentProviderResponded(false);
     setPaymentPollMessage('Waiting for payment confirmation…');
     void checkPayment();
     const timer=window.setInterval(()=>{if(document.visibilityState==='visible')void checkPayment();},6000);
@@ -804,11 +806,11 @@ export function StorefrontFlow({
 
   function renderPaymentProcessing() {
     if(!activeOrder)return <section className="customer-flow"><FlowHeading title="Payment processing" onBack={()=>onNavigate('cart')}/><div className="customer-empty-state"><p>Loading…</p></div></section>;
-    return <section className="customer-flow customer-success-page market-payment-processing">
+    return <section className={"customer-flow customer-success-page market-payment-processing"+(paymentProviderResponded?" has-provider-response":"")}>
       <div className="market-payment-processing-icon" aria-hidden="true"><span/></div>
       <span className="buyer-section-kicker">SECURE PAYMENT CHECK</span>
       <h1>Confirming your M-PESA payment</h1>
-      <p className="market-payment-processing-copy">Keep this page open while we wait for the payment confirmation.</p>
+      <p className="market-payment-processing-copy">{paymentProviderResponded?"Safaricom has responded. We are verifying the M-PESA receipt before confirming your order.":"Keep this page open while we wait for the payment confirmation."}</p>
       <div className="customer-panel market-payment-processing-card">
         <div><small>ORDER NUMBER</small><strong>{activeOrder.orderNumber}</strong></div>
         <div><small>AMOUNT</small><strong>{formatKes(activeOrder.total)}</strong></div>
