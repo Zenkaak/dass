@@ -810,19 +810,23 @@ export function StorefrontFlow({
 
   function renderPaymentProcessing() {
     if(!activeOrder)return <section className="customer-flow"><FlowHeading title="Payment processing" onBack={()=>onNavigate('cart')}/><div className="customer-empty-state"><p>Loading…</p></div></section>;
-    return <section className={"customer-flow customer-success-page market-payment-processing"+(paymentProviderResponded?" has-provider-response":"")}>
+    const paymentState=String(activeOrder.paymentStatus||'pending').toLowerCase();
+    const paymentTerminal=['cancelled','failed','reversed'].includes(paymentState);
+    const paymentSucceeded=paymentState==='succeeded';
+    const paymentWaiting=!paymentTerminal&&!paymentSucceeded;
+    return <section className={"customer-flow customer-success-page market-payment-processing"+(paymentProviderResponded?" has-provider-response":"")+(paymentTerminal?" is-terminal":"")+(paymentSucceeded?" is-paid":"")}>
       <div className="market-payment-processing-icon" aria-hidden="true"><span/></div>
-      <span className="buyer-section-kicker">SECURE PAYMENT CHECK</span>
-      <h1>Confirming your M-PESA payment</h1>
-      <p className="market-payment-processing-copy">{paymentProviderResponded?"Safaricom has responded. We are verifying the M-PESA receipt before confirming your order.":"Keep this page open while we wait for the payment confirmation."}</p>
+      <span className="buyer-section-kicker">{paymentSucceeded?'PAYMENT CONFIRMED':paymentTerminal?'PAYMENT NOT COMPLETED':'SECURE PAYMENT CHECK'}</span>
+      <h1>{paymentSucceeded?'Your payment is confirmed':paymentState==='cancelled'?'You cancelled the M-PESA prompt':paymentState==='failed'?'M-PESA payment failed':paymentState==='reversed'?'Payment reversed':'Confirming your M-PESA payment'}</h1>
+      <p className="market-payment-processing-copy">{paymentSucceeded?(activeOrder.receipt?'Safaricom confirmed your payment. Receipt: '+activeOrder.receipt:'Safaricom confirmed your payment.') : paymentTerminal?(paymentState==='cancelled'?'Safaricom confirmed that you cancelled the prompt. No payment was collected. You can safely request a new prompt when ready.':'Safaricom confirmed that this payment did not complete. No payment was collected. You can retry when ready.') : paymentProviderResponded?"Safaricom has responded. We are verifying the M-PESA receipt before confirming your order.":"Keep this page open while we wait for the payment confirmation."}</p>
       <div className="customer-panel market-payment-processing-card">
         <div><small>ORDER NUMBER</small><strong>{activeOrder.orderNumber}</strong></div>
         <div><small>AMOUNT</small><strong>{formatKes(activeOrder.total)}</strong></div>
         <div><small>PAYMENT PHONE</small><strong>{paymentPhone||activeOrder.customerPhone}</strong></div>
       </div>
-      <p className="market-payment-poll-status" role="status">{paymentPollMessage}</p>
-      <p className="customer-preview-note"><ShieldCheck size={15}/> Your order will only be marked paid after Safaricom’s payment receipt is verified. Do not send another payment prompt while this check is running.</p>
-      <div className="customer-flow-actions"><button type="button" className="customer-secondary-button" onClick={()=>openOrder(activeOrder,'order-detail')}>View order status</button></div>
+      <p className="market-payment-poll-status" role="status">{paymentSucceeded?'Payment confirmed by Safaricom.':paymentTerminal?(paymentPollMessage||'Payment request ended.'):paymentPollMessage}</p>
+      {paymentWaiting&&<p className="customer-preview-note"><ShieldCheck size={15}/> Your order will only be marked paid after Safaricom’s payment receipt is verified. Do not send another payment prompt while this check is running.</p>}
+      <div className="customer-flow-actions"><button type="button" className="customer-secondary-button" onClick={()=>openOrder(activeOrder,'order-detail')}>{paymentTerminal?'View order and retry':'View order status'}</button></div>
     </section>;
   }
 
