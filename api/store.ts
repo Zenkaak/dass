@@ -394,15 +394,18 @@ export default async function handler(req:any,res:any){
      console.error('Daraja successful callback did not match payment record',{paymentId:p.id,checkout,amountMinor:Number.isFinite(amount)?Math.round(amount*100):null,expectedAmountMinor:Number(p.amount_minor),phoneMatched:phone===expectedPhone,hasReceipt:!!receipt});
      return send(res,200,{ResultCode:0,ResultDesc:'Callback received; payment details require review'});
     }
-    if(p.provider_result?.source==='seller_subscription'){
+    if(['seller_subscription','seller_lifetime_license'].includes(String(p.provider_result?.source||''))){
      const meta=p.provider_result||{},planId=String(meta.planId||''),intervalDays=Number(meta.intervalDays);
-     if(!/^[0-9a-f-]{36}$/i.test(planId)||![30,90,180,365].includes(intervalDays))return send(res,200,{ResultCode:0,ResultDesc:'Payment received; subscription details require admin review'});
+     const lifetime=p.provider_result?.source==='seller_lifetime_license';
+     if(!/^[0-9a-f-]{36}$/i.test(planId)||(lifetime?intervalDays!==36500:![30,90,180,365].includes(intervalDays)))return send(res,200,{ResultCode:0,ResultDesc:'Payment received; subscription details require admin review'});
      await sql`UPDATE public.payments SET status='succeeded',provider_receipt=${receipt},provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({callback:cb,callbackResultCode:resultCode})}::jsonb,verified_at=now(),updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
      const existing=await sql`SELECT id FROM public.subscriptions WHERE tenant_id=${p.tenant_id} ORDER BY created_at DESC LIMIT 1`;
      if(existing.length){
-      await sql`UPDATE public.subscriptions SET plan_id=${planId},status='active',trial_ends_at=NULL,current_period_start=now(),current_period_end=now()+make_interval(days=>${intervalDays}),provider_payment_id=${p.id},updated_at=now() WHERE id=${existing[0].id}`;
+      if(lifetime)await sql`UPDATE public.subscriptions SET plan_id=${planId},status='active',trial_ends_at=NULL,current_period_start=now(),current_period_end='9999-12-31 23:59:59+00'::timestamptz,provider_payment_id=${p.id},updated_at=now() WHERE id=${existing[0].id}`;
+      else await sql`UPDATE public.subscriptions SET plan_id=${planId},status='active',trial_ends_at=NULL,current_period_start=now(),current_period_end=now()+make_interval(days=>${intervalDays}),provider_payment_id=${p.id},updated_at=now() WHERE id=${existing[0].id}`;
      }else{
-      await sql`INSERT INTO public.subscriptions(tenant_id,plan_id,status,trial_ends_at,current_period_start,current_period_end,provider_payment_id) VALUES(${p.tenant_id},${planId},'active',NULL,now(),now()+make_interval(days=>${intervalDays}),${p.id})`;
+      if(lifetime)await sql`INSERT INTO public.subscriptions(tenant_id,plan_id,status,trial_ends_at,current_period_start,current_period_end,provider_payment_id) VALUES(${p.tenant_id},${planId},'active',NULL,now(),'9999-12-31 23:59:59+00'::timestamptz,${p.id})`;
+      else await sql`INSERT INTO public.subscriptions(tenant_id,plan_id,status,trial_ends_at,current_period_start,current_period_end,provider_payment_id) VALUES(${p.tenant_id},${planId},'active',NULL,now(),now()+make_interval(days=>${intervalDays}),${p.id})`;
      }
      await sql`UPDATE public.tenants SET status='active',updated_at=now() WHERE id=${p.tenant_id} AND status IN ('trial','past_due')`;
      return send(res,200,{ResultCode:0,ResultDesc:'Subscription payment verified and activated'});
@@ -992,7 +995,7 @@ export default async function handler(req:any,res:any){
     sql`SELECT s.id,s.status,s.trial_ends_at,s.current_period_start,s.current_period_end,s.updated_at,p.id AS plan_id,p.code,p.name,p.description,p.price_minor,p.currency,p.interval_days,p.features FROM public.subscriptions s JOIN public.subscription_plans p ON p.id=s.plan_id WHERE s.tenant_id=${me.tenant_id} ORDER BY s.created_at DESC LIMIT 1`,
     sql`SELECT id,code,name,description,price_minor,currency,interval_days,is_featured,features FROM public.subscription_plans WHERE is_active=true ORDER BY sort_order,price_minor`,
     sql`SELECT setting_value FROM public.platform_settings WHERE setting_key='subscription_payment' LIMIT 1`,
-    sql`SELECT id,status,amount_minor,provider_receipt,created_at FROM public.payments WHERE tenant_id=${me.tenant_id} AND provider_result->>'source'='seller_subscription' ORDER BY created_at DESC LIMIT 1`,
+    sql`SELECT id,status,amount_minor,provider_receipt,created_at FROM public.payments WHERE tenant_id=${me.tenant_id} AND provider_result->>'source' IN ('seller_subscription','seller_lifetime_license') ORDER BY created_at DESC LIMIT 1`,
     sql`SELECT COALESCE((setting_value->>'trial_days')::int,7) AS trial_days FROM public.platform_settings WHERE setting_key='subscription' LIMIT 1`
    ]);
    let currentSubscription=subs[0]||null;
@@ -1021,7 +1024,7 @@ export default async function handler(req:any,res:any){
    if(!/^[0-9a-f-]{36}$/i.test(planId)||!phone)return send(res,400,{error:'Choose a plan and enter a valid Kenyan M-PESA phone number.'});
    const [plans,subs,settings]=await Promise.all([
     sql`SELECT id,name,price_minor,currency,interval_days FROM public.subscription_plans WHERE id=${planId} AND is_active=true LIMIT 1`,
-    sql`SELECT id,status FROM public.subscriptions WHERE tenant_id=${me.tenant_id} ORDER BY created_at DESC LIMIT 1`,
+    sql`SELECT s.id,s.status,sp.code AS plan_code FROM public.subscriptions s JOIN public.subscription_plans sp ON sp.id=s.plan_id WHERE s.tenant_id=${me.tenant_id} ORDER BY s.created_at DESC LIMIT 1`,
     sql`SELECT setting_value FROM public.platform_settings WHERE setting_key='subscription_payment' LIMIT 1`
    ]);
    if(!plans.length)return send(res,404,{error:'That subscription plan is no longer available.'});
@@ -1033,18 +1036,19 @@ export default async function handler(req:any,res:any){
    const payment={...secret,shortcode:credentials[0].shortcode,environment:credentials[0].environment,partyB:String(cfg.destination),accountType:method==='paybill'?'CustomerPayBillOnline':'CustomerBuyGoodsOnline'};
    if(payment.environment!=='production')return send(res,503,{error:'Subscription STK is disabled while the selected Daraja credentials are in sandbox.'});
    if(!payment.consumerKey||!payment.consumerSecret||!payment.passkey||!payment.shortcode)return send(res,503,{error:'Complete the selected platform Daraja credentials before accepting subscription payments.'});
-   const prior=await sql`SELECT id,status FROM public.payments WHERE tenant_id=${me.tenant_id} AND provider='mpesa_daraja' AND provider_result->>'source'='seller_subscription' AND status IN ('initiated','pending') ORDER BY created_at DESC LIMIT 1`;
-   if(prior.length)return send(res,409,{error:'A subscription payment is already awaiting confirmation. Check your M-PESA messages before requesting another prompt.'});
-   const plan=plans[0],sub=subs[0]||null,amount=Number(plan.price_minor);
+   const prior=await sql`SELECT id,status FROM public.payments WHERE tenant_id=${me.tenant_id} AND provider='mpesa_daraja' AND provider_result->>'source' IN ('seller_subscription','seller_lifetime_license') AND status IN ('initiated','pending') ORDER BY created_at DESC LIMIT 1`;
+   if(prior.length)return send(res,409,{error:'A DASMARKET payment is already awaiting confirmation. Check your M-PESA messages before requesting another prompt.'});
+   if(subs[0]?.plan_code==='lifetime-license')return send(res,409,{error:'This shop already has a lifetime platform licence.'});
+   const plan=plans[0],sub=subs[0]||null,amount=Number(plan.price_minor),isLifetime=plan.code==='lifetime-license';
    if(!Number.isSafeInteger(amount)||amount<1)return send(res,400,{error:'This plan does not have a payable price.'});
-   const paymentId=crypto.randomUUID(),meta={source:'seller_subscription',paymentMethod:method,planId:plan.id,intervalDays:plan.interval_days,subscriptionId:sub?.id||null};
+   const paymentId=crypto.randomUUID(),meta={source:isLifetime?'seller_lifetime_license':'seller_subscription',paymentMethod:method,planId:plan.id,intervalDays:isLifetime?36500:plan.interval_days,subscriptionId:sub?.id||null};
    const inserted=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result) VALUES(${me.tenant_id},NULL,'mpesa_daraja',${phone},${amount},'KES','initiated',${paymentId},${JSON.stringify(meta)}::jsonb) RETURNING id`;
    try{
     const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/payments?action=daraja-callback';
     const stk=await startStk(payment,{order_number:'SUB-'+String(inserted[0].id).slice(0,8).toUpperCase()},phone,amount/100,method==='paybill'?(cfg.accountReference||'DASMARKET'):'DASMARKET',callbackUrl);
     await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({...meta,merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${inserted[0].id}`;
     await audit(sql,me.tenant_id,me.user_id,'subscription.payment_prompt.sent','subscription',sub?.id||me.tenant_id,{planId:plan.id,amountMinor:amount,method});
-    return send(res,200,{ok:true,checkoutRequestId:stk.checkoutId,paymentId:inserted[0].id,message:'M-PESA prompt sent for KSh '+(amount/100).toLocaleString('en-KE')+'. Enter your M-PESA PIN to complete the subscription.'});
+    return send(res,200,{ok:true,checkoutRequestId:stk.checkoutId,paymentId:inserted[0].id,message:'M-PESA prompt sent for KSh '+(amount/100).toLocaleString('en-KE')+'. Enter your M-PESA PIN to complete the '+(isLifetime?'one-time lifetime licence purchase':'subscription')+'.'});
    }catch(e:any){
     await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({error:String(e?.message||e).slice(0,500)})}::jsonb,updated_at=now() WHERE id=${inserted[0].id}`;
     return send(res,502,{error:String(e?.message||'M-PESA could not start the payment prompt.')});
