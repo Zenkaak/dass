@@ -46,7 +46,7 @@ export default async function handler(req:any,res:any){
     const shop=String(seller[0]?.shop_name||'DASMARKET shop'),reference=String(c.id).slice(0,8).toUpperCase();
     if(seller[0]?.buyer_email){const mail=brandedEmail(shop,title,detail,{'Report reference':reference});await sendTenantTransactionalEmail(sql,String(c.tenant_id),{to:String(seller[0].buyer_email),subject:title+' — '+reference,...mail,idempotencyKey:'dispute-cron-buyer-'+c.id});}
     if(seller[0]?.seller_email){const mail=brandedEmail(shop,title,detail,{'Report reference':reference});await sendTenantTransactionalEmail(sql,String(c.tenant_id),{to:String(seller[0].seller_email),subject:title+' — '+reference,...mail,idempotencyKey:'dispute-cron-seller-'+c.id});}
-    const admins=(env('DAS_PLATFORM_ADMIN_EMAILS')||'').split(',').map((v:string)=>v.trim()).filter((v:string)=>/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(v));
+    const admins=(env('DAS_PLATFORM_ADMIN_EMAILS')||env('SUPPORT_EMAIL')||'support@dasnet.co.ke').split(',').map((v:string)=>v.trim()).filter((v:string)=>/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(v));
     for(const to of admins){const mail=brandedEmail('DASMARKET','Dispute requires support review','A dispute has reached its one-hour deadline and requires platform review.',{'Shop':shop,'Report reference':reference});await sendTenantTransactionalEmail(sql,String(c.tenant_id),{to,subject:'Dispute escalated — '+reference,...mail,idempotencyKey:'dispute-cron-admin-'+c.id+'-'+crypto.createHash('sha256').update(to).digest('hex').slice(0,8)});}
    }catch(emailError:any){console.error('Dispute escalation email failed',String(emailError?.message||emailError).slice(0,200));}
   }
