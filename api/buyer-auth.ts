@@ -75,7 +75,7 @@ export default async function handler(req:any,res:any){
   }
   if(req.method==='POST'&&action==='signup'){
    const phone=phoneOf(body.phone),name=String(body.name||'').trim().slice(0,120),email=String(body.email||'').trim().toLowerCase().slice(0,254),altRaw=String(body.alternativePhone||'').trim(),alt=altRaw?phoneOf(altRaw):null,address=String(body.address||'').trim().slice(0,300),password=String(body.password||''),code=String(body.code||'');
-   if(!phone||name.length<2||!/^\S+@\S+\.\S+$/.test(email)||!address)return send(res,400,{error:'Complete your name, valid email, phone and delivery address.'});if(await restricted(sql,'buyer',phone,email,requestIp(req)))return send(res,403,{error:'This buyer identity is restricted. Contact DASNET support.'});
+   if(!phone||name.length<2||!/^\S+@\S+\.\S+$/.test(email))return send(res,400,{error:'Complete your name, valid email and phone number.'});if(await restricted(sql,'buyer',phone,email,requestIp(req)))return send(res,403,{error:'This buyer identity is restricted. Contact DASNET support.'});
    if(altRaw&&!alt)return send(res,400,{error:'Enter a valid Kenyan alternative phone number.'});
    if(!validPassword(password))return send(res,400,{error:'Use a password of at least 10 characters with letters and numbers.'});
    if((await sql`SELECT id FROM public.users WHERE phone=${phone} LIMIT 1`).length)return send(res,409,{error:'This phone already has a DASNET identity. Sign in instead.'});
