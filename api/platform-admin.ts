@@ -102,7 +102,7 @@ export default async function handler(req:any,res:any){
    const [settings,credentials,transactions]=await Promise.all([
     sql`SELECT setting_value FROM public.platform_settings WHERE setting_key='subscription_payment' LIMIT 1`,
     sql`SELECT method,shortcode,environment,encrypted_credentials FROM public.platform_payment_methods ORDER BY method`,
-    sql`SELECT p.id,p.tenant_id,p.phone,p.amount_minor,p.currency,p.status,p.provider_receipt,p.created_at,p.verified_at,p.provider_result,t.name AS shop_name,t.slug,sp.name AS plan_name FROM public.payments p JOIN public.tenants t ON t.id=p.tenant_id LEFT JOIN public.subscription_plans sp ON sp.id::text=p.provider_result->>'planId' WHERE p.provider_result->>'source'='seller_subscription' ORDER BY p.created_at DESC LIMIT 100`
+    sql`SELECT p.id,p.tenant_id,p.phone,p.amount_minor,p.currency,p.status,p.provider_receipt,p.created_at,p.verified_at,p.provider_result,t.name AS shop_name,t.slug,sp.name AS plan_name FROM public.payments p JOIN public.tenants t ON t.id=p.tenant_id LEFT JOIN public.subscription_plans sp ON sp.id::text=p.provider_result->>'planId' WHERE p.provider_result->>'source' IN ('seller_subscription','seller_lifetime_license') ORDER BY p.created_at DESC LIMIT 100`
    ]);
    const cfg=settings[0]?.setting_value||{},methods:any={till:{configured:false,shortcode:'',environment:'production'},paybill:{configured:false,shortcode:'',environment:'production'}};
    for(const row of credentials){const secret=row.encrypted_credentials||{};methods[row.method]={configured:!!(secret.data&&row.shortcode),shortcode:row.shortcode||'',environment:row.environment||'production'};}
@@ -196,7 +196,7 @@ export default async function handler(req:any,res:any){
    const v=req.body||{},id=String(v.id||''),code=String(v.code||'').trim().toLowerCase(),name=String(v.name||'').trim().slice(0,80),description=String(v.description||'').trim().slice(0,1000),price=Number(v.price_minor),interval=Number(v.interval_days),sort=Number(v.sort_order??100);
    if(id&&!/^[0-9a-f-]{36}$/i.test(id))return send(res,400,{error:'Invalid plan identifier.'});
    if(!/^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/.test(code)||!name)return send(res,400,{error:'Enter a plan name and a unique code using lowercase letters, numbers or hyphens.'});
-   if(!Number.isSafeInteger(price)||price<0||![30,90,180,365].includes(interval)||!Number.isInteger(sort)||sort<0||sort>10000)return send(res,400,{error:'Enter a valid price, billing period and display order.'});
+   if(!Number.isSafeInteger(price)||price<0||![30,90,180,365,36500].includes(interval)||!Number.isInteger(sort)||sort<0||sort>10000)return send(res,400,{error:'Enter a valid price, billing period and display order.'});
    const features={product_limit:0,staff_limit:0,custom_domain:true,advanced_analytics:true,coupons:true,promotions:true,priority_support:true};
    const active=v.is_active===true||v.is_active==='true',featured=v.is_featured===true||v.is_featured==='true';if(featured&&!active)return send(res,400,{error:'Only an active plan can be featured.'});if(featured){if(id)await sql`UPDATE public.subscription_plans SET is_featured=false WHERE id<>${id}`;else await sql`UPDATE public.subscription_plans SET is_featured=false WHERE is_featured=true`;}
    let saved:any[];
