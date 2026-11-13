@@ -19,6 +19,7 @@ import {
   TicketPercent,
   Phone,
   Mail,
+  MessageCircle,
 } from 'lucide-react';
 
 // Buyer account navigation keeps the marketplace account destinations available as real URLs.
@@ -1018,7 +1019,6 @@ export function StorefrontFlow({
             <div className="customer-panel buyer-inbox-list">
               <div className="buyer-inbox-list-heading"><strong>Conversations</strong><span>{conversations.length}</span></div>
               {conversations.length ? conversations.map((order) => {
-                const selected = Boolean(chatPanel) && false;
                 const status = String(order.deliveryStatus || order.orderStatus || 'Order placed').replace(/_/g,' ');
                 return <article className="buyer-inbox-thread" key={order.orderNumber}>
                   <div className="buyer-inbox-thread-avatar"><ShoppingBag size={19}/></div>
