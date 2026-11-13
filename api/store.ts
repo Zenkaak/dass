@@ -59,6 +59,7 @@ async function notifyBuyer(sql:any,tenantId:string,buyerPhone:string,orderId:str
  const inserted=await sql`INSERT INTO public.buyer_notifications(tenant_id,buyer_phone,order_id,complaint_id,notification_type,title,detail) VALUES(${tenantId},${buyerPhone},${orderId},${complaintId},${type},${title},${detail}) RETURNING id`;
  if(type==='chat_message'&&orderId){
   try{
+   await sql`ALTER TABLE public.tenant_email_configs ADD COLUMN IF NOT EXISTS notification_email text`;
    const rows=await sql`SELECT o.order_number,o.customer_name,o.customer_email,t.name AS shop_name,COALESCE(NULLIF(ec.notification_email,''),NULLIF(u.email,'')) AS seller_email FROM public.orders o JOIN public.tenants t ON t.id=o.tenant_id LEFT JOIN public.users u ON u.id=t.created_by LEFT JOIN public.tenant_email_configs ec ON ec.tenant_id=t.id AND ec.enabled=true WHERE o.id=${orderId} AND o.tenant_id=${tenantId} LIMIT 1`;
    const order=rows[0];
    if(order?.customer_email){
@@ -1098,6 +1099,13 @@ export default async function handler(req:any,res:any){
    const ticket='DS-'+Date.now().toString(36).toUpperCase();
    const row=await sql`INSERT INTO public.support_tickets(tenant_id,user_id,ticket_number,subject,category,priority,message) VALUES(${me.tenant_id},${me.user_id},${ticket},${subject},${category},'normal',${message}) RETURNING id,ticket_number,subject,status,created_at`;
    await audit(sql,me.tenant_id,me.user_id,'support.ticket.created','ticket',row[0].id,{ticketNumber:ticket,category});
+   try{
+    const owner=await sql`SELECT email,display_name FROM public.users WHERE id=${me.user_id} LIMIT 1`;
+    const mail=brandedEmail('DASMARKET','Support request received','We have received your support request. Our team will review it and respond through your seller dashboard.',{'Ticket number':ticket,'Subject':subject,'Category':category});
+    if(owner[0]?.email)await sendTransactionalEmail({to:String(owner[0].email),subject:'DASMARKET support ticket received — '+ticket,...mail,idempotencyKey:'support-ticket-receipt-'+row[0].id});
+    const admins=(env('DAS_PLATFORM_ADMIN_EMAILS')||'').split(',').map((v:string)=>v.trim()).filter((v:string)=>/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(v));
+    for(const to of admins){const adminMail=brandedEmail('DASMARKET','New seller support ticket','A seller has opened a support ticket. Sign in to the platform admin dashboard to review it.',{'Ticket number':ticket,'Shop':String(me.shop_name||''),'Subject':subject,'Category':category});await sendTransactionalEmail({to,subject:'New seller support ticket — '+ticket,...adminMail,idempotencyKey:'support-ticket-admin-'+row[0].id+'-'+hash(to).slice(0,8)});}
+   }catch(emailError:any){console.error('Support ticket email failed',String(emailError?.message||emailError).slice(0,200));}
    return send(res,201,{ticket:row[0]});
   }
   if(req.method==='GET'&&action==='subscription'){
