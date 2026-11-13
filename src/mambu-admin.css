@@ -708,3 +708,14 @@
 .mambu-subscription-destination-panel{background:#fff;border:1px solid #e3e8ef;border-radius:13px;padding:18px;margin:18px 0;max-width:920px;box-shadow:0 10px 30px #1c2d4210}
 .mambu-subscription-destination-panel .mambu-plan-editor-head{position:static;z-index:auto;background:transparent;padding:0;margin-bottom:15px}
 @media(max-width:600px){.mambu-subscription-destination-panel{padding:14px}}
+
+
+/* Complaint dossier becomes a real admin page when addressed by its case URL. */
+.mambu-report-page-backdrop{
+  position:relative!important;inset:auto!important;z-index:1!important;
+  display:block!important;padding:0!important;background:transparent!important;
+}
+.mambu-report-page-drawer{
+  width:100%!important;height:auto!important;max-height:none!important;
+  min-height:0;border-radius:16px!important;box-shadow:none!important;
+}
