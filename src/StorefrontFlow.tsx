@@ -357,7 +357,7 @@ export function StorefrontFlow({
           customerName: order.customerName,
           customerPhone: order.customerPhone,
           customerEmail: order.customerEmail || '',
-          paymentMethod: 'mpesa',
+          paymentMethod: isCash ? 'delivery' : 'mpesa',
           deliveryMethod: order.deliveryMethod === 'pickup' ? 'pickup' : 'home',
           deliveryAddress: order.deliveryAddress || '',
           pickupStation: order.pickupStation || '',
@@ -498,11 +498,8 @@ export function StorefrontFlow({
 
   async function placeOrder() {
     if (!lines.length || submitting) return;
-    if (paymentMethod !== 'mpesa') {
-      setCheckoutError('This payment method is coming soon. Choose M-PESA to continue.');
-      return;
-    }
-    if (!/^\+?254[17]\d{8}$|^0[17]\d{8}$/.test(paymentPhone.trim().replace(/[\s().-]/g,''))) {
+    const isCash = paymentMethod === 'delivery';
+    if (!isCash && !/^\\+?254[17]\\d{8}$|^0[17]\\d{8}$/.test(paymentPhone.trim().replace(/[\\s().-]/g,''))) {
       setCheckoutError('Enter a valid Kenyan M-PESA phone number to receive the payment prompt.');
       return;
     }
@@ -516,7 +513,7 @@ export function StorefrontFlow({
     }
     setSubmitting(true);
     setCheckoutError('');
-    const fingerprint=JSON.stringify({slug,items:lines.map(({product,quantity})=>[product.id,quantity]).sort((a,b)=>String(a[0]).localeCompare(String(b[0]))),coupon:appliedCoupon?.code||'',paymentPhone:paymentPhone.trim(),deliveryFee,deliveryMethod,deliveryCounty,deliverySubCounty,deliveryEstate:deliveryEstate.trim(),deliveryAddress:deliveryAddress.trim(),deliveryDirections:deliveryDirections.trim(),pickupStation:pickupStation.trim()});
+    const fingerprint=JSON.stringify({slug,items:lines.map(({product,quantity})=>[product.id,quantity]).sort((a,b)=>String(a[0]).localeCompare(String(b[0]))),coupon:appliedCoupon?.code||'',paymentMethod,paymentPhone:isCash?'':paymentPhone.trim(),deliveryFee,deliveryMethod,deliveryCounty,deliverySubCounty,deliveryEstate:deliveryEstate.trim(),deliveryAddress:deliveryAddress.trim(),deliveryDirections:deliveryDirections.trim(),pickupStation:pickupStation.trim()});
     if(!checkoutIdempotency.current||checkoutIdempotency.current.fingerprint!==fingerprint){const key=window.crypto?.randomUUID?.()||('buyer-'+Date.now()+'-'+Math.random().toString(36).slice(2,14));checkoutIdempotency.current={fingerprint,key};}
     try {
       const response = await fetch('/api/buyer?action=order', {
@@ -527,7 +524,7 @@ export function StorefrontFlow({
           couponCode: appliedCoupon?.code || '',
           customerName: customerName.trim(),
           customerPhone: customerPhone.trim(),
-          paymentPhone: paymentPhone.trim(),
+          paymentPhone: isCash ? '' : paymentPhone.trim(),
           customerEmail: customerEmail.trim(),
           deliveryMethod,
           deliveryCounty,
@@ -553,7 +550,7 @@ export function StorefrontFlow({
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim(),
         customerEmail: customerEmail.trim(),
-        paymentMethod: 'mpesa',
+        paymentMethod: isCash ? 'delivery' : 'mpesa',
         deliveryMethod,
         deliveryAddress: deliveryAddress.trim(),
         pickupStation: pickupStation.trim(),
@@ -575,8 +572,13 @@ export function StorefrontFlow({
       setActiveOrderNumber(order.orderNumber);
       checkoutIdempotency.current=null;
       onCartChange({});
-      setPaymentPollMessage('Waiting for payment confirmation…');
-      onNavigate('checkout/processing');
+      if (isCash) {
+        setPaymentPollMessage(deliveryMethod === 'pickup' ? 'Order placed. Pay in cash when you collect it; the seller must accept the order first.' : 'Order placed. Pay the seller in cash when it arrives; the seller must accept the order first.');
+        onNavigate('orders');
+      } else {
+        setPaymentPollMessage('Waiting for payment confirmation…');
+        onNavigate('checkout/processing');
+      }
     } catch (error) {
       setCheckoutError(error instanceof Error ? error.message : 'Checkout failed. Please try again.');
     } finally {
