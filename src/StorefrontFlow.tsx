@@ -908,11 +908,12 @@ export function StorefrontFlow({
     const orderState=String(activeOrder?.orderStatus||'').toLowerCase();
     const deliveryState=String(activeOrder?.deliveryStatus||'pending_delivery').toLowerCase();
     const paid=['succeeded','success','paid'].includes(paymentState);
+    const cashDue=activeOrder.paymentMethod==='delivery'&&!paid&&!['cancelled','refunded'].includes(orderState);
     const cancelled=paymentState==='cancelled'||orderState==='cancelled';
     const failed=paymentState==='failed';
     const orderClosed=['cancelled','returned','refunded'].includes(orderState);
-    const canRetryPayment=Boolean(activeOrder?.orderId&&!paid&&!orderClosed&&(activeOrder?.lines?.length||0)>0);
-    const paymentLabel=orderState==='refunded'||paymentState==='refunded'?'Refunded':paid?'Paid':cancelled?'Payment cancelled':failed?'Payment failed':paymentState==='pending'?'Awaiting confirmation':'Not yet paid';
+    const canRetryPayment=Boolean(activeOrder?.orderId&&!paid&&!cashDue&&!orderClosed&&(activeOrder?.lines?.length||0)>0);
+    const paymentLabel=orderState==='refunded'||paymentState==='refunded'?'Refunded':paid?'Paid':cashDue?(activeOrder.deliveryMethod==='pickup'?'Cash due on pickup':'Cash due on delivery'):cancelled?'Payment cancelled':failed?'Payment failed':paymentState==='pending'?'Awaiting confirmation':'Not yet paid';
     const deliveryLabel=deliveryState==='delivered'?'Delivered':deliveryState==='in_transit'?'On the way':orderState==='processing'?'Being prepared':orderState==='fulfilled'?'Ready for delivery':cancelled?'Cancelled':'Order received';
     const isDelivered=deliveryState==='delivered';
     const processing=['processing','fulfilled'].includes(orderState)||['in_transit','delivered'].includes(deliveryState);
