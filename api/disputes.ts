@@ -46,7 +46,7 @@ async function notify(sql:any,tenantId:string,complaintId:string,role:'buyer'|'s
    const rows=await sql`SELECT email FROM public.users WHERE id=${userId} LIMIT 1`;
    if(rows[0]?.email)recipients=[String(rows[0].email)];
   }else if(role==='admin'){
-   recipients=(env('DAS_PLATFORM_ADMIN_EMAILS')||'').split(',').map((v:string)=>v.trim()).filter((v:string)=>/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(v));
+   recipients=(env('DAS_PLATFORM_ADMIN_EMAILS')||env('SUPPORT_EMAIL')||'support@dasnet.co.ke').split(',').map((v:string)=>v.trim()).filter((v:string)=>/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(v));
   }
   for(const to of recipients){
    const mail=brandedEmail(role==='admin'?'DASMARKET':shopName,title,detail,{'Report reference':complaintId.slice(0,8).toUpperCase()});
