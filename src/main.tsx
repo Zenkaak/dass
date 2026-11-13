@@ -8,6 +8,7 @@ import './storefront-performance.css';
 import './buyer-orders-redesign.css';
 import './buyer-order-detail-redesign.css';
 import './buyer-reports-redesign.css';
+import './buyer-messaging-redesign.css';
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
