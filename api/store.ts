@@ -877,12 +877,12 @@ export default async function handler(req:any,res:any){
    try{
     const context=await sql`SELECT t.name AS shop_name,u.email AS seller_email FROM public.tenants t LEFT JOIN public.users u ON u.id=t.created_by WHERE t.id=${tenantId} LIMIT 1`;
     const shopName=String(context[0]?.shop_name||'the shop'),safeTotal=(payableTotal/100).toLocaleString('en-KE',{style:'currency',currency:'KES'});
-    if(customerEmail&&/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(customerEmail)){
+    if(customerEmail&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)){
      const mail=brandedEmail(shopName,'We received your order','Hi '+name+', your order has been created. We will send another update when payment is confirmed.',{'Order number':orderNo,'Order total':safeTotal,'Payment status':'Awaiting M-PESA confirmation'});
      await sendTenantTransactionalEmail(sql,tenantId,{to:customerEmail,subject:'Order received — '+orderNo,...mail,idempotencyKey:'order-received-'+o[0].id});
     }
     const sellerEmail=String(context[0]?.seller_email||'');
-    if(sellerEmail&&/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(sellerEmail)){
+    if(sellerEmail&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sellerEmail)){
      const mail=brandedEmail(shopName,'New order received','A new customer order has been placed. Sign in to your seller dashboard to review it.',{'Order number':orderNo,'Customer':name,'Order total':safeTotal,'Payment status':'Awaiting confirmation'});
      await sendTenantTransactionalEmail(sql,tenantId,{to:sellerEmail,subject:'New order — '+orderNo,...mail,idempotencyKey:'seller-new-order-'+o[0].id});
     }
@@ -919,7 +919,7 @@ export default async function handler(req:any,res:any){
    if(!Number.isFinite(homeFee)||!Number.isFinite(pickupFee)||homeFee<0||pickupFee<0||homeFee>1000000||pickupFee>1000000)return send(res,400,{error:'Enter valid delivery fees between KES 0 and KES 1,000,000.'});
    const homeFeeMinor=Math.round(homeFee*100),pickupFeeMinor=Math.round(pickupFee*100);
    if(phoneRaw&&!contactPhone)return send(res,400,{error:'Enter a valid Kenyan customer support phone number.'});
-   if(email&&!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))return send(res,400,{error:'Enter a valid support email address.'});
+   if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return send(res,400,{error:'Enter a valid support email address.'});
    await sql`UPDATE public.sites SET contact_phone=${contactPhone||null},whatsapp_number=${contactPhone||null},contact_email=${email||null},terms_and_conditions=${terms},privacy_policy=${privacy},return_policy=${returns},delivery_policy=${delivery},delivery_home_fee_minor=${homeFeeMinor},delivery_pickup_fee_minor=${pickupFeeMinor},storefront_faqs=${JSON.stringify(faqs)}::jsonb,updated_at=now() WHERE tenant_id=${me.tenant_id}`;
    await audit(sql,me.tenant_id,me.user_id,'shop.buyer_policies.updated','shop',me.tenant_id,{termsPublished:!!terms,privacyPublished:!!privacy,returnsPublished:!!returns,deliveryPublished:!!delivery,faqCount:faqs.length});
    return send(res,200,{ok:true});
@@ -987,7 +987,7 @@ export default async function handler(req:any,res:any){
    if(!encryptionKey)return send(res,503,{error:'Secure credential storage is not configured. Contact DASMARKET support.'});
    if(action==='email-credentials'&&req.method==='POST'){
     const b=req.body||{},fromEmail=String(b.fromEmail||'').trim().toLowerCase(),replyToEmail=String(b.replyToEmail||'').trim().toLowerCase(),fromName=String(b.fromName||me.shop_name||'').trim().slice(0,100);
-    if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(fromEmail)||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(replyToEmail))return send(res,400,{error:'Enter valid sender and reply-to email addresses.'});
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fromEmail)||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyToEmail))return send(res,400,{error:'Enter valid sender and reply-to email addresses.'});
     const current=await sql`SELECT encrypted_config FROM public.tenant_email_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
     let secret:any={};
     if(current[0]?.encrypted_config?.ciphertext){try{secret=decryptTenantEmailConfig(current[0].encrypted_config)}catch{return send(res,500,{error:'Saved Resend credentials could not be decrypted. Contact support before replacing them.'});}}
@@ -1005,7 +1005,7 @@ export default async function handler(req:any,res:any){
     const rows=await sql`SELECT encrypted_config,from_email,reply_to_email,enabled FROM public.tenant_email_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
     if(!rows[0]?.enabled)return send(res,400,{error:'Save your Resend settings first.'});
     const recipient=String(req.body?.to||'').trim().toLowerCase();
-    if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(recipient))return send(res,400,{error:'Enter a valid test recipient email address.'});
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient))return send(res,400,{error:'Enter a valid test recipient email address.'});
     let secret:any;try{secret=decryptTenantEmailConfig(rows[0].encrypted_config)}catch{return send(res,500,{error:'Saved Resend credentials could not be decrypted.'});}
     const test=brandedEmail(me.shop_name||'Your shop','Your email connection is working','This is a test email from your shop. Future customer notifications will use this sender.');
     const result=await sendUsingResendConfig(String(secret.apiKey||''),rows[0].from_email,String(secret.fromName||me.shop_name||''),rows[0].reply_to_email,{to:recipient,subject:'Test email from '+(me.shop_name||'your shop'),...test});
