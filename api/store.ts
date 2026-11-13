@@ -87,12 +87,12 @@ async function reconcilePaymentJob(sql:any,jobId:string){
   const claimed=Number(result[0]?.claimed||0)>0;
   if(claimed){
    try{
-    const details=await sql`SELECT o.order_number,o.customer_name,o.customer_email,o.total_minor,p.provider_receipt,t.name AS shop_name FROM public.payment_reconciliation_jobs j JOIN public.orders o ON o.id=j.order_id AND o.tenant_id=j.tenant_id JOIN public.payments p ON p.id=j.payment_id AND p.tenant_id=j.tenant_id JOIN public.tenants t ON t.id=j.tenant_id WHERE j.id=${jobId} LIMIT 1`;
+    const details=await sql`SELECT j.tenant_id,o.order_number,o.customer_name,o.customer_email,o.total_minor,p.provider_receipt,t.name AS shop_name FROM public.payment_reconciliation_jobs j JOIN public.orders o ON o.id=j.order_id AND o.tenant_id=j.tenant_id JOIN public.payments p ON p.id=j.payment_id AND p.tenant_id=j.tenant_id JOIN public.tenants t ON t.id=j.tenant_id WHERE j.id=${jobId} LIMIT 1`;
     const order=details[0];
     if(order?.customer_email&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(order.customer_email))){
      const name=String(order.customer_name||'Customer'),shop=String(order.shop_name||'the shop'),number=String(order.order_number||''),amount=(Number(order.total_minor||0)/100).toLocaleString('en-KE',{style:'currency',currency:'KES'}),receipt=String(order.provider_receipt||'');
      const safeName=escapeEmailHtml(name),safeShop=escapeEmailHtml(shop),safeNumber=escapeEmailHtml(number),safeAmount=escapeEmailHtml(amount),safeReceipt=escapeEmailHtml(receipt);
-     const message=brandedEmail(shop,'Payment confirmed','Hi '+name+', your payment has been confirmed. You can view your order and delivery updates from your buyer account.',{'Order number':number,'Total paid':amount,...(receipt?{'M-PESA receipt':receipt}:{})});await sendTenantTransactionalEmail(sql,String((await sql`SELECT tenant_id FROM public.orders WHERE order_number=${number} LIMIT 1`)[0]?.tenant_id||''),{to:String(order.customer_email),subject:'Payment confirmed — order '+number,...message,idempotencyKey:'order-payment-confirmed-'+number});
+     const message=brandedEmail(shop,'Payment confirmed','Hi '+name+', your payment has been confirmed. You can view your order and delivery updates from your buyer account.',{'Order number':number,'Total paid':amount,...(receipt?{'M-PESA receipt':receipt}:{})});await sendTenantTransactionalEmail(sql,String(order.tenant_id||''),{to:String(order.customer_email),subject:'Payment confirmed — order '+number,...message,idempotencyKey:'order-payment-confirmed-'+number});
     }
    }catch(emailError:any){console.error('Order confirmation email could not be sent',String(emailError?.message||emailError).slice(0,240));}
   }
