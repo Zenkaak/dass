@@ -77,6 +77,8 @@ type StorefrontFlowProps = {
   shopDeliveryPolicy?: string;
   shopDeliveryHomeFee?: number;
   shopDeliveryPickupFee?: number;
+  shopCashOnDeliveryEnabled?: boolean;
+  shopCashOnPickupEnabled?: boolean;
   shopFaqs?: Array<{question:string;answer:string}>;
   products: StoreProduct[];
   recentlyViewed?: string[];
@@ -217,6 +219,8 @@ export function StorefrontFlow({
   shopDeliveryPolicy = '',
   shopDeliveryHomeFee = 0,
   shopDeliveryPickupFee = 0,
+  shopCashOnDeliveryEnabled = false,
+  shopCashOnPickupEnabled = false,
   shopFaqs = [],
   products,
   recentlyViewed: recentlyViewedIds = [],
@@ -262,6 +266,8 @@ export function StorefrontFlow({
   const [paymentPollMessage,setPaymentPollMessage]=useState('Waiting for payment confirmation…');const [paymentProviderResponded,setPaymentProviderResponded]=useState(false);
   const [checkoutError, setCheckoutError] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('pickup');
+  const cashOptionEnabled=deliveryMethod==='pickup'?shopCashOnPickupEnabled:shopCashOnDeliveryEnabled;
+  useEffect(()=>{if(paymentMethod==='delivery'&&!cashOptionEnabled)setPaymentMethod('mpesa');},[paymentMethod,cashOptionEnabled]);
   const [deliveryCounty, setDeliveryCounty] = useState('');
   const [deliverySubCounty, setDeliverySubCounty] = useState('');
   const [deliveryEstate, setDeliveryEstate] = useState('');
@@ -754,9 +760,9 @@ export function StorefrontFlow({
                 <button type="button" className={'market-payment-method-option '+(paymentMethod==='mpesa'?'is-selected':'')} aria-pressed={paymentMethod==='mpesa'} onClick={choosePayment}>
                   <span className="market-payment-method-brand market-payment-mpesa">M</span><strong>M-PESA</strong><small>STK Push</small><i><Check size={13}/></i>
                 </button>
-                <button type="button" className={'market-payment-method-option '+(paymentMethod==='delivery'?'is-selected':'')} aria-pressed={paymentMethod==='delivery'} onClick={()=>{setCheckoutError('');setPaymentMethod('delivery');setPaymentModal(null);}}>
-                  <span className="market-payment-method-brand">K</span><strong>Cash on delivery / pickup</strong><small>{deliveryMethod==='pickup'?'Pay when you collect':'Pay when delivered'}</small><i>{paymentMethod==='delivery'?<Check size={13}/>:'○'}</i>
-                </button>
+                {cashOptionEnabled&&<button type="button" className={'market-payment-method-option '+(paymentMethod==='delivery'?'is-selected':'')} aria-pressed={paymentMethod==='delivery'} onClick={()=>{setCheckoutError('');setPaymentMethod('delivery');setPaymentModal(null);}}>
+                  <span className="market-payment-method-brand">K</span><strong>{deliveryMethod==='pickup'?'Pay on pickup':'Cash on delivery'}</strong><small>{deliveryMethod==='pickup'?'Pay when you collect':'Pay when delivered'}</small><i>{paymentMethod==='delivery'?<Check size={13}/>:'○'}</i>
+                </button>}
                 <button type="button" className="market-payment-method-option is-unavailable" disabled aria-disabled="true" title="Airtel Money is not enabled for this shop">
                   <span className="market-payment-method-brand market-payment-airtel">A</span><strong>Airtel Money</strong><small>Not enabled</small><i>—</i>
                 </button>
