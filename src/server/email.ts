@@ -41,6 +41,7 @@ async function sendWithResend(input:EmailInput){
  return {sent:true,id:String(result?.id||'')} as const;
 }
 export async function sendTransactionalEmail(input:EmailInput){return sendWithResend(input);}
+export async function sendUsingResendConfig(apiKey:string,fromEmail:string,fromName:string,replyTo:string,input:EmailInput){return sendWithResend({...input,apiKey,from:fromName.trim()?fromName.trim()+' <'+fromEmail+'>':fromEmail,replyTo});}
 export async function sendTenantTransactionalEmail(sql:any,tenantId:string,input:EmailInput){
  try{
   await sql`CREATE TABLE IF NOT EXISTS public.tenant_email_configs (
