@@ -162,12 +162,9 @@ function storageUrl(key:string,method:'PUT'|'GET',mime='application/octet-stream
  const host=new URL(endpoint).host,endpointRegion=host.match(/\.([a-z]{2}-[a-z]+-\d)\.aws\.neon\.tech$/)?.[1],region=endpointRegion||configuredRegion||'us-east-2',now=new Date(),amz=now.toISOString().slice(0,19).replace(/[-:T]/g,'')+'Z',day=amz.slice(0,8),scope=day+'/'+region+'/s3/aws4_request',path='/'+bucket+'/'+key.split('/').map(awsEncode).join('/');
  const params:any={'X-Amz-Algorithm':'AWS4-HMAC-SHA256','X-Amz-Credential':access+'/'+scope,'X-Amz-Date':amz,'X-Amz-Expires':'300','X-Amz-SignedHeaders':'host'};
  const canonicalQuery=Object.keys(params).sort().map(k=>awsEncode(k)+'='+awsEncode(params[k])).join('&');
- const canonical=[method,path,canonicalQuery,'host:'+host+'
-','host','UNSIGNED-PAYLOAD'].join('
-');
- const toSign=['AWS4-HMAC-SHA256',amz,scope,crypto.createHash('sha256').update(canonical).digest('hex')].join('
-');
- const kDate=hmac('AWS4'+secret,day),kRegion=hmac(kDate,region),kService=hmac(kRegion,'s3'),kSigning=hmac(kService,'aws4_request'),signature=hmac(kSigning,toSign,'hex');
+ const canonical=[method,path,canonicalQuery,'host:'+host+'\n','host','UNSIGNED-PAYLOAD'].join('\n');
+ const toSign=['AWS4-HMAC-SHA256',amz,scope,crypto.createHash('sha256').update(canonical).digest('hex')].join('\n');
+const kDate=hmac('AWS4'+secret,day),kRegion=hmac(kDate,region),kService=hmac(kRegion,'s3'),kSigning=hmac(kService,'aws4_request'),signature=hmac(kSigning,toSign,'hex');
  return endpoint.replace(/\/$/,'')+path+'?'+canonicalQuery+'&X-Amz-Signature='+signature;
 }
 function safeFileName(s:string){return s.replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,120)||'attachment'}
