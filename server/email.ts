@@ -24,7 +24,7 @@ export function decryptTenantEmailConfig(blob:any){
 async function sendWithResend(input:EmailInput){
  const apiKey=input.apiKey||env('RESEND_API_KEY');
  if(!apiKey){console.warn('Transactional email skipped: no Resend API key is configured.');return {sent:false,reason:'not_configured'} as const;}
- const from=input.from||env('RESEND_FROM_EMAIL')||'DASMARKET <notifications@dasmarket.co.ke>';
+ const from=input.from||env('RESEND_FROM_EMAIL')||'DASMARKET <notification@dasmarket.co.ke>';
  const replyTo=input.replyTo||env('RESEND_REPLY_TO')||'support@dasnet.co.ke';
  const headers:Record<string,string>={Authorization:'Bearer '+apiKey,'Content-Type':'application/json',Accept:'application/json'};
  if(input.idempotencyKey)headers['Idempotency-Key']=input.idempotencyKey.slice(0,256);
@@ -59,7 +59,7 @@ export async function sendTenantTransactionalEmail(sql:any,tenantId:string,input
    const branding=await sql`SELECT t.name AS shop_name,s.logo_url,s.contact_email FROM public.tenants t LEFT JOIN public.sites s ON s.tenant_id=t.id WHERE t.id=${tenantId} LIMIT 1`;
    const logo=safeHttpUrl(String(branding[0]?.logo_url||''));
    const shopLabel=String(branding[0]?.shop_name||'Shop').replace(/[<>\\r\\n]/g,'').slice(0,80);
-   const configuredFrom=env('RESEND_FROM_EMAIL')||'DASMARKET <notifications@dasmarket.co.ke>';
+   const configuredFrom=env('RESEND_FROM_EMAIL')||'DASMARKET <notification@dasmarket.co.ke>';
    const senderAddress=configuredFrom.match(/<([^>]+)>/)?.[1]||configuredFrom;
    var shopFallbackFrom=shopLabel+' via DASMARKET <'+senderAddress+'>';
    if(logo&&shopInput.html.includes('<!--SHOP_LOGO_SLOT-->')){
