@@ -118,25 +118,13 @@ const paymentLabels: Record<PaymentMethod, string> = {
 
 const accountGroups = [
   { title: 'SHOPPING', links: [
-    { label: 'Orders', icon: Package, view: 'orders' },
     { label: 'Inbox & messages', icon: ShoppingBag, view: 'inbox' },
     { label: 'Saved items', icon: Search, view: 'wishlist' },
-    { label: 'Recently viewed', icon: Search, view: 'recently-viewed' },
-    { label: 'Vouchers', icon: WalletCards, view: 'vouchers' },
-    { label: 'Reviews', icon: ShieldCheck, view: 'reviews' },
   ]},
   { title: 'ACCOUNT & SUPPORT', links: [
-    { label: 'My profile', icon: UserRound, view: 'profile' },
-    { label: 'Address book', icon: MapPin, view: 'address-book' },
-    { label: 'Notifications', icon: Package, view: 'notifications' },
+    { label: 'My profile & addresses', icon: UserRound, view: 'profile' },
     { label: 'Reports & Complaints', icon: Flag, view: 'my-reports' },
-    { label: 'Notification settings', icon: ShieldCheck, view: 'notification-settings' },
-    { label: 'Account management', icon: UserRound, view: 'account-management' },
     { label: 'Help & support', icon: ShieldCheck, view: 'assistant' },
-    { label: 'Followed shops', icon: ShoppingBag, view: 'followed-shops' },
-    { label: 'Newsletter & offers', icon: WalletCards, view: 'newsletter' },
-    { label: 'Public profile', icon: UserRound, view: 'public-profile' },
-    { label: 'Close account', icon: UserRound, view: 'close-account' },
   ]},
 ];
 
