@@ -23,15 +23,28 @@ function storageUrl(key:string,method:'PUT'|'GET',mime='application/octet-stream
 function validSignature(b:Buffer,m:string){if(m==='application/pdf')return b.subarray(0,5).toString()==='%PDF-';if(m==='image/jpeg')return b[0]===255&&b[1]===216&&b[2]===255;if(m==='image/png')return b.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]));if(m==='image/webp')return b.subarray(0,4).toString()==='RIFF'&&b.subarray(8,12).toString()==='WEBP';if(m==='text/plain')return !b.includes(0);if(m.includes('officedocument'))return b[0]===80&&b[1]===75;if(m==='application/msword'||m==='application/vnd.ms-excel')return b.subarray(0,4).equals(Buffer.from([208,207,17,224]));return false}
 async function validateObject(key:string,mime:string,size:number){const r=await fetch(storageUrl(key,'GET'));if(!r.ok)throw Error('UPLOAD_UNAVAILABLE');const b=Buffer.from(await r.arrayBuffer());if(b.length!==size||b.length<1||b.length>10485760||!validSignature(b,mime))throw Error('UPLOAD_INVALID')}
 async function actor(sql:any,req:any,tenantId:string){
- const global=cookie(req,'das_session');
- if(global){const s=await sql`SELECT u.id,u.display_name,u.phone,u.email,m.tenant_id,m.role,t.name AS shop_name FROM public.auth_sessions a JOIN public.users u ON u.id=a.user_id JOIN public.memberships m ON m.user_id=u.id JOIN public.tenants t ON t.id=m.tenant_id WHERE a.token_hash=${hash(global)} AND a.expires_at>now() AND m.tenant_id=${tenantId} AND t.status IN ('trial','active') LIMIT 1`;if(s.length)return {...s[0],role:'seller',senderRole:'seller',senderId:s[0].id,name:s[0].display_name};
-  const adminPhones=env('DAS_PLATFORM_ADMIN_PHONES').split(',').map((x:string)=>phoneOf(x)).filter(Boolean);
-  if(adminPhones.length){const a=await sql`SELECT u.id,u.display_name,u.phone FROM public.auth_sessions x JOIN public.users u ON u.id=x.user_id WHERE x.token_hash=${hash(global)} AND x.expires_at>now() LIMIT 1`;if(a.length&&adminPhones.includes(phoneOf(a[0].phone)))return {...a[0],role:'admin',senderRole:'admin',senderId:a[0].id,name:a[0].display_name||'DASNET Support'};}
- }
- const legacy=cookie(req,'das_buyer_session');
+ // An explicit buyer session must win over a seller session cookie on the same
+ // browser/domain. Buyers and sellers can use the same storefront on one device.
  const modernBuyer=cookie(req,'das_buyer_auth');
- const buyerToken=modernBuyer||global||legacy;
- if(buyerToken){const b=await sql`SELECT c.id,c.full_name,c.phone,c.email,c.tenant_id FROM public.store_customers c LEFT JOIN public.auth_sessions a ON a.user_id=c.user_id AND a.token_hash=${hash(buyerToken)} AND a.expires_at>now() LEFT JOIN public.store_customer_sessions x ON x.customer_id=c.id AND x.token_hash=${hash(buyerToken)} AND x.expires_at>now() WHERE c.tenant_id=${tenantId} AND (a.user_id IS NOT NULL OR x.token_hash IS NOT NULL) AND c.is_banned=false AND (c.banned_until IS NULL OR c.banned_until<=now()) LIMIT 1`;if(b.length)return {...b[0],role:'buyer',senderRole:'buyer',senderId:b[0].id,name:b[0].full_name};}
+ const legacy=cookie(req,'das_buyer_session');
+ const explicitBuyer=modernBuyer||legacy;
+ if(explicitBuyer){
+  const b=await sql`SELECT c.id,c.full_name,c.phone,c.email,c.tenant_id FROM public.store_customers c LEFT JOIN public.auth_sessions a ON a.user_id=c.user_id AND a.token_hash=${hash(explicitBuyer)} AND a.expires_at>now() LEFT JOIN public.store_customer_sessions x ON x.customer_id=c.id AND x.token_hash=${hash(explicitBuyer)} AND x.expires_at>now() WHERE c.tenant_id=${tenantId} AND (a.user_id IS NOT NULL OR x.token_hash IS NOT NULL) AND c.is_banned=false AND (c.banned_until IS NULL OR c.banned_until<=now()) LIMIT 1`;
+  if(b.length)return {...b[0],role:'buyer',senderRole:'buyer',senderId:b[0].id,name:b[0].full_name};
+ }
+ const global=cookie(req,'das_session');
+ if(global){
+  const s=await sql`SELECT u.id,u.display_name,u.phone,u.email,m.tenant_id,m.role,t.name AS shop_name FROM public.auth_sessions a JOIN public.users u ON u.id=a.user_id JOIN public.memberships m ON m.user_id=u.id JOIN public.tenants t ON t.id=m.tenant_id WHERE a.token_hash=${hash(global)} AND a.expires_at>now() AND m.tenant_id=${tenantId} AND t.status IN ('trial','active') LIMIT 1`;
+  if(s.length)return {...s[0],role:'seller',senderRole:'seller',senderId:s[0].id,name:s[0].display_name};
+  const adminPhones=env('DAS_PLATFORM_ADMIN_PHONES').split(',').map((x:string)=>phoneOf(x)).filter(Boolean);
+  if(adminPhones.length){
+   const a=await sql`SELECT u.id,u.display_name,u.phone FROM public.auth_sessions x JOIN public.users u ON u.id=x.user_id WHERE x.token_hash=${hash(global)} AND x.expires_at>now() LIMIT 1`;
+   if(a.length&&adminPhones.includes(phoneOf(a[0].phone)))return {...a[0],role:'admin',senderRole:'admin',senderId:a[0].id,name:a[0].display_name||'DASNET Support'};
+  }
+  // Legacy storefronts sometimes authenticate buyers through the shared auth cookie.
+  const b=await sql`SELECT c.id,c.full_name,c.phone,c.email,c.tenant_id FROM public.store_customers c JOIN public.auth_sessions a ON a.user_id=c.user_id WHERE c.tenant_id=${tenantId} AND a.token_hash=${hash(global)} AND a.expires_at>now() AND c.is_banned=false AND (c.banned_until IS NULL OR c.banned_until<=now()) LIMIT 1`;
+  if(b.length)return {...b[0],role:'buyer',senderRole:'buyer',senderId:b[0].id,name:b[0].full_name};
+ }
  return null;
 }
 async function notify(sql:any,tenantId:string,complaintId:string,role:'buyer'|'seller'|'admin',phone:string|null,userId:string|null,title:string,detail:string){
