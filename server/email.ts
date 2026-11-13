@@ -54,14 +54,23 @@ export async function sendTenantTransactionalEmail(sql:any,tenantId:string,input
   )`;
   const rows=await sql`SELECT encrypted_config,from_email,reply_to_email,enabled FROM public.tenant_email_configs WHERE tenant_id=${tenantId} LIMIT 1`;
   const row=rows[0];
+  let shopInput=input;
+  try{
+   const branding=await sql`SELECT logo_url,contact_email FROM public.sites WHERE tenant_id=${tenantId} LIMIT 1`;
+   const logo=safeHttpUrl(String(branding[0]?.logo_url||''));
+   if(logo&&shopInput.html.includes('SHOP UPDATE')){
+    const logoMarkup='<img src="'+escapeEmailHtml(logo)+'" alt="Shop logo" width="150" style="display:block;max-width:150px;max-height:56px;object-fit:contain;border:0">';
+    shopInput={...shopInput,html:shopInput.html.replace(/<span style="font-size:22px;line-height:1\.2;font-weight:800;letter-spacing:-\.5px;color:[^"]+">[^<]*<\\/span>/,logoMarkup)};
+   }
+  }catch(error:any){console.warn('Shop email branding lookup skipped',String(error?.message||error).slice(0,160));}
   if(row?.enabled&&row.encrypted_config?.ciphertext){
    const secret=decryptTenantEmailConfig(row.encrypted_config);
-   const result=await sendWithResend({...input,apiKey:String(secret.apiKey||''),from:String(secret.fromName||'').trim()?String(secret.fromName).trim()+' <'+row.from_email+'>':row.from_email,replyTo:row.reply_to_email});
+   const result=await sendWithResend({...shopInput,apiKey:String(secret.apiKey||''),from:String(secret.fromName||'').trim()?String(secret.fromName).trim()+' <'+row.from_email+'>':row.from_email,replyTo:row.reply_to_email});
    if(result.sent)return result;
    console.warn('Seller Resend delivery failed; attempting platform sender fallback.',{tenantId,reason:result.reason});
   }
  }catch(error:any){console.error('Seller email configuration could not be loaded; using platform sender fallback.',String(error?.message||error).slice(0,200));}
- return sendWithResend(input);
+ return sendWithResend(shopInput);
 }
 type EmailTemplateOptions={logoUrl?:string;accentColor?:string;buttonLabel?:string;buttonUrl?:string;productImageUrl?:string;productName?:string;preheader?:string;supportEmail?:string};
 function safeHttpUrl(value:string|undefined){const v=String(value||'').trim();return /^https?:\/\/[^\s"'<>]+$/i.test(v)?v:'';}
