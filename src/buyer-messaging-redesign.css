@@ -1,0 +1,77 @@
+/* Buyer inbox and first-message experience — shared across all storefront tenants. */
+.buyer-inbox-page{width:100%;max-width:1120px;margin-inline:auto}
+.buyer-inbox-page .buyer-inbox-intro{
+ display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin:4px 0 18px;padding:23px 25px;
+ border:1px solid #e8e1d2;border-radius:18px;background:linear-gradient(115deg,#fffdf7,#fff 70%);
+}
+.buyer-inbox-page .buyer-section-kicker{color:#a17b2a;font-size:10px;font-weight:900;letter-spacing:.14em}
+.buyer-inbox-page .buyer-inbox-intro h2{margin:7px 0 5px;color:#1d2a3b;font-size:25px;letter-spacing:-.03em;font-weight:850}
+.buyer-inbox-page .buyer-inbox-intro p{max-width:600px;margin:0;color:#748092;font-size:12px;line-height:1.6}
+.buyer-inbox-page .buyer-inbox-count{flex:0 0 auto;padding:8px 11px;border:1px solid #eadfbe;border-radius:99px;background:#fffaf0;color:#85651f;font-size:11px;font-weight:800}
+.buyer-inbox-page .buyer-inbox-layout{display:grid;grid-template-columns:minmax(270px,.82fr) minmax(0,1.5fr);align-items:start;gap:16px}
+.buyer-inbox-page .buyer-inbox-list,
+.buyer-inbox-page .buyer-inbox-placeholder,
+.buyer-inbox-page .buyer-inbox-conversation{min-width:0;border:1px solid #e7ecf1;border-radius:17px;background:#fff;box-shadow:0 6px 22px rgba(22,34,50,.04)}
+.buyer-inbox-page .buyer-inbox-list{padding:16px}
+.buyer-inbox-page .buyer-inbox-list-heading{display:flex;align-items:center;justify-content:space-between;padding:2px 2px 13px;border-bottom:1px solid #edf0f3}
+.buyer-inbox-page .buyer-inbox-list-heading strong{color:#263448;font-size:13px;font-weight:850}
+.buyer-inbox-page .buyer-inbox-list-heading span{color:#8994a2;font-size:11px;font-weight:750}
+.buyer-inbox-page .buyer-inbox-thread{display:flex;gap:11px;padding:14px 2px;border-bottom:1px solid #f0f2f5}
+.buyer-inbox-page .buyer-inbox-thread:last-child{border-bottom:0}
+.buyer-inbox-page .buyer-inbox-thread-avatar{width:39px;height:39px;flex:0 0 39px;display:grid;place-items:center;border-radius:12px;background:#f6f2e8;color:#967124}
+.buyer-inbox-page .buyer-inbox-thread-content{min-width:0;flex:1}
+.buyer-inbox-page .buyer-inbox-thread-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.buyer-inbox-page .buyer-inbox-thread-top strong{color:#2a394d;font-size:12px;font-weight:850}
+.buyer-inbox-page .buyer-inbox-thread-top time{color:#98a1ad;font-size:9px}
+.buyer-inbox-page .buyer-inbox-thread-order{display:block;margin-top:4px;color:#8a95a3;font-size:10px}
+.buyer-inbox-page .buyer-inbox-thread-content>p{margin:6px 0;color:#647184;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.buyer-inbox-page .buyer-inbox-thread-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.buyer-inbox-page .buyer-inbox-thread-bottom>span{color:#a0a8b3;font-size:9px}
+.buyer-inbox-page .buyer-inbox-thread-bottom button{display:inline-flex;align-items:center;gap:5px;padding:5px 0;border:0;background:transparent;color:#8b6821;font-size:10px;font-weight:850;cursor:pointer}
+.buyer-inbox-page .buyer-inbox-empty{display:grid;justify-items:center;gap:9px;padding:30px 14px;text-align:center}
+.buyer-inbox-page .buyer-inbox-empty>span{width:46px;height:46px;display:grid;place-items:center;border-radius:14px;background:#f6f3eb;color:#9a7528}
+.buyer-inbox-page .buyer-inbox-empty strong{color:#29384b;font-size:13px;font-weight:850}
+.buyer-inbox-page .buyer-inbox-empty p{max-width:270px;margin:0;color:#7d8998;font-size:11px;line-height:1.6}
+.buyer-inbox-page .buyer-inbox-empty-active{padding:23px 12px;border:1px dashed #e6d7b5;border-radius:13px;background:#fffdf7}
+.buyer-inbox-page .buyer-inbox-placeholder{min-height:300px;display:grid;align-content:center;justify-items:center;gap:10px;padding:25px;text-align:center}
+.buyer-inbox-page .buyer-inbox-placeholder>span{width:54px;height:54px;display:grid;place-items:center;border-radius:16px;background:#f6f3eb;color:#9a7528}
+.buyer-inbox-page .buyer-inbox-placeholder h3{margin:0;color:#27364a;font-size:15px}
+.buyer-inbox-page .buyer-inbox-placeholder p{max-width:330px;margin:0;color:#7b8796;font-size:12px;line-height:1.65}
+.buyer-inbox-page .buyer-inbox-conversation{overflow:hidden}
+.buyer-inbox-page .buyer-inbox-conversation .store-chat-heading{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid #edf0f3;background:#fcfcfd
+}
+.buyer-inbox-page .buyer-inbox-conversation .store-chat-heading h2{margin:5px 0;color:#233247;font-size:16px;font-weight:850}
+.buyer-inbox-page .buyer-inbox-conversation .store-chat-heading p{margin:0;color:#8792a0;font-size:11px}
+.buyer-inbox-page .buyer-inbox-conversation .store-chat-live{padding:6px 9px;border-radius:99px;background:#edf7f0;color:#347b51;font-size:9px;font-weight:850}
+.buyer-inbox-page .buyer-inbox-conversation .store-chat-messages{
+ min-height:260px;max-height:480px;display:flex;flex-direction:column;gap:12px;overflow:auto;padding:18px;background:#fafbfc
+}
+.buyer-inbox-page .buyer-inbox-conversation .store-chat-message{max-width:82%;padding:11px 13px;border:1px solid #e6ebf0;border-radius:13px;background:#fff}
+.buyer-inbox-page .buyer-inbox-conversation .store-chat-message.mine{align-self:flex-end;border-color:#eadcb8;background:#fff9ed}
+.buyer-inbox-page .buyer-inbox-conversation .store-chat-message>span{color:#8a702f;font-size:10px;font-weight:850}
+.buyer-inbox-page .buyer-inbox-conversation .store-chat-message p{margin:6px 0;color:#3f4e61;font-size:12px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+.buyer-inbox-page .buyer-inbox-conversation .store-chat-message small{color:#98a2ae;font-size:9px}
+.buyer-inbox-page .store-chat-first-message{margin:auto;display:grid;justify-items:center;gap:9px;max-width:330px;padding:24px;text-align:center}
+.buyer-inbox-page .store-chat-first-icon{width:46px;height:46px;display:grid;place-items:center;border-radius:14px;background:#f5f1e6;color:#967124}
+.buyer-inbox-page .store-chat-first-message strong{color:#28374a;font-size:14px;font-weight:850}
+.buyer-inbox-page .store-chat-first-message p{margin:0;color:#7b8796;font-size:11px;line-height:1.65}
+.buyer-inbox-page .buyer-inbox-conversation .store-chat-compose{display:flex;gap:9px;padding:14px 16px;border-top:1px solid #edf0f3;background:#fff}
+.buyer-inbox-page .buyer-inbox-conversation .store-chat-compose input{min-width:0;flex:1;height:42px;padding:0 12px;border:1px solid #dfe5eb;border-radius:10px;outline:0;color:#29384b;font-size:12px}
+.buyer-inbox-page .buyer-inbox-conversation .store-chat-compose input:focus{border-color:#c9a34e;box-shadow:0 0 0 3px rgba(201,163,78,.12)}
+.buyer-inbox-page .buyer-inbox-conversation .store-chat-compose button{min-width:78px;border:1px solid #d2a844;border-radius:10px;background:#e9bd56;color:#202b39;font-size:11px;font-weight:850;cursor:pointer}
+.buyer-inbox-page .buyer-inbox-conversation .chat-file-upload{display:flex;align-items:center;gap:7px;padding:0 17px 15px;color:#8b6821;font-size:10px;font-weight:800;cursor:pointer}
+.buyer-inbox-page .buyer-inbox-conversation .chat-file-upload input{display:none}
+.buyer-inbox-page .buyer-inbox-conversation .chat-file-upload small{margin-left:auto;color:#98a2ae;font-size:9px;font-weight:500}
+.buyer-inbox-page .buyer-inbox-conversation .chat-attachments{padding:12px 17px;border-top:1px solid #edf0f3}
+.buyer-inbox-page .buyer-inbox-conversation .chat-attachments strong{display:block;margin-bottom:7px;color:#344256;font-size:11px}
+.buyer-inbox-page .buyer-inbox-conversation .chat-attachments button{display:flex;align-items:center;gap:8px;width:100%;padding:8px;border:0;background:#fafbfc;color:#647184;font-size:10px;text-align:left}
+@media(max-width:760px){
+ .buyer-inbox-page .buyer-inbox-intro{align-items:flex-start;flex-direction:column;padding:19px}
+ .buyer-inbox-page .buyer-inbox-layout{grid-template-columns:1fr}
+ .buyer-inbox-page .buyer-inbox-list{order:2}
+ .buyer-inbox-page .buyer-inbox-conversation{order:1}
+ .buyer-inbox-page .buyer-inbox-conversation .store-chat-messages{min-height:220px;max-height:55vh;padding:13px}
+ .buyer-inbox-page .buyer-inbox-conversation .store-chat-compose{padding:11px}
+ .buyer-inbox-page .buyer-inbox-conversation .store-chat-compose button{min-width:68px}
+}
