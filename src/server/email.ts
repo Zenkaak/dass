@@ -1,5 +1,5 @@
 type EmailInput={to:string;subject:string;html:string;text:string;replyTo?:string};
-const env=(key:string)=>(process.env[key]||'').trim();
+const env=(key:string)=>String((globalThis as any).process?.env?.[key]||'').trim();
 export function escapeEmailHtml(value:unknown){
  return String(value??'').replace(/[&<>"']/g,(character)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character] as string));
 }
