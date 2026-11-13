@@ -638,7 +638,7 @@ export default function App() {
   if (path === 'login') return <Deferred><AuthPage initial="login" /></Deferred>;
   if (path === 'reset-password') return <Deferred><AuthPage initial="reset" /></Deferred>;
   if (path === 'dashboard' || path.startsWith('dashboard/')) { const dashboardSubpath=path.slice('dashboard/'.length); const isReportRoute=dashboardSubpath==='reports'||dashboardSubpath.startsWith('reports/'); return <SellerDashboard initialOrderNumber={path.startsWith('dashboard/')&&!isReportRoute?decodeURIComponent(dashboardSubpath):''} />; }
-  if (path === 'platform-admin') return <PlatformAdmin />;
+  if (path === 'platform-admin' || path.startsWith('platform-admin/')) return <PlatformAdmin />;
   const storePathParts=path.split('/');
   return <MerchantStore slug={storePathParts[0]} initialBuyerPage={storePathParts.slice(1).join('/')||'store'} />;
 }
