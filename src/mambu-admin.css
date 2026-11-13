@@ -758,3 +758,14 @@
 .seller-editor-route-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 20px;padding-bottom:14px;border-bottom:1px solid #e8edf2}
 .seller-editor-route-top>span{color:#8996a5;font-size:10px;font-weight:850;letter-spacing:.12em}
 @media(max-width:640px){.seller-editor-route{width:calc(100% - 16px)!important;max-height:calc(100dvh - 16px)!important;margin:8px auto!important;padding:16px!important;border-radius:14px!important}}
+
+.seller-subscriptions.is-checkout-route>.seller-page-heading,
+.seller-subscriptions.is-checkout-route>.seller-sub-checkout-page,
+.seller-subscriptions.is-checkout-route>.seller-sub-footnote,
+.seller-subscriptions.is-checkout-route>.seller-sub-review-note{display:block}
+.seller-subscriptions.is-checkout-route>.seller-sub-trial,
+.seller-subscriptions.is-checkout-route>.seller-sub-selection,
+.seller-subscriptions.is-checkout-route>.seller-sub-payment-status,
+.seller-subscriptions.is-checkout-route>.seller-sub-benefits,
+.seller-subscriptions.is-checkout-route>.seller-sub-lifetime-plan,
+.seller-subscriptions.is-checkout-route>.seller-sub-plan-grid{display:none!important}
