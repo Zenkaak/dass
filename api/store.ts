@@ -54,7 +54,20 @@ async function productCapacity(sql:any,tenantId:string,requested:number){
  return {ok:true,limit,total,requested};
 }
 async function audit(sql:any,tenantId:string,actorId:string,action:string,type:string,id:string|null,metadata:any={}){await sql`INSERT INTO public.audit_logs(tenant_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${tenantId},${actorId},${action},${type},${id},${JSON.stringify(metadata)}::jsonb)`}
-async function notifyBuyer(sql:any,tenantId:string,buyerPhone:string,orderId:string|null,type:string,title:string,detail:string,complaintId:string|null=null){if(!buyerPhone)return;await sql`INSERT INTO public.buyer_notifications(tenant_id,buyer_phone,order_id,complaint_id,notification_type,title,detail) VALUES(${tenantId},${buyerPhone},${orderId},${complaintId},${type},${title},${detail})`;}
+async function notifyBuyer(sql:any,tenantId:string,buyerPhone:string,orderId:string|null,type:string,title:string,detail:string,complaintId:string|null=null){
+ if(!buyerPhone)return;
+ const inserted=await sql`INSERT INTO public.buyer_notifications(tenant_id,buyer_phone,order_id,complaint_id,notification_type,title,detail) VALUES(${tenantId},${buyerPhone},${orderId},${complaintId},${type},${title},${detail}) RETURNING id`;
+ if(type==='chat_message'&&orderId){
+  try{
+   const rows=await sql`SELECT o.order_number,o.customer_name,o.customer_email,t.name AS shop_name,COALESCE(NULLIF(ec.notification_email,''),NULLIF(u.email,'')) AS seller_email FROM public.orders o JOIN public.tenants t ON t.id=o.tenant_id LEFT JOIN public.users u ON u.id=t.created_by LEFT JOIN public.tenant_email_configs ec ON ec.tenant_id=t.id AND ec.enabled=true WHERE o.id=${orderId} AND o.tenant_id=${tenantId} LIMIT 1`;
+   const order=rows[0];
+   if(order?.customer_email){
+    const mail=brandedEmail(String(order.shop_name||'Your shop'),title,detail,{'Order number':String(order.order_number||'')});
+    await sendTenantTransactionalEmail(sql,tenantId,{to:String(order.customer_email),subject:title+' — '+String(order.order_number||''),...mail,idempotencyKey:'buyer-notification-'+String(inserted[0]?.id||orderId)});
+   }
+  }catch(error:any){console.error('Buyer activity email failed',String(error?.message||error).slice(0,200));}
+ }
+}
 async function notifyOrderBuyer(sql:any,tenantId:string,orderId:string,type:string,title:string,detail:string){const rows=await sql`SELECT customer_phone FROM public.orders WHERE id=${orderId} AND tenant_id=${tenantId} LIMIT 1`;if(rows.length)await notifyBuyer(sql,tenantId,rows[0].customer_phone,orderId,type,title,detail);}
 
 async function reserveInventory(sql:any,paymentId:string){
@@ -699,6 +712,15 @@ export default async function handler(req:any,res:any){
     const rate=await sql`SELECT count(*)::int AS n FROM public.order_messages WHERE tenant_id=${order.tenant_id} AND order_id=${order.id} AND sender_type='customer' AND created_at>now()-interval '1 minute'`;
     if(Number(rate[0]?.n||0)>=8)return send(res,429,{error:'Please wait before sending another message.'});
     await sql`INSERT INTO public.order_messages(tenant_id,order_id,sender_type,message) VALUES(${order.tenant_id},${order.id},'customer',${message})`;
+    try{
+     await sql`CREATE TABLE IF NOT EXISTS public.tenant_email_configs (tenant_id uuid PRIMARY KEY REFERENCES public.tenants(id) ON DELETE CASCADE,encrypted_config jsonb NOT NULL,from_email text NOT NULL,reply_to_email text NOT NULL,notification_email text,enabled boolean NOT NULL DEFAULT true,updated_at timestamptz NOT NULL DEFAULT now())`;
+     await sql`ALTER TABLE public.tenant_email_configs ADD COLUMN IF NOT EXISTS notification_email text`;
+     const recipients=await sql`SELECT COALESCE(NULLIF(ec.notification_email,''),NULLIF(u.email,'')) AS seller_email,o.order_number,t.name AS shop_name FROM public.orders o JOIN public.tenants t ON t.id=o.tenant_id LEFT JOIN public.users u ON u.id=t.created_by LEFT JOIN public.tenant_email_configs ec ON ec.tenant_id=t.id AND ec.enabled=true WHERE o.id=${order.id} AND o.tenant_id=${order.tenant_id} LIMIT 1`;
+     if(recipients[0]?.seller_email){
+      const mail=brandedEmail(String(recipients[0].shop_name||'Your shop'),'New message from a buyer','A buyer sent a new message about an order. Open your seller dashboard to reply.',{'Order number':String(recipients[0].order_number||'')});
+      await sendTenantTransactionalEmail(sql,String(order.tenant_id),{to:String(recipients[0].seller_email),subject:'New buyer message — '+String(recipients[0].order_number||''),...mail,idempotencyKey:'seller-order-chat-'+String(order.id)+'-'+hash(message).slice(0,16)});
+     }
+    }catch(emailError:any){console.error('Seller order-chat email failed',String(emailError?.message||emailError).slice(0,200));}
    }
    const messages=await sql`SELECT id,sender_type,message,created_at FROM public.order_messages WHERE tenant_id=${order.tenant_id} AND order_id=${order.id} ORDER BY created_at ASC LIMIT 100`;
    const payment=await sql`SELECT status,provider_receipt,updated_at FROM public.payments WHERE tenant_id=${order.tenant_id} AND order_id=${order.id} ORDER BY created_at DESC LIMIT 1`;
