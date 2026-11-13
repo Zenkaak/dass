@@ -124,11 +124,11 @@ async function reconcilePaymentJob(sql:any,jobId:string){
     const order=details[0];
     const name=String(order?.customer_name||'Customer'),shop=String(order?.shop_name||'the shop'),number=String(order?.order_number||''),amount=(Number(order?.total_minor||0)/100).toLocaleString('en-KE',{style:'currency',currency:'KES'}),receipt=String(order?.provider_receipt||''),emailItems=await orderEmailItems(sql,String(order.tenant_id||''),String(order.order_id||'')),shopSlug=String(order?.shop_slug||'');
     if(order?.customer_email&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(order.customer_email))){
-     const message=brandedEmail(shop,'Payment confirmed','Hi '+name+', your payment has been confirmed. Your shop order details and delivery updates are ready to view.',{'Order number':number,'Total paid':amount,...(receipt?{'M-PESA receipt':receipt}:{})},{items:emailItems,buttonLabel:'View my order',buttonUrl:shopOrderEmailUrl(shopSlug,number)});
+     const message=brandedEmail(shop,'Payment confirmed','Hi '+name+', your payment has been confirmed. Your shop order details and delivery updates are ready to view.',{'Order number':number,'Total paid':amount,...(receipt?{'M-PESA receipt':receipt}:{})},{items:emailItems,buttonLabel:'View my order',buttonUrl:shopEmailOrderUrl(shopSlug,number)});
      await sendTenantTransactionalEmail(sql,String(order.tenant_id||''),{to:String(order.customer_email),subject:'Payment confirmed — order '+number,...message,idempotencyKey:'order-payment-confirmed-'+number});
     }
     if(order?.seller_email&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(order.seller_email))){
-     const sellerMail=brandedEmail(shop,'Payment received','A customer payment has been confirmed for an order in your shop.',{'Order number':number,'Customer':name,'Amount received':amount,...(receipt?{'M-PESA receipt':receipt}:{})},{items:emailItems,buttonLabel:'Open order',buttonUrl:shopOrderEmailUrl(shopSlug,number,true)});
+     const sellerMail=brandedEmail(shop,'Payment received','A customer payment has been confirmed for an order in your shop.',{'Order number':number,'Customer':name,'Amount received':amount,...(receipt?{'M-PESA receipt':receipt}:{})},{items:emailItems,buttonLabel:'Open order',buttonUrl:shopEmailOrderUrl(shopSlug,number,true)});
      await sendTenantTransactionalEmail(sql,String(order.tenant_id||''),{to:String(order.seller_email),subject:'Payment received — order '+number,...sellerMail,idempotencyKey:'seller-order-payment-confirmed-'+number});
     }
    }catch(emailError:any){console.error('Order confirmation email could not be sent',String(emailError?.message||emailError).slice(0,240));}
@@ -761,7 +761,7 @@ export default async function handler(req:any,res:any){
      await sql`ALTER TABLE public.tenant_email_configs ADD COLUMN IF NOT EXISTS notification_email text`;
      const recipients=await sql`SELECT COALESCE(NULLIF(ec.notification_email,''),NULLIF(u.email,'')) AS seller_email,o.order_number,t.name AS shop_name,t.slug AS shop_slug FROM public.orders o JOIN public.tenants t ON t.id=o.tenant_id LEFT JOIN public.users u ON u.id=t.created_by LEFT JOIN public.tenant_email_configs ec ON ec.tenant_id=t.id AND ec.enabled=true WHERE o.id=${order.id} AND o.tenant_id=${order.tenant_id} LIMIT 1`;
      if(recipients[0]?.seller_email){
-      const chatNumber=String(recipients[0].order_number||''),mail=brandedEmail(String(recipients[0].shop_name||'Your shop'),'New message from a buyer','A buyer sent a new message about an order. Open your seller dashboard to reply.',{'Order number':chatNumber},{buttonLabel:'Reply to buyer',buttonUrl:shopOrderEmailUrl(String(recipients[0].shop_slug||''),chatNumber,true)});
+      const chatNumber=String(recipients[0].order_number||''),mail=brandedEmail(String(recipients[0].shop_name||'Your shop'),'New message from a buyer','A buyer sent a new message about an order. Open your seller dashboard to reply.',{'Order number':chatNumber},{buttonLabel:'Reply to buyer',buttonUrl:shopEmailOrderUrl(String(recipients[0].shop_slug||''),chatNumber,true)});
       await sendTenantTransactionalEmail(sql,String(order.tenant_id),{to:String(recipients[0].seller_email),subject:'New buyer message — '+String(recipients[0].order_number||''),...mail,idempotencyKey:'seller-order-chat-'+String(order.id)+'-'+hash(message).slice(0,16)});
      }
     }catch(emailError:any){console.error('Seller order-chat email failed',String(emailError?.message||emailError).slice(0,200));}
@@ -977,12 +977,12 @@ export default async function handler(req:any,res:any){
      const context=await sql`SELECT t.name AS shop_name,t.slug,COALESCE(NULLIF(ec.notification_email,''),NULLIF(u.email,''),NULLIF(ec.reply_to_email,'')) AS seller_email FROM public.tenants t LEFT JOIN public.users u ON u.id=t.created_by LEFT JOIN public.tenant_email_configs ec ON ec.tenant_id=t.id AND ec.enabled=true WHERE t.id=${tenantId} LIMIT 1`;
     const shopName=String(context[0]?.shop_name||'the shop'),shopSlug=String(context[0]?.slug||''),safeTotal=(payableTotal/100).toLocaleString('en-KE',{style:'currency',currency:'KES'}),emailItems=await orderEmailItems(sql,tenantId,String(o[0].id));
     if(customerEmail&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)){
-     const mail=brandedEmail(shopName,'We received your order','Hi '+name+', your order has been created. We will send another update when payment is confirmed.',{'Order number':orderNo,'Order total':safeTotal,'Payment status':'Awaiting M-PESA confirmation'},{items:emailItems,buttonLabel:'View my order',buttonUrl:shopOrderEmailUrl(shopSlug,orderNo)});
+     const mail=brandedEmail(shopName,'We received your order','Hi '+name+', your order has been created. We will send another update when payment is confirmed.',{'Order number':orderNo,'Order total':safeTotal,'Payment status':'Awaiting M-PESA confirmation'},{items:emailItems,buttonLabel:'View my order',buttonUrl:shopEmailOrderUrl(shopSlug,orderNo)});
      await sendTenantTransactionalEmail(sql,tenantId,{to:customerEmail,subject:'Order received — '+orderNo,...mail,idempotencyKey:'order-received-'+o[0].id});
     }
     const sellerEmail=String(context[0]?.seller_email||'');
     if(sellerEmail&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sellerEmail)){
-     const mail=brandedEmail(shopName,'New order received','A new customer order has been placed. Sign in to your seller dashboard to review it.',{'Order number':orderNo,'Customer':name,'Order total':safeTotal,'Payment status':'Awaiting confirmation'},{items:emailItems,buttonLabel:'Open order',buttonUrl:shopOrderEmailUrl(shopSlug,orderNo,true)});
+     const mail=brandedEmail(shopName,'New order received','A new customer order has been placed. Sign in to your seller dashboard to review it.',{'Order number':orderNo,'Customer':name,'Order total':safeTotal,'Payment status':'Awaiting confirmation'},{items:emailItems,buttonLabel:'Open order',buttonUrl:shopEmailOrderUrl(shopSlug,orderNo,true)});
      await sendTenantTransactionalEmail(sql,tenantId,{to:sellerEmail,subject:'New order — '+orderNo,...mail,idempotencyKey:'seller-new-order-'+o[0].id});
     }
    }catch(emailError:any){console.error('New order email notification failed',String(emailError?.message||emailError).slice(0,220));}
