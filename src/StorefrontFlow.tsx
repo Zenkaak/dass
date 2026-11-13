@@ -1126,7 +1126,35 @@ export function StorefrontFlow({
 
   if (view === 'store') return null;
   const pageContent = view === 'cart' ? renderCart() : view === 'checkout/delivery' ? (lines.length ? renderCheckoutDelivery() : renderCart()) : view === 'checkout/payment' ? (lines.length ? renderCheckoutPayment() : renderCart()) : view === 'checkout/review' ? (lines.length ? renderReview() : renderCart()) : view === 'checkout/processing' ? renderPaymentProcessing() : view === 'checkout/complete' ? renderSuccess() : view === 'orders' || view.startsWith('orders/') ? renderOrders() : view === 'order-detail' ? renderOrderDetail() : view === 'order-tracking' ? renderTracking() : view === 'account' ? renderAccount() : view === 'profile' ? renderProfile() : renderAccountSection() || (<section className="customer-flow"><FlowHeading title="Shopping assistant" onBack={() => onNavigate('store')} /><div className="customer-panel customer-account-detail"><Search size={24} /><p>{accountSectionCopy.assistant.description}</p><button type="button" className="customer-secondary-button" onClick={() => onNavigate('store')}>Back to the store</button></div></section>);
+  // Add product discovery beneath buyer-account content without interrupting account tasks.
+  const buyerDashboardViews = new Set([
+    'account','orders','order-detail','order-tracking','inbox','wishlist','recently-viewed',
+    'address-book','vouchers','reviews','notifications','my-reports','report-shop','followed-shops',
+    'newsletter','notification-settings','public-profile','account-management','close-account','assistant',
+  ]);
+  const showProductDiscovery = buyerDashboardViews.has(view) || view.startsWith('orders/') || view.startsWith('my-reports/');
+  const viewedCategories = new Set(recentlyViewedProducts.map(product => String(product.category || '').toLowerCase()).filter(Boolean));
+  const discoveryProducts = products
+    .filter(product => product.stockQuantity !== 0)
+    .slice()
+    .sort((a,b) => Number(viewedCategories.has(String(b.category || '').toLowerCase())) - Number(viewedCategories.has(String(a.category || '').toLowerCase())) || Number(Boolean((b as any).spotlight)) - Number(Boolean((a as any).spotlight)))
+    .slice(0,8);
   // Each account destination is its own full-screen page. Navigation lives on the account overview;
   // individual pages use their own back action instead of a persistent sub-tab rail.
-  return <div className="customer-workspace-shell">{pageContent}</div>;
+  return <div className="customer-workspace-shell">
+    {pageContent}
+    {showProductDiscovery && discoveryProducts.length > 0 && <section className="buyer-account-discovery" aria-label="Product recommendations">
+      <div className="buyer-account-discovery-heading"><div><span>MORE TO EXPLORE</span><h2>Discover more products</h2><p>Handpicked from this shop, with more from categories you have viewed.</p></div><button type="button" onClick={() => onNavigate('collection/all-products')}>View all <ArrowRight size={15}/></button></div>
+      <div className="buyer-account-discovery-track" role="region" aria-label="Recommended products. Scroll horizontally to explore.">
+        {discoveryProducts.map(product => <article className="buyer-account-discovery-card" key={product.id}>
+          <button type="button" className="buyer-account-discovery-open" onClick={() => onOpenProduct?.(product)} aria-label={'View '+product.name}>
+            <span className="buyer-account-discovery-image"><ProductThumb product={product}/></span>
+            <strong>{product.name}</strong><b>{formatKes(product.price)}</b>
+            <small>{product.stockQuantity == null ? 'Available' : product.stockQuantity+' in stock'}</small>
+          </button>
+          <button type="button" className="buyer-account-discovery-add" disabled={product.stockQuantity === 0} onClick={() => onCartChange({...cart,[product.id]:Math.min(99,product.stockQuantity ?? 99,(cart[product.id]||0)+1)})}>Add to cart</button>
+        </article>)}
+      </div>
+    </section>}
+  </div>;
 }
