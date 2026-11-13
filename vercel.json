@@ -9,6 +9,10 @@
     {
       "path": "/api/payments?action=reconcile-payments",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/email-cron",
+      "schedule": "0 1 * * *"
     }
   ],
   "headers": [
