@@ -769,7 +769,7 @@ export default async function handler(req:any,res:any){
    const shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
    if(!shops.length)return send(res,404,{error:'Shop not found.'});
     const buyer=await buyerSession(sql,req,shops[0].id);if(!buyer)return send(res,401,{error:'Sign in to this shop before checkout.'});
-   const name=String(buyer.full_name||'').trim().slice(0,120),phone=normalizePhone(buyer.phone),paymentPhone=normalizePhone(b.paymentPhone||buyer.phone),customerEmail=String(buyer.email||'').trim().slice(0,254);
+   const name=String(buyer.full_name||'').trim().slice(0,120),phone=normalizePhone(buyer.phone),paymentPhone=normalizePhone(b.paymentPhone||buyer.phone),checkoutEmail=String(b.customerEmail||'').trim().toLowerCase().slice(0,254),customerEmail=checkoutEmail||String(buyer.email||'').trim().toLowerCase().slice(0,254);\n   if(checkoutEmail&&!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(checkoutEmail))return send(res,400,{error:'Enter a valid email address or leave the email field blank.'});\n   if(checkoutEmail&&checkoutEmail!==String(buyer.email||'').trim().toLowerCase())await sql`UPDATE public.store_customers SET email=${checkoutEmail},updated_at=now() WHERE id=${buyer.id} AND tenant_id=${shops[0].id}`;
    if(!name||!phone||!paymentPhone||!items.length||items.length>30)return send(res,400,{error:'Your buyer account or payment phone is invalid, or the cart is empty.'});
    if(!/^[a-zA-Z0-9:_-]{12,100}$/.test(idempotency))return send(res,400,{error:'Checkout session expired. Refresh checkout and try again.'});
    if(!['home','pickup'].includes(deliveryMethod))return send(res,400,{error:'Choose a valid delivery method.'});
@@ -875,7 +875,7 @@ export default async function handler(req:any,res:any){
     }
    }
    try{
-    const context=await sql`SELECT t.name AS shop_name,u.email AS seller_email FROM public.tenants t LEFT JOIN public.users u ON u.id=t.created_by WHERE t.id=${tenantId} LIMIT 1`;
+    await sql`CREATE TABLE IF NOT EXISTS public.tenant_email_configs (tenant_id uuid PRIMARY KEY REFERENCES public.tenants(id) ON DELETE CASCADE,encrypted_config jsonb NOT NULL,from_email text NOT NULL,reply_to_email text NOT NULL,notification_email text,enabled boolean NOT NULL DEFAULT true,updated_at timestamptz NOT NULL DEFAULT now())`;\n     await sql`ALTER TABLE public.tenant_email_configs ADD COLUMN IF NOT EXISTS notification_email text`;\n     const context=await sql`SELECT t.name AS shop_name,COALESCE(NULLIF(ec.notification_email,''),NULLIF(u.email,''),NULLIF(ec.reply_to_email,'')) AS seller_email FROM public.tenants t LEFT JOIN public.users u ON u.id=t.created_by LEFT JOIN public.tenant_email_configs ec ON ec.tenant_id=t.id AND ec.enabled=true WHERE t.id=${tenantId} LIMIT 1`;
     const shopName=String(context[0]?.shop_name||'the shop'),safeTotal=(payableTotal/100).toLocaleString('en-KE',{style:'currency',currency:'KES'});
     if(customerEmail&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)){
      const mail=brandedEmail(shopName,'We received your order','Hi '+name+', your order has been created. We will send another update when payment is confirmed.',{'Order number':orderNo,'Order total':safeTotal,'Payment status':'Awaiting M-PESA confirmation'});
@@ -978,15 +978,15 @@ export default async function handler(req:any,res:any){
     updated_at timestamptz NOT NULL DEFAULT now()
    )`;
    if(req.method==='GET'&&action==='email-credentials'){
-    const rows=await sql`SELECT from_email,reply_to_email,enabled,updated_at FROM public.tenant_email_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
+    const rows=await sql`SELECT ec.from_email,ec.reply_to_email,ec.notification_email,ec.enabled,ec.updated_at,u.email AS owner_email FROM public.tenant_email_configs ec LEFT JOIN public.users u ON u.id=${me.user_id} WHERE ec.tenant_id=${me.tenant_id} LIMIT 1`;
     const row=rows[0];
-    return send(res,200,{configured:!!row?.enabled,fromEmail:row?.from_email||'',replyToEmail:row?.reply_to_email||'',updatedAt:row?.updated_at||null,apiKeyConfigured:!!row?.enabled});
+    return send(res,200,{configured:!!row?.enabled,fromEmail:row?.from_email||'',replyToEmail:row?.reply_to_email||'',notificationEmail:row?.notification_email||row?.owner_email||'',updatedAt:row?.updated_at||null,apiKeyConfigured:!!row?.enabled});
    }
    if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner or admin can manage email credentials.'});
    const encryptionKey=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');
    if(!encryptionKey)return send(res,503,{error:'Secure credential storage is not configured. Contact DASMARKET support.'});
    if(action==='email-credentials'&&req.method==='POST'){
-    const b=req.body||{},fromEmail=String(b.fromEmail||'').trim().toLowerCase(),replyToEmail=String(b.replyToEmail||'').trim().toLowerCase(),fromName=String(b.fromName||me.shop_name||'').trim().slice(0,100);
+    const b=req.body||{},fromEmail=String(b.fromEmail||'').trim().toLowerCase(),replyToEmail=String(b.replyToEmail||'').trim().toLowerCase(),fromName=String(b.fromName||me.shop_name||'').trim().slice(0,100),notificationEmail=String(b.notificationEmail||'').trim().toLowerCase().slice(0,254);
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fromEmail)||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyToEmail))return send(res,400,{error:'Enter valid sender and reply-to email addresses.'});
     const current=await sql`SELECT encrypted_config FROM public.tenant_email_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
     let secret:any={};
@@ -997,9 +997,9 @@ export default async function handler(req:any,res:any){
     if(!secret.apiKey)return send(res,400,{error:'Enter your Resend API key before saving.'});
     secret.fromName=fromName;
     const encrypted=encryptTenantEmailConfig(secret);
-    await sql`INSERT INTO public.tenant_email_configs(tenant_id,encrypted_config,from_email,reply_to_email,enabled,updated_at) VALUES(${me.tenant_id},${JSON.stringify(encrypted)}::jsonb,${fromEmail},${replyToEmail},true,now()) ON CONFLICT(tenant_id) DO UPDATE SET encrypted_config=EXCLUDED.encrypted_config,from_email=EXCLUDED.from_email,reply_to_email=EXCLUDED.reply_to_email,enabled=true,updated_at=now()`;
+    await sql`INSERT INTO public.tenant_email_configs(tenant_id,encrypted_config,from_email,reply_to_email,notification_email,enabled,updated_at) VALUES(${me.tenant_id},${JSON.stringify(encrypted)}::jsonb,${fromEmail},${replyToEmail},${notificationEmail||null},true,now()) ON CONFLICT(tenant_id) DO UPDATE SET encrypted_config=EXCLUDED.encrypted_config,from_email=EXCLUDED.from_email,reply_to_email=EXCLUDED.reply_to_email,notification_email=EXCLUDED.notification_email,enabled=true,updated_at=now()`;
     await audit(sql,me.tenant_id,me.user_id,'email.resend.credentials.updated','email_config',me.tenant_id,{fromEmail,replyToEmail,apiKeyStoredEncrypted:true});
-    return send(res,200,{ok:true,configured:true,fromEmail,replyToEmail,apiKeyConfigured:true,message:'Resend credentials encrypted and saved.'});
+    return send(res,200,{ok:true,configured:true,fromEmail,replyToEmail,notificationEmail,apiKeyConfigured:true,message:'Resend credentials encrypted and saved.'});
    }
    if(action==='email-test'&&req.method==='POST'){
     const rows=await sql`SELECT encrypted_config,from_email,reply_to_email,enabled FROM public.tenant_email_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
