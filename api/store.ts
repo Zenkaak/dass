@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import crypto from 'node:crypto';
+import { sendTransactionalEmail, escapeEmailHtml } from '../src/server/email.js';
 
 // Keep a stack trace for legacy URL parser warnings so the originating dependency
 // can be identified and upgraded instead of hiding the warning.
@@ -83,7 +84,19 @@ async function verifyInventoryCronOidc(token:string){
 async function reconcilePaymentJob(sql:any,jobId:string){
  try{
   const result=await sql`WITH claimed AS (UPDATE public.payment_reconciliation_jobs SET status='completed',attempts=attempts+1,processed_at=now(),updated_at=now(),last_error=NULL WHERE id=${jobId} AND status='pending' RETURNING id,tenant_id,order_id,payment_id), order_update AS (UPDATE public.orders o SET status='confirmed',updated_at=now() FROM claimed j JOIN public.payments p ON p.id=j.payment_id WHERE o.id=j.order_id AND o.tenant_id=j.tenant_id AND o.status='pending' AND COALESCE(p.provider_result->>'inventoryIssue','')='' RETURNING o.id), payment_notice AS (INSERT INTO public.buyer_notifications(tenant_id,buyer_phone,order_id,notification_type,title,detail) SELECT j.tenant_id,o.customer_phone,j.order_id,'payment_update',CASE WHEN COALESCE(p.provider_result->>'inventoryIssue','')<>'' THEN 'Payment received — stock review required' ELSE 'Payment confirmed' END,CASE WHEN COALESCE(p.provider_result->>'inventoryIssue','')<>'' THEN 'Your M-PESA payment was confirmed, but stock changed during checkout. The shop must review availability before dispatch.' ELSE 'Your M-PESA payment was confirmed.' END FROM claimed j JOIN public.orders o ON o.id=j.order_id AND o.tenant_id=j.tenant_id JOIN public.payments p ON p.id=j.payment_id WHERE NULLIF(o.customer_phone,'') IS NOT NULL RETURNING id), order_notice AS (INSERT INTO public.buyer_notifications(tenant_id,buyer_phone,order_id,notification_type,title,detail) SELECT j.tenant_id,o.customer_phone,j.order_id,'order_update','Order confirmed','Your order has been confirmed by the shop.' FROM claimed j JOIN public.orders o ON o.id=j.order_id AND o.tenant_id=j.tenant_id JOIN public.payments p ON p.id=j.payment_id WHERE NULLIF(o.customer_phone,'') IS NOT NULL AND COALESCE(p.provider_result->>'inventoryIssue','')='' RETURNING id), coupon_update AS (UPDATE public.store_coupons c SET used_count=c.used_count+1,updated_at=now() FROM claimed j JOIN public.orders o ON o.id=j.order_id AND o.tenant_id=j.tenant_id JOIN public.payments p ON p.id=j.payment_id WHERE o.coupon_code IS NOT NULL AND c.tenant_id=j.tenant_id AND c.code=o.coupon_code AND COALESCE(p.provider_result->>'inventoryIssue','')='' RETURNING c.id), callback_update AS (UPDATE public.payment_configs pc SET callback_verified_at=now() FROM claimed j WHERE pc.tenant_id=j.tenant_id RETURNING pc.tenant_id) SELECT (SELECT COUNT(*) FROM claimed)::integer AS claimed,(SELECT COUNT(*) FROM order_update)::integer AS orders_updated,(SELECT COUNT(*) FROM payment_notice)::integer AS payment_notifications,(SELECT COUNT(*) FROM order_notice)::integer AS order_notifications,(SELECT COUNT(*) FROM coupon_update)::integer AS coupons_updated,(SELECT COUNT(*) FROM callback_update)::integer AS configs_updated`;
-  return Number(result[0]?.claimed||0)>0;
+  const claimed=Number(result[0]?.claimed||0)>0;
+  if(claimed){
+   try{
+    const details=await sql`SELECT o.order_number,o.customer_name,o.customer_email,o.total_minor,p.provider_receipt,t.name AS shop_name FROM public.payment_reconciliation_jobs j JOIN public.orders o ON o.id=j.order_id AND o.tenant_id=j.tenant_id JOIN public.payments p ON p.id=j.payment_id AND p.tenant_id=j.tenant_id JOIN public.tenants t ON t.id=j.tenant_id WHERE j.id=${jobId} LIMIT 1`;
+    const order=details[0];
+    if(order?.customer_email&&/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(String(order.customer_email))){
+     const name=String(order.customer_name||'Customer'),shop=String(order.shop_name||'the shop'),number=String(order.order_number||''),amount=(Number(order.total_minor||0)/100).toLocaleString('en-KE',{style:'currency',currency:'KES'}),receipt=String(order.provider_receipt||'');
+     const safeName=escapeEmailHtml(name),safeShop=escapeEmailHtml(shop),safeNumber=escapeEmailHtml(number),safeAmount=escapeEmailHtml(amount),safeReceipt=escapeEmailHtml(receipt);
+     await sendTransactionalEmail({to:String(order.customer_email),subject:'Payment confirmed — order '+number,text:'Hi '+name+', your payment for order '+number+' at '+shop+' has been confirmed. Total: '+amount+'.'+(receipt?' M-PESA receipt: '+receipt+'.':''),html:'<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#202124"><h2>Payment confirmed</h2><p>Hi '+safeName+',</p><p>Your payment to <b>'+safeShop+'</b> has been confirmed.</p><div style="padding:16px;background:#f6f7f8;border-radius:10px"><p>Order: <b>'+safeNumber+'</b></p><p>Total paid: <b>'+safeAmount+'</b></p>'+(receipt?'<p>M-PESA receipt: <b>'+safeReceipt+'</b></p>':'')+'</div><p>You can view your order and delivery updates from your buyer account.</p><p style="color:#667085;font-size:13px">Powered by DASMARKET</p></div>'});
+    }
+   }catch(emailError:any){console.error('Order confirmation email could not be sent',String(emailError?.message||emailError).slice(0,240));}
+  }
+  return claimed;
  }catch(error:any){
   const message=String(error?.message||'Reconciliation failed').slice(0,1000);
   await sql`UPDATE public.payment_reconciliation_jobs SET attempts=attempts+1,last_error=${message},updated_at=now() WHERE id=${jobId} AND status='pending'`;
