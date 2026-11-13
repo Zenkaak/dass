@@ -129,7 +129,7 @@ async function reconcilePaymentJob(sql:any,jobId:string){
     }
     if(order?.seller_email&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(order.seller_email))){
      const sellerMail=brandedEmail(shop,'Payment received','A customer payment has been confirmed for an order in your shop.',{'Order number':number,'Customer':name,'Amount received':amount,...(receipt?{'M-PESA receipt':receipt}:{})},{items:emailItems,buttonLabel:'Open order',buttonUrl:shopOrderEmailUrl(shopSlug,number,true)});
-     await sendTenantTransactionalEmail(sql,String(order.seller_email),{to:String(order.seller_email),subject:'Payment received — order '+number,...sellerMail,idempotencyKey:'seller-order-payment-confirmed-'+number});
+     await sendTenantTransactionalEmail(sql,String(order.tenant_id||''),{to:String(order.seller_email),subject:'Payment received — order '+number,...sellerMail,idempotencyKey:'seller-order-payment-confirmed-'+number});
     }
    }catch(emailError:any){console.error('Order confirmation email could not be sent',String(emailError?.message||emailError).slice(0,240));}
   }
@@ -759,9 +759,9 @@ export default async function handler(req:any,res:any){
     try{
      await sql`CREATE TABLE IF NOT EXISTS public.tenant_email_configs (tenant_id uuid PRIMARY KEY REFERENCES public.tenants(id) ON DELETE CASCADE,encrypted_config jsonb NOT NULL,from_email text NOT NULL,reply_to_email text NOT NULL,notification_email text,enabled boolean NOT NULL DEFAULT true,updated_at timestamptz NOT NULL DEFAULT now())`;
      await sql`ALTER TABLE public.tenant_email_configs ADD COLUMN IF NOT EXISTS notification_email text`;
-     const recipients=await sql`SELECT COALESCE(NULLIF(ec.notification_email,''),NULLIF(u.email,'')) AS seller_email,o.order_number,t.name AS shop_name FROM public.orders o JOIN public.tenants t ON t.id=o.tenant_id LEFT JOIN public.users u ON u.id=t.created_by LEFT JOIN public.tenant_email_configs ec ON ec.tenant_id=t.id AND ec.enabled=true WHERE o.id=${order.id} AND o.tenant_id=${order.tenant_id} LIMIT 1`;
+     const recipients=await sql`SELECT COALESCE(NULLIF(ec.notification_email,''),NULLIF(u.email,'')) AS seller_email,o.order_number,t.name AS shop_name,t.slug AS shop_slug FROM public.orders o JOIN public.tenants t ON t.id=o.tenant_id LEFT JOIN public.users u ON u.id=t.created_by LEFT JOIN public.tenant_email_configs ec ON ec.tenant_id=t.id AND ec.enabled=true WHERE o.id=${order.id} AND o.tenant_id=${order.tenant_id} LIMIT 1`;
      if(recipients[0]?.seller_email){
-      const mail=brandedEmail(String(recipients[0].shop_name||'Your shop'),'New message from a buyer','A buyer sent a new message about an order. Open your seller dashboard to reply.',{'Order number':String(recipients[0].order_number||'')});
+      const chatNumber=String(recipients[0].order_number||''),mail=brandedEmail(String(recipients[0].shop_name||'Your shop'),'New message from a buyer','A buyer sent a new message about an order. Open your seller dashboard to reply.',{'Order number':chatNumber},{buttonLabel:'Reply to buyer',buttonUrl:shopOrderEmailUrl(String(recipients[0].shop_slug||''),chatNumber,true)});
       await sendTenantTransactionalEmail(sql,String(order.tenant_id),{to:String(recipients[0].seller_email),subject:'New buyer message — '+String(recipients[0].order_number||''),...mail,idempotencyKey:'seller-order-chat-'+String(order.id)+'-'+hash(message).slice(0,16)});
      }
     }catch(emailError:any){console.error('Seller order-chat email failed',String(emailError?.message||emailError).slice(0,200));}
