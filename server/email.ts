@@ -56,8 +56,12 @@ export async function sendTenantTransactionalEmail(sql:any,tenantId:string,input
   const row=rows[0];
   let shopInput=input;
   try{
-   const branding=await sql`SELECT logo_url,contact_email FROM public.sites WHERE tenant_id=${tenantId} LIMIT 1`;
+   const branding=await sql`SELECT t.name AS shop_name,s.logo_url,s.contact_email FROM public.tenants t LEFT JOIN public.sites s ON s.tenant_id=t.id WHERE t.id=${tenantId} LIMIT 1`;
    const logo=safeHttpUrl(String(branding[0]?.logo_url||''));
+   const shopLabel=String(branding[0]?.shop_name||'Shop').replace(/[<>\\r\\n]/g,'').slice(0,80);
+   const configuredFrom=env('RESEND_FROM_EMAIL')||'DASMARKET <notifications@dasmarket.co.ke>';
+   const senderAddress=configuredFrom.match(/<([^>]+)>/)?.[1]||configuredFrom;
+   var shopFallbackFrom=shopLabel+' via DASMARKET <'+senderAddress+'>';
    if(logo&&shopInput.html.includes('SHOP UPDATE')){
     const logoMarkup='<img src="'+escapeEmailHtml(logo)+'" alt="Shop logo" width="150" style="display:block;max-width:150px;max-height:56px;object-fit:contain;border:0">';
     shopInput={...shopInput,html:shopInput.html.replace(/<span style="font-size:22px;line-height:1\.2;font-weight:800;letter-spacing:-\.5px;color:[^"]+">[^<]*<\\/span>/,logoMarkup)};
@@ -70,7 +74,7 @@ export async function sendTenantTransactionalEmail(sql:any,tenantId:string,input
    console.warn('Seller Resend delivery failed; attempting platform sender fallback.',{tenantId,reason:result.reason});
   }
  }catch(error:any){console.error('Seller email configuration could not be loaded; using platform sender fallback.',String(error?.message||error).slice(0,200));}
- return sendWithResend(shopInput);
+ return sendWithResend({...shopInput,from:(typeof shopFallbackFrom==='string'&&shopFallbackFrom)||undefined});
 }
 type EmailTemplateOptions={logoUrl?:string;accentColor?:string;buttonLabel?:string;buttonUrl?:string;productImageUrl?:string;productName?:string;preheader?:string;supportEmail?:string};
 function safeHttpUrl(value:string|undefined){const v=String(value||'').trim();return /^https?:\/\/[^\s"'<>]+$/i.test(v)?v:'';}
