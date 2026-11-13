@@ -1024,7 +1024,7 @@ export default async function handler(req:any,res:any){
    const b=req.body||{},planId=String(b.planId||''),phone=normalizePhone(b.phone);
    if(!/^[0-9a-f-]{36}$/i.test(planId)||!phone)return send(res,400,{error:'Choose a plan and enter a valid Kenyan M-PESA phone number.'});
    const [plans,subs,settings]=await Promise.all([
-    sql`SELECT id,name,price_minor,currency,interval_days FROM public.subscription_plans WHERE id=${planId} AND is_active=true LIMIT 1`,
+    sql`SELECT id,code,name,price_minor,currency,interval_days FROM public.subscription_plans WHERE id=${planId} AND is_active=true LIMIT 1`,
     sql`SELECT s.id,s.status,sp.code AS plan_code FROM public.subscriptions s JOIN public.subscription_plans sp ON sp.id=s.plan_id WHERE s.tenant_id=${me.tenant_id} ORDER BY s.created_at DESC LIMIT 1`,
     sql`SELECT setting_value FROM public.platform_settings WHERE setting_key='subscription_payment' LIMIT 1`
    ]);
