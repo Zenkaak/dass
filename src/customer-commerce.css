@@ -5989,3 +5989,17 @@
  .market-checkout-page .market-checkout-order-card { padding:12px; }
  .market-checkout-payment-dialog { padding:18px 16px; }
 }
+
+
+/* Checkout dialog sizing and a settled visual state after Safaricom responds. */
+.market-checkout-payment-dialog{width:min(340px,calc(100% - 28px));padding:16px;border-radius:12px}
+.market-checkout-payment-dialog .customer-payment-modal-mark{width:30px;height:30px;font-size:16px}
+.market-checkout-payment-dialog h2{margin:9px 0 4px;font-size:15px}
+.market-checkout-payment-dialog>p{margin-bottom:10px;font-size:10px}
+.market-checkout-payment-dialog .customer-form-label input{min-height:36px;font-size:12px}
+.market-checkout-payment-dialog .customer-payment-modal-actions{margin-top:12px}
+.market-payment-processing.has-provider-response .market-payment-processing-icon{background:#eef8f0;border-color:#cce8d1}
+.market-payment-processing.has-provider-response .market-payment-processing-icon span{display:none;animation:none}
+.market-payment-processing.has-provider-response .market-payment-processing-icon::after{content:'✓';width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:#238447;color:#fff;font-size:22px;font-weight:800}
+.market-payment-processing.has-provider-response .market-payment-poll-status{color:#247344}
+@media(max-width:600px){.market-checkout-payment-dialog{width:min(320px,calc(100% - 28px));padding:14px}}
