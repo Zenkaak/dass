@@ -17,7 +17,8 @@ function token(req:any){const c=String(req.headers.cookie||'').split(';').map((s
 async function buyerSession(sql:any,req:any,tenantId:string){
  // Expire customer moderation only within the tenant whose buyer session is being checked.
  await sql`UPDATE public.store_customers SET is_banned=false,ban_reason=NULL,banned_until=NULL,updated_at=now() WHERE tenant_id=${tenantId} AND is_banned=true AND banned_until IS NOT NULL AND banned_until<=now()`;
- const rawBuyer=String(req.headers.cookie||'').split(';').map((x:string)=>x.trim()).find((x:string)=>x.startsWith('das_buyer_auth='));let buyerAuth='';try{buyerAuth=rawBuyer?decodeURIComponent(rawBuyer.slice('das_buyer_auth='.length)):''}catch{}\n const global=buyerAuth||token(req);
+ const rawBuyer=String(req.headers.cookie||'').split(';').map((x:string)=>x.trim()).find((x:string)=>x.startsWith('das_buyer_auth='));let buyerAuth='';try{buyerAuth=rawBuyer?decodeURIComponent(rawBuyer.slice('das_buyer_auth='.length)):''}catch{}
+ const global=buyerAuth||token(req);
  if(global){
   const rows=await sql`SELECT c.id,c.user_id,c.full_name,c.phone,c.email,c.address FROM public.auth_sessions s JOIN public.store_customers c ON c.user_id=s.user_id AND c.tenant_id=${tenantId} WHERE s.token_hash=${hash(global)} AND s.expires_at>now() AND c.is_banned=false AND (c.banned_until IS NULL OR c.banned_until<=now()) LIMIT 1`;
   return rows[0]||null;
