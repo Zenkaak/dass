@@ -769,3 +769,45 @@
 .seller-subscriptions.is-checkout-route>.seller-sub-benefits,
 .seller-subscriptions.is-checkout-route>.seller-sub-lifetime-plan,
 .seller-subscriptions.is-checkout-route>.seller-sub-plan-grid{display:none!important}
+
+/* Record routes are pages, not dashboard overlays. Keep the dashboard shell for
+   list views, but let deep-linked details own the full viewport. */
+.seller-app.seller-page-route{
+  display:block!important;min-height:100dvh!important;background:#f3f6fa!important;color:#263b4e!important;
+}
+.seller-app.seller-page-route .seller-rail,
+.seller-app.seller-page-route .seller-topbar,
+.seller-app.seller-page-route .seller-mobile-bottom,
+.seller-app.seller-page-route .seller-whatsapp-float,
+.seller-app.seller-page-route .seller-mobile-scrim{display:none!important}
+.seller-app.seller-page-route .seller-workarea{min-height:100dvh!important;width:100%!important}
+.seller-app.seller-page-route .seller-content{
+  box-sizing:border-box;width:100%!important;max-width:1120px!important;min-height:100dvh!important;
+  margin:0 auto!important;padding:24px 22px 48px!important;
+}
+.seller-app.seller-record-page .seller-content>:not(.seller-detail-route):not(.seller-alert){display:none!important}
+.seller-app.seller-page-route .seller-detail-route{
+  position:relative!important;inset:auto!important;z-index:1!important;display:block!important;
+  width:min(1080px,100%)!important;margin:0 auto!important;padding:0!important;overflow:visible!important;
+  background:transparent!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+.seller-app.seller-page-route .seller-detail-route .seller-detail-card{
+  box-sizing:border-box!important;width:100%!important;max-width:100%!important;max-height:none!important;
+  min-height:calc(100dvh - 72px)!important;overflow:visible!important;margin:0!important;padding:24px!important;
+  border:0!important;border-radius:16px!important;background:#f3f6fa!important;color:#263b4e!important;
+  box-shadow:none!important;animation:none!important;
+}
+.seller-app.seller-product-editor-page .seller-content .seller-page-heading,
+.seller-app.seller-product-editor-page .seller-content .seller-bulk-import,
+.seller-app.seller-product-editor-page .seller-content .seller-table-panel{display:none!important}
+.seller-app.seller-page-route .seller-editor-route{
+  position:relative!important;inset:auto!important;z-index:1!important;box-sizing:border-box!important;
+  width:min(980px,100%)!important;max-width:980px!important;min-height:calc(100dvh - 72px)!important;
+  max-height:none!important;overflow:visible!important;margin:0 auto!important;padding:0 0 40px!important;
+  border:0!important;border-radius:0!important;box-shadow:none!important;
+}
+@media(max-width:650px){
+  .seller-app.seller-page-route .seller-content{padding:14px 14px 32px!important}
+  .seller-app.seller-page-route .seller-detail-route .seller-detail-card{min-height:calc(100dvh - 46px)!important;padding:16px!important}
+  .seller-app.seller-page-route .seller-editor-route{min-height:calc(100dvh - 46px)!important}
+}
