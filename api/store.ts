@@ -1103,7 +1103,7 @@ export default async function handler(req:any,res:any){
     const owner=await sql`SELECT email,display_name FROM public.users WHERE id=${me.user_id} LIMIT 1`;
     const mail=brandedEmail('DASMARKET','Support request received','We have received your support request. Our team will review it and respond through your seller dashboard.',{'Ticket number':ticket,'Subject':subject,'Category':category});
     if(owner[0]?.email)await sendTransactionalEmail({to:String(owner[0].email),subject:'DASMARKET support ticket received — '+ticket,...mail,idempotencyKey:'support-ticket-receipt-'+row[0].id});
-    const admins=(env('DAS_PLATFORM_ADMIN_EMAILS')||'').split(',').map((v:string)=>v.trim()).filter((v:string)=>/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(v));
+    const admins=(env('DAS_PLATFORM_ADMIN_EMAILS')||env('SUPPORT_EMAIL')||'support@dasnet.co.ke').split(',').map((v:string)=>v.trim()).filter((v:string)=>/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(v));
     for(const to of admins){const adminMail=brandedEmail('DASMARKET','New seller support ticket','A seller has opened a support ticket. Sign in to the platform admin dashboard to review it.',{'Ticket number':ticket,'Shop':String(me.shop_name||''),'Subject':subject,'Category':category});await sendTransactionalEmail({to,subject:'New seller support ticket — '+ticket,...adminMail,idempotencyKey:'support-ticket-admin-'+row[0].id+'-'+hash(to).slice(0,8)});}
    }catch(emailError:any){console.error('Support ticket email failed',String(emailError?.message||emailError).slice(0,200));}
    return send(res,201,{ticket:row[0]});
