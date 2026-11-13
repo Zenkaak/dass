@@ -126,7 +126,7 @@ export default function PlatformSeoPage({ slug }: { slug: string }) {
     document.head.querySelector('meta[property="og:description"]')?.setAttribute('content', page.description);
     setMeta('meta[property="og:url"]', 'property', 'og:url');
     document.head.querySelector('meta[property="og:url"]')?.setAttribute('content', 'https://dasmarket.co.ke/' + slug);
-    const schema = { '@context': 'https://schema.org', '@type': 'WebPage', name: page.title, description: page.description, url: 'https://dasmarket.co.ke/' + slug, isPartOf: { '@type': 'WebSite', name: 'DASMARKET', url: 'https://dasmarket.co.ke/' } };
+    const schema = { '@context': 'https://schema.org', '@graph': [ { '@type': 'Organization', '@id': 'https://dasmarket.co.ke/#organization', name: 'DASMARKET', alternateName: 'DASMARKET', url: 'https://dasmarket.co.ke/', brand: { '@type': 'Brand', name: 'DASMARKET' } }, { '@type': 'WebSite', '@id': 'https://dasmarket.co.ke/#website', name: 'DASMARKET', alternateName: 'DASMARKET', url: 'https://dasmarket.co.ke/', publisher: { '@id': 'https://dasmarket.co.ke/#organization' } }, { '@type': 'WebPage', name: page.title, description: page.description, url: 'https://dasmarket.co.ke/' + slug, isPartOf: { '@id': 'https://dasmarket.co.ke/#website' } } ] };
     let script = document.getElementById('dasmarket-seo-schema') as HTMLScriptElement | null;
     if (!script) { script = document.createElement('script'); script.id = 'dasmarket-seo-schema'; script.type = 'application/ld+json'; document.head.appendChild(script); }
     script.textContent = JSON.stringify(schema);
