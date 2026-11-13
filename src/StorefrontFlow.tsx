@@ -499,7 +499,7 @@ export function StorefrontFlow({
   async function placeOrder() {
     if (!lines.length || submitting) return;
     const isCash = paymentMethod === 'delivery';
-    if (!isCash && !/^\+?254[17]\\d{8}$|^0[17]\\d{8}$/.test(paymentPhone.trim().replace(/[\\s().-]/g,''))) {
+    if (!isCash && !/^\+?254[17]\d{8}$|^0[17]\d{8}$/.test(paymentPhone.trim().replace(/[\\s().-]/g,''))) {
       setCheckoutError('Enter a valid Kenyan M-PESA phone number to receive the payment prompt.');
       return;
     }
@@ -533,7 +533,7 @@ export function StorefrontFlow({
           deliveryAddress: deliveryAddress.trim(),
           deliveryDirections: deliveryDirections.trim(),
           pickupStation: pickupStation.trim(),
-          paymentMethod: 'mpesa',
+          paymentMethod: isCash ? 'delivery' : 'mpesa',
           items: lines.map(({ product, quantity }) => ({ id: product.id, quantity })),
           idempotencyKey: checkoutIdempotency.current.key,
         }),
