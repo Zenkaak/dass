@@ -24,7 +24,7 @@ async function sendCode(phone:string,code:string,purpose:string,shop:string){
  const data:any=await response.json().catch(()=>({}));
  if(!response.ok||data.status===false||data.success===false||data.error)throw Error('SMS_FAILED');
 }
-async function issue(sql:any,phone:string,purpose:'signup'|'password_reset',ip:string,shop:string){
+async function issue(sql:any,phone:string,purpose:'signup'|'password_reset',ip:string,shop:string,tenantId:string){
  const recent=await sql`SELECT id FROM public.auth_otp_challenges WHERE phone=${phone} AND purpose=${purpose} AND created_at>now()-interval '60 seconds' LIMIT 1`;
  if(recent.length)return false;
  const count=await sql`SELECT count(*)::int n FROM public.auth_otp_challenges WHERE phone=${phone} AND purpose=${purpose} AND created_at>now()-interval '1 hour'`;
@@ -32,7 +32,7 @@ async function issue(sql:any,phone:string,purpose:'signup'|'password_reset',ip:s
  const code=String(crypto.randomInt(0,1000000)).padStart(6,'0'),salt=crypto.randomBytes(16).toString('hex');
  const codeHash=hash(`${phone}:${purpose}:${salt}:${code}`);
  const row=await sql`INSERT INTO public.auth_otp_challenges(phone,purpose,code_hash,code_salt,request_ip_hash,expires_at) VALUES(${phone},${purpose},${codeHash},${salt},${hash(ip).slice(0,32)},now()+interval '10 minutes') RETURNING id`;
- try{await sendCode(phone,code,purpose,shop)}catch(error){await sql`UPDATE public.auth_otp_challenges SET consumed_at=now() WHERE id=${row[0].id}`;throw error}
+ try{await sendCode(phone,code,purpose,shop)}catch(error){await sql`UPDATE public.auth_otp_challenges SET consumed_at=now() WHERE id=${row[0].id}`;throw error}if(purpose==='password_reset'){try{const profile=await sql`SELECT email,full_name FROM public.store_customers WHERE tenant_id=${tenantId} AND phone=${phone} LIMIT 1`;if(profile[0]?.email&&/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(String(profile[0].email))){const mail=brandedEmail(shop,'Your password reset code','Use this one-time code to reset your buyer account password: '+code+'. It expires in 10 minutes. If you did not request this, ignore this email.');await sendTenantTransactionalEmail(sql,tenantId,{to:String(profile[0].email),subject:'Password reset code — '+shop,...mail,idempotencyKey:'buyer-password-reset-'+row[0].id});}}catch(emailError:any){console.error('Buyer password reset email could not be sent',String(emailError?.message||emailError).slice(0,200));}}
  return true;
 }
 async function verify(sql:any,phone:string,purpose:'signup'|'password_reset',code:string){
@@ -62,7 +62,7 @@ export default async function handler(req:any,res:any){
    if((await sql`SELECT id FROM public.store_customers WHERE tenant_id=${tenantId} AND phone=${phone} LIMIT 1`).length)return send(res,409,{error:'You already have a buyer profile in this shop. Please sign in.'});
    if((await sql`SELECT id FROM public.users WHERE phone=${phone} LIMIT 1`).length)return send(res,409,{error:'This phone already has a DASNET identity. Sign in instead; your buyer profile will be created for this shop.'});
    const ip=String(req.headers['x-forwarded-for']||req.socket?.remoteAddress||'').split(',')[0].trim();
-   if(!await issue(sql,phone,'signup',ip,tenant.name))return send(res,429,{error:'Please wait before requesting another code.'});
+   if(!await issue(sql,phone,'signup',ip,tenant.name,tenantId))return send(res,429,{error:'Please wait before requesting another code.'});
    return send(res,200,{ok:true,message:'Verification code sent by SMS.'});
   }
   if(req.method==='POST'&&action==='send-reset-code'){
@@ -70,7 +70,7 @@ export default async function handler(req:any,res:any){
    const exists=await sql`SELECT id FROM public.users WHERE phone=${phone} LIMIT 1`;
    if(!exists.length)return send(res,200,{ok:true,message:'If an account exists, a code has been sent.'});
    const ip=String(req.headers['x-forwarded-for']||req.socket?.remoteAddress||'').split(',')[0].trim();
-   if(!await issue(sql,phone,'password_reset',ip,tenant.name))return send(res,429,{error:'Please wait before requesting another code.'});
+   if(!await issue(sql,phone,'password_reset',ip,tenant.name,tenantId))return send(res,429,{error:'Please wait before requesting another code.'});
    return send(res,200,{ok:true,message:'Password reset code sent by SMS.'});
   }
   if(req.method==='POST'&&action==='signup'){
