@@ -109,6 +109,7 @@ export default async function handler(req:any,res:any){
    return send(res,200,{settings:{method:cfg.method||'till',destination:cfg.destination||'',accountReference:cfg.accountReference||''},methods,transactions:transactions.map((p:any)=>({...p,amount:Number(p.amount_minor)/100,planId:p.provider_result?.planId||'',paymentMethod:p.provider_result?.paymentMethod||'till'}))});
   }
   if(req.method==='GET'&&String(req.query?.action||'')==='plans'){
+   await sql`INSERT INTO public.subscription_plans(code,name,description,price_minor,currency,interval_days,is_active,is_featured,sort_order,features) VALUES('lifetime-license','Lifetime platform licence','One-time payment for lifetime use of the full DASMARKET platform for this shop. Hosting, domain renewals, third-party services and optional maintenance are billed separately.',25000000,'KES',36500,true,false,50,'{"product_limit":0,"staff_limit":0,"custom_domain":true,"advanced_analytics":true,"coupons":true,"promotions":true,"priority_support":true}'::jsonb) ON CONFLICT(code) DO NOTHING`;
    const [plans,settings]=await Promise.all([
     sql`SELECT id,code,name,description,price_minor,currency,interval_days,is_active,is_featured,sort_order,features,created_at FROM public.subscription_plans ORDER BY sort_order ASC,price_minor ASC`,
     sql`SELECT setting_value FROM public.platform_settings WHERE setting_key='subscription' LIMIT 1`
