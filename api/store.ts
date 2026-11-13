@@ -545,7 +545,7 @@ export default async function handler(req:any,res:any){
     }
     // A successful STK query response is not itself a receipt. Wait for the signed callback
     // to attach the M-PESA receipt before telling the buyer that payment succeeded.
-    return send(res,200,{orderId,paymentStatus:'pending',receipt:null,terminal:false,queryAvailable:true,message:resultCode==='0'?'Safaricom processed the request; waiting for the payment receipt callback.':'Waiting for Safaricom to finish processing.'});
+    return send(res,200,{orderId,paymentStatus:'pending',receipt:null,terminal:false,queryAvailable:true,providerResponded:resultCode==='0',message:resultCode==='0'?'Safaricom processed the request; verifying the payment receipt callback.':'Waiting for Safaricom to finish processing.'});
    }catch(queryError:any){
     console.error('Buyer payment status query failed',{paymentId:payment.id,error:String(queryError?.message||queryError)});
     return send(res,200,{orderId,paymentStatus:payment.status||'pending',receipt:null,terminal:false,queryAvailable:false,message:'Still checking with Safaricom.'});
