@@ -1141,7 +1141,7 @@ export function StorefrontFlow({
     .slice(0,8);
   // Each account destination is its own full-screen page. Navigation lives on the account overview;
   // individual pages use their own back action instead of a persistent sub-tab rail.
-  return <div className="customer-workspace-shell">
+  return <div className={`customer-workspace-shell${showProductDiscovery ? " has-product-discovery" : ""}`}>
     {pageContent}
     {showProductDiscovery && discoveryProducts.length > 0 && <section className="buyer-account-discovery" aria-label="Product recommendations">
       <div className="buyer-account-discovery-heading"><div><span>MORE TO EXPLORE</span><h2>Discover more products</h2><p>Handpicked from this shop, with more from categories you have viewed.</p></div><button type="button" onClick={() => onNavigate('collection/all-products')}>View all <ArrowRight size={15}/></button></div>
