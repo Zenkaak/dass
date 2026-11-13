@@ -64,7 +64,7 @@ export async function sendTenantTransactionalEmail(sql:any,tenantId:string,input
    var shopFallbackFrom=shopLabel+' via DASMARKET <'+senderAddress+'>';
    if(logo&&shopInput.html.includes('SHOP UPDATE')){
     const logoMarkup='<img src="'+escapeEmailHtml(logo)+'" alt="Shop logo" width="150" style="display:block;max-width:150px;max-height:56px;object-fit:contain;border:0">';
-    shopInput={...shopInput,html:shopInput.html.replace(/<span style="font-size:22px;line-height:1\.2;font-weight:800;letter-spacing:-\.5px;color:[^"]+">[^<]*<\\/span>/,logoMarkup)};
+    shopInput={...shopInput,html:shopInput.html.replace(new RegExp('<span[^>]*>[^<]*</span>'),logoMarkup)};
    }
   }catch(error:any){console.warn('Shop email branding lookup skipped',String(error?.message||error).slice(0,160));}
   if(row?.enabled&&row.encrypted_config?.ciphertext){
