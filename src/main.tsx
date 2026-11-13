@@ -6,6 +6,7 @@ import './auth-pages.css';
 import './storefront-reference.css';
 import './storefront-performance.css';
 import './buyer-orders-redesign.css';
+import './buyer-order-detail-redesign.css';
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
