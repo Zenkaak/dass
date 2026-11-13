@@ -872,6 +872,19 @@ export default async function handler(req:any,res:any){
       return send(res,502,{error:error?.message||'Could not start the M-PESA payment prompt. Please retry from order details.'});
     }
    }
+   try{
+    const context=await sql`SELECT t.name AS shop_name,u.email AS seller_email FROM public.tenants t LEFT JOIN public.users u ON u.id=t.created_by WHERE t.id=${tenantId} LIMIT 1`;
+    const shopName=String(context[0]?.shop_name||'the shop'),safeTotal=(payableTotal/100).toLocaleString('en-KE',{style:'currency',currency:'KES'});
+    if(customerEmail&&/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(customerEmail)){
+     const mail=brandedEmail(shopName,'We received your order','Hi '+name+', your order has been created. We will send another update when payment is confirmed.',{'Order number':orderNo,'Order total':safeTotal,'Payment status':'Awaiting M-PESA confirmation'});
+     await sendTenantTransactionalEmail(sql,tenantId,{to:customerEmail,subject:'Order received — '+orderNo,...mail,idempotencyKey:'order-received-'+o[0].id});
+    }
+    const sellerEmail=String(context[0]?.seller_email||'');
+    if(sellerEmail&&/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(sellerEmail)){
+     const mail=brandedEmail(shopName,'New order received','A new customer order has been placed. Sign in to your seller dashboard to review it.',{'Order number':orderNo,'Customer':name,'Order total':safeTotal,'Payment status':'Awaiting confirmation'});
+     await sendTenantTransactionalEmail(sql,tenantId,{to:sellerEmail,subject:'New order — '+orderNo,...mail,idempotencyKey:'seller-new-order-'+o[0].id});
+    }
+   }catch(emailError:any){console.error('New order email notification failed',String(emailError?.message||emailError).slice(0,220));}
    const p=[{id:o[0].payment_id}];
    try{
     await reserveInventory(sql,String(p[0].id));
