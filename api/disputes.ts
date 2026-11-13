@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import crypto from 'node:crypto';
+import { sendTenantTransactionalEmail, brandedEmail } from '../server/email.js';
 
 const env=(k:string)=>(process.env[k]||'').trim();
 const db=()=>{const u=env('POSTGRES_URL')||env('DATABASE_URL')||env('NEON_DATABASE_URL');if(!u)throw Error('DB_CONFIG');return neon(u)};
@@ -32,7 +33,28 @@ async function actor(sql:any,req:any,tenantId:string){
  if(buyerToken){const b=await sql`SELECT c.id,c.full_name,c.phone,c.email,c.tenant_id FROM public.store_customers c LEFT JOIN public.auth_sessions a ON a.user_id=c.user_id AND a.token_hash=${hash(buyerToken)} AND a.expires_at>now() LEFT JOIN public.store_customer_sessions x ON x.customer_id=c.id AND x.token_hash=${hash(buyerToken)} AND x.expires_at>now() WHERE c.tenant_id=${tenantId} AND (a.user_id IS NOT NULL OR x.token_hash IS NOT NULL) AND c.is_banned=false AND (c.banned_until IS NULL OR c.banned_until<=now()) LIMIT 1`;if(b.length)return {...b[0],role:'buyer',senderRole:'buyer',senderId:b[0].id,name:b[0].full_name};}
  return null;
 }
-async function notify(sql:any,tenantId:string,complaintId:string,role:'buyer'|'seller'|'admin',phone:string|null,userId:string|null,title:string,detail:string){await sql`INSERT INTO public.dispute_notifications(tenant_id,complaint_id,recipient_role,recipient_phone,recipient_user_id,title,detail) VALUES(${tenantId},${complaintId},${role},${phone},${userId},${title},${detail})`}
+async function notify(sql:any,tenantId:string,complaintId:string,role:'buyer'|'seller'|'admin',phone:string|null,userId:string|null,title:string,detail:string){
+ const inserted=await sql`INSERT INTO public.dispute_notifications(tenant_id,complaint_id,recipient_role,recipient_phone,recipient_user_id,title,detail) VALUES(${tenantId},${complaintId},${role},${phone},${userId},${title},${detail}) RETURNING id`;
+ try{
+  let recipients:string[]=[];
+  const shopRows=await sql`SELECT name FROM public.tenants WHERE id=${tenantId} LIMIT 1`;
+  const shopName=String(shopRows[0]?.name||'DASMARKET shop');
+  if(role==='buyer'&&phone){
+   const rows=await sql`SELECT email FROM public.store_customers WHERE tenant_id=${tenantId} AND right(regexp_replace(phone,'[^0-9]','','g'),9)=right(regexp_replace(${phone},'[^0-9]','','g'),9) AND email IS NOT NULL LIMIT 1`;
+   if(rows[0]?.email)recipients=[String(rows[0].email)];
+  }else if(role==='seller'&&userId){
+   const rows=await sql`SELECT email FROM public.users WHERE id=${userId} LIMIT 1`;
+   if(rows[0]?.email)recipients=[String(rows[0].email)];
+  }else if(role==='admin'){
+   recipients=(env('DAS_PLATFORM_ADMIN_EMAILS')||'').split(',').map((v:string)=>v.trim()).filter((v:string)=>/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(v));
+  }
+  for(const to of recipients){
+   const mail=brandedEmail(role==='admin'?'DASMARKET':shopName,title,detail,{'Report reference':complaintId.slice(0,8).toUpperCase()});
+   const sendEmail=role==='admin'?sendTenantTransactionalEmail(sql,tenantId,{to,subject:title+' — report '+complaintId.slice(0,8),...mail,idempotencyKey:'dispute-notification-'+String(inserted[0]?.id||complaintId)+'-'+role+'-'+hash(to).slice(0,8)}):sendTenantTransactionalEmail(sql,tenantId,{to,subject:title+' — '+shopName,...mail,idempotencyKey:'dispute-notification-'+String(inserted[0]?.id||complaintId)+'-'+role+'-'+hash(to).slice(0,8)});
+   await sendEmail;
+  }
+ }catch(error:any){console.error('Dispute email notification failed',String(error?.message||error).slice(0,200));}
+}
 async function loadCase(sql:any,id:string,tenantId:string){const c=await sql`SELECT c.*,t.name AS shop_name,t.slug AS shop_slug,t.created_by AS seller_user_id,u.display_name AS seller_name,u.phone AS seller_phone FROM public.shop_complaints c JOIN public.tenants t ON t.id=c.tenant_id LEFT JOIN public.users u ON u.id=t.created_by WHERE c.id=${id} AND c.tenant_id=${tenantId} LIMIT 1`;return c[0]||null}
 async function escalateExpired(sql:any,tenantId:string){const rows=await sql`UPDATE public.shop_complaints SET dispute_status='escalated',status='under_review',dispute_escalated_at=now(),updated_at=now() WHERE tenant_id=${tenantId} AND dispute_status IN ('open','resolution_pending') AND dispute_deadline_at<=now() RETURNING id,buyer_phone`;for(const r of rows){await notify(sql,tenantId,r.id,'buyer',r.buyer_phone,null,'Dispute escalated to DASNET support','The one-hour resolution window has ended. DASNET support will review the case.');const seller=await sql`SELECT created_by FROM public.tenants WHERE id=${tenantId}`;await notify(sql,tenantId,r.id,'seller',null,seller[0]?.created_by||null,'Dispute escalated to DASNET support','The one-hour resolution window has ended. DASNET support will review the case.');await notify(sql,tenantId,r.id,'admin',null,null,'Dispute requires support review','A dispute has reached its one-hour deadline.');}}
 export default async function handler(req:any,res:any){
