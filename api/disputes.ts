@@ -29,8 +29,10 @@ async function actor(sql:any,req:any,tenantId:string){
  const legacy=cookie(req,'das_buyer_session');
  const explicitBuyer=modernBuyer||legacy;
  if(explicitBuyer){
-  const b=await sql`SELECT c.id,c.full_name,c.phone,c.email,c.tenant_id FROM public.store_customers c LEFT JOIN public.auth_sessions a ON a.user_id=c.user_id AND a.token_hash=${hash(explicitBuyer)} AND a.expires_at>now() LEFT JOIN public.store_customer_sessions x ON x.customer_id=c.id AND x.token_hash=${hash(explicitBuyer)} AND x.expires_at>now() WHERE c.tenant_id=${tenantId} AND (a.user_id IS NOT NULL OR x.token_hash IS NOT NULL) AND c.is_banned=false AND (c.banned_until IS NULL OR c.banned_until<=now()) LIMIT 1`;
-  if(b.length)return {...b[0],role:'buyer',senderRole:'buyer',senderId:b[0].id,name:b[0].full_name};
+  const b=await sql`SELECT c.id,c.full_name,c.phone,c.email,c.tenant_id FROM public.auth_sessions a JOIN public.users u ON u.id=a.user_id JOIN public.store_customers c ON c.tenant_id=${tenantId} AND (c.user_id=u.id OR (c.user_id IS NULL AND right(regexp_replace(c.phone,'[^0-9]','','g'),9)=right(regexp_replace(u.phone,'[^0-9]','','g'),9))) WHERE a.token_hash=${hash(explicitBuyer)} AND a.expires_at>now() AND c.is_banned=false AND (c.banned_until IS NULL OR c.banned_until<=now()) LIMIT 1`;
+  const legacyBuyer=await sql`SELECT c.id,c.full_name,c.phone,c.email,c.tenant_id FROM public.store_customer_sessions x JOIN public.store_customers c ON c.id=x.customer_id AND c.tenant_id=x.tenant_id WHERE x.tenant_id=${tenantId} AND x.token_hash=${hash(explicitBuyer)} AND x.expires_at>now() AND c.is_banned=false AND (c.banned_until IS NULL OR c.banned_until<=now()) LIMIT 1`;
+  const buyerProfile=b[0]||legacyBuyer[0];
+  if(buyerProfile)return {...buyerProfile,role:'buyer',senderRole:'buyer',senderId:buyerProfile.id,name:buyerProfile.full_name};
  }
  const global=cookie(req,'das_session');
  if(global){
