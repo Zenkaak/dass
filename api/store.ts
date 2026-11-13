@@ -76,7 +76,7 @@ async function orderEmailItems(sql:any,tenantId:string,orderId:string){
   let images:any[]=Array.isArray(row.images)?row.images:[];
   if(typeof row.images==='string'){try{const parsed=JSON.parse(row.images);images=Array.isArray(parsed)?parsed:[]}catch{images=[]}}
   const first=images[0],raw=typeof first==='string'?first:String(first?.url||first?.src||first?.publicUrl||first?.public_url||first?.key||first?.path||'');
-  const imageUrl=raw.startsWith('neon-object:')?storageUrl(raw.slice(12),'GET'):raw.startsWith('s3://')?storageUrl(raw.slice(5).replace(/^documents\\//,''),'GET'):/^https?:\\/\\//i.test(raw)?raw:'';
+  const imageUrl=raw.startsWith('neon-object:')?storageUrl(raw.slice(12),'GET'):raw.startsWith('s3://')?storageUrl(raw.slice(5).replace('documents/',''),'GET'):(raw.startsWith('https://')||raw.startsWith('http://'))?raw:'';
   const total=(Number(row.line_total_minor??(Number(row.unit_price_minor||0)*Number(row.quantity||1)))/100).toLocaleString('en-KE',{style:'currency',currency:'KES'});
   return {name:String(row.product_name||'Product'),quantity:Math.max(1,Number(row.quantity)||1),lineTotal:total,imageUrl};
  });
