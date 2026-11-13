@@ -111,7 +111,7 @@ const paymentLabels: Record<PaymentMethod, string> = {
   card: 'Bank card',
   airtel: 'Airtel Money',
   mpesa: 'M-Pesa',
-  delivery: 'Pay on delivery',
+  delivery: 'Cash on delivery / pickup',
 };
 
 const accountGroups = [
@@ -499,7 +499,7 @@ export function StorefrontFlow({
   async function placeOrder() {
     if (!lines.length || submitting) return;
     const isCash = paymentMethod === 'delivery';
-    if (!isCash && !/^\\+?254[17]\\d{8}$|^0[17]\\d{8}$/.test(paymentPhone.trim().replace(/[\\s().-]/g,''))) {
+    if (!isCash && !/^\+?254[17]\\d{8}$|^0[17]\\d{8}$/.test(paymentPhone.trim().replace(/[\\s().-]/g,''))) {
       setCheckoutError('Enter a valid Kenyan M-PESA phone number to receive the payment prompt.');
       return;
     }
@@ -751,8 +751,11 @@ export function StorefrontFlow({
             <div className="market-checkout-card market-checkout-payment-methods-card">
               <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><WalletCards size={18}/></span><div><h2>Choose a payment method</h2><p>Select how you would like to complete your payment.</p></div></div>
               <div className="market-payment-method-options" role="group" aria-label="Available payment methods">
-                <button type="button" className="market-payment-method-option is-selected" aria-pressed="true" onClick={choosePayment}>
+                <button type="button" className={'market-payment-method-option '+(paymentMethod==='mpesa'?'is-selected':'')} aria-pressed={paymentMethod==='mpesa'} onClick={choosePayment}>
                   <span className="market-payment-method-brand market-payment-mpesa">M</span><strong>M-PESA</strong><small>STK Push</small><i><Check size={13}/></i>
+                </button>
+                <button type="button" className={'market-payment-method-option '+(paymentMethod==='delivery'?'is-selected':'')} aria-pressed={paymentMethod==='delivery'} onClick={()=>{setCheckoutError('');setPaymentMethod('delivery');setPaymentModal(null);}}>
+                  <span className="market-payment-method-brand">K</span><strong>Cash on delivery / pickup</strong><small>{deliveryMethod==='pickup'?'Pay when you collect':'Pay when delivered'}</small><i>{paymentMethod==='delivery'?<Check size={13}/>:'○'}</i>
                 </button>
                 <button type="button" className="market-payment-method-option is-unavailable" disabled aria-disabled="true" title="Airtel Money is not enabled for this shop">
                   <span className="market-payment-method-brand market-payment-airtel">A</span><strong>Airtel Money</strong><small>Not enabled</small><i>—</i>
@@ -761,8 +764,7 @@ export function StorefrontFlow({
                   <span className="market-payment-method-brand market-payment-card">▤</span><strong>Bank card</strong><small>Not enabled</small><i>—</i>
                 </button>
               </div>
-              <div className="market-checkout-mpesa-select" role="group" aria-label="M-PESA payment details"><span><strong>Pay securely with M-PESA</strong><small>We will send a payment request to your selected Kenyan mobile number. Enter your PIN only in the official M-PESA prompt.</small></span><button type="button" className="market-checkout-change-phone" onClick={choosePayment}>Choose phone number</button></div>
-              <div className="market-checkout-secure-note"><ShieldCheck size={17}/><span>Your order remains pending until Safaricom confirms the payment. Never share your M-PESA PIN or one-time password with anyone.</span></div>
+              {paymentMethod==='mpesa'?<><div className="market-checkout-mpesa-select" role="group" aria-label="M-PESA payment details"><span><strong>Pay securely with M-PESA</strong><small>We will send a payment request to your selected Kenyan mobile number. Enter your PIN only in the official M-PESA prompt.</small></span><button type="button" className="market-checkout-change-phone" onClick={choosePayment}>Choose phone number</button></div><div className="market-checkout-secure-note"><ShieldCheck size={17}/><span>Your order remains pending until Safaricom confirms the payment. Never share your M-PESA PIN or one-time password with anyone.</span></div></>:<div className="market-checkout-secure-note"><ShieldCheck size={17}/><span>{deliveryMethod==='pickup'?'Your order will be sent to the seller for acceptance. Pay cash only when you collect your items.':'Your order will be sent to the seller for acceptance. Pay cash only when your order is delivered.'} Do not pay before the seller confirms the order.</span></div>}
             </div>
             <div className="market-checkout-card market-checkout-voucher-card">
               <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><TicketPercent size={18}/></span><div><h2>Have a voucher?</h2><p>Apply a discount code to this order</p></div></div>
@@ -772,7 +774,7 @@ export function StorefrontFlow({
           {renderSummary()}
         </div>
         {checkoutError&&<p className="customer-checkout-error" role="alert">{checkoutError}</p>}
-        <div className="market-checkout-bottom-action"><div><small>AMOUNT TO PAY</small><strong>{formatKes(total)}</strong></div><button type="button" className="customer-primary-button" disabled={!lines.length||paymentMethod!=='mpesa'} onClick={()=>onNavigate('checkout/review')}>Review your order <ArrowRight size={18}/></button></div>
+        <div className="market-checkout-bottom-action"><div><small>AMOUNT TO PAY</small><strong>{formatKes(total)}</strong></div><button type="button" className="customer-primary-button" disabled={!lines.length} onClick={()=>onNavigate('checkout/review')}>Review your order <ArrowRight size={18}/></button></div>
         {paymentModal==='mpesa'&&<div className="customer-payment-modal-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setPaymentModal(null)}}><section className="customer-payment-modal market-checkout-payment-dialog" role="dialog" aria-modal="true" aria-labelledby="customer-payment-modal-title"><button type="button" className="customer-payment-modal-close" aria-label="Close payment window" onClick={()=>setPaymentModal(null)}>×</button><span className="customer-payment-modal-mark">M</span><h2 id="customer-payment-modal-title">M-PESA payment number</h2><p>Enter the Kenyan mobile number that should receive the STK payment prompt. It can be different from your buyer account number.</p><label className="customer-form-label">Phone number to pay with<input type="tel" inputMode="tel" autoComplete="tel" placeholder="07XX XXX XXX or 2547XXXXXXXX" value={paymentPhone} onChange={e=>setPaymentPhone(e.target.value)} required maxLength={16}/></label><small className="customer-payment-modal-note">Your order remains pending until Safaricom confirms payment.</small><div className="customer-payment-modal-actions"><button type="button" className="customer-secondary-button" onClick={()=>setPaymentModal(null)}>Cancel</button><button type="button" className="customer-primary-button" onClick={confirmMpesa}>Use this number <ArrowRight size={16}/></button></div></section></div>}
       </section>
     );
@@ -792,8 +794,8 @@ export function StorefrontFlow({
               <div className="market-checkout-review-details"><strong>{deliveryMethod==='pickup'?pickupStation:addressSummary}</strong>{deliveryMethod==='home'&&deliveryDirections&&<small>Directions: {deliveryDirections}</small>}<div><span>{customerName}</span><span>{customerPhone}</span>{customerEmail&&<span>{customerEmail}</span>}</div></div>
             </div>
             <div className="market-checkout-card">
-              <div className="market-checkout-card-heading"><span className="market-checkout-mpesa-mark">M</span><div><h2>Payment method</h2><p>M-PESA · STK push</p></div><button type="button" className="market-checkout-edit" onClick={()=>{setOrderConfirmed(false);onNavigate('checkout/payment')}}>Edit</button></div>
-              <div className="market-checkout-review-details"><strong>{paymentLabels[paymentMethod]}</strong><small>Payment prompt will be sent to {paymentPhone||customerPhone}. Payment is only complete after Safaricom confirmation.</small></div>
+              <div className="market-checkout-card-heading"><span className="market-checkout-mpesa-mark">M</span><div><h2>Payment method</h2><p>{paymentMethod==='delivery'?(deliveryMethod==='pickup'?'Cash on pickup':'Cash on delivery'):'M-PESA · STK push'}</p></div><button type="button" className="market-checkout-edit" onClick={()=>{setOrderConfirmed(false);onNavigate('checkout/payment')}}>Edit</button></div>
+              <div className="market-checkout-review-details"><strong>{paymentLabels[paymentMethod]}</strong><small>{paymentMethod==='delivery'?'The seller must accept your order. Cash is due only when '+(deliveryMethod==='pickup'?'you collect it.':'it is delivered.'):'Payment prompt will be sent to '+(paymentPhone||customerPhone)+'. Payment is only complete after Safaricom confirmation.'}</small></div>
             </div>
             <div className="market-checkout-card">
               <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><ShoppingBag size={18}/></span><div><h2>Items in your order</h2><p>{lines.length} {lines.length===1?'product':'products'} · Fulfilled by {shopName}</p></div><button type="button" className="market-checkout-edit" onClick={()=>onNavigate('cart')}>Edit cart</button></div>
