@@ -162,8 +162,11 @@ function storageUrl(key:string,method:'PUT'|'GET',mime='application/octet-stream
  const host=new URL(endpoint).host,endpointRegion=host.match(/\.([a-z]{2}-[a-z]+-\d)\.aws\.neon\.tech$/)?.[1],region=endpointRegion||configuredRegion||'us-east-2',now=new Date(),amz=now.toISOString().slice(0,19).replace(/[-:T]/g,'')+'Z',day=amz.slice(0,8),scope=day+'/'+region+'/s3/aws4_request',path='/'+bucket+'/'+key.split('/').map(awsEncode).join('/');
  const params:any={'X-Amz-Algorithm':'AWS4-HMAC-SHA256','X-Amz-Credential':access+'/'+scope,'X-Amz-Date':amz,'X-Amz-Expires':'300','X-Amz-SignedHeaders':'host'};
  const canonicalQuery=Object.keys(params).sort().map(k=>awsEncode(k)+'='+awsEncode(params[k])).join('&');
- const canonical=[method,path,canonicalQuery,'host:'+host+'\n','host','UNSIGNED-PAYLOAD'].join('\n');
- const toSign=['AWS4-HMAC-SHA256',amz,scope,crypto.createHash('sha256').update(canonical).digest('hex')].join('\n');
+ const canonical=[method,path,canonicalQuery,'host:'+host+'
+','host','UNSIGNED-PAYLOAD'].join('
+');
+ const toSign=['AWS4-HMAC-SHA256',amz,scope,crypto.createHash('sha256').update(canonical).digest('hex')].join('
+');
  const kDate=hmac('AWS4'+secret,day),kRegion=hmac(kDate,region),kService=hmac(kRegion,'s3'),kSigning=hmac(kService,'aws4_request'),signature=hmac(kSigning,toSign,'hex');
  return endpoint.replace(/\/$/,'')+path+'?'+canonicalQuery+'&X-Amz-Signature='+signature;
 }
@@ -769,7 +772,9 @@ export default async function handler(req:any,res:any){
    const shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
    if(!shops.length)return send(res,404,{error:'Shop not found.'});
     const buyer=await buyerSession(sql,req,shops[0].id);if(!buyer)return send(res,401,{error:'Sign in to this shop before checkout.'});
-   const name=String(buyer.full_name||'').trim().slice(0,120),phone=normalizePhone(buyer.phone),paymentPhone=normalizePhone(b.paymentPhone||buyer.phone),checkoutEmail=String(b.customerEmail||'').trim().toLowerCase().slice(0,254),customerEmail=checkoutEmail||String(buyer.email||'').trim().toLowerCase().slice(0,254);\n   if(checkoutEmail&&!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(checkoutEmail))return send(res,400,{error:'Enter a valid email address or leave the email field blank.'});\n   if(checkoutEmail&&checkoutEmail!==String(buyer.email||'').trim().toLowerCase())await sql`UPDATE public.store_customers SET email=${checkoutEmail},updated_at=now() WHERE id=${buyer.id} AND tenant_id=${shops[0].id}`;
+   const name=String(buyer.full_name||'').trim().slice(0,120),phone=normalizePhone(buyer.phone),paymentPhone=normalizePhone(b.paymentPhone||buyer.phone),checkoutEmail=String(b.customerEmail||'').trim().toLowerCase().slice(0,254),customerEmail=checkoutEmail||String(buyer.email||'').trim().toLowerCase().slice(0,254);
+   if(checkoutEmail&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(checkoutEmail))return send(res,400,{error:'Enter a valid email address or leave the email field blank.'});
+   if(checkoutEmail&&checkoutEmail!==String(buyer.email||'').trim().toLowerCase())await sql`UPDATE public.store_customers SET email=${checkoutEmail},updated_at=now() WHERE id=${buyer.id} AND tenant_id=${shops[0].id}`;
    if(!name||!phone||!paymentPhone||!items.length||items.length>30)return send(res,400,{error:'Your buyer account or payment phone is invalid, or the cart is empty.'});
    if(!/^[a-zA-Z0-9:_-]{12,100}$/.test(idempotency))return send(res,400,{error:'Checkout session expired. Refresh checkout and try again.'});
    if(!['home','pickup'].includes(deliveryMethod))return send(res,400,{error:'Choose a valid delivery method.'});
@@ -875,7 +880,9 @@ export default async function handler(req:any,res:any){
     }
    }
    try{
-    await sql`CREATE TABLE IF NOT EXISTS public.tenant_email_configs (tenant_id uuid PRIMARY KEY REFERENCES public.tenants(id) ON DELETE CASCADE,encrypted_config jsonb NOT NULL,from_email text NOT NULL,reply_to_email text NOT NULL,notification_email text,enabled boolean NOT NULL DEFAULT true,updated_at timestamptz NOT NULL DEFAULT now())`;\n     await sql`ALTER TABLE public.tenant_email_configs ADD COLUMN IF NOT EXISTS notification_email text`;\n     const context=await sql`SELECT t.name AS shop_name,COALESCE(NULLIF(ec.notification_email,''),NULLIF(u.email,''),NULLIF(ec.reply_to_email,'')) AS seller_email FROM public.tenants t LEFT JOIN public.users u ON u.id=t.created_by LEFT JOIN public.tenant_email_configs ec ON ec.tenant_id=t.id AND ec.enabled=true WHERE t.id=${tenantId} LIMIT 1`;
+    await sql`CREATE TABLE IF NOT EXISTS public.tenant_email_configs (tenant_id uuid PRIMARY KEY REFERENCES public.tenants(id) ON DELETE CASCADE,encrypted_config jsonb NOT NULL,from_email text NOT NULL,reply_to_email text NOT NULL,notification_email text,enabled boolean NOT NULL DEFAULT true,updated_at timestamptz NOT NULL DEFAULT now())`;
+     await sql`ALTER TABLE public.tenant_email_configs ADD COLUMN IF NOT EXISTS notification_email text`;
+     const context=await sql`SELECT t.name AS shop_name,COALESCE(NULLIF(ec.notification_email,''),NULLIF(u.email,''),NULLIF(ec.reply_to_email,'')) AS seller_email FROM public.tenants t LEFT JOIN public.users u ON u.id=t.created_by LEFT JOIN public.tenant_email_configs ec ON ec.tenant_id=t.id AND ec.enabled=true WHERE t.id=${tenantId} LIMIT 1`;
     const shopName=String(context[0]?.shop_name||'the shop'),safeTotal=(payableTotal/100).toLocaleString('en-KE',{style:'currency',currency:'KES'});
     if(customerEmail&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)){
      const mail=brandedEmail(shopName,'We received your order','Hi '+name+', your order has been created. We will send another update when payment is confirmed.',{'Order number':orderNo,'Order total':safeTotal,'Payment status':'Awaiting M-PESA confirmation'});
@@ -974,9 +981,11 @@ export default async function handler(req:any,res:any){
     encrypted_config jsonb NOT NULL,
     from_email text NOT NULL,
     reply_to_email text NOT NULL,
+    notification_email text,
     enabled boolean NOT NULL DEFAULT true,
     updated_at timestamptz NOT NULL DEFAULT now()
    )`;
+   await sql`ALTER TABLE public.tenant_email_configs ADD COLUMN IF NOT EXISTS notification_email text`;
    if(req.method==='GET'&&action==='email-credentials'){
     const rows=await sql`SELECT ec.from_email,ec.reply_to_email,ec.notification_email,ec.enabled,ec.updated_at,u.email AS owner_email FROM public.tenant_email_configs ec LEFT JOIN public.users u ON u.id=${me.user_id} WHERE ec.tenant_id=${me.tenant_id} LIMIT 1`;
     const row=rows[0];
