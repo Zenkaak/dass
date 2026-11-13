@@ -71,7 +71,7 @@ export default async function handler(req:any,res:any){
    if(!exists.length)return send(res,200,{ok:true,message:'If an account exists, a code has been sent.'});
    const ip=String(req.headers['x-forwarded-for']||req.socket?.remoteAddress||'').split(',')[0].trim();
    if(!await issue(sql,phone,'password_reset',ip,tenant.name,tenantId))return send(res,429,{error:'Please wait before requesting another code.'});
-   return send(res,200,{ok:true,message:'Password reset code sent by SMS.'});
+   return send(res,200,{ok:true,message:'Password reset code sent by SMS and, when available, to your registered email.'});
   }
   if(req.method==='POST'&&action==='signup'){
    const phone=phoneOf(body.phone),name=String(body.name||'').trim().slice(0,120),email=String(body.email||'').trim().toLowerCase().slice(0,254),altRaw=String(body.alternativePhone||'').trim(),alt=altRaw?phoneOf(altRaw):null,address=String(body.address||'').trim().slice(0,300),password=String(body.password||''),code=String(body.code||'');
