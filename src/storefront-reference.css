@@ -837,7 +837,7 @@
   --store-ink:#14251b;
   --store-muted:#68766d;
   --store-line:#e7eee8;
-  --store-accent:var(--store-green)!important;
+  /* The seller-selected --store-accent is supplied inline by the storefront. */
   background:#f7faf7!important;
   color:var(--store-ink)!important;
 }
