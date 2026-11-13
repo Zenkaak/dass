@@ -12,9 +12,9 @@ async function restricted(sql:any,scope:'seller'|'buyer',phone:string,email:stri
 async function recordSignals(sql:any,customerId:string,phone:string,email:string,ip:string){for(const [kind,value] of [['phone',phone],['email',email.toLowerCase()],['ip',ip]] as string[][]){if(value)await sql`INSERT INTO public.auth_identity_signals(customer_id,identity_type,identity_hash) VALUES(${customerId},${kind},${identityHash(value.trim().toLowerCase())}) ON CONFLICT DO NOTHING`;}}
 const passwordHash=(password:string,salt:string)=>crypto.scryptSync(password,salt,64).toString('hex');
 const equal=(a:string,b:string)=>{const x=Buffer.from(a),y=Buffer.from(b);return x.length===y.length&&crypto.timingSafeEqual(x,y)};
-function cookie(res:any,value:string,maxAge:number){res.setHeader('Set-Cookie',[ `das_session=${encodeURIComponent(value)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`,`das_buyer_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0` ])}
+function cookie(res:any,value:string,maxAge:number){res.setHeader('Set-Cookie',[ `das_buyer_auth=${encodeURIComponent(value)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`,`das_buyer_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0` ])}
 function cookieValue(req:any,name:string){const item=String(req.headers.cookie||'').split(';').map((x:string)=>x.trim()).find((x:string)=>x.startsWith(name+'='));try{return item?decodeURIComponent(item.slice(name.length+1)):''}catch{return ''}}
-function globalToken(req:any){return cookieValue(req,'das_session')}
+function globalToken(req:any){return cookieValue(req,'das_buyer_auth')||cookieValue(req,'das_session')}
 function legacyToken(req:any){return cookieValue(req,'das_buyer_session')}
 async function sendCode(phone:string,code:string,purpose:string,shop:string){
  const key=env('OTS_API_TOKEN')||env('SMS_OTS_API_TOKEN'),sender=env('SENDER_ID')||env('SMS_OTS_SENDER_ID');
@@ -189,9 +189,9 @@ export default async function handler(req:any,res:any){
   }
   if(req.method==='POST'&&action==='logout'){
    const current=globalToken(req),legacy=legacyToken(req);let userId='';
-   if(current){const rows=await sql`SELECT user_id FROM public.auth_sessions WHERE token_hash=${hash(current)} LIMIT 1`;userId=rows[0]?.user_id||'';if(userId)await sql`DELETE FROM public.store_customer_sessions WHERE customer_id IN (SELECT id FROM public.store_customers WHERE user_id=${userId})`;await sql`DELETE FROM public.auth_sessions WHERE token_hash=${hash(current)}`;}
+   if(current){const rows=await sql`SELECT user_id FROM public.auth_sessions WHERE token_hash=${hash(current)} AND user_id IN (SELECT user_id FROM public.store_customers WHERE tenant_id=${tenantId}) LIMIT 1`;userId=rows[0]?.user_id||'';if(userId)await sql`DELETE FROM public.store_customer_sessions WHERE customer_id IN (SELECT id FROM public.store_customers WHERE user_id=${userId} AND tenant_id=${tenantId})`;if(userId)await sql`DELETE FROM public.auth_sessions WHERE token_hash=${hash(current)}`;}
    if(legacy){const rows=await sql`SELECT c.user_id FROM public.store_customer_sessions s JOIN public.store_customers c ON c.id=s.customer_id WHERE s.tenant_id=${tenantId} AND s.token_hash=${hash(legacy)} LIMIT 1`;if(!userId)userId=rows[0]?.user_id||'';if(userId)await sql`DELETE FROM public.store_customer_sessions WHERE customer_id IN (SELECT id FROM public.store_customers WHERE user_id=${userId})`;else await sql`DELETE FROM public.store_customer_sessions WHERE tenant_id=${tenantId} AND token_hash=${hash(legacy)}`;}
-   res.setHeader('Set-Cookie',[`das_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`,`das_buyer_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`]);
+   res.setHeader('Set-Cookie',[`das_buyer_auth=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`,`das_buyer_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`]);
    return send(res,200,{ok:true});
   }
   return send(res,404,{error:'Unknown buyer authentication action'});
