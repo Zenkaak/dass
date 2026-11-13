@@ -424,7 +424,7 @@ export function StorefrontFlow({
   const deliveryFee = Math.max(0,Number(deliveryMethod==='pickup'?shopDeliveryPickupFee:shopDeliveryHomeFee)||0);
   const total = Math.max(0, subtotal - Number(appliedCoupon?.discount||0) + deliveryFee);
   const activeOrder = orders.find((order) => order.orderNumber === activeOrderNumber) || (!activeOrderNumber ? orders[0] : undefined);
-  useEffect(()=>{if(activeOrder?.orderId)setRetryPaymentPhone(activeOrder.customerPhone||initialCustomerPhone);if(activeOrder?.orderId&&['order-detail','order-tracking'].includes(view))onOpenChat?.('',activeOrder.orderNumber,activeOrder.orderId)},[view,activeOrder?.orderId,initialCustomerPhone]);
+  useEffect(()=>{if(activeOrder?.orderId)setRetryPaymentPhone(activeOrder.customerPhone||initialCustomerPhone)},[activeOrder?.orderId,initialCustomerPhone]);
 
   useEffect(()=>{
     if(view!=='checkout/processing'||!activeOrder?.orderId)return;
@@ -582,7 +582,7 @@ export function StorefrontFlow({
 
   function openOrder(order: BuyerOrder, next: string) {
     setActiveOrderNumber(order.orderNumber);
-    if (order.chatToken || order.orderId) onOpenChat?.(order.chatToken, order.orderNumber, order.orderId);
+    if (next === 'inbox' && (order.chatToken || order.orderId)) onOpenChat?.(order.chatToken, order.orderNumber, order.orderId);
     onNavigate(next);
   }
 
@@ -838,7 +838,7 @@ export function StorefrontFlow({
         <div className="customer-preview-alert"><ShieldCheck size={17} /><span>{activeOrder.paymentStatus === 'succeeded' ? `Payment confirmed${activeOrder.receipt ? ` · M-PESA receipt ${activeOrder.receipt}` : ''}.` : activeOrder.paymentStatus === 'failed' || activeOrder.paymentStatus === 'cancelled' ? 'M-PESA payment was not completed. This order is not paid.' : 'Your order has been created. Payment is pending Safaricom confirmation; do not retry unless the payment prompt has failed or expired.'}</span></div>
         <div className="customer-panel customer-success-delivery">
           <MapPin size={22} />
-          <div><strong>Delivery coordination</strong><p>Contact the seller through your private order conversation to agree on collection or delivery.</p><small>{activeOrder.deliveryMethod === 'pickup' ? 'Your preferred pickup station is saved with this order.' : 'Your delivery address is saved with this order.'} The seller can coordinate collection or delivery in your private order conversation.</small></div>
+          <div><strong>Delivery coordination</strong><p>You can message the seller about this order from Inbox & messages in your account.</p><small>{activeOrder.deliveryMethod === 'pickup' ? 'Your preferred pickup station is saved with this order.' : 'Your delivery address is saved with this order.'} The seller can coordinate collection or delivery in your private order conversation.</small></div>
         </div>
         <div className="customer-panel customer-success-payment">
           <WalletCards size={22} />
@@ -946,7 +946,6 @@ export function StorefrontFlow({
         </section>
         <div className="buyer-order-bottom-actions"><button type="button" className="customer-secondary-button" onClick={()=>openOrder(activeOrder,'order-tracking')}>Track order <ArrowRight size={16}/></button><button type="button" className="customer-primary-button" onClick={()=>onNavigate('store')}>Shop again <ShoppingBag size={16}/></button></div>
         <div className="buyer-order-safety-note"><ShieldCheck size={16}/><span>Keep your order number and payment receipt. Never share your M-PESA PIN or verification codes.</span></div>
-        {chatPanel}
       </section>
     );
   }
@@ -1009,21 +1008,29 @@ export function StorefrontFlow({
       const savedProducts=products.filter(product=>(serverWishlistLoaded?serverWishlist:wishlistIds).includes(product.id));
       return <section className="customer-flow"><FlowHeading title="Saved items" onBack={()=>onNavigate('account')} backLabel="My account"/><div className="customer-panel customer-account-detail"><div className="customer-panel-heading"><h2>Your wishlist</h2><span>{savedProducts.length} saved</span></div><p className="customer-preview-note">Saved items are synced to your buyer account.</p>{savedProducts.length?<div className="customer-recommendation-row">{savedProducts.map(product=><article className="customer-recommendation-card" key={product.id}><ProductThumb product={product}/><strong>{product.name}</strong><b>{formatKes(product.price)}</b><div className="customer-wishlist-actions"><button type="button" className="customer-secondary-button" onClick={()=>onOpenProduct?.(product)}>View item</button><button type="button" className="customer-text-button" onClick={()=>togglePersistentWishlist(product.id)}>Remove</button></div></article>)}</div>:<div className="customer-empty-state"><span><ShoppingBag size={28}/></span><h2>No saved items yet</h2><p>Open a product and save it to your wishlist to keep it here.</p><button type="button" className="customer-primary-button" onClick={()=>onNavigate('store')}>Browse products</button></div>}</div></section>;
     }
-    if (view === 'inbox') return (
-      <section className="customer-flow">
-        <FlowHeading title="Inbox & messages" onBack={() => onNavigate('account')} backLabel="My account" />
-        <div className="customer-panel customer-inbox-list">
-          <div className="customer-panel-heading"><h2>Order conversations</h2><span>{orders.filter((order) => Boolean(order.chatToken||order.orderId)).length} chats</span></div>
-          {orders.filter((order) => Boolean(order.chatToken||order.orderId)).length ? orders.filter((order) => Boolean(order.chatToken||order.orderId)).map((order) => (
-            <article className="customer-order-card" key={order.orderNumber}>
-              <div className="customer-order-card-heading"><div><small>ORDER {order.orderNumber}</small><strong>{new Date(order.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}</strong></div><span className="customer-order-status">Seller chat</span></div>
-              <div className="customer-order-card-footer"><span>{order.lines[0]?.product.name || 'Order'}{order.lines.length > 1 ? ` + ${order.lines.length - 1} more` : ''}</span><div><button type="button" className="customer-primary-button" onClick={() => onOpenChat?.(order.chatToken, order.orderNumber, order.orderId)}>Open conversation</button></div></div>
-            </article>
-          )) : <div className="customer-empty-state"><span><ShoppingBag size={28}/></span><h2>No messages yet</h2><p>Conversations with sellers appear here after you place an order.</p><button type="button" className="customer-primary-button" onClick={() => onNavigate('orders')}>View my orders</button></div>}
-        </div>
-        {chatPanel}
-      </section>
-    );
+    if (view === 'inbox') {
+      const conversations = orders.filter((order) => Boolean(order.chatToken || order.orderId));
+      return (
+        <section className="customer-flow buyer-inbox-page">
+          <FlowHeading title="Inbox" onBack={() => onNavigate('account')} backLabel="My account" />
+          <div className="buyer-inbox-intro"><div><span className="buyer-section-kicker">YOUR SHOP CONVERSATIONS</span><h2>Messages with {shopName}</h2><p>Keep order questions, delivery arrangements and seller replies together in one place.</p></div><span className="buyer-inbox-count">{conversations.length} {conversations.length===1?'conversation':'conversations'}</span></div>
+          <div className="buyer-inbox-layout">
+            <div className="customer-panel buyer-inbox-list">
+              <div className="buyer-inbox-list-heading"><strong>Conversations</strong><span>{conversations.length}</span></div>
+              {conversations.length ? conversations.map((order) => {
+                const selected = Boolean(chatPanel) && false;
+                const status = String(order.deliveryStatus || order.orderStatus || 'Order placed').replace(/_/g,' ');
+                return <article className="buyer-inbox-thread" key={order.orderNumber}>
+                  <div className="buyer-inbox-thread-avatar"><ShoppingBag size={19}/></div>
+                  <div className="buyer-inbox-thread-content"><div className="buyer-inbox-thread-top"><strong>{shopName}</strong><time>{new Date(order.createdAt).toLocaleDateString('en-KE',{day:'numeric',month:'short'})}</time></div><span className="buyer-inbox-thread-order">Order #{order.orderNumber}</span><p>{order.lines[0]?.product.name || 'Order conversation'}{order.lines.length>1? ` · +${order.lines.length-1} more item(s)`:''}</p><div className="buyer-inbox-thread-bottom"><span>{status}</span><button type="button" onClick={()=>onOpenChat?.(order.chatToken,order.orderNumber,order.orderId)}>Open messages <ArrowRight size={14}/></button></div></div>
+                </article>;
+              }) : <div className="buyer-inbox-empty"><span><ShoppingBag size={25}/></span><strong>Your inbox is quiet</strong><p>After you place an order, you can message the seller here about that purchase.</p><button type="button" className="customer-primary-button" onClick={()=>onNavigate('orders')}>View my orders</button></div>}
+            </div>
+            {chatPanel || <div className="customer-panel buyer-inbox-placeholder"><span><MessageCircle size={28}/></span><h3>Select a conversation</h3><p>Choose an order on the left to read messages and contact the seller.</p></div>}
+          </div>
+        </section>
+      );
+    }
     if(view==='account-management')return <section className="customer-flow"><FlowHeading title="Account & security" onBack={()=>onNavigate('account')} backLabel="My account"/><form className="customer-panel customer-account-detail" onSubmit={changePassword}><h2>Change password</h2><p>Use your current password to set a new password for this shop account.</p><div className="customer-contact-fields"><label className="customer-form-label">Current password<input type="password" autoComplete="current-password" required value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)}/></label><label className="customer-form-label">New password<input type="password" autoComplete="new-password" minLength={10} required value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="At least 10 characters"/></label><label className="customer-form-label">Confirm new password<input type="password" autoComplete="new-password" minLength={10} required value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)}/></label></div>{passwordMessage&&<p role="status" className="customer-preview-note">{passwordMessage}</p>}<div className="customer-flow-actions"><button className="customer-primary-button" type="submit" disabled={passwordSaving}>{passwordSaving?'Updating…':'Update password'}</button></div></form></section>;
     if(view==='address-book')return <section className="customer-flow"><FlowHeading title="Address book" onBack={()=>onNavigate('account')} backLabel="My account"/><div className="customer-panel customer-account-detail"><h2>Default delivery address</h2><p>{profileAddress||initialCustomerAddress||'No default address saved yet.'}</p><p className="customer-preview-note">Your default address is saved with your buyer profile and can be updated at any time.</p><button type="button" className="customer-primary-button" onClick={()=>onNavigate('profile')}>Edit and save address</button></div></section>;
     if(view==='notifications')return <section className="customer-flow"><FlowHeading title="Order notifications" onBack={()=>onNavigate('account')} backLabel="My account"/><div className="customer-panel customer-account-detail"><div className="customer-panel-heading"><h2>Recent order updates</h2><span>{notifications.length} updates</span></div>{notifications.length?notifications.map((item:any)=><article className="customer-order-card" key={item.id||item.orderId||item.complaintId||item.orderNumber}><div className="customer-order-card-heading"><strong>{item.title}</strong><small>{item.created_at?new Date(item.created_at).toLocaleString('en-KE'):item.updatedAt?new Date(item.updatedAt).toLocaleString('en-KE'):'Update'}</small></div><p>{item.detail}</p><button type="button" className="customer-secondary-button" onClick={()=>onNavigate(item.complaint_id?'my-reports':'orders')}>{item.complaint_id?'Track my report':'View my orders'}</button></article>):<div className="customer-empty-state"><span><Package size={28}/></span><h2>No recent updates</h2><p>Payment, fulfilment and delivery changes will appear here when the seller updates your order.</p><button type="button" className="customer-primary-button" onClick={()=>onNavigate('orders')}>View my orders</button></div>}</div></section>;
