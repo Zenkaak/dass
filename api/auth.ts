@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import crypto from 'node:crypto';
-import { sendTransactionalEmail, brandedEmail, escapeEmailHtml } from '../server/email.js';
+import { sendTransactionalEmail, brandedEmail } from '../server/email.js';
 const env=(k:string)=>(process.env[k]||'').trim();
 const send=(res:any,s:number,b:unknown)=>res.status(s).json(b);
 const hash=(s:string)=>crypto.createHash('sha256').update(s).digest('hex');
