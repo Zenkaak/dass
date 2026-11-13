@@ -6745,3 +6745,47 @@ button,input,select,textarea{font:inherit;}
  .buyer-inbox-conversation .chat-file-upload{padding:0 13px 13px;flex-wrap:wrap}
  .buyer-inbox-conversation .chat-file-upload small{width:100%;margin-left:21px}
 }
+
+
+/* Buyer account: consistent, mobile-first dashboard design across every tab. */
+.buyer-account-redesign{width:min(1240px,100%);margin:0 auto;padding:0 22px 40px}
+.buyer-global-routebar{position:sticky;top:0;z-index:45;margin:0 auto 18px;width:min(1240px,100%);background:rgba(255,255,255,.96);backdrop-filter:blur(14px);border:1px solid #e7edf2;border-radius:0 0 16px 16px;box-shadow:0 5px 18px rgba(27,48,67,.055);padding:12px 18px}
+.buyer-account-redesign .customer-flow{width:100%;max-width:none;margin:0 auto;padding:0 0 30px;color:#263d50}
+.buyer-account-redesign .customer-panel,.buyer-account-redesign .buyer-order-panel,.buyer-account-redesign .buyer-support-stat,.buyer-account-redesign .buyer-inbox-list,.buyer-account-redesign .buyer-inbox-placeholder{background:#fff;border:1px solid #e6edf2;border-radius:17px;box-shadow:0 7px 24px rgba(31,55,76,.045)}
+.buyer-account-redesign .customer-account-welcome{background:linear-gradient(120deg,#fff 0%,#fff8ef 100%);border:1px solid #f0e3d4;border-radius:20px;padding:24px;box-shadow:0 8px 24px rgba(31,55,76,.05);margin:0 0 16px}
+.buyer-account-redesign .customer-account-welcome h1{font-size:clamp(23px,3vw,32px);letter-spacing:-.04em;color:#1d3549}
+.buyer-account-redesign .buyer-account-orders-shortcut{border:1px solid #e4ebf1;border-radius:16px;background:#fff;box-shadow:0 6px 20px rgba(31,55,76,.04);padding:17px 19px;margin:0 0 18px}
+.buyer-account-redesign .customer-account-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.buyer-account-redesign .customer-account-groups>.customer-panel{padding:17px 18px}
+.buyer-account-redesign .customer-account-group-title{font-size:11px;letter-spacing:.1em;color:#8293a2;margin:0 0 10px}
+.buyer-account-redesign .customer-account-link{display:flex;align-items:center;gap:12px;min-height:54px;padding:12px 10px;border-bottom:1px solid #edf1f4;color:#314b60;border-radius:10px;text-decoration:none}
+.buyer-account-redesign .customer-account-link:last-child{border-bottom:0}
+.buyer-account-redesign .customer-account-link:hover{background:#fff8ef;color:#a75e18}
+.buyer-account-redesign .customer-account-link>svg:first-child{color:#c17a32;flex-shrink:0}
+.buyer-account-redesign .customer-account-link>svg:last-child{margin-left:auto;color:#91a0ac}
+.buyer-account-redesign .customer-flow .customer-account-detail{padding:22px}
+.buyer-account-redesign .customer-flow .customer-panel-heading{padding-bottom:14px;border-bottom:1px solid #edf1f4}
+.buyer-account-redesign .customer-form-label{color:#40586b;font-weight:700}
+.buyer-account-redesign .customer-form-label input,.buyer-account-redesign .customer-form-label select,.buyer-account-redesign .customer-form-label textarea,.buyer-account-redesign .customer-account-detail input,.buyer-account-redesign .customer-account-detail textarea,.buyer-account-redesign .dispute-new-form input,.buyer-account-redesign .dispute-new-form select,.buyer-account-redesign .dispute-new-form textarea{border:1px solid #dce5ec;border-radius:11px;background:#fbfcfd;min-height:44px;padding:10px 12px;color:#263d50}
+.buyer-account-redesign .customer-form-label input:focus,.buyer-account-redesign .customer-form-label select:focus,.buyer-account-redesign .customer-form-label textarea:focus{outline:0;border-color:#d58a3e;box-shadow:0 0 0 3px #d58a3e1c}
+.buyer-account-redesign .customer-primary-button,.buyer-account-redesign .buyer-support-new-button{border-radius:11px;min-height:44px;font-weight:800;box-shadow:0 5px 13px rgba(196,111,34,.13)}
+.buyer-account-redesign .customer-secondary-button{border-radius:11px;min-height:42px}
+.buyer-account-redesign .buyer-inbox-page{max-width:1160px}
+.buyer-account-redesign .buyer-inbox-layout{grid-template-columns:minmax(280px,.9fr) minmax(0,1.4fr)}
+.buyer-account-redesign .buyer-inbox-list,.buyer-account-redesign .buyer-inbox-placeholder{overflow:hidden}
+.buyer-account-redesign .buyer-inbox-thread{padding:17px 18px}
+.buyer-account-redesign .buyer-inbox-thread-content>p{overflow-wrap:anywhere}
+.buyer-account-redesign .buyer-order-overview,.buyer-account-redesign .buyer-order-panel{border-radius:17px}
+.buyer-account-redesign .buyer-order-bottom-actions{display:flex;flex-wrap:wrap;gap:10px}
+.buyer-account-redesign .buyer-support-hero{border-radius:18px;border:1px solid #e7edf2;box-shadow:0 8px 22px rgba(31,55,76,.045)}
+.buyer-account-redesign .dispute-create-modal-backdrop{position:relative;inset:auto;background:transparent;padding:0}
+.buyer-account-redesign .dispute-new-form{width:100%;max-width:850px;margin:18px auto;border:1px solid #e5ebf0;border-radius:18px;box-shadow:0 10px 30px rgba(31,55,76,.06)}
+@media(max-width:760px){
+ .buyer-account-redesign{padding:0 12px 28px}
+ .buyer-global-routebar{padding:10px 13px;margin-bottom:13px;border-radius:0 0 13px 13px}
+ .buyer-account-redesign .customer-account-groups{grid-template-columns:1fr;gap:12px}
+ .buyer-account-redesign .customer-account-welcome{padding:18px}
+ .buyer-account-redesign .buyer-inbox-layout{grid-template-columns:minmax(0,1fr)}
+ .buyer-account-redesign .buyer-order-bottom-actions>*{flex:1 1 100%}
+ .buyer-account-redesign .customer-flow .customer-account-detail{padding:16px}
+}

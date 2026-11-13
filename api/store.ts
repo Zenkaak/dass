@@ -706,6 +706,22 @@ export default async function handler(req:any,res:any){
     console.error('Buyer payment retry failed',e?.message||e);return send(res,502,{error:e?.message||'Could not start the M-PESA payment prompt.'});
    }
   }
+  if(req.method==='GET'&&action==='customer-chat-threads'){
+   const slug=String(req.query?.slug||'').toLowerCase().trim();
+   if(!slug)return send(res,400,{error:'Shop is required.'});
+   const shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
+   if(!shops.length)return send(res,404,{error:'Shop not found.'});
+   const customer=await buyerSession(sql,req,shops[0].id);
+   if(!customer)return send(res,401,{error:'Sign in to view your messages.'});
+   const threads=await sql`SELECT o.id AS order_id,o.order_number,o.created_at,
+     (SELECT m.message FROM public.order_messages m WHERE m.tenant_id=o.tenant_id AND m.order_id=o.id ORDER BY m.created_at DESC LIMIT 1) AS last_message,
+     (SELECT m.created_at FROM public.order_messages m WHERE m.tenant_id=o.tenant_id AND m.order_id=o.id ORDER BY m.created_at DESC LIMIT 1) AS last_message_at
+     FROM public.orders o
+     WHERE o.tenant_id=${shops[0].id} AND o.customer_phone=${customer.phone}
+       AND EXISTS (SELECT 1 FROM public.order_messages m WHERE m.tenant_id=o.tenant_id AND m.order_id=o.id)
+     ORDER BY last_message_at DESC NULLS LAST LIMIT 100`;
+   return send(res,200,{threads});
+  }
   if((req.method==='GET'||req.method==='POST')&&action==='customer-chat'){
    const b=req.body||{},tokenValue=String(req.method==='GET'?req.query?.token:b.token||'').trim(),orderId=String(req.method==='GET'?req.query?.orderId:b.orderId||'').trim(),slug=String(req.method==='GET'?req.query?.slug:b.slug||'').toLowerCase().trim();
    let rows:any[]=[];

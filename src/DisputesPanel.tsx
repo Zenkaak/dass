@@ -4,7 +4,7 @@ import { AlertTriangle,ArrowLeft,ArrowRight,Bell,Check,FileUp,MessageCircle,Pape
 type Report=any;
 async function api(slug:string,method:'GET'|'POST',payload:any={}){
  const url='/api/disputes?slug='+encodeURIComponent(slug)+(method==='GET'&&payload.id?'&id='+encodeURIComponent(payload.id):'');
- const r=await fetch(url,{method,headers:method==='POST'?{'Content-Type':'application/json'}:undefined,body:method==='POST'?JSON.stringify({...payload,slug}):undefined});
+ const r=await fetch(url,{method,credentials:'same-origin',headers:method==='POST'?{'Content-Type':'application/json'}:undefined,body:method==='POST'?JSON.stringify({...payload,slug}):undefined});
  const raw=await r.text();let d:any={};try{d=raw?JSON.parse(raw):{}}catch{}
  if(!r.ok)throw Error(d.error||'Dispute request failed.');return d;
 }
