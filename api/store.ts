@@ -457,6 +457,16 @@ export default async function handler(req:any,res:any){
    const authorization=String(req.headers.authorization||''),provided=authorization.startsWith('Bearer ')?authorization.slice(7):'';
    const authorized=(Boolean(secret)&&provided===secret)||await verifyInventoryCronOidc(provided);
    if(!authorized)return send(res,401,{error:'Unauthorized.'});
+   // Repair succeeded order payments settled by checkout recovery or another verified path but never queued.
+   // Reconciliation must discover these itself; callbacks are not the only source of settlement.
+   await sql`INSERT INTO public.payment_reconciliation_jobs(payment_id,tenant_id,order_id,status)
+    SELECT p.id,p.tenant_id,p.order_id,'pending'
+    FROM public.payments p
+    JOIN public.orders o ON o.id=p.order_id AND o.tenant_id=p.tenant_id
+    WHERE p.status='succeeded' AND p.order_id IS NOT NULL AND NULLIF(p.provider_receipt,'') IS NOT NULL
+      AND COALESCE(p.provider_result->>'source','') NOT IN ('seller_subscription','seller_lifetime_license')
+      AND NOT EXISTS (SELECT 1 FROM public.payment_reconciliation_jobs existing WHERE existing.payment_id=p.id)
+    ON CONFLICT(payment_id) DO NOTHING`;
    const jobs=await sql`SELECT id FROM public.payment_reconciliation_jobs WHERE status='pending' ORDER BY created_at ASC LIMIT 25`;
    let processed=0,failed=0,inventoryReleased=0,inventoryHeld=0,inventoryChecked=0;
    for(const job of jobs){
