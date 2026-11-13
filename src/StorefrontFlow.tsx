@@ -87,6 +87,7 @@ type StorefrontFlowProps = {
   onCartChange: (next: Record<string, number>) => void;
   view: string;
   initialReportId?: string;
+  initialOrderNumber?: string;
   onNavigate: (next: string) => void;
   customerName?: string;
   customerPhone?: string;
@@ -217,6 +218,7 @@ export function StorefrontFlow({
   onCartChange,
   view,
   initialReportId,
+  initialOrderNumber = '',
   onNavigate,
   customerName: initialCustomerName = '',
   customerPhone: initialCustomerPhone = '',
@@ -426,8 +428,7 @@ export function StorefrontFlow({
   const deliveryFee = Math.max(0,Number(deliveryMethod==='pickup'?shopDeliveryPickupFee:shopDeliveryHomeFee)||0);
   const total = Math.max(0, subtotal - Number(appliedCoupon?.discount||0) + deliveryFee);
   const activeOrder = orders.find((order) => order.orderNumber === activeOrderNumber) || (!activeOrderNumber ? orders[0] : undefined);
-  const emailOrderNumber=useRef<string>(new URLSearchParams(window.location.search).get('order')||'');
-  useEffect(()=>{if(view==='order-detail'&&emailOrderNumber.current)setActiveOrderNumber(emailOrderNumber.current);},[view,orders]);
+  useEffect(()=>{if(view==='order-detail'&&initialOrderNumber)setActiveOrderNumber(initialOrderNumber);},[view,orders,initialOrderNumber]);
   useEffect(()=>{let live=true;if(!initialCustomerPhone||view!=='inbox'){setChatThreads([]);return()=>{live=false};}const refresh=async()=>{try{const response=await fetch('/api/store?action=customer-chat-threads&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'});const data=await response.json().catch(()=>({}));if(!response.ok)throw Error(data.error||'Could not load messages.');if(live)setChatThreads(Array.isArray(data.threads)?data.threads:[]);}catch(error:any){if(live)setBuyerFeatureMessage(error.message||'Could not load messages.');}};void refresh();const timer=window.setInterval(()=>{if(document.visibilityState==='visible')void refresh();},10000);return()=>{live=false;window.clearInterval(timer)}},[slug,initialCustomerPhone,view]);
   useEffect(()=>{if(activeOrder?.orderId)setRetryPaymentPhone(activeOrder.customerPhone||initialCustomerPhone)},[activeOrder?.orderId,initialCustomerPhone]);
 
