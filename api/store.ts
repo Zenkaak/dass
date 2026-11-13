@@ -991,6 +991,7 @@ export default async function handler(req:any,res:any){
    return send(res,201,{ticket:row[0]});
   }
   if(req.method==='GET'&&action==='subscription'){
+   await sql`INSERT INTO public.subscription_plans(code,name,description,price_minor,currency,interval_days,is_active,is_featured,sort_order,features) VALUES('lifetime-license','Lifetime platform licence','One-time payment for lifetime use of the full DASMARKET platform for this shop. Hosting, domain renewals, third-party services and optional maintenance are billed separately.',25000000,'KES',36500,true,false,50,'{"product_limit":0,"staff_limit":0,"custom_domain":true,"advanced_analytics":true,"coupons":true,"promotions":true,"priority_support":true}'::jsonb) ON CONFLICT(code) DO NOTHING`;
    const [subs,plans,config,lastPayment,trialConfig]=await Promise.all([
     sql`SELECT s.id,s.status,s.trial_ends_at,s.current_period_start,s.current_period_end,s.updated_at,p.id AS plan_id,p.code,p.name,p.description,p.price_minor,p.currency,p.interval_days,p.features FROM public.subscriptions s JOIN public.subscription_plans p ON p.id=s.plan_id WHERE s.tenant_id=${me.tenant_id} ORDER BY s.created_at DESC LIMIT 1`,
     sql`SELECT id,code,name,description,price_minor,currency,interval_days,is_featured,features FROM public.subscription_plans WHERE is_active=true ORDER BY sort_order,price_minor`,
