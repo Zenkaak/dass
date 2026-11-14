@@ -85,24 +85,6 @@ jobs:
             echo "::warning::Could not attach wildcard merchant domain (HTTP $status): $body. Continuing with application deployment."
           fi
 
-      - name: Attach DASMARKET root domain
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: team_FUjJJLDSAITzmg32U4dQzNwD
-          VERCEL_PROJECT_ID: prj_vZuYn5UoOgZbJ9NGLvyiTAFHfWPe
-        run: |
-          response=$(curl -sS -w '\\n%{http_code}' -X POST "https://api.vercel.com/v10/projects/$VERCEL_PROJECT_ID/domains?teamId=$VERCEL_ORG_ID" -H "Authorization: Bearer $VERCEL_TOKEN" -H "Content-Type: application/json" --data '{"name":"dasmarket.co.ke"}')
-          status=$(printf '%s' "$response" | tail -n1)
-          body=$(printf '%s' "$response" | sed '$d')
-          if [ "$status" = "200" ] || [ "$status" = "201" ]; then
-            echo "dasmarket.co.ke attached to the DASMARKET project."
-          elif printf '%s' "$body" | grep -Eqi 'already exists|already assigned|domain is already|already in use'; then
-            echo "dasmarket.co.ke is already attached."
-          else
-            echo "::error::Could not attach dasmarket.co.ke (HTTP $status): $body"
-            exit 1
-          fi
-
       - name: Link Vercel project configuration
         run: |
           mkdir -p .vercel
@@ -115,9 +97,8 @@ jobs:
           VERCEL_PROJECT_ID: prj_vZuYn5UoOgZbJ9NGLvyiTAFHfWPe
         run: |
           echo "Deploying DASNET production commit: $GITHUB_SHA"
-          deploy_output=$(npx vercel deploy --prod --yes --scope=cheruiyott233-4429s-projects --token="$VERCEL_TOKEN" 2>&1 | tee /tmp/vercel-deploy.log)
-          printf '%s\\n' "$deploy_output"
-          deployment_url=$(printf '%s\\n' "$deploy_output" | grep -Eo 'https://dass-[^[:space:]]+\\.vercel\\.app' | head -n1)
+          npx vercel deploy --prod --yes --scope=cheruiyott233-4429s-projects --token="$VERCEL_TOKEN" 2>&1 | tee /tmp/vercel-deploy.log
+          deployment_url=$(grep -Eo 'https://dass-[^[:space:]]+\.vercel\.app' /tmp/vercel-deploy.log | head -n1)
           if [ -z "$deployment_url" ]; then
             echo "::error::Could not identify the production deployment URL for domain aliasing."
             exit 1
