@@ -1358,3 +1358,23 @@
   .dm-auth-exact .dm-auth-exact-secondary,
   .buyer-auth-exact .buyer-auth-submit { min-height: 84px!important; font-size: 19px!important; }
 }
+
+
+/* Small final desktop scale increase requested after live review. */
+@media (min-width: 900px) {
+ .dm-auth-exact > .dm-auth-exact-panel { width:min(790px,calc(100vw - 64px))!important; min-height:clamp(730px,91svh,940px)!important; }
+ .dm-auth-exact > .dm-auth-exact-panel > .dm-auth-exact-inner { min-height:clamp(730px,91svh,940px)!important; }
+ .buyer-auth-page.buyer-auth-exact > .buyer-auth-exact-panel { width:min(930px,calc(100vw - 64px))!important; min-height:clamp(790px,93svh,1000px)!important; }
+ .buyer-auth-page.buyer-auth-exact .buyer-auth-exact-inner { min-height:clamp(790px,93svh,1000px)!important; }
+ .dm-auth-exact .dm-auth-exact-heading h1,.buyer-auth-exact .buyer-auth-exact-heading h1 { font-size:clamp(40px,3.6vw,48px)!important; }
+ .dm-auth-exact .dm-auth-exact-heading p,.buyer-auth-exact .buyer-auth-exact-heading p { font-size:17px!important; }
+ .dm-auth-exact .dm-auth-exact-form>label,.dm-auth-exact .dm-auth-exact-card label,.buyer-auth-exact .buyer-auth-exact-form>label { font-size:17px!important; }
+ .dm-auth-exact .dm-auth-exact-form input,.dm-auth-exact .dm-auth-exact-card input,.buyer-auth-exact .buyer-auth-exact-form input { height:82px!important; min-height:82px!important; font-size:19px!important; }
+ .dm-auth-exact .dm-auth-exact-submit,.dm-auth-exact .dm-auth-exact-secondary,.buyer-auth-exact .buyer-auth-submit { min-height:82px!important; font-size:19px!important; }
+}
+@media (min-width: 1200px) {
+ .dm-auth-exact > .dm-auth-exact-panel { width:min(870px,calc(100vw - 96px))!important; min-height:clamp(810px,91svh,990px)!important; }
+ .dm-auth-exact > .dm-auth-exact-panel > .dm-auth-exact-inner { min-height:clamp(810px,91svh,990px)!important; }
+ .buyer-auth-page.buyer-auth-exact > .buyer-auth-exact-panel { width:min(1030px,calc(100vw - 120px))!important; min-height:clamp(870px,93svh,1050px)!important; }
+ .buyer-auth-page.buyer-auth-exact .buyer-auth-exact-inner { min-height:clamp(870px,93svh,1050px)!important; }
+}
