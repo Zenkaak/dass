@@ -894,3 +894,18 @@
   min-height:42px!important;
   max-height:42px!important;
 }
+
+
+/* Legal links beneath seller signup; these are DASMARKET platform policies. */
+.dm-auth-exact-legal{
+  margin:14px 0 0!important;
+  color:#91a2bd!important;
+  font-size:11px!important;
+  line-height:1.65!important;
+  text-align:center!important;
+}
+.dm-auth-exact-legal a{
+  color:#55b5f1!important;
+  text-decoration:underline!important;
+  text-underline-offset:2px;
+}
