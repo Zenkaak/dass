@@ -7188,3 +7188,50 @@
  .store-page.is-account-route .buyer-account-workspace .customer-account-link{min-height:54px;padding:8px 13px;font-size:12px}
  .store-page.is-account-route .buyer-account-workspace .customer-account-link>svg:first-child{flex-basis:32px;width:32px;height:32px;padding:7px}
 }
+
+
+/* Buyer account home — consolidated marketplace workspace */
+.buyer-account-home-v3{max-width:1120px!important;gap:18px!important}
+.buyer-account-welcome-v3{position:relative;display:flex;align-items:center;gap:16px;min-height:142px;padding:25px 28px;border:1px solid #e8edf2;border-radius:20px;background:linear-gradient(115deg,#fff 0%,#fff8ef 58%,#f8fbfd 100%);box-shadow:0 8px 28px rgba(27,48,67,.045)}
+.buyer-account-avatar-v3{width:54px;height:54px;flex:0 0 54px;display:grid;place-items:center;border-radius:17px;background:#fff0df;color:#c66d12}
+.buyer-account-welcome-copy-v3{min-width:0;flex:1}
+.buyer-account-welcome-copy-v3>span{display:block;margin-bottom:6px;color:#b46a1e;font-size:10px;font-weight:900;letter-spacing:.14em}
+.buyer-account-welcome-copy-v3 h1{margin:0;color:#1b3044;font-size:clamp(22px,3vw,30px);font-weight:850;letter-spacing:-.04em}
+.buyer-account-welcome-copy-v3 p{margin:6px 0;color:#647587;font-size:13px;line-height:1.5}
+.buyer-account-welcome-copy-v3 small{color:#8995a1;font-size:11px}
+.buyer-account-signout-v3{align-self:flex-start;min-height:38px;padding:0 13px;border:1px solid #e2e8ed;border-radius:10px;background:#fff;color:#596b7c;font-size:11px;font-weight:800;cursor:pointer}
+.buyer-account-stats-v3{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.buyer-account-stats-v3>button{min-width:0;min-height:104px;display:grid;grid-template-columns:36px 1fr;grid-template-rows:auto auto;align-content:center;align-items:center;column-gap:10px;padding:15px;border:1px solid #e5ebf0;border-radius:15px;background:#fff;text-align:left;cursor:pointer;transition:border-color .15s,transform .15s}
+.buyer-account-stats-v3>button:hover{border-color:#e6c38e;transform:translateY(-1px)}
+.buyer-account-stats-v3>button>span{grid-row:1/3;width:36px;height:36px;display:grid;place-items:center;border-radius:11px;background:#fff3e6;color:#bd6a16}
+.buyer-account-stats-v3>button strong{color:#20384b;font-size:23px;font-weight:850;line-height:1.1}
+.buyer-account-stats-v3>button small{margin-top:4px;color:#82909d;font-size:10px;font-weight:700}
+.buyer-account-orders-shortcut-v3{margin:0!important;min-height:72px!important;border-color:#eadfcf!important;background:#fff!important}
+.buyer-account-groups-v3{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px!important}
+.buyer-account-group-v3{overflow:hidden;padding:0!important;border:1px solid #e5ebf0!important;border-radius:15px!important;background:#fff}
+.buyer-account-group-v3 .customer-account-group-title{margin:0;padding:17px 18px 12px;color:#9a6a32;font-size:10px;font-weight:900;letter-spacing:.13em}
+.buyer-account-group-v3 .customer-account-link{min-height:64px!important;display:flex;align-items:center;gap:11px;padding:10px 16px!important;border-top:1px solid #f0f2f4!important;border-radius:0!important}
+.buyer-account-group-v3 .customer-account-link:hover{background:#fffaf4!important}
+.buyer-account-link-icon-v3{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;border-radius:10px;background:#f5f7f9;color:#64788a}
+.buyer-account-link-copy-v3{min-width:0;flex:1;display:grid;gap:4px}
+.buyer-account-link-copy-v3 strong{color:#263c50;font-size:12px;font-weight:800}
+.buyer-account-link-copy-v3 small{color:#8793a0;font-size:10px;line-height:1.35}
+.buyer-account-group-v3 .customer-account-link>svg:last-child{color:#a4afb9}
+@media(max-width:680px){
+ .buyer-account-home-v3{gap:12px!important}
+ .buyer-account-welcome-v3{min-height:0;align-items:flex-start;gap:11px;padding:17px 14px;border-radius:16px}
+ .buyer-account-avatar-v3{width:43px;height:43px;flex-basis:43px;border-radius:13px}
+ .buyer-account-welcome-copy-v3{padding-right:52px}
+ .buyer-account-welcome-copy-v3 h1{font-size:20px}
+ .buyer-account-welcome-copy-v3 p{font-size:11px}
+ .buyer-account-welcome-copy-v3 small{font-size:10px}
+ .buyer-account-signout-v3{position:absolute;top:12px;right:11px;min-height:31px;padding:0 9px;font-size:10px}
+ .buyer-account-stats-v3{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .buyer-account-stats-v3>button{min-height:78px;padding:11px;grid-template-columns:32px 1fr;column-gap:8px}
+ .buyer-account-stats-v3>button>span{width:32px;height:32px}
+ .buyer-account-stats-v3>button strong{font-size:19px}
+ .buyer-account-stats-v3>button small{font-size:9px}
+ .buyer-account-groups-v3{grid-template-columns:minmax(0,1fr)!important;gap:10px!important}
+ .buyer-account-group-v3 .customer-account-group-title{padding:14px 14px 9px}
+ .buyer-account-group-v3 .customer-account-link{min-height:58px!important;padding:9px 12px!important}
+}
