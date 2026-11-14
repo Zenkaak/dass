@@ -7507,3 +7507,61 @@
  .store-page.is-account-route .buyer-account-workspace .buyer-support-new-button{flex:1}
  .store-page.is-account-route .buyer-account-workspace .disputes-create-card{padding:13px}
 }
+
+
+/* Reports & complaints — buyer case list, form and conversation */
+.store-page.is-account-route .buyer-account-workspace .buyer-support-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:13px 0}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-stat{display:flex;align-items:center;gap:10px;padding:13px;border:1px solid #e4eaf1;border-radius:12px;background:#fff}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-stat-icon{width:35px;height:35px;display:grid;place-items:center;border-radius:10px;background:#fff4c6;color:#17243a}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-stat strong{display:block;color:#17243a;font-size:18px;font-weight:950}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-stat small{display:block;color:#8491a1;font-size:9px}
+.store-page.is-account-route .buyer-account-workspace .disputes-list-toolbar{margin:13px 0;padding:13px;border:1px solid #e4eaf1;border-radius:13px;background:#fff}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-list-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-list-heading h3{margin:0;font-size:14px;font-weight:900}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-controls{display:flex;gap:9px;flex-wrap:wrap}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-search{min-width:180px;flex:1}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-search input{width:100%;min-height:39px;padding:0 12px;border:1px solid #dfe6ee;border-radius:9px;background:#fbfcfe;font-size:11px}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-filters{display:flex;gap:5px;flex-wrap:wrap}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-filters button{min-height:35px;padding:0 10px;border:1px solid #e3e8ef;border-radius:8px;background:#fff;color:#68788d;font-size:9px;font-weight:850}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-filters button.active{border-color:#17243a;background:#17243a;color:#fff}
+.store-page.is-account-route .buyer-account-workspace .disputes-list{display:grid;gap:9px}
+.store-page.is-account-route .buyer-account-workspace .disputes-list>button,.store-page.is-account-route .buyer-account-workspace .disputes-list>article{width:100%;display:flex;align-items:center;gap:12px;padding:14px;border:1px solid #e4eaf1;border-radius:12px;background:#fff;text-align:left}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-report-icon,.store-page.is-account-route .buyer-account-workspace .dispute-row-icon{width:39px;height:39px;flex:0 0 39px;display:grid;place-items:center;border-radius:11px;background:#fff4c6;color:#17243a}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-report-main,.store-page.is-account-route .buyer-account-workspace .dispute-row-copy{min-width:0;flex:1}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-report-topline{display:flex;align-items:center;justify-content:space-between;gap:9px}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-report-topline strong{color:#24364d;font-size:11px}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-report-meta{margin-top:5px;color:#8491a1;font-size:9px}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-report-description{margin-top:6px;color:#68788d;font-size:10px;line-height:1.45}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-report-arrow{color:#8996a5}
+.store-page.is-account-route .buyer-account-workspace .dispute-create-page{max-width:780px;margin:0 auto;padding:20px;border:1px solid #e4eaf1;border-radius:15px;background:#fff}
+.store-page.is-account-route .buyer-account-workspace .dispute-create-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:15px}
+.store-page.is-account-route .buyer-account-workspace .dispute-create-heading h2{margin:0;color:#17243a;font-size:20px;font-weight:950}
+.store-page.is-account-route .buyer-account-workspace .dispute-create-heading p{margin:6px 0;color:#7e8c9d;font-size:10px;line-height:1.55}
+.store-page.is-account-route .buyer-account-workspace .dispute-new-form{display:grid;gap:13px}
+.store-page.is-account-route .buyer-account-workspace .dispute-new-form label{display:grid;gap:6px;color:#34465d;font-size:10px;font-weight:850}
+.store-page.is-account-route .buyer-account-workspace .dispute-new-form input,.store-page.is-account-route .buyer-account-workspace .dispute-new-form select,.store-page.is-account-route .buyer-account-workspace .dispute-new-form textarea{width:100%;min-height:42px;padding:10px 12px;border:1px solid #dfe6ee;border-radius:9px;background:#fbfcfe;color:#1b2b42;font-size:11px}
+.store-page.is-account-route .buyer-account-workspace .dispute-create-actions{display:flex;justify-content:flex-end;gap:8px;padding-top:5px}
+.store-page.is-account-route .buyer-account-workspace .dispute-file-picker{display:flex;align-items:center;gap:9px;padding:13px;border:1px dashed #cbd5e1;border-radius:10px;background:#f8fafc;color:#56677c;font-size:10px}
+.store-page.is-account-route .buyer-account-workspace .dispute-case{padding:17px;border:1px solid #e4eaf1;border-radius:15px;background:#fff}
+.store-page.is-account-route .buyer-account-workspace .dispute-case-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:13px;border-bottom:1px solid #edf0f4}
+.store-page.is-account-route .buyer-account-workspace .dispute-case-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:13px 0}
+.store-page.is-account-route .buyer-account-workspace .dispute-chat{margin-top:14px;border:1px solid #e4eaf1;border-radius:13px;overflow:hidden}
+.store-page.is-account-route .buyer-account-workspace .dispute-chat-head{padding:12px 14px;background:#17243a;color:#fff;font-size:11px;font-weight:900}
+.store-page.is-account-route .buyer-account-workspace .dispute-messages{display:grid;gap:9px;max-height:420px;overflow:auto;padding:13px;background:#f7f9fc}
+.store-page.is-account-route .buyer-account-workspace .dispute-compose{display:grid;gap:8px;padding:12px;border-top:1px solid #e4eaf1;background:#fff}
+.store-page.is-account-route .buyer-account-workspace .dispute-compose textarea{width:100%;min-height:76px;padding:10px;border:1px solid #dfe6ee;border-radius:9px;background:#fbfcfe;font-size:11px}
+.store-page.is-account-route .buyer-account-workspace .dispute-compose-actions{display:flex;justify-content:space-between;gap:8px}
+.store-page.is-account-route .buyer-account-workspace .dispute-evidence{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.store-page.is-account-route .buyer-account-workspace .disputes-empty{padding:35px 18px;border:1px dashed #d7e0e9;border-radius:13px;background:#fff;text-align:center;color:#718096}
+@media(max-width:760px){
+ .store-page.is-account-route .buyer-account-workspace .buyer-support-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-support-stat{align-items:flex-start;flex-direction:column;gap:5px;padding:9px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-support-stat strong{font-size:15px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-support-stat small{font-size:8px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-support-controls{display:grid;grid-template-columns:1fr}
+ .store-page.is-account-route .buyer-account-workspace .buyer-support-filters{overflow:auto;flex-wrap:nowrap;padding-bottom:3px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-support-filters button{white-space:nowrap}
+ .store-page.is-account-route .buyer-account-workspace .dispute-create-page{padding:13px}
+ .store-page.is-account-route .buyer-account-workspace .dispute-case{padding:12px}
+ .store-page.is-account-route .buyer-account-workspace .dispute-case-summary{grid-template-columns:1fr}
+}
