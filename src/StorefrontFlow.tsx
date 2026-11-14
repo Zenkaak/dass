@@ -21,7 +21,20 @@ import {
   Mail,
   MessageCircle,
   Heart,
+  Flag,
 } from 'lucide-react';
+
+const accountGroups = [
+  { title: 'SHOPPING', links: [
+    { label: 'Inbox & messages', icon: MessageCircle, view: 'inbox' },
+    { label: 'Saved items', icon: Search, view: 'wishlist' },
+  ]},
+  { title: 'ACCOUNT & SUPPORT', links: [
+    { label: 'My profile & addresses', icon: UserRound, view: 'profile' },
+    { label: 'Reports & Complaints', icon: Flag, view: 'my-reports' },
+    { label: 'Help & support', icon: ShieldCheck, view: 'assistant' },
+  ]},
+];
 
 // Buyer account navigation keeps the marketplace account destinations available as real URLs.
 export type StoreProduct = {
