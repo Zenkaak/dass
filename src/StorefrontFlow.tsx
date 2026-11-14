@@ -122,25 +122,6 @@ const paymentLabels: Record<PaymentMethod, string> = {
   delivery: 'Cash on delivery / pickup',
 };
 
-const accountGroups = [
-  { title: 'SHOPPING', links: [
-    { label: 'Inbox & messages', icon: MessageCircle, view: 'inbox', description: 'Conversations you or the seller have started' },
-    { label: 'Saved items', icon: Heart, view: 'wishlist', description: 'Products you want to come back to' },
-    { label: 'Shop vouchers', icon: TicketPercent, view: 'vouchers', description: 'Discounts published by this shop' },
-    { label: 'Product reviews', icon: Star, view: 'reviews', description: 'Review products you have purchased' },
-  ]},
-  { title: 'ACCOUNT', links: [
-    { label: 'Personal details', icon: UserRound, view: 'profile', description: 'Your name, email and phone details' },
-    { label: 'Delivery addresses', icon: MapPin, view: 'address-book', description: 'Manage your saved delivery destination' },
-    { label: 'Notifications', icon: Bell, view: 'notifications', description: 'Payment, order and delivery updates' },
-    { label: 'Security & sign-in', icon: ShieldCheck, view: 'account-management', description: 'Change your account password' },
-  ]},
-  { title: 'HELP & SUPPORT', links: [
-    { label: 'Reports & complaints', icon: Flag, view: 'my-reports', description: 'Raise and follow up a shop or order issue' },
-    { label: 'Contact this shop', icon: Phone, view: 'assistant', description: 'Contact the seller using published details' },
-  ]},
-];
-
 const accountSectionCopy: Record<string, { title: string; description: string }> = {
   inbox: { title: 'Inbox', description: 'Your store messages will appear here when messaging is connected.' },
   reviews: { title: 'Pending reviews', description: 'Items that are ready for a review will appear here after your first order.' },
@@ -239,7 +220,6 @@ export function StorefrontFlow({
   wishlistIds = [],
   onOpenProduct,
   notifications = [],
-  onSignOut,
   onOrderCreated,
   chatPanel,
   onOpenChat,
