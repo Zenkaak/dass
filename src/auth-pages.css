@@ -1254,3 +1254,53 @@
     padding-bottom: 64px!important;
   }
 }
+
+
+/* Final pass: increase the full seller and shop-buyer auth surfaces on desktop.
+   Preserve the already-approved widths and let shorter laptop viewports scroll naturally. */
+@media (min-width: 900px) {
+  .dm-auth-exact {
+    align-items: flex-start!important;
+    padding-top: 32px!important;
+    padding-bottom: 32px!important;
+  }
+  .dm-auth-exact > .dm-auth-exact-panel {
+    min-height: clamp(700px, 88svh, 900px)!important;
+  }
+  .dm-auth-exact > .dm-auth-exact-panel > .dm-auth-exact-inner {
+    min-height: clamp(700px, 88svh, 900px)!important;
+    padding-top: 68px!important;
+    padding-bottom: 64px!important;
+  }
+  .buyer-auth-page.buyer-auth-exact {
+    justify-content: flex-start!important;
+    padding-top: 32px!important;
+    padding-bottom: 32px!important;
+  }
+  .buyer-auth-page.buyer-auth-exact > .buyer-auth-exact-panel {
+    min-height: clamp(760px, 90svh, 960px)!important;
+  }
+  .buyer-auth-page.buyer-auth-exact .buyer-auth-exact-inner {
+    min-height: clamp(760px, 90svh, 960px)!important;
+    padding-top: 72px!important;
+    padding-bottom: 68px!important;
+  }
+}
+@media (min-width: 1200px) {
+  .dm-auth-exact > .dm-auth-exact-panel {
+    min-height: clamp(780px, 88svh, 960px)!important;
+  }
+  .dm-auth-exact > .dm-auth-exact-panel > .dm-auth-exact-inner {
+    min-height: clamp(780px, 88svh, 960px)!important;
+    padding-top: 78px!important;
+    padding-bottom: 72px!important;
+  }
+  .buyer-auth-page.buyer-auth-exact > .buyer-auth-exact-panel {
+    min-height: clamp(840px, 90svh, 1020px)!important;
+  }
+  .buyer-auth-page.buyer-auth-exact .buyer-auth-exact-inner {
+    min-height: clamp(840px, 90svh, 1020px)!important;
+    padding-top: 84px!important;
+    padding-bottom: 76px!important;
+  }
+}
