@@ -3,7 +3,6 @@ import { marketplaceFaqs } from './marketplaceFaqs';
 import { DisputesPanel } from './DisputesPanel';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
-  Activity,
   ArrowLeft,
   ArrowRight,
   Check,
@@ -20,7 +19,6 @@ import {
   Phone,
   Mail,
   MessageCircle,
-  Heart,
   Flag,
 } from 'lucide-react';
 
@@ -230,6 +228,7 @@ export function StorefrontFlow({
   wishlistIds = [],
   onOpenProduct,
   notifications = [],
+  onSignOut,
   onOrderCreated,
   chatPanel,
   onOpenChat,
