@@ -9,32 +9,41 @@ export function BuyerAuthPage({slug,shopName,initial='login',onBack,onAuthentica
  async function sendCode(resend=false){setBusy(true);setError('');setNotice('');try{const d=await call(mode==='reset'?'send-reset-code':'send-code',{phone});setSent(true);setNotice(d.message||(resend?'A new SMS code has been sent.':'Check your phone for the SMS code.'));return true}catch(e:any){setError(e.message||'Could not send SMS code.');return false}finally{setBusy(false)}}
  async function submit(e:any){e.preventDefault();setError('');setNotice('');if(mode==='signup'&&step<3){if(step===2&&!phone.trim()){setError('Enter your mobile number.');return}setStep(s=>s+1);return}if(mode==='signup'&&step===3){if(password!==confirmPassword){setError('Your passwords do not match.');return}if(password.length<10||!/[A-Za-z]/.test(password)||!/[0-9]/.test(password)){setError('Use at least 10 characters, including letters and numbers.');return}if(await sendCode())setStep(4);return}if(mode==='reset'&&!sent){await sendCode();return}setBusy(true);try{if(mode==='signup'){const d=await call('signup',{name,email,phone,password,code});onAuthenticated(d.customer)}else if(mode==='login'){const d=await call('login',{phone,password});onAuthenticated(d.customer)}else{await call('reset-password',{phone,password,code});setMode('login');setStep(1);setSent(false);setCode('');setPassword('');setNotice('Password updated. Please sign in.')}}catch(e:any){setError(e.message||'Authentication failed')}finally{setBusy(false)}}
  function changeMode(next:Mode){setMode(next);setStep(1);setSent(false);setCode('');setPassword('');setConfirmPassword('');setError('');setNotice('')}
- const stepTitle=step===1?'Your details':step===2?'Phone number':step===3?'Create password':'Verify account';
- const title=mode==='signup'?'Create your account':mode==='reset'?'Reset your password':'Sign in';
- const intro=mode==='signup'?'Set up your buyer account for this shop. Your buyer account is securely connected to this shop.':mode==='reset'?'We’ll send a one-time code to your registered mobile number.':'Access your orders, delivery updates and conversations with this shop.';
- return <main className="buyer-auth-page buyer-auth-redesign buyer-auth-v2">
-  <div className="buyer-auth-v2-shell">
-   <header className="buyer-auth-v2-top">
-    <button className="buyer-auth-back" type="button" onClick={onBack}><ArrowLeft size={17}/> <span>Back to shop</span></button>
-    <div className="buyer-auth-v2-shop"><span className="buyer-auth-v2-shop-mark">{(shopName||'S').trim().slice(0,1).toUpperCase()}</span><span><b>{shopName}</b><small>BUYER ACCOUNT</small></span></div>
-   </header>
-   <section className="buyer-auth-card buyer-auth-modal buyer-auth-v2-card" role="dialog" aria-modal="true" aria-labelledby="buyer-auth-title">
-    <div className="buyer-auth-v2-icon">{mode==='login'?<LockKeyhole size={21}/>:<UserRound size={21}/>}</div>
-    <div className="buyer-auth-v2-heading"><span className="buyer-auth-eyebrow">{mode==='signup'?'NEW CUSTOMER':mode==='reset'?'ACCOUNT RECOVERY':'WELCOME BACK'}</span><h1 id="buyer-auth-title">{title}</h1><p>{intro}</p></div>
-    {mode==='signup'&&<div className="buyer-auth-progress buyer-auth-v2-progress" aria-label={'Signup step '+step+' of 4'}><div>{[1,2,3,4].map(n=><span key={n} className={n<=step?'done':''}/>)}</div><small><b>STEP {String(step).padStart(2,'0')} OF 04</b><span>{stepTitle}</span></small></div>}
-    <form className="buyer-auth-form buyer-auth-v2-form" onSubmit={submit}>
-     {mode==='signup'&&step===1&&<><label>Full name<input value={name} onChange={e=>setName(e.target.value)} required minLength={2} maxLength={120} autoComplete="name" placeholder="Your full name"/></label><label>Email address<input type="email" value={email} onChange={e=>setEmail(e.target.value)} required maxLength={254} autoComplete="email" placeholder="name@example.com"/></label></>}
-     {(mode==='signup'&&step===2||mode!=='signup')&&<label>Mobile number<input type="tel" inputMode="tel" value={phone} onChange={e=>setPhone(e.target.value)} required placeholder="07XX XXX XXX" autoComplete="tel"/></label>}
-     {mode==='signup'&&step===3&&<><label>Password<input type="password" value={password} onChange={e=>setPassword(e.target.value)} required minLength={10} maxLength={128} autoComplete="new-password" placeholder="At least 10 characters"/><small className="buyer-auth-v2-hint">Use at least 10 characters, including letters and numbers.</small></label><label>Confirm password<input type="password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} required minLength={10} maxLength={128} autoComplete="new-password" placeholder="Re-enter your password"/></label></>}
-     {(mode==='signup'&&step===4||mode==='reset'&&sent)&&<><label>Verification code<input inputMode="numeric" value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,'').slice(0,6))} required minLength={6} maxLength={6} autoComplete="one-time-code" placeholder="Enter 6-digit code"/></label><button className="buyer-auth-resend" type="button" disabled={busy||!phone.trim()} onClick={()=>sendCode(true)}>{busy?'Sending…':'Resend verification code'}</button></>}
-     {mode==='login'&&<label>Password<input type="password" value={password} onChange={e=>setPassword(e.target.value)} required minLength={10} maxLength={128} autoComplete="current-password" placeholder="Your password"/></label>}{mode==='reset'&&sent&&<label>New password<input type="password" value={password} onChange={e=>setPassword(e.target.value)} required minLength={10} maxLength={128} autoComplete="new-password" placeholder="At least 10 characters"/></label>}
+ const stepTitle=step===1?'Your details':step===2?'Phone number':step===3?'Create password':'Verify phone';
+ const title=mode==='signup'?'Create your account':mode==='reset'?'Reset your password':'Welcome back';
+ const intro=mode==='signup'?'Create your buyer account to shop with '+shopName+'.':mode==='reset'?'Enter your mobile number to recover your account.':'Sign in to your '+shopName+' buyer account.';
+ return <main className={`buyer-auth-page buyer-auth-exact ${mode==='login'?'is-login':'is-signup'}`}>
+  {mode==='login'&&<div className="buyer-auth-keyboard-backdrop" aria-hidden="true"><div className="buyer-auth-keyboard"><div className="buyer-auth-keys">{Array.from({length:60},(_,i)=><i key={i}/>)}</div></div></div>}
+  <section className="buyer-auth-exact-panel" aria-labelledby="buyer-auth-title">
+   <div className="buyer-auth-exact-inner">
+    <header className="buyer-auth-exact-header">
+     <span className="buyer-auth-exact-logo" aria-hidden="true">D</span>
+     <span className="buyer-auth-exact-brand"><b>DASMARKET</b><small>{shopName}</small></span>
+     <button className="buyer-auth-exact-back" type="button" onClick={onBack}><ArrowLeft size={16}/> Back to shop</button>
+    </header>
+    {mode==='signup'&&<div className="buyer-auth-exact-steps" aria-label={'Signup step '+step+' of 4'}>
+     <div className={step>=1?'active':''}><i>1</i><span>Your<br/>details</span></div><b/>
+     <div className={step>=4?'active':''}><i>2</i><span>Verify<br/>email</span></div><b/>
+     <div className={step>=4?'active':''}><i>3</i><span>Verify<br/>phone</span></div>
+    </div>}
+    <div className="buyer-auth-exact-heading">
+     <h1 id="buyer-auth-title">{title}</h1>
+     <p>{intro}</p>
+    </div>
+    <form className="buyer-auth-form buyer-auth-exact-form" onSubmit={submit}>
+     {mode==='signup'&&step===1&&<><label>Full name<input value={name} onChange={e=>setName(e.target.value)} required minLength={2} maxLength={120} autoComplete="name" placeholder="e.g. Your Full Name"/></label><label>Email<input type="email" value={email} onChange={e=>setEmail(e.target.value)} required maxLength={254} autoComplete="email" placeholder="e.g. you@example.com"/></label></>}
+     {(mode==='signup'&&step===2||mode!=='signup')&&<label>{mode==='login'?'Phone or mobile number':'Phone'}<input type="tel" inputMode="tel" value={phone} onChange={e=>setPhone(e.target.value)} required placeholder="e.g. 712 345 678" autoComplete="tel"/></label>}
+     {mode==='signup'&&step===3&&<><label>Password<input type="password" value={password} onChange={e=>setPassword(e.target.value)} required minLength={10} maxLength={128} autoComplete="new-password" placeholder="At least 10 characters"/><small className="buyer-auth-exact-hint">Use at least 10 characters, including letters and numbers.</small></label><label>Confirm password<input type="password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} required minLength={10} maxLength={128} autoComplete="new-password" placeholder="Re-enter your password"/></label></>}
+     {(mode==='signup'&&step===4||mode==='reset'&&sent)&&<><label>Verification code<input inputMode="numeric" value={code} onChange={e=>setCode(e.target.value.replace(/\\D/g,'').slice(0,6))} required minLength={6} maxLength={6} autoComplete="one-time-code" placeholder="Enter 6-digit code"/></label><button className="buyer-auth-exact-link" type="button" disabled={busy||!phone.trim()} onClick={()=>sendCode(true)}>{busy?'Sending…':'Resend verification code'}</button></>}
+     {mode==='login'&&<label><span className="buyer-auth-password-label">Password<button className="buyer-auth-exact-link" type="button" onClick={()=>changeMode('reset')}>Forgot password?</button></span><input type="password" value={password} onChange={e=>setPassword(e.target.value)} required minLength={10} maxLength={128} autoComplete="current-password" placeholder="Your password"/></label>}
+     {mode==='reset'&&sent&&<label>New password<input type="password" value={password} onChange={e=>setPassword(e.target.value)} required minLength={10} maxLength={128} autoComplete="new-password" placeholder="At least 10 characters"/></label>}
      {error&&<div className="buyer-auth-error" role="alert">{error}</div>}{notice&&<div className="buyer-auth-notice" role="status">{notice}</div>}
-     <div className="buyer-auth-actions buyer-auth-v2-actions">{mode==='signup'&&step>1&&<button className="buyer-auth-secondary" type="button" onClick={()=>setStep(s=>Math.max(1,s-1))}>Back</button>}<button className="buyer-auth-submit" disabled={busy}>{busy?'Please wait…':mode==='signup'?(step<3?'Continue':step===3?'Send SMS code':'Create account'):mode==='login'?'Sign in':sent?'Update password':'Send reset code'} <ArrowRight size={17}/></button></div>
+     <div className="buyer-auth-actions buyer-auth-exact-actions">{mode==='signup'&&step>1&&<button className="buyer-auth-exact-secondary" type="button" onClick={()=>setStep(s=>Math.max(1,s-1))}>Back</button>}<button className="buyer-auth-submit" disabled={busy}>{busy?'Please wait…':mode==='signup'?(step<3?'Continue':step===3?'Continue':'Create account'):mode==='login'?'Sign In':sent?'Update password':'Continue'}{!busy&&<ArrowRight size={17}/>}</button></div>
     </form>
-    <div className="buyer-auth-v2-switch">{mode==='login'?<><span>New to {shopName}?</span><button type="button" onClick={()=>changeMode('signup')}>Create buyer account</button><button className="buyer-auth-v2-forgot" type="button" onClick={()=>changeMode('reset')}>Forgot password?</button></>:<button type="button" onClick={()=>changeMode('login')}>Already have an account? <b>Sign in</b></button>}</div>
-    <div className="buyer-auth-secure buyer-auth-v2-secure"><ShieldCheck size={17}/><span><b>Private to this shop</b><small>Your buyer profile and orders are kept separate for each shop.</small></span></div>
-   </section>
-   <footer className="buyer-auth-v2-foot">SECURE BUYER ACCESS <span>·</span> {shopName}</footer>
-  </div>
+    <div className="buyer-auth-exact-switch">{mode==='login'?<>Don't have an account? <button type="button" onClick={()=>changeMode('signup')}>Sign up</button></>:<button type="button" onClick={()=>changeMode('login')}>Already have an account? <b>Sign in</b></button>}</div>
+    {mode==='signup'&&<p className="buyer-auth-exact-terms">By proceeding, you agree to this shop's <a href="/terms">Terms &amp; Conditions</a> and <a href="/privacy">Privacy Policy</a>.</p>}
+    <footer className="buyer-auth-exact-footer"><button type="button" onClick={onBack}><ArrowLeft size={15}/> Back to shop</button><span>Secure buyer access · {shopName}</span></footer>
+   </div>
+  </section>
  </main>;
 }
