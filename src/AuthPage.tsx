@@ -35,6 +35,7 @@ export function AuthPage({initial='signup'}:{initial?:Mode}) {
      {mode==='login'&&!emailVerificationRequired&&<button className="dm-auth-exact-link dm-auth-exact-forgot" type="button" onClick={()=>changeMode('reset')}>Forgot your password?</button>}
      {mode==='reset'&&<button className="dm-auth-exact-link" type="button" onClick={()=>changeMode('login')}>Back to sign in</button>}
     </section>
+    {mode==='signup'&&!emailVerificationRequired&&<p className="dm-auth-exact-legal">By creating a shop, you agree to DASMARKET's <a href="/terms">Terms &amp; Conditions</a> and <a href="/privacy">Privacy Policy</a>.</p>}
     {!emailVerificationRequired&&<div className="dm-auth-exact-switch">{mode==='login'?<>New to DASMARKET? <button type="button" onClick={()=>changeMode('signup')}>Create a shop</button></>:<>Already registered? <button type="button" onClick={()=>changeMode('login')}>Sign in</button></>}</div>}
     <footer className="dm-auth-exact-footer"><span>© {new Date().getFullYear()} DASMARKET</span><a href="mailto:support@dasnet.co.ke">Need help? Contact support</a></footer>
    </div>
