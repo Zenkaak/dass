@@ -808,3 +808,26 @@
     width: min(420px, calc(100vw - 24px))!important;
   }
 }
+
+
+/* Narrow seller auth dialog further with balanced side gutters. */
+.dm-auth-exact > .dm-auth-exact-panel{
+  width:min(360px, calc(100vw - 48px))!important;
+  max-width:360px!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+.dm-auth-exact > .dm-auth-exact-panel > .dm-auth-exact-inner{
+  padding-left:18px!important;
+  padding-right:18px!important;
+}
+@media(max-width:480px){
+  .dm-auth-exact > .dm-auth-exact-panel{
+    width:calc(100vw - 40px)!important;
+    max-width:360px!important;
+  }
+  .dm-auth-exact > .dm-auth-exact-panel > .dm-auth-exact-inner{
+    padding-left:15px!important;
+    padding-right:15px!important;
+  }
+}
