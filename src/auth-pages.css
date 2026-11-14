@@ -831,3 +831,23 @@
     padding-right:15px!important;
   }
 }
+
+
+/* Seller auth action buttons: compact, centered controls instead of full-row bars. */
+.dm-auth-exact-actions{
+  justify-content:center!important;
+}
+.dm-auth-exact-actions .dm-auth-exact-submit{
+  width:auto!important;
+  min-width:156px!important;
+  max-width:220px!important;
+  flex:0 1 auto!important;
+  padding:0 26px!important;
+}
+.dm-auth-exact-actions .dm-auth-exact-secondary{
+  width:auto!important;
+  min-width:92px!important;
+  flex:0 0 auto!important;
+  padding-left:18px!important;
+  padding-right:18px!important;
+}
