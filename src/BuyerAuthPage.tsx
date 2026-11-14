@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, ArrowRight, ShieldCheck, UserRound, LockKeyhole } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 type Mode='login'|'signup'|'reset';
 
@@ -9,7 +9,6 @@ export function BuyerAuthPage({slug,shopName,initial='login',onBack,onAuthentica
  async function sendCode(resend=false){setBusy(true);setError('');setNotice('');try{const d=await call(mode==='reset'?'send-reset-code':'send-code',{phone});setSent(true);setNotice(d.message||(resend?'A new SMS code has been sent.':'Check your phone for the SMS code.'));return true}catch(e:any){setError(e.message||'Could not send SMS code.');return false}finally{setBusy(false)}}
  async function submit(e:any){e.preventDefault();setError('');setNotice('');if(mode==='signup'&&step<3){if(step===2&&!phone.trim()){setError('Enter your mobile number.');return}setStep(s=>s+1);return}if(mode==='signup'&&step===3){if(password!==confirmPassword){setError('Your passwords do not match.');return}if(password.length<10||!/[A-Za-z]/.test(password)||!/[0-9]/.test(password)){setError('Use at least 10 characters, including letters and numbers.');return}if(await sendCode())setStep(4);return}if(mode==='reset'&&!sent){await sendCode();return}setBusy(true);try{if(mode==='signup'){const d=await call('signup',{name,email,phone,password,code});onAuthenticated(d.customer)}else if(mode==='login'){const d=await call('login',{phone,password});onAuthenticated(d.customer)}else{await call('reset-password',{phone,password,code});setMode('login');setStep(1);setSent(false);setCode('');setPassword('');setNotice('Password updated. Please sign in.')}}catch(e:any){setError(e.message||'Authentication failed')}finally{setBusy(false)}}
  function changeMode(next:Mode){setMode(next);setStep(1);setSent(false);setCode('');setPassword('');setConfirmPassword('');setError('');setNotice('')}
- const stepTitle=step===1?'Your details':step===2?'Phone number':step===3?'Create password':'Verify phone';
  const title=mode==='signup'?'Create your account':mode==='reset'?'Reset your password':'Welcome back';
  const intro=mode==='signup'?'Create your buyer account to shop with '+shopName+'.':mode==='reset'?'Enter your mobile number to recover your account.':'Sign in to your '+shopName+' buyer account.';
  return <main className={`buyer-auth-page buyer-auth-exact ${mode==='login'?'is-login':'is-signup'}`}>
