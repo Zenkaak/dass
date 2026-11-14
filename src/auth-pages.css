@@ -206,3 +206,102 @@
  .buyer-auth-exact-form input{padding:0 18px!important}
  .buyer-auth-exact-footer span{display:none}
 }
+
+
+/* Shared REATech360-inspired auth system for seller and buyer entry points */
+.dm-auth-page.dm-auth-v3{
+ --dm-auth-ink:#f4f7fc;--dm-auth-muted:#8c9bb8;--dm-auth-line:rgba(142,160,194,.2);
+ min-height:100svh!important;padding:24px clamp(16px,4vw,32px)!important;
+ background:radial-gradient(ellipse at 50% 0%,rgba(20,104,169,.18),transparent 42%),linear-gradient(145deg,#0d1832,#111d38 58%,#182440)!important;
+ color:#f4f7fc!important;justify-content:flex-start!important;
+}
+.dm-auth-v3:before,.dm-auth-v3:after{display:none!important}
+.dm-auth-v3 .dm-auth-v3-header{width:min(100%,520px);min-height:42px;margin:0 auto 26px!important}
+.dm-auth-v3 .dm-home-brand{color:#f4f7fc!important;gap:10px}
+.dm-auth-v3 .dm-home-mark{width:42px;height:42px;border-radius:12px;background:linear-gradient(145deg,#13b6f4,#0874c9)!important;color:#071b36!important;box-shadow:0 7px 20px rgba(0,139,220,.22)!important}
+.dm-auth-v3 .dm-home-brand b{color:#f4f7fc!important;letter-spacing:.12em}
+.dm-auth-v3 .dm-home-brand small{color:#8192b0!important}
+.dm-auth-v3 .dm-auth-v3-wrap{width:min(100%,520px)!important}
+.dm-auth-v3 .dm-auth-v3-heading{text-align:left!important;margin:0 0 18px!important}
+.dm-auth-v3 .dm-auth-v3-heading h1{color:#f4f6fc!important;font-size:clamp(28px,4vw,35px)!important;font-weight:680!important;letter-spacing:-.04em!important}
+.dm-auth-v3 .dm-auth-v3-heading p{color:#8798b5!important;font-size:13px!important}
+.dm-auth-v3 .dm-auth-v3-card{padding:clamp(20px,4vw,28px)!important;border:1px solid rgba(105,132,177,.2)!important;border-radius:20px!important;background:linear-gradient(145deg,rgba(26,37,66,.98),rgba(24,35,62,.98))!important;box-shadow:0 22px 65px rgba(0,0,0,.22)!important;backdrop-filter:none!important}
+.dm-auth-v3 .dm-auth-v3-progress{margin:0 0 20px!important;padding:0 0 15px!important;border-color:rgba(141,159,191,.16)!important}
+.dm-auth-v3 .dm-auth-stepper i{height:4px;background:rgba(138,157,190,.2)!important}
+.dm-auth-v3 .dm-auth-stepper i.active{background:linear-gradient(90deg,#13b6f4,#0874c9)!important}
+.dm-auth-v3 .dm-auth-stepper small{color:#9aabc5!important}
+.dm-auth-v3 .dm-auth-stepper small span{color:#7185a7!important}
+.dm-auth-v3 .dm-auth-form{gap:14px!important}
+.dm-auth-v3 .dm-auth-form label,.dm-auth-v3 .dm-email-verification-prompt label{color:#a3b1ca!important;font-size:12px!important;gap:7px!important}
+.dm-auth-v3 .dm-auth-form input,.dm-auth-v3 .dm-email-verification-prompt input{min-height:52px!important;padding:12px 16px!important;border:1px solid rgba(142,160,194,.2)!important;border-radius:14px!important;background:rgba(255,255,255,.055)!important;color:#f4f7fc!important;font-size:14px!important}
+.dm-auth-v3 .dm-auth-form input::placeholder,.dm-auth-v3 .dm-email-verification-prompt input::placeholder{color:rgba(151,170,204,.48)!important}
+.dm-auth-v3 .dm-auth-form input:focus,.dm-auth-v3 .dm-email-verification-prompt input:focus{border-color:#168fd4!important;background:rgba(255,255,255,.075)!important;box-shadow:0 0 0 3px rgba(0,139,220,.13)!important}
+.dm-auth-v3 .dm-auth-hint{color:#8496b5!important;font-size:10px!important}
+.dm-auth-v3 .dm-auth-domain-input{border-color:rgba(142,160,194,.2)!important;border-radius:14px!important;background:rgba(255,255,255,.055)!important}
+.dm-auth-v3 .dm-auth-domain-input span{color:#8496b5!important}
+.dm-auth-v3 .dm-auth-submit{min-height:54px!important;border-radius:30px!important;background:linear-gradient(100deg,#0876c2,#078bd5)!important;color:#fff!important;font-size:14px!important;box-shadow:0 9px 24px rgba(0,128,211,.2)!important}
+.dm-auth-v3 .auth-back-step{min-height:50px;border-color:rgba(142,160,194,.2)!important;border-radius:28px!important;background:rgba(255,255,255,.04)!important;color:#c4d0e4!important}
+.dm-auth-v3 .auth-resend,.dm-auth-v3 .dm-auth-forgot,.dm-auth-v3 .auth-text-button{color:#45a9f2!important}
+.dm-auth-v3 .dm-email-verification-prompt h2{color:#f4f6fc!important}
+.dm-auth-v3 .dm-email-verification-prompt p{color:#9aabc5!important}
+.dm-auth-v3 .dm-email-verification-prompt .dm-email-verification-address{border-color:rgba(142,160,194,.18)!important;background:rgba(255,255,255,.05)!important;color:#dce6f7!important}
+.dm-auth-v3 .dm-email-verification-icon{background:rgba(7,139,215,.14)!important;color:#45a9f2!important}
+.dm-auth-v3 .dm-auth-v3-mode-switch{color:#8798b5!important;font-size:12px!important}
+.dm-auth-v3 .dm-auth-v3-mode-switch button{color:#45a9f2!important}
+.dm-auth-v3 .dm-auth-v3-footer{width:min(100%,520px);margin:20px auto 0!important;color:#7185a7!important;font-size:10px!important}
+.dm-auth-v3 .dm-auth-v3-footer a{color:#9aabc5!important}
+.dm-auth-v3 .auth-message.error{border-color:rgba(240,115,115,.3)!important;background:rgba(160,40,50,.15)!important;color:#ffb4b4!important}
+.dm-auth-v3 .auth-message.success{border-color:rgba(80,190,140,.3)!important;background:rgba(40,150,100,.13)!important;color:#9ce3bd!important}
+
+/* Buyer auth is a compact dialog-sized panel, not a full-width oversized sheet */
+.buyer-auth-page.buyer-auth-exact{justify-content:center!important;align-items:center!important;padding:20px 14px!important;overflow-y:auto!important}
+.buyer-auth-exact .buyer-auth-exact-panel{width:min(100%,520px)!important;min-height:0!important;margin:0 auto!important;border:1px solid rgba(105,132,177,.22)!important;border-radius:22px!important;overflow:hidden!important;box-shadow:0 24px 75px rgba(0,0,0,.34)!important}
+.buyer-auth-exact .buyer-auth-exact-inner{width:100%!important;padding:24px clamp(20px,5vw,30px) 22px!important}
+.buyer-auth-exact-header{min-height:42px!important;margin-bottom:24px!important;gap:10px!important}
+.buyer-auth-exact-logo{width:42px!important;height:42px!important;flex-basis:42px!important;font-size:27px!important}
+.buyer-auth-exact-brand b{font-size:13px!important}
+.buyer-auth-exact-brand small{font-size:8px!important}
+.buyer-auth-exact-back{font-size:11px!important}
+.buyer-auth-exact-heading{margin:0 0 18px!important}
+.buyer-auth-exact-heading h1{font-size:clamp(25px,4vw,31px)!important}
+.buyer-auth-exact-heading p{margin-top:7px!important;font-size:12px!important}
+.buyer-auth-exact-steps{gap:8px!important;margin:0 0 22px!important}
+.buyer-auth-exact-steps>div{gap:7px!important;font-size:11px!important}
+.buyer-auth-exact-steps>div i{width:32px!important;height:32px!important;flex:0 0 32px!important}
+.buyer-auth-exact-form{gap:14px!important}
+.buyer-auth-exact-form>label{gap:7px!important;font-size:12px!important}
+.buyer-auth-exact-form input{height:52px!important;min-height:52px!important;padding:0 16px!important;border-radius:14px!important;font-size:14px!important}
+.buyer-auth-exact-link{font-size:12px!important}
+.buyer-auth-exact-actions{gap:9px!important;margin-top:3px!important}
+.buyer-auth-exact-actions .buyer-auth-submit{min-height:54px!important;border-radius:30px!important;font-size:14px!important}
+.buyer-auth-exact-secondary{min-height:50px!important}
+.buyer-auth-exact-switch{margin:17px 0 0!important;font-size:12px!important}
+.buyer-auth-exact-terms{margin:16px 0 0!important;font-size:10px!important}
+.buyer-auth-exact-footer{margin-top:20px!important;padding-top:13px!important;font-size:9px!important}
+.buyer-auth-exact-footer button{font-size:10px!important}
+.buyer-auth-page.buyer-auth-exact.is-login{justify-content:center!important;align-items:center!important;padding:18px 14px!important}
+.buyer-auth-keyboard-backdrop{height:100%!important;opacity:.36!important}
+.buyer-auth-exact.is-login .buyer-auth-exact-panel{width:min(100%,480px)!important;min-height:0!important;margin:0 auto!important;border-radius:22px!important;background:rgba(26,36,64,.97)!important}
+.buyer-auth-exact.is-login .buyer-auth-exact-inner{padding:24px clamp(20px,5vw,30px) 22px!important}
+.buyer-auth-exact.is-login .buyer-auth-exact-header{margin-bottom:24px!important}
+.buyer-auth-exact.is-login .buyer-auth-exact-heading{margin-bottom:20px!important}
+.buyer-auth-exact.is-login .buyer-auth-exact-form{gap:16px!important}
+.buyer-auth-exact.is-login .buyer-auth-exact-footer{margin-top:20px!important}
+@media(max-width:600px){
+ .dm-auth-page.dm-auth-v3{padding:18px 14px 22px!important}
+ .dm-auth-v3 .dm-auth-v3-header{margin:0 auto 22px!important}
+ .dm-auth-v3 .dm-auth-v3-card{padding:20px 17px!important}
+ .dm-auth-v3 .dm-auth-v3-footer{margin-top:17px!important}
+ .buyer-auth-page.buyer-auth-exact{padding:12px!important}
+ .buyer-auth-exact .buyer-auth-exact-inner{padding:20px 17px 18px!important}
+ .buyer-auth-exact-header{margin-bottom:20px!important}
+ .buyer-auth-exact-steps{margin-bottom:19px!important}
+ .buyer-auth-exact-footer{margin-top:17px!important}
+}
+@media(max-height:720px){
+ .buyer-auth-exact .buyer-auth-exact-inner{padding-top:17px!important;padding-bottom:15px!important}
+ .buyer-auth-exact-header{margin-bottom:15px!important}
+ .buyer-auth-exact-heading{margin-bottom:14px!important}
+ .buyer-auth-exact-steps{margin-bottom:15px!important}
+ .buyer-auth-exact-footer{margin-top:13px!important}
+}
