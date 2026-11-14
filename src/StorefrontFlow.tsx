@@ -970,38 +970,15 @@ export function StorefrontFlow({
   async function saveAddress(e:any){e.preventDefault();if(profileSaving)return;setProfileSaving(true);setProfileMessage('');try{const r=await fetch('/api/buyer-auth?action=update-profile&slug='+encodeURIComponent(slug),{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug,name:profileName,email:profileEmail,alternativePhone:profilePhoneAlt,address:profileAddress})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Address could not be saved.');onProfileUpdated?.(d.customer);setProfileMessage('Your delivery address has been saved to your buyer account.');}catch(e:any){setProfileMessage(e.message||'Address could not be saved.')}finally{setProfileSaving(false)}}
   function renderAddressEditor(){return <section className="customer-flow customer-address-editor"><FlowHeading title="Edit delivery address" onBack={()=>onNavigate('address-book')} backLabel="Address book"/><form className="customer-panel customer-account-detail" onSubmit={saveAddress}><p className="customer-preview-note">This address is saved to your buyer account and can be used as your default for future orders in this shop.</p><label className="customer-form-label">Default delivery address<textarea rows={5} required maxLength={300} value={profileAddress} onChange={e=>setProfileAddress(e.target.value)} placeholder="County, sub-county, estate, street, building or house number"/></label>{profileMessage&&<p role="status" className="customer-preview-note">{profileMessage}</p>}<div className="customer-flow-actions"><button type="button" className="customer-secondary-button" onClick={()=>onNavigate('address-book')}>Cancel</button><button className="customer-primary-button" type="submit" disabled={profileSaving}>{profileSaving?'Saving…':'Save address'}</button></div></form></section>}
   function renderAccount() {
-    const savedCount = serverWishlistLoaded ? serverWishlist.length : wishlistIds.length;
-    const activeOrders = orders.filter(order => !['delivered','cancelled','returned','refunded'].includes(String(order.deliveryStatus||order.orderStatus||'').toLowerCase())).length;
-    const recentOrders = orders.slice(0,3);
-    const featuredProduct = products.find(product => product.stockQuantity !== 0);
     return (
-      <section className="customer-flow customer-account-page buyer-account-home-v3">
-        <header className="buyer-account-welcome-v3">
-          <div className="buyer-account-avatar-v3"><UserRound size={25}/></div>
-          <div className="buyer-account-welcome-copy-v3"><span>YOUR SHOP ACCOUNT</span><h1>{customerName.trim() ? `Welcome back, ${customerName.trim()}!` : 'Welcome back!'}</h1><p>Here's what's happening with your account.</p></div>
-          <div className="buyer-account-shop-chip"><strong>{shopName}</strong><small>Official shop</small></div>
-        </header>
-        <div className="buyer-account-stats-v3">
-          <button type="button" onClick={()=>onNavigate('orders')}><span><Package size={18}/></span><strong>{orders.length}</strong><small>Total orders</small></button>
-          <button type="button" onClick={()=>onNavigate('orders/ongoing')}><span><Activity size={18}/></span><strong>{activeOrders}</strong><small>In progress</small></button>
-          <button type="button" onClick={()=>onNavigate('inbox')}><span><MessageCircle size={18}/></span><strong>{chatThreads.length}</strong><small>Messages</small></button>
-          <button type="button" onClick={()=>onNavigate('wishlist')}><span><Heart size={18}/></span><strong>{savedCount}</strong><small>Saved items</small></button>
-        </div>
-        <div className="buyer-account-overview-panels">
-          <section className="buyer-account-recent-orders">
-            <div className="buyer-account-overview-heading"><div><h2>Recent Orders</h2><p>Your latest purchases and delivery updates</p></div><button type="button" onClick={()=>onNavigate('orders')}>View all <ArrowRight size={15}/></button></div>
-            {recentOrders.length?recentOrders.map(order=><article className="buyer-account-recent-order" key={order.orderNumber}>
-              <div className="buyer-account-recent-thumb">{order.lines[0]?.product?<ProductThumb product={order.lines[0].product}/>:<Package size={22}/>}</div>
-              <div className="buyer-account-recent-copy"><strong>{order.lines[0]?.product?.name||order.orderNumber}</strong><small>#{order.orderNumber} · {new Date(order.createdAt).toLocaleDateString('en-KE')}</small></div>
-              <span className={'buyer-account-recent-status '+(String(order.deliveryStatus||'').toLowerCase()==='delivered'?'is-delivered':'')}>{String(order.deliveryStatus||order.orderStatus||'Processing').replaceAll('_',' ')}</span>
-              <strong className="buyer-account-recent-total">{formatKes(order.total)}</strong>
-              <button type="button" aria-label={'View order '+order.orderNumber} onClick={()=>openOrder(order,'order-detail')}><ChevronRight size={17}/></button>
-            </article>):<div className="buyer-account-no-orders"><Package size={25}/><strong>No orders yet</strong><span>Your purchases will appear here.</span><button type="button" onClick={()=>onNavigate('store')}>Start shopping</button></div>}
-          </section>
-          <aside className="buyer-account-promo">
-            <div><span>SHOP SMART</span><h2>Save more on your next find</h2><p>Explore more products from {shopName}.</p><button type="button" onClick={()=>onNavigate('store')}>Shop now <ArrowRight size={15}/></button></div>
-            {featuredProduct&&<div className="buyer-account-promo-product"><ProductThumb product={featuredProduct}/><span><strong>{featuredProduct.name}</strong><b>{formatKes(featuredProduct.price)}</b></span></div>}
-          </aside>
+      <section className="customer-flow customer-account-page">
+        <div className="customer-account-welcome"><span><UserRound size={27} /></span><div><small>MY ACCOUNT</small><h1>{customerName.trim() ? `Welcome back, ${customerName.trim()}` : 'Welcome back'}</h1><p>Manage your orders, saved items and account settings.</p><small>{initialCustomerPhone}{initialCustomerEmail?' · '+initialCustomerEmail:''}</small></div><button type="button" className="customer-secondary-button" onClick={onSignOut}>Sign out</button></div>
+        <button type="button" className="buyer-account-orders-shortcut" onClick={()=>onNavigate('orders')}><span className="buyer-account-orders-icon"><Package size={20}/></span><span><strong>My Orders</strong><small>View purchases, payment and delivery updates</small></span><b>{orders.length}</b><ChevronRight size={18}/></button>
+        <div className="customer-account-groups">
+          {accountGroups.map((group) => <section className="customer-panel" key={group.title}>
+            <h2 className="customer-account-group-title">{group.title}</h2>
+            {group.links.map((link) => <button type="button" className="customer-account-link" key={link.view} onClick={() => onNavigate(link.view)}><link.icon size={18} /><span>{link.label}</span><ChevronRight size={16} /></button>)}
+          </section>)}
         </div>
       </section>
     );
