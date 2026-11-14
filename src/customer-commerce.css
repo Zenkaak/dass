@@ -7188,3 +7188,62 @@
  .store-page.is-account-route .buyer-account-workspace .customer-account-link{min-height:54px;padding:8px 13px;font-size:12px}
  .store-page.is-account-route .buyer-account-workspace .customer-account-link>svg:first-child{flex-basis:32px;width:32px;height:32px;padding:7px}
 }
+
+
+
+/* Buyer dashboard shell — restores the missing navigation and header styling */
+.store-page.is-account-route{min-height:100vh;background:#f4f7fb;color:#1b293b}
+.buyer-dashboard-header{position:sticky;top:0;z-index:70;width:100%;min-height:64px;padding:9px clamp(12px,2.4vw,28px);display:flex;align-items:center;gap:12px;background:#fff;border-bottom:1px solid #e6ebf1;box-shadow:0 2px 10px rgba(20,32,51,.045)}
+.buyer-dashboard-header button{font:inherit;cursor:pointer}
+.buyer-dashboard-menu,.buyer-dashboard-brand,.buyer-dashboard-header-actions>button{height:42px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #e4e9ef;border-radius:10px;background:#fff;color:#29384d}
+.buyer-dashboard-menu{width:42px;flex:0 0 42px}
+.buyer-dashboard-brand{padding:0 13px;gap:8px;white-space:nowrap}
+.buyer-dashboard-brand strong{font-size:16px;font-weight:850;letter-spacing:-.035em;color:#172337}
+.buyer-dashboard-brand-mark{width:27px;height:27px;display:grid;place-items:center;border-radius:8px;background:#fff3cf;color:#946500}
+.buyer-dashboard-search{height:42px;min-width:100px;max-width:620px;flex:1;display:flex;align-items:center;gap:9px;padding:0 11px;border:1px solid #e0e6ed;border-radius:10px;background:#f8fafc;color:#8793a4}
+.buyer-dashboard-search input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:#26364b;font:inherit;font-size:14px}
+.buyer-dashboard-search>button{width:30px;height:30px;display:grid;place-items:center;border:0;border-radius:7px;background:#fff;color:#64748b}
+.buyer-dashboard-header-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+.buyer-dashboard-header-actions>button{position:relative;width:42px;flex:0 0 42px}
+.buyer-dashboard-header-actions>button i{position:absolute;top:7px;right:8px;width:8px;height:8px;border:2px solid #fff;border-radius:50%;background:#e05252}
+.buyer-dashboard-header-actions>button b{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 4px;display:grid;place-items:center;border-radius:99px;background:#e9a400;color:#fff;font-size:10px}
+.buyer-dashboard-header-actions .buyer-dashboard-avatar{border:0;border-radius:50%;background:#fff1c8;color:#8b6200;font-weight:800}
+.buyer-dashboard-sidebar{position:fixed;z-index:60;top:64px;bottom:0;left:0;width:250px;padding:17px 12px 20px;display:flex;flex-direction:column;gap:5px;overflow-y:auto;border-right:1px solid #e6ebf1;background:#fff;box-shadow:4px 0 18px rgba(20,32,51,.035);transition:width .2s,transform .2s}
+.buyer-dashboard-sidebar.is-collapsed{width:68px;padding-left:10px;padding-right:10px}
+.buyer-dashboard-nav-item{width:100%;min-height:43px;padding:0 12px;display:flex;align-items:center;gap:12px;border:0;border-radius:9px;background:transparent;color:#536176;text-align:left;font:600 13px 'DM Sans',sans-serif;cursor:pointer}
+.buyer-dashboard-nav-item svg{width:19px;flex:0 0 19px;color:#78869a}
+.buyer-dashboard-nav-item:hover,.buyer-dashboard-nav-item.active{background:#fff5dc;color:#865b00}
+.buyer-dashboard-nav-item.active{font-weight:800}
+.buyer-dashboard-nav-item.active svg{color:#a87500}
+.buyer-dashboard-sidebar.is-collapsed .buyer-dashboard-nav-item{justify-content:center;padding:0}
+.buyer-dashboard-sidebar.is-collapsed .buyer-dashboard-nav-item span,.buyer-dashboard-sidebar.is-collapsed .buyer-dashboard-nav-divider,.buyer-dashboard-sidebar.is-collapsed .buyer-dashboard-sidebar-help,.buyer-dashboard-sidebar.is-collapsed .buyer-dashboard-logout span{display:none}
+.buyer-dashboard-nav-divider{padding:16px 12px 7px;color:#96a0af;font-size:10px;font-weight:850;letter-spacing:.12em}
+.buyer-dashboard-sidebar-help{margin-top:auto;padding:14px 12px;display:flex;flex-direction:column;gap:7px;border:1px solid #edf0f4;border-radius:11px;background:#f8fafc;color:#6b7789;font-size:11px;line-height:1.45}
+.buyer-dashboard-sidebar-help strong{color:#27364a;font-size:13px}
+.buyer-dashboard-sidebar-help button{align-self:flex-start;padding:7px 11px;border:0;border-radius:7px;background:#172337;color:#fff;font-size:11px;font-weight:750}
+.buyer-dashboard-logout{min-height:42px;padding:0 12px;display:flex;align-items:center;gap:11px;border:0;border-radius:9px;background:#fff;color:#8b4c4c;font-size:13px;font-weight:700;cursor:pointer}
+.buyer-dashboard-logout:hover{background:#fff1f1}
+.store-page.is-account-route .customer-flow{width:min(100% - 36px,1080px);margin:26px auto 60px}
+.store-page.is-account-route .buyer-my-orders-v2,.store-page.is-account-route .buyer-order-v2{max-width:100%}
+.store-page.is-account-route .buyer-account-routebar{display:none}
+@media(min-width:761px){
+ .store-page.is-account-route:not(.is-sidebar-collapsed) .customer-flow{margin-left:calc(250px + max(18px,(100vw - 250px - 1080px)/2));width:min(calc(100% - 286px),1080px)}
+ .store-page.is-account-route.is-sidebar-collapsed .customer-flow{margin-left:calc(68px + max(18px,(100vw - 68px - 1080px)/2));width:min(calc(100% - 104px),1080px)}
+}
+@media(max-width:760px){
+ .buyer-dashboard-header{min-height:56px;padding:7px 9px;gap:7px}
+ .buyer-dashboard-menu,.buyer-dashboard-header-actions>button{width:37px;height:38px;flex-basis:37px}
+ .buyer-dashboard-brand{height:38px;padding:0 8px;gap:6px}
+ .buyer-dashboard-brand strong{font-size:13px}
+ .buyer-dashboard-brand-mark{width:23px;height:23px}
+ .buyer-dashboard-search{height:38px;padding:0 8px;gap:5px}
+ .buyer-dashboard-search input{font-size:12px}
+ .buyer-dashboard-search>button{display:none}
+ .buyer-dashboard-header-actions{gap:5px}
+ .buyer-dashboard-sidebar{top:56px;width:min(82vw,290px);transform:translateX(0);box-shadow:8px 0 28px rgba(20,32,51,.16)}
+ .buyer-dashboard-sidebar.is-collapsed{width:min(82vw,290px);transform:translateX(-110%);padding:17px 12px 20px}
+ .buyer-dashboard-sidebar.is-collapsed .buyer-dashboard-nav-item{justify-content:flex-start;padding:0 12px}
+ .buyer-dashboard-sidebar.is-collapsed .buyer-dashboard-nav-item span,.buyer-dashboard-sidebar.is-collapsed .buyer-dashboard-nav-divider,.buyer-dashboard-sidebar.is-collapsed .buyer-dashboard-sidebar-help,.buyer-dashboard-sidebar.is-collapsed .buyer-dashboard-logout span{display:initial}
+ .buyer-dashboard-sidebar.is-collapsed .buyer-dashboard-sidebar-help{display:flex}
+ .store-page.is-account-route .customer-flow{width:calc(100% - 24px);margin:17px auto 38px}
+}
