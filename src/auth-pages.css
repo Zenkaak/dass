@@ -876,3 +876,21 @@
   caret-color:#ffffff!important;
   transition:background-color 99999s ease-out 0s;
 }
+
+
+/* Seller auth Continue button: compact vertical height to match the reduced width. */
+.dm-auth-exact-actions .dm-auth-exact-submit{
+  height:42px!important;
+  min-height:42px!important;
+  max-height:42px!important;
+  padding-top:0!important;
+  padding-bottom:0!important;
+  line-height:1!important;
+  font-size:13px!important;
+  border-radius:12px!important;
+}
+.dm-auth-exact-actions .dm-auth-exact-secondary{
+  height:42px!important;
+  min-height:42px!important;
+  max-height:42px!important;
+}
