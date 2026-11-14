@@ -125,23 +125,20 @@ const paymentLabels: Record<PaymentMethod, string> = {
 
 const accountGroups = [
   { title: 'SHOPPING', links: [
-    { label: 'Inbox & messages', icon: MessageCircle, view: 'inbox' },
-    { label: 'Saved items', icon: Heart, view: 'wishlist' },
-    { label: 'Followed shops', icon: Store, view: 'followed-shops' },
-    { label: 'Shop vouchers', icon: TicketPercent, view: 'vouchers' },
-    { label: 'Product reviews', icon: Star, view: 'reviews' },
+    { label: 'Inbox & messages', icon: MessageCircle, view: 'inbox', description: 'Conversations you or the seller have started' },
+    { label: 'Saved items', icon: Heart, view: 'wishlist', description: 'Products you want to come back to' },
+    { label: 'Shop vouchers', icon: TicketPercent, view: 'vouchers', description: 'Discounts published by this shop' },
+    { label: 'Product reviews', icon: Star, view: 'reviews', description: 'Review products you have purchased' },
   ]},
-  { title: 'MY ACCOUNT', links: [
-    { label: 'Personal details', icon: UserRound, view: 'profile' },
-    { label: 'Delivery addresses', icon: MapPin, view: 'address-book' },
-    { label: 'Notifications', icon: Bell, view: 'notifications' },
-    { label: 'Notification settings', icon: Settings, view: 'notification-settings' },
-    { label: 'Account & security', icon: ShieldCheck, view: 'account-management' },
-    { label: 'Shop updates & offers', icon: Mail, view: 'newsletter' },
+  { title: 'ACCOUNT', links: [
+    { label: 'Personal details', icon: UserRound, view: 'profile', description: 'Your name, email and phone details' },
+    { label: 'Delivery addresses', icon: MapPin, view: 'address-book', description: 'Manage your saved delivery destination' },
+    { label: 'Notifications', icon: Bell, view: 'notifications', description: 'Payment, order and delivery updates' },
+    { label: 'Security & sign-in', icon: ShieldCheck, view: 'account-management', description: 'Change your account password' },
   ]},
   { title: 'HELP & SUPPORT', links: [
-    { label: 'Reports & Complaints', icon: Flag, view: 'my-reports' },
-    { label: 'Contact this shop', icon: Phone, view: 'assistant' },
+    { label: 'Reports & complaints', icon: Flag, view: 'my-reports', description: 'Raise and follow up a shop or order issue' },
+    { label: 'Contact this shop', icon: Phone, view: 'assistant', description: 'Contact the seller using published details' },
   ]},
 ];
 
@@ -997,14 +994,26 @@ export function StorefrontFlow({
   async function saveAddress(e:any){e.preventDefault();if(profileSaving)return;setProfileSaving(true);setProfileMessage('');try{const r=await fetch('/api/buyer-auth?action=update-profile&slug='+encodeURIComponent(slug),{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug,name:profileName,email:profileEmail,alternativePhone:profilePhoneAlt,address:profileAddress})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Address could not be saved.');onProfileUpdated?.(d.customer);setProfileMessage('Your delivery address has been saved to your buyer account.');}catch(e:any){setProfileMessage(e.message||'Address could not be saved.')}finally{setProfileSaving(false)}}
   function renderAddressEditor(){return <section className="customer-flow customer-address-editor"><FlowHeading title="Edit delivery address" onBack={()=>onNavigate('address-book')} backLabel="Address book"/><form className="customer-panel customer-account-detail" onSubmit={saveAddress}><p className="customer-preview-note">This address is saved to your buyer account and can be used as your default for future orders in this shop.</p><label className="customer-form-label">Default delivery address<textarea rows={5} required maxLength={300} value={profileAddress} onChange={e=>setProfileAddress(e.target.value)} placeholder="County, sub-county, estate, street, building or house number"/></label>{profileMessage&&<p role="status" className="customer-preview-note">{profileMessage}</p>}<div className="customer-flow-actions"><button type="button" className="customer-secondary-button" onClick={()=>onNavigate('address-book')}>Cancel</button><button className="customer-primary-button" type="submit" disabled={profileSaving}>{profileSaving?'Saving…':'Save address'}</button></div></form></section>}
   function renderAccount() {
+    const savedCount = serverWishlistLoaded ? serverWishlist.length : wishlistIds.length;
+    const activeOrders = orders.filter(order => !['delivered','cancelled','returned','refunded'].includes(String(order.deliveryStatus||order.orderStatus||'').toLowerCase())).length;
     return (
-      <section className="customer-flow customer-account-page">
-        <div className="customer-account-welcome"><span><UserRound size={27} /></span><div><small>MY ACCOUNT</small><h1>{customerName.trim() ? `Welcome back, ${customerName.trim()}` : 'Welcome back'}</h1><p>Manage your orders, saved items and account settings.</p><small>{initialCustomerPhone}{initialCustomerEmail?' · '+initialCustomerEmail:''}</small></div><button type="button" className="customer-secondary-button" onClick={onSignOut}>Sign out</button></div>
-        <button type="button" className="buyer-account-orders-shortcut" onClick={()=>onNavigate('orders')}><span className="buyer-account-orders-icon"><Package size={20}/></span><span><strong>My Orders</strong><small>View purchases, payment and delivery updates</small></span><b>{orders.length}</b><ChevronRight size={18}/></button>
-        <div className="customer-account-groups">
-          {accountGroups.map((group) => <section className="customer-panel" key={group.title}>
+      <section className="customer-flow customer-account-page buyer-account-home-v3">
+        <header className="buyer-account-welcome-v3">
+          <div className="buyer-account-avatar-v3"><UserRound size={25}/></div>
+          <div className="buyer-account-welcome-copy-v3"><span>YOUR SHOP ACCOUNT</span><h1>{customerName.trim() ? `Hello, ${customerName.trim()}` : 'Welcome back'}</h1><p>Everything you need for your purchases at {shopName}.</p><small>{initialCustomerPhone}{initialCustomerEmail?' · '+initialCustomerEmail:''}</small></div>
+          <button type="button" className="buyer-account-signout-v3" onClick={onSignOut}>Sign out</button>
+        </header>
+        <div className="buyer-account-stats-v3">
+          <button type="button" onClick={()=>onNavigate('orders')}><span><Package size={18}/></span><strong>{orders.length}</strong><small>Total orders</small></button>
+          <button type="button" onClick={()=>onNavigate('orders/ongoing')}><span><Activity size={18}/></span><strong>{activeOrders}</strong><small>In progress</small></button>
+          <button type="button" onClick={()=>onNavigate('inbox')}><span><MessageCircle size={18}/></span><strong>{chatThreads.length}</strong><small>Conversations</small></button>
+          <button type="button" onClick={()=>onNavigate('wishlist')}><span><Heart size={18}/></span><strong>{savedCount}</strong><small>Saved items</small></button>
+        </div>
+        <button type="button" className="buyer-account-orders-shortcut buyer-account-orders-shortcut-v3" onClick={()=>onNavigate('orders')}><span className="buyer-account-orders-icon"><Package size={20}/></span><span><strong>My orders</strong><small>Track purchases, delivery and payment status</small></span><b>{orders.length}</b><ChevronRight size={18}/></button>
+        <div className="customer-account-groups buyer-account-groups-v3">
+          {accountGroups.map((group) => <section className="customer-panel buyer-account-group-v3" key={group.title}>
             <h2 className="customer-account-group-title">{group.title}</h2>
-            {group.links.map((link) => <button type="button" className="customer-account-link" key={link.view} onClick={() => onNavigate(link.view)}><link.icon size={18} /><span>{link.label}</span><ChevronRight size={16} /></button>)}
+            {group.links.map((link) => <button type="button" className="customer-account-link" key={link.view} onClick={() => onNavigate(link.view)}><span className="buyer-account-link-icon-v3"><link.icon size={18}/></span><span className="buyer-account-link-copy-v3"><strong>{link.label}</strong><small>{link.description}</small></span><ChevronRight size={16}/></button>)}
           </section>)}
         </div>
       </section>
