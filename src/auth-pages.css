@@ -1304,3 +1304,57 @@
     padding-bottom: 76px!important;
   }
 }
+
+
+/* Desktop proportional typography and spacing: scale the content with the larger auth panels. */
+@media (min-width: 900px) {
+  .dm-auth-exact .dm-auth-exact-brand b,
+  .buyer-auth-exact .buyer-auth-exact-brand b { font-size: 17px!important; }
+  .dm-auth-exact .dm-auth-exact-brand small,
+  .buyer-auth-exact .buyer-auth-exact-brand small { font-size: 10px!important; }
+  .dm-auth-exact .dm-auth-exact-heading h1,
+  .buyer-auth-exact .buyer-auth-exact-heading h1 { font-size: clamp(38px, 3.4vw, 46px)!important; line-height: 1.18!important; }
+  .dm-auth-exact .dm-auth-exact-heading p,
+  .buyer-auth-exact .buyer-auth-exact-heading p { font-size: 16px!important; line-height: 1.7!important; margin-top: 14px!important; }
+  .dm-auth-exact .dm-auth-exact-steps,
+  .buyer-auth-exact .buyer-auth-exact-steps { gap: 16px!important; }
+  .dm-auth-exact .dm-auth-exact-steps>div,
+  .buyer-auth-exact .buyer-auth-exact-steps>div { gap: 13px!important; font-size: 15px!important; line-height: 1.45!important; }
+  .dm-auth-exact .dm-auth-exact-steps>div i,
+  .buyer-auth-exact .buyer-auth-exact-steps>div i { width: 48px!important; height: 48px!important; flex-basis: 48px!important; font-size: 15px!important; }
+  .dm-auth-exact .dm-auth-exact-form,
+  .buyer-auth-exact .buyer-auth-exact-form { gap: 28px!important; }
+  .dm-auth-exact .dm-auth-exact-form>label,
+  .dm-auth-exact .dm-auth-exact-card label,
+  .buyer-auth-exact .buyer-auth-exact-form>label { gap: 11px!important; font-size: 16px!important; line-height: 1.45!important; }
+  .dm-auth-exact .dm-auth-exact-form input,
+  .dm-auth-exact .dm-auth-exact-card input,
+  .buyer-auth-exact .buyer-auth-exact-form input { height: 78px!important; min-height: 78px!important; padding: 0 30px!important; border-radius: 20px!important; font-size: 18px!important; }
+  .dm-auth-exact .dm-auth-exact-hint,
+  .buyer-auth-exact .buyer-auth-exact-hint { font-size: 13px!important; line-height: 1.65!important; }
+  .dm-auth-exact .dm-auth-exact-link,
+  .buyer-auth-exact .buyer-auth-exact-link { font-size: 15px!important; }
+  .dm-auth-exact .dm-auth-exact-submit,
+  .dm-auth-exact .dm-auth-exact-secondary,
+  .buyer-auth-exact .buyer-auth-submit { min-height: 78px!important; font-size: 18px!important; border-radius: 18px!important; }
+  .dm-auth-exact .dm-auth-exact-switch,
+  .buyer-auth-exact .buyer-auth-exact-switch { margin-top: 32px!important; font-size: 15px!important; line-height: 1.6!important; }
+  .dm-auth-exact .dm-auth-exact-footer { margin-top: 38px!important; padding-top: 20px!important; font-size: 12px!important; }
+}
+@media (min-width: 1200px) {
+  .dm-auth-exact .dm-auth-exact-heading h1,
+  .buyer-auth-exact .buyer-auth-exact-heading h1 { font-size: 50px!important; }
+  .dm-auth-exact .dm-auth-exact-heading p,
+  .buyer-auth-exact .buyer-auth-exact-heading p { font-size: 17px!important; }
+  .dm-auth-exact .dm-auth-exact-form,
+  .buyer-auth-exact .buyer-auth-exact-form { gap: 32px!important; }
+  .dm-auth-exact .dm-auth-exact-form>label,
+  .dm-auth-exact .dm-auth-exact-card label,
+  .buyer-auth-exact .buyer-auth-exact-form>label { font-size: 17px!important; }
+  .dm-auth-exact .dm-auth-exact-form input,
+  .dm-auth-exact .dm-auth-exact-card input,
+  .buyer-auth-exact .buyer-auth-exact-form input { height: 84px!important; min-height: 84px!important; font-size: 19px!important; }
+  .dm-auth-exact .dm-auth-exact-submit,
+  .dm-auth-exact .dm-auth-exact-secondary,
+  .buyer-auth-exact .buyer-auth-submit { min-height: 84px!important; font-size: 19px!important; }
+}
