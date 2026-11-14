@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { unzipSync } from 'fflate';
-import { Activity, CreditCard, Check, ArrowRight, ArrowUpRight, Bell, Heart, Star, ChevronRight, CircleAlert, Download, HelpCircle, LayoutDashboard, LogOut, Menu, X, MessageCircle, Package, Plus, RefreshCw, Search, Send, Settings, Globe, ShieldCheck, ShoppingBag, ShoppingCart, UserRound, Store, Wallet, WalletCards, Home, FileText, TicketPercent } from 'lucide-react';
+import { Activity, CreditCard, Check, MapPin, Flag, ArrowRight, ArrowUpRight, Bell, Heart, Star, ChevronRight, CircleAlert, Download, HelpCircle, LayoutDashboard, LogOut, Menu, X, MessageCircle, Package, Plus, RefreshCw, Search, Send, Settings, Globe, ShieldCheck, ShoppingBag, ShoppingCart, UserRound, Store, Wallet, WalletCards, Home, FileText, TicketPercent } from 'lucide-react';
 import { storefrontCategories } from './storefrontCatalog';
 import { marketplaceFaqs } from './marketplaceFaqs';
 import './customer-commerce.css';
@@ -213,10 +213,10 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
     </div>
   </header>}
   {buyerPage!=='buyer-login'&&buyerPage!=='buyer-signup'&&buyerPage!=='my-reports'&&(mobileSidebarOpen||desktopSidebarOpen)&&<button type="button" className="market-sidebar-scrim market-global-drawer-scrim" aria-label="Close navigation menu" onClick={()=>{setMobileSidebarOpen(false);setDesktopSidebarOpen(false)}}/>}
-  {buyerPage!=='buyer-login'&&buyerPage!=='buyer-signup'&&buyerPage!=='my-reports'&&{isBuyerAccountRoute?<aside className={"buyer-dashboard-sidebar"+(desktopSidebarOpen?"":" is-collapsed")} aria-label="Buyer account navigation">
+  {buyerPage!=='buyer-login'&&buyerPage!=='buyer-signup'&&buyerPage!=='my-reports'&&(isBuyerAccountRoute?<aside className={"buyer-dashboard-sidebar"+(desktopSidebarOpen?"":" is-collapsed")} aria-label="Buyer account navigation">
     <button type="button" className={"buyer-dashboard-nav-item"+(buyerPage==='account'?' active':'')} onClick={()=>navigateBuyerPage('account')}><Home size={18}/> <span>Overview</span></button>
     <button type="button" className={"buyer-dashboard-nav-item"+(buyerPage==='orders'||buyerPage.startsWith('orders/')||buyerPage==='order-detail'||buyerPage==='order-tracking'?' active':'')} onClick={()=>navigateBuyerPage('orders')}><ShoppingBag size={18}/> <span>My Orders</span></button>
-    <button type="button" className={"buyer-dashboard-nav-item"+(buyerPage==='inbox'?' active':'')} onClick={()=>navigateBuyerPage('inbox')}><MessageCircle size={18}/> <span>Messages</span>{chatUnreadCount>0&&<i>{chatUnreadCount}</i>}</button>
+    <button type="button" className={"buyer-dashboard-nav-item"+(buyerPage==='inbox'?' active':'')} onClick={()=>navigateBuyerPage('inbox')}><MessageCircle size={18}/> <span>Messages</span></button>
     <button type="button" className={"buyer-dashboard-nav-item"+(buyerPage==='wishlist'?' active':'')} onClick={()=>navigateBuyerPage('wishlist')}><Heart size={18}/> <span>Saved Items</span></button>
     <button type="button" className={"buyer-dashboard-nav-item"+((buyerPage==='my-reports'||buyerPage.startsWith('my-reports/'))?' active':'')} onClick={()=>navigateBuyerPage('my-reports')}><Flag size={18}/> <span>My Reports</span></button>
     <div className="buyer-dashboard-nav-divider">ACCOUNT</div>
@@ -249,7 +249,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
       {expandedCategory===category.name&&<div className="market-sidebar-subcategories">{category.subcategories.map(child=><button type="button" key={child} className={filter===child?'active':''} onClick={()=>{selectStoreCategory(child);setMobileSidebarOpen(false);setDesktopSidebarOpen(false)}}>{child}</button>)}</div>}
     </div>)}
     {buyerCustomer&&<div className="market-sidebar-account-footer"><button type="button" className="market-sidebar-logout" onClick={()=>{fetch('/api/buyer-auth?action=logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug}),credentials:'same-origin'}).finally(()=>{setBuyerCustomer(null);setCart({});navigateBuyerPage('store')})}}><LogOut size={17}/><span>Log out</span></button></div>}
-  </aside>}}
+  </aside>)}
   {!isBuyerAccountRoute&&buyerPage!=='store'&&buyerPage!=='buyer-login'&&buyerPage!=='buyer-signup'&&<nav className="buyer-account-routebar buyer-global-routebar" aria-label="Store navigation"><button type="button" className="buyer-account-home-link" onClick={()=>navigateBuyerPage('store')}><Home size={17}/><span>Shop home</span></button><span className="buyer-account-route-divider">/</span><button type="button" className="buyer-account-overview-link" onClick={()=>navigateBuyerPage(buyerCustomer?'account':'buyer-login')}><UserRound size={16}/><span>My account</span></button></nav>}
   {buyerPage==='store'?<>
     <main className="ds-store">
