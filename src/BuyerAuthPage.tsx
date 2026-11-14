@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 type Mode='login'|'signup'|'reset';
 
-export function BuyerAuthPage({slug,shopName,initial='login',onBack,onAuthenticated}:{slug:string;shopName:string;initial?:Mode;onBack:()=>void;onAuthenticated:(user:any)=>void}) {
+export function BuyerAuthPage({slug,shopName,initial='login',onBack,onAuthenticated,onPolicyNavigate}:{slug:string;shopName:string;initial?:Mode;onBack:()=>void;onAuthenticated:(user:any)=>void;onPolicyNavigate:(page:string)=>void}) {
  const [mode,setMode]=useState<Mode>(initial),[step,setStep]=useState(1),[name,setName]=useState(''),[email,setEmail]=useState(''),[phone,setPhone]=useState(''),[password,setPassword]=useState(''),[confirmPassword,setConfirmPassword]=useState(''),[code,setCode]=useState(''),[sent,setSent]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
  async function call(action:string,payload:any={}){const r=await fetch('/api/buyer-auth?action='+action,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({slug,...payload})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Request failed');return d}
  async function sendCode(resend=false){setBusy(true);setError('');setNotice('');try{const d=await call(mode==='reset'?'send-reset-code':'send-code',{phone});setSent(true);setNotice(d.message||(resend?'A new SMS code has been sent.':'Check your phone for the SMS code.'));return true}catch(e:any){setError(e.message||'Could not send SMS code.');return false}finally{setBusy(false)}}
@@ -40,7 +40,7 @@ export function BuyerAuthPage({slug,shopName,initial='login',onBack,onAuthentica
      <div className="buyer-auth-actions buyer-auth-exact-actions">{mode==='signup'&&step>1&&<button className="buyer-auth-exact-secondary" type="button" onClick={()=>setStep(s=>Math.max(1,s-1))}>Back</button>}<button className="buyer-auth-submit" disabled={busy}>{busy?'Please wait…':mode==='signup'?(step<3?'Continue':step===3?'Continue':'Create account'):mode==='login'?'Sign In':sent?'Update password':'Continue'}{!busy&&<ArrowRight size={17}/>}</button></div>
     </form>
     <div className="buyer-auth-exact-switch">{mode==='login'?<>Don't have an account? <button type="button" onClick={()=>changeMode('signup')}>Sign up</button></>:<button type="button" onClick={()=>changeMode('login')}>Already have an account? <b>Sign in</b></button>}</div>
-    {mode==='signup'&&<p className="buyer-auth-exact-terms">By proceeding, you agree to this shop's <a href="/terms">Terms &amp; Conditions</a> and <a href="/privacy">Privacy Policy</a>.</p>}
+    {mode==='signup'&&<p className="buyer-auth-exact-terms">By proceeding, you agree to this shop's <a href="/shop-terms" onClick={e=>{e.preventDefault();onPolicyNavigate('shop-terms')}}>Terms &amp; Conditions</a> and <a href="/shop-privacy" onClick={e=>{e.preventDefault();onPolicyNavigate('shop-privacy')}}>Privacy Policy</a>.</p>}
     <footer className="buyer-auth-exact-footer"><button type="button" onClick={onBack}><ArrowLeft size={15}/> Back to shop</button><span>Secure buyer access · {shopName}</span></footer>
    </div>
   </section>
