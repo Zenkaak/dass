@@ -769,3 +769,42 @@
   .dm-auth-exact-steps{margin-bottom:10px!important}
   .dm-auth-exact-footer{margin-top:9px!important}
 }
+
+
+/* Keep seller authentication as a centered dialog, never a full-width flex item. */
+.dm-auth-exact{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:100%!important;
+  min-height:100svh!important;
+  padding:18px 14px!important;
+  box-sizing:border-box!important;
+}
+.dm-auth-exact > .dm-auth-exact-panel{
+  display:block!important;
+  position:relative!important;
+  flex:0 1 auto!important;
+  align-self:center!important;
+  width: min(420px, calc(100vw - 28px))!important;
+  min-width:0!important;
+  max-width:420px!important;
+  min-height:0!important;
+  height:auto!important;
+  margin:0 auto!important;
+  border-radius:18px!important;
+}
+.dm-auth-exact > .dm-auth-exact-panel > .dm-auth-exact-inner{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  box-sizing:border-box!important;
+}
+@media(max-width:480px){
+  .dm-auth-exact{padding:14px 12px!important}
+  .dm-auth-exact > .dm-auth-exact-panel{
+    width: min(420px, calc(100vw - 24px))!important;
+  }
+}
