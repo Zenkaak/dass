@@ -1072,16 +1072,7 @@ export default async function handler(req:any,res:any){
    return send(res,200,{ok:true,defaultPayoutMethod:method,accountType:type});
   }
   if(['email-credentials','email-test'].includes(action)){
-   await sql`CREATE TABLE IF NOT EXISTS public.tenant_email_configs (
-    tenant_id uuid PRIMARY KEY REFERENCES public.tenants(id) ON DELETE CASCADE,
-    encrypted_config jsonb NOT NULL,
-    from_email text NOT NULL,
-    reply_to_email text NOT NULL,
-    notification_email text,
-    enabled boolean NOT NULL DEFAULT true,
-    updated_at timestamptz NOT NULL DEFAULT now()
-   )`;
-   await sql`ALTER TABLE public.tenant_email_configs ADD COLUMN IF NOT EXISTS notification_email text`;
+   // Provisioned by db/migrations/0029_tenant_resend_email.sql and 0031_tenant_email_notification_recipient.sql.
    if(req.method==='GET'&&action==='email-credentials'){
     const rows=await sql`SELECT ec.from_email,ec.reply_to_email,ec.notification_email,ec.enabled,ec.updated_at,u.email AS owner_email FROM public.tenant_email_configs ec LEFT JOIN public.users u ON u.id=${me.user_id} WHERE ec.tenant_id=${me.tenant_id} LIMIT 1`;
     const row=rows[0];
