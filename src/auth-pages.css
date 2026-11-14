@@ -1017,3 +1017,149 @@
   .buyer-auth-exact-header { margin-bottom: 14px!important; }
   .buyer-auth-exact-footer { margin-top: 12px!important; }
 }
+
+
+/* Desktop and laptop auth layout correction — override the compact mobile dialog sizing. */
+@media (min-width: 900px) {
+  .dm-auth-exact {
+    width: 100%!important;
+    min-height: 100vh!important;
+    min-height: 100svh!important;
+    box-sizing: border-box!important;
+    display: flex!important;
+    align-items: center!important;
+    justify-content: center!important;
+    padding: 36px 28px!important;
+    overflow-x: hidden!important;
+    overflow-y: auto!important;
+  }
+  .dm-auth-exact > .dm-auth-exact-panel {
+    flex: 0 1 auto!important;
+    width: min(600px, calc(100vw - 56px))!important;
+    max-width: 600px!important;
+    min-width: 0!important;
+    min-height: 0!important;
+    height: auto!important;
+    margin: auto!important;
+    border-radius: 22px!important;
+  }
+  .dm-auth-exact > .dm-auth-exact-panel > .dm-auth-exact-inner {
+    width: 100%!important;
+    max-width: none!important;
+    min-width: 0!important;
+    padding: 38px 54px 34px!important;
+    box-sizing: border-box!important;
+  }
+  .dm-auth-exact .dm-auth-exact-heading h1 {
+    font-size: clamp(30px, 2.6vw, 36px)!important;
+  }
+  .dm-auth-exact .dm-auth-exact-form,
+  .dm-auth-exact .dm-auth-exact-card {
+    width: 100%!important;
+    min-width: 0!important;
+  }
+  .dm-auth-exact .dm-auth-exact-form input,
+  .dm-auth-exact .dm-auth-exact-card input {
+    width: 100%!important;
+    box-sizing: border-box!important;
+  }
+
+  .buyer-auth-page.buyer-auth-exact {
+    display: flex!important;
+    flex-direction: column!important;
+    align-items: center!important;
+    justify-content: center!important;
+    min-height: 100vh!important;
+    min-height: 100svh!important;
+    padding: 36px 28px!important;
+    box-sizing: border-box!important;
+    overflow-x: hidden!important;
+    overflow-y: auto!important;
+  }
+  .buyer-auth-page.buyer-auth-exact > .buyer-auth-exact-panel {
+    flex: 0 1 auto!important;
+    width: min(780px, calc(100vw - 56px))!important;
+    max-width: 780px!important;
+    min-width: 0!important;
+    min-height: 0!important;
+    height: auto!important;
+    margin: auto!important;
+    border-radius: 26px!important;
+    box-sizing: border-box!important;
+  }
+  .buyer-auth-page.buyer-auth-exact .buyer-auth-exact-inner {
+    width: 100%!important;
+    max-width: 700px!important;
+    min-width: 0!important;
+    margin: 0 auto!important;
+    padding: 42px 64px 38px!important;
+    box-sizing: border-box!important;
+  }
+  .buyer-auth-page.buyer-auth-exact .buyer-auth-exact-form {
+    width: 100%!important;
+    min-width: 0!important;
+  }
+  .buyer-auth-page.buyer-auth-exact .buyer-auth-exact-form > label,
+  .buyer-auth-page.buyer-auth-exact .buyer-auth-exact-form input {
+    width: 100%!important;
+    min-width: 0!important;
+    box-sizing: border-box!important;
+  }
+  .buyer-auth-page.buyer-auth-exact .buyer-auth-exact-heading h1 {
+    font-size: clamp(34px, 3vw, 42px)!important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .dm-auth-exact > .dm-auth-exact-panel {
+    width: min(660px, calc(100vw - 80px))!important;
+    max-width: 660px!important;
+  }
+  .dm-auth-exact > .dm-auth-exact-panel > .dm-auth-exact-inner {
+    padding: 42px 64px 38px!important;
+  }
+  .buyer-auth-page.buyer-auth-exact > .buyer-auth-exact-panel {
+    width: min(860px, calc(100vw - 96px))!important;
+    max-width: 860px!important;
+  }
+  .buyer-auth-page.buyer-auth-exact .buyer-auth-exact-inner {
+    max-width: 740px!important;
+    padding: 48px 72px 42px!important;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 899px) {
+  .dm-auth-exact {
+    align-items: center!important;
+    justify-content: center!important;
+    min-height: 100vh!important;
+    min-height: 100svh!important;
+    padding: 28px 22px!important;
+    overflow-y: auto!important;
+  }
+  .dm-auth-exact > .dm-auth-exact-panel {
+    width: min(520px, calc(100vw - 44px))!important;
+    max-width: 520px!important;
+    min-height: 0!important;
+    height: auto!important;
+  }
+  .dm-auth-exact > .dm-auth-exact-panel > .dm-auth-exact-inner {
+    padding: 30px 38px 28px!important;
+  }
+  .buyer-auth-page.buyer-auth-exact {
+    align-items: center!important;
+    justify-content: center!important;
+    padding: 28px 22px!important;
+    overflow-y: auto!important;
+  }
+  .buyer-auth-page.buyer-auth-exact > .buyer-auth-exact-panel {
+    width: min(660px, calc(100vw - 44px))!important;
+    max-width: 660px!important;
+    min-height: 0!important;
+    height: auto!important;
+  }
+  .buyer-auth-page.buyer-auth-exact .buyer-auth-exact-inner {
+    max-width: 600px!important;
+    padding: 34px 44px 30px!important;
+  }
+}
