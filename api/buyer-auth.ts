@@ -108,16 +108,20 @@ export default async function handler(req:any,res:any){
    await recordSignals(sql,rows[0].id,phone,email,requestIp(req));cookie(res,token,604800);try{const welcome=brandedEmail(tenant.name,'Welcome to '+tenant.name,'Hi '+name+', your buyer account is ready. You can now place orders, track deliveries and receive updates from the shop.');await sendTenantTransactionalEmail(sql,tenantId,{to:email,subject:'Welcome to '+tenant.name,...welcome,idempotencyKey:'buyer-welcome-'+rows[0].id});}catch(emailError:any){console.error('Buyer welcome email could not be sent',String(emailError?.message||emailError).slice(0,200));}return send(res,201,{ok:true,customer:customer(rows[0])});
   }
   if(req.method==='POST'&&action==='login'){
-   const phone=phoneOf(body.phone),password=String(body.password||'');if(!phone||!password)return send(res,400,{error:'Enter your mobile number and password.'});if(await restricted(sql,'buyer',phone,'',requestIp(req)))return send(res,403,{error:'This buyer identity is restricted. Contact DASNET support.'});
-   const blocked=await sql`SELECT id FROM public.store_customers WHERE tenant_id=${tenantId} AND phone=${phone} AND is_banned=true LIMIT 1`;if(blocked.length)return send(res,403,{error:'Buyer access to this shop has been restricted. Contact the shop or DASNET support.'});
-   const users=await sql`SELECT id,display_name,password_hash,password_salt,phone_verified_at FROM public.users WHERE phone=${phone} LIMIT 1`,user=users[0];
-   if(!user||!user.password_hash||!user.password_salt||!equal(passwordHash(password,user.password_salt),user.password_hash))return send(res,401,{error:'Invalid phone number or password.'});
+   const identifier=String(body.phone||'').trim(),isEmail=identifier.includes('@'),email=isEmail?identifier.toLowerCase():'',phone=isEmail?'':phoneOf(identifier),password=String(body.password||'');
+   if((!phone&&!email)||!password)return send(res,400,{error:'Enter your phone number or email address and password.'});
+   const users=isEmail
+    ?await sql`SELECT u.id,u.display_name,u.password_hash,u.password_salt,u.phone_verified_at,u.phone FROM public.users u JOIN public.store_customers c ON c.user_id=u.id AND c.tenant_id=${tenantId} WHERE lower(c.email)=${email} OR lower(u.email)=${email} LIMIT 1`
+    :await sql`SELECT id,display_name,password_hash,password_salt,phone_verified_at,phone FROM public.users WHERE phone=${phone} LIMIT 1`;
+   const user=users[0];if(!user||!user.password_hash||!user.password_salt||!equal(passwordHash(password,user.password_salt),user.password_hash))return send(res,401,{error:'Invalid phone/email or password.'});
+   const loginPhone=String(user.phone||phone);if(await restricted(sql,'buyer',loginPhone,email,requestIp(req)))return send(res,403,{error:'This buyer identity is restricted. Contact DASNET support.'});
+   const blocked=await sql`SELECT id FROM public.store_customers WHERE tenant_id=${tenantId} AND phone=${loginPhone} AND is_banned=true LIMIT 1`;if(blocked.length)return send(res,403,{error:'Buyer access to this shop has been restricted. Contact the shop or DASNET support.'});
    if(!user.phone_verified_at)return send(res,403,{error:'Verify your phone before signing in.'});
    const token=crypto.randomBytes(32).toString('base64url');
    const rows=await sql`
     WITH profile AS (
      INSERT INTO public.store_customers(tenant_id,user_id,full_name,email,phone,alternative_phone,address,password_hash,password_salt,phone_verified_at)
-     VALUES(${tenantId},${user.id},${user.display_name},NULL,${phone},NULL,NULL,NULL,NULL,now())
+     VALUES(${tenantId},${user.id},${user.display_name},NULL,${loginPhone},NULL,NULL,NULL,NULL,now())
      ON CONFLICT(tenant_id,phone) DO UPDATE SET user_id=COALESCE(store_customers.user_id,EXCLUDED.user_id),updated_at=now()
      WHERE store_customers.user_id IS NULL OR store_customers.user_id=EXCLUDED.user_id
      RETURNING id,full_name,email,phone,alternative_phone,address,user_id
