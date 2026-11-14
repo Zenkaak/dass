@@ -708,3 +708,64 @@
  .dm-auth-exact-steps{margin-bottom:15px!important}
  .dm-auth-exact-footer{margin-top:13px!important}
 }
+
+
+/* Seller auth: reduce the overall footprint to a compact buyer-style dialog. */
+.dm-auth-exact{
+  padding:12px!important;
+}
+.dm-auth-exact-panel{
+  width:min(100%,420px)!important;
+  max-width:420px!important;
+  border-radius:18px!important;
+}
+.dm-auth-exact-inner{
+  padding:18px 22px 16px!important;
+}
+.dm-auth-exact-header{
+  min-height:34px!important;
+  margin-bottom:16px!important;
+}
+.dm-auth-exact-logo{
+  width:36px!important;height:36px!important;flex-basis:36px!important;font-size:23px!important;
+}
+.dm-auth-exact-brand b{font-size:12px!important}
+.dm-auth-exact-brand small{font-size:7px!important}
+.dm-auth-exact-heading{margin:0 0 13px!important}
+.dm-auth-exact-heading h1{font-size:24px!important;line-height:1.15!important}
+.dm-auth-exact-heading p{margin-top:5px!important;font-size:11px!important}
+.dm-auth-exact-steps{gap:6px!important;margin:0 0 15px!important}
+.dm-auth-exact-steps>div{gap:5px!important;font-size:10px!important}
+.dm-auth-exact-steps>div i{width:27px!important;height:27px!important;flex:0 0 27px!important;font-size:10px!important}
+.dm-auth-exact-form{gap:11px!important}
+.dm-auth-exact-form>label,.dm-auth-exact-card label{gap:5px!important;font-size:11px!important}
+.dm-auth-exact-form input,.dm-auth-exact-card input{
+  height:43px!important;min-height:43px!important;padding:0 12px!important;border-radius:10px!important;font-size:13px!important;
+}
+.dm-auth-exact-domain input{height:42px!important;min-height:42px!important}
+.dm-auth-exact-domain span{font-size:10px!important;padding-right:9px!important}
+.dm-auth-exact-hint{font-size:9px!important}
+.dm-auth-exact-actions{gap:7px!important;margin-top:1px!important}
+.dm-auth-exact-submit{min-height:44px!important;font-size:12px!important;border-radius:11px!important}
+.dm-auth-exact-secondary{min-height:42px!important;font-size:11px!important}
+.dm-auth-exact-switch{margin:12px 0 0!important;font-size:11px!important}
+.dm-auth-exact-footer{margin-top:14px!important;padding-top:9px!important;font-size:8px!important}
+.dm-auth-exact-forgot{margin-top:10px!important}
+.dm-auth-exact-card .dm-email-verification-prompt{gap:9px!important}
+.dm-auth-exact-card .dm-email-verification-prompt h2{font-size:17px!important}
+.dm-auth-exact-card .dm-email-verification-prompt p{font-size:11px!important}
+@media(max-width:600px){
+  .dm-auth-exact{padding:10px!important}
+  .dm-auth-exact-inner{padding:17px 16px 14px!important}
+  .dm-auth-exact-header{margin-bottom:14px!important}
+  .dm-auth-exact-heading h1{font-size:23px!important}
+  .dm-auth-exact-steps{margin-bottom:13px!important}
+  .dm-auth-exact-footer{margin-top:12px!important}
+}
+@media(max-height:650px){
+  .dm-auth-exact-inner{padding-top:12px!important;padding-bottom:11px!important}
+  .dm-auth-exact-header{margin-bottom:10px!important}
+  .dm-auth-exact-heading{margin-bottom:9px!important}
+  .dm-auth-exact-steps{margin-bottom:10px!important}
+  .dm-auth-exact-footer{margin-top:9px!important}
+}
