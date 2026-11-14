@@ -909,3 +909,111 @@
   text-decoration:underline!important;
   text-underline-offset:2px;
 }
+
+
+/* Desktop and laptop refinements for both authentication flows. */
+@media (min-width: 900px) {
+  .dm-auth-exact {
+    min-height: 100svh!important;
+    padding: 36px 28px!important;
+  }
+  .dm-auth-exact-panel {
+    width: min(100%, 620px)!important;
+    max-width: 620px!important;
+    border-radius: 24px!important;
+  }
+  .dm-auth-exact-inner {
+    max-width: 620px!important;
+    padding: 34px 54px 30px!important;
+  }
+  .dm-auth-exact-header { margin-bottom: 26px!important; }
+  .dm-auth-exact-heading h1 { font-size: 32px!important; }
+  .dm-auth-exact-form { gap: 16px!important; }
+  .dm-auth-exact-form input,.dm-auth-exact-card input {
+    height: 50px!important;
+    min-height: 50px!important;
+    border-radius: 12px!important;
+  }
+  .dm-auth-exact-actions { justify-content: center!important; }
+  .dm-auth-exact-actions .dm-auth-exact-submit {
+    width: auto!important;
+    min-width: 164px!important;
+    max-width: 210px!important;
+    height: 36px!important;
+    min-height: 36px!important;
+    max-height: 36px!important;
+    padding: 0 22px!important;
+    border-radius: 9px!important;
+    font-size: 12px!important;
+    line-height: 1!important;
+  }
+  .dm-auth-exact-actions .dm-auth-exact-secondary {
+    min-width: 88px!important;
+    height: 36px!important;
+    min-height: 36px!important;
+    max-height: 36px!important;
+  }
+
+  .buyer-auth-page.buyer-auth-exact {
+    min-height: 100svh!important;
+    padding: 36px 28px!important;
+  }
+  .buyer-auth-exact .buyer-auth-exact-panel {
+    width: min(100%, 760px)!important;
+    max-width: 760px!important;
+    border-radius: 26px!important;
+  }
+  .buyer-auth-exact .buyer-auth-exact-inner {
+    max-width: 680px!important;
+    padding: 38px 58px 34px!important;
+  }
+  .buyer-auth-exact-header { margin-bottom: 30px!important; }
+  .buyer-auth-exact-heading h1 { font-size: 34px!important; }
+  .buyer-auth-exact-form { gap: 18px!important; }
+  .buyer-auth-exact-form input {
+    height: 56px!important;
+    min-height: 56px!important;
+    border-radius: 14px!important;
+  }
+  .buyer-auth-exact-actions .buyer-auth-submit {
+    min-height: 52px!important;
+    border-radius: 12px!important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .dm-auth-exact-panel { width: min(100%, 660px)!important; max-width: 660px!important; }
+  .dm-auth-exact-inner { max-width: 660px!important; padding: 38px 62px 34px!important; }
+  .buyer-auth-exact .buyer-auth-exact-panel { width: min(100%, 800px)!important; max-width: 800px!important; }
+  .buyer-auth-exact .buyer-auth-exact-inner { max-width: 700px!important; padding: 42px 64px 38px!important; }
+}
+
+@media (max-width: 899px) {
+  .dm-auth-exact-actions .dm-auth-exact-submit {
+    height: 38px!important;
+    min-height: 38px!important;
+    max-height: 38px!important;
+    padding-top: 0!important;
+    padding-bottom: 0!important;
+    font-size: 12px!important;
+    line-height: 1!important;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 899px) {
+  .dm-auth-exact-panel { width: min(100%, 520px)!important; }
+  .dm-auth-exact-inner { padding: 26px 34px 24px!important; }
+  .buyer-auth-exact .buyer-auth-exact-panel { width: min(100%, 620px)!important; }
+  .buyer-auth-exact .buyer-auth-exact-inner { padding: 30px 38px 28px!important; }
+}
+
+@media (max-height: 760px) and (min-width: 601px) {
+  .dm-auth-exact { padding-top: 14px!important; padding-bottom: 14px!important; }
+  .dm-auth-exact-inner { padding-top: 18px!important; padding-bottom: 16px!important; }
+  .dm-auth-exact-header { margin-bottom: 14px!important; }
+  .dm-auth-exact-footer { margin-top: 12px!important; }
+  .buyer-auth-page.buyer-auth-exact { padding-top: 14px!important; padding-bottom: 14px!important; }
+  .buyer-auth-exact .buyer-auth-exact-inner { padding-top: 18px!important; padding-bottom: 16px!important; }
+  .buyer-auth-exact-header { margin-bottom: 14px!important; }
+  .buyer-auth-exact-footer { margin-top: 12px!important; }
+}
