@@ -321,3 +321,52 @@
  .dm-auth-v3.is-login .dm-auth-v3-header{margin-bottom:18px!important}
  .dm-auth-v3.is-login .dm-auth-v3-card{backdrop-filter:blur(10px)!important}
 }
+
+
+/* Seller signup — screenshot-led layout, with the existing four secure actions grouped into three visual stages */
+.dm-auth-page.dm-auth-v3:not(.is-login){justify-content:flex-start!important;padding:clamp(20px,4vh,42px) 18px 28px!important;background:radial-gradient(ellipse at 50% 0%,rgba(15,137,208,.12),transparent 38%),linear-gradient(145deg,#0d1832 0%,#101c38 100%)!important}
+.dm-auth-v3:not(.is-login):before,.dm-auth-v3:not(.is-login):after{border-color:rgba(94,133,190,.09)!important}
+.dm-auth-v3:not(.is-login) .dm-auth-v3-header{width:min(100%,560px)!important;min-height:48px!important;margin:0 auto clamp(22px,4vh,38px)!important}
+.dm-auth-v3:not(.is-login) .dm-home-mark{width:44px!important;height:44px!important;flex:0 0 44px!important;border-radius:13px!important;background:linear-gradient(145deg,#13b6f4,#0874c9)!important;color:#071b36!important;box-shadow:0 7px 20px rgba(0,139,220,.22)!important}
+.dm-auth-v3:not(.is-login) .dm-home-brand b{color:#f4f7fc!important;letter-spacing:.12em!important}
+.dm-auth-v3:not(.is-login) .dm-home-brand small{color:#8192b0!important}
+.dm-auth-v3:not(.is-login) .dm-auth-v3-wrap{width:min(100%,560px)!important}
+.dm-auth-v3:not(.is-login) .dm-auth-v3-heading{text-align:left!important;margin:0 0 20px!important}
+.dm-auth-v3:not(.is-login) .dm-auth-v3-heading h1{color:#f4f6fc!important;font-size:clamp(30px,5vw,38px)!important;font-weight:680!important;letter-spacing:-.045em!important;line-height:1.12!important}
+.dm-auth-v3:not(.is-login) .dm-auth-v3-heading p{margin-top:9px!important;color:#91a1bd!important;font-size:13px!important}
+.dm-auth-v3:not(.is-login) .dm-auth-v3-card{padding:clamp(22px,4vw,32px)!important;border:1px solid rgba(105,132,177,.2)!important;border-radius:22px!important;background:linear-gradient(145deg,rgba(27,38,67,.98),rgba(22,33,59,.98))!important;box-shadow:0 24px 70px rgba(0,0,0,.28)!important;backdrop-filter:none!important}
+.dm-auth-v3:not(.is-login) .dm-auth-v3-progress{margin:0 0 24px!important;padding:0 0 18px!important;border-color:rgba(141,159,191,.17)!important}
+.dm-auth-v3:not(.is-login) .dm-auth-stepper>div{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:9px!important;margin-bottom:12px!important}
+.dm-auth-v3:not(.is-login) .dm-auth-stepper i{height:5px!important;border-radius:20px!important;background:rgba(138,157,190,.2)!important}
+.dm-auth-v3:not(.is-login) .dm-auth-stepper i.active{background:linear-gradient(90deg,#13b6f4,#0874c9)!important}
+.dm-auth-v3:not(.is-login) .dm-auth-stepper small{color:#a8b6cd!important;font-size:10px!important;letter-spacing:.1em!important}
+.dm-auth-v3:not(.is-login) .dm-auth-stepper small span{color:#8192b0!important;font-size:11px!important;letter-spacing:0!important}
+.dm-auth-v3:not(.is-login) .dm-auth-form{gap:17px!important}
+.dm-auth-v3:not(.is-login) .dm-auth-form label{gap:8px!important;color:#aab8cf!important;font-size:12px!important}
+.dm-auth-v3:not(.is-login) .dm-auth-form input{min-height:58px!important;padding:13px 18px!important;border:1px solid rgba(142,160,194,.2)!important;border-radius:15px!important;background:rgba(255,255,255,.055)!important;color:#f4f7fc!important;font-size:14px!important}
+.dm-auth-v3:not(.is-login) .dm-auth-form input::placeholder{color:rgba(151,170,204,.48)!important}
+.dm-auth-v3:not(.is-login) .dm-auth-form input:focus{border-color:#168fd4!important;background:rgba(255,255,255,.075)!important;box-shadow:0 0 0 3px rgba(0,139,220,.13)!important}
+.dm-auth-v3:not(.is-login) .dm-auth-domain-input{border-color:rgba(142,160,194,.2)!important;border-radius:15px!important;background:rgba(255,255,255,.055)!important}
+.dm-auth-v3:not(.is-login) .dm-auth-domain-input input{min-height:56px!important}
+.dm-auth-v3:not(.is-login) .dm-auth-domain-input span{color:#9aabc5!important}
+.dm-auth-v3:not(.is-login) .dm-auth-hint{color:#8496b5!important;font-size:10px!important}
+.dm-auth-v3:not(.is-login) .dm-auth-submit{min-height:58px!important;border-radius:32px!important;background:linear-gradient(100deg,#0876c2,#078bd5)!important;font-size:14px!important;box-shadow:0 9px 24px rgba(0,128,211,.2)!important}
+.dm-auth-v3:not(.is-login) .auth-back-step{min-height:54px!important;border-color:rgba(142,160,194,.2)!important;border-radius:30px!important;background:rgba(255,255,255,.04)!important;color:#c4d0e4!important}
+.dm-auth-v3:not(.is-login) .dm-auth-v3-mode-switch{margin-top:20px!important;color:#9aabc5!important}
+.dm-auth-v3:not(.is-login) .dm-auth-v3-mode-switch button,.dm-auth-v3:not(.is-login) .auth-resend,.dm-auth-v3:not(.is-login) .dm-auth-forgot,.dm-auth-v3:not(.is-login) .auth-text-button{color:#45a9f2!important}
+.dm-auth-v3:not(.is-login) .dm-auth-v3-footer{width:min(100%,560px)!important;margin:20px auto 0!important;color:#7185a7!important}
+.dm-auth-v3:not(.is-login) .dm-auth-v3-footer a{color:#9aabc5!important}
+@media(max-width:600px){
+ .dm-auth-page.dm-auth-v3:not(.is-login){padding:16px 14px 22px!important}
+ .dm-auth-v3:not(.is-login) .dm-auth-v3-header{margin-bottom:22px!important}
+ .dm-auth-v3:not(.is-login) .dm-auth-v3-heading{margin-bottom:17px!important}
+ .dm-auth-v3:not(.is-login) .dm-auth-v3-heading h1{font-size:29px!important}
+ .dm-auth-v3:not(.is-login) .dm-auth-v3-card{padding:21px 17px!important;border-radius:18px!important}
+ .dm-auth-v3:not(.is-login) .dm-auth-form{gap:14px!important}
+ .dm-auth-v3:not(.is-login) .dm-auth-form input{min-height:54px!important}
+ .dm-auth-v3:not(.is-login) .dm-auth-v3-footer{margin-top:17px!important}
+}
+@media(max-width:360px){
+ .dm-auth-v3:not(.is-login) .dm-auth-v3-card{padding:18px 14px!important}
+ .dm-auth-v3:not(.is-login) .dm-auth-stepper small span{font-size:10px!important}
+}
