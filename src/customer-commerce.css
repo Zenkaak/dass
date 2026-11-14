@@ -7345,3 +7345,165 @@
  .buyer-account-promo h2{font-size:19px}
  .buyer-account-promo-product{max-width:260px}
 }
+
+
+/* Buyer subpages — final page-level visual system */
+.store-page.is-account-route .buyer-account-workspace .customer-flow{color:#17243a}
+.store-page.is-account-route .buyer-account-workspace .customer-flow>header:first-child,
+.store-page.is-account-route .buyer-account-workspace .customer-flow>.customer-flow-heading{margin-bottom:16px}
+.store-page.is-account-route .buyer-account-workspace .customer-flow h1,
+.store-page.is-account-route .buyer-account-workspace .customer-flow h2,
+.store-page.is-account-route .buyer-account-workspace .customer-flow h3{color:#17243a}
+.store-page.is-account-route .buyer-account-workspace .customer-panel,
+.store-page.is-account-route .buyer-account-workspace .buyer-order-panel,
+.store-page.is-account-route .buyer-account-workspace .buyer-my-order-card,
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-list{border:1px solid #e4eaf1;border-radius:15px;background:#fff;box-shadow:0 5px 18px rgba(17,32,53,.035)}
+.store-page.is-account-route .buyer-account-workspace .customer-primary-button{min-height:40px;padding:0 16px;border:0;border-radius:9px;background:#ffc400;color:#17243a;font-size:11px;font-weight:900;box-shadow:0 3px 8px rgba(255,196,0,.16)}
+.store-page.is-account-route .buyer-account-workspace .customer-secondary-button{min-height:39px;padding:0 14px;border:1px solid #dfe6ee;border-radius:9px;background:#fff;color:#273950;font-size:11px;font-weight:800}
+.store-page.is-account-route .buyer-account-workspace .customer-form-label{color:#33465e;font-size:11px;font-weight:800}
+.store-page.is-account-route .buyer-account-workspace .customer-form-label input,
+.store-page.is-account-route .buyer-account-workspace .customer-form-label textarea,
+.store-page.is-account-route .buyer-account-workspace .customer-form-label select{min-height:43px;border:1px solid #dfe6ee;border-radius:9px;background:#fbfcfe;color:#1d2e45;font-size:12px}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-orders-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:4px 0 16px;padding:19px 21px;border:1px solid #e4eaf1;border-radius:15px;background:linear-gradient(115deg,#fff 0%,#f8faff 100%)}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-orders-heading h2{margin:5px 0;color:#17243a;font-size:23px;font-weight:950;letter-spacing:-.035em}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-orders-heading p{margin:0;color:#7c8a9b;font-size:11px}
+.store-page.is-account-route .buyer-account-workspace .buyer-orders-total{padding:8px 12px;border-radius:99px;background:#fff4c6;color:#5b4800;font-size:10px;font-weight:900}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-orders-tabs{display:flex;gap:8px;margin:0 0 15px;padding:5px;border:1px solid #e4eaf1;border-radius:12px;background:#fff}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-orders-tabs button{min-height:40px;display:flex;align-items:center;justify-content:center;gap:8px;flex:1;border:0;border-radius:8px;background:transparent;color:#66758a;font-size:11px;font-weight:850}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-orders-tabs button.is-active{background:#17243a;color:#fff}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-orders-tabs button b{min-width:19px;height:19px;display:grid;place-items:center;border-radius:99px;background:rgba(255,255,255,.16);font-size:9px}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-order-card{margin-bottom:12px;padding:17px}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-order-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid #edf0f4}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-order-top>div{display:grid;gap:4px}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-order-top small,.store-page.is-account-route .buyer-account-workspace .buyer-my-order-bottom small{color:#91a0b0;font-size:8px;font-weight:900;letter-spacing:.12em}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-order-top strong{color:#17243a;font-size:12px}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-order-top>div>span{color:#8390a0;font-size:9px}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-order-status{padding:6px 10px;border-radius:99px;font-size:9px;font-weight:900}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-order-status.is-success{background:#e4f8ec;color:#167b42}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-order-status.is-pending{background:#fff4c6;color:#745800}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-order-status.is-danger{background:#fee8e8;color:#b42318}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-order-items{display:grid;gap:9px;padding:12px 0}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-order-item{display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:10px}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-order-item>img,.store-page.is-account-route .buyer-account-workspace .buyer-my-order-item .customer-product-thumb{width:46px;height:46px;object-fit:contain;border-radius:9px;background:#f4f6f9}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-order-item>div{display:grid;gap:4px}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-order-item strong{color:#283a50;font-size:11px}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-order-item span{color:#8996a5;font-size:9px}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-order-item>b{color:#17243a;font-size:10px}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-order-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:12px;border-top:1px solid #edf0f4}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-order-bottom>div:first-child{display:grid;gap:4px}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-order-bottom>div:first-child strong{color:#17243a;font-size:16px;font-weight:950}
+.store-page.is-account-route .buyer-account-workspace .buyer-my-order-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-overview{padding:20px;border:1px solid #e4eaf1;border-radius:16px;background:linear-gradient(120deg,#fff,#f5f8fd);box-shadow:0 5px 18px rgba(17,32,53,.035)}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-overview-main h2{margin:5px 0;color:#17243a;font-size:22px;font-weight:950}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-total strong{color:#17243a;font-size:24px;font-weight:950}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-status-row{display:flex;gap:8px;flex-wrap:wrap;margin:13px 0}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-status-row>span{padding:7px 10px;border-radius:99px;background:#eef2f7;color:#53657a;font-size:9px;font-weight:850}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-status-row>span.is-success{background:#e2f7e9;color:#167b42}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-progress{display:flex;justify-content:space-between;gap:5px;margin-top:20px}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-progress-step{position:relative;display:grid;justify-items:center;gap:7px;flex:1;text-align:center}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-progress-step:before{content:"";position:absolute;z-index:0;top:15px;left:50%;width:100%;height:2px;background:#e3e8ef}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-progress-step:last-child:before{display:none}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-progress-step>span{z-index:1;width:31px;height:31px;display:grid;place-items:center;border:2px solid #dce3ec;border-radius:50%;background:#fff;color:#8794a5;font-size:10px;font-weight:900}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-progress-step.is-done>span{border-color:#ffc400;background:#ffc400;color:#17243a}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-progress-step small{max-width:95px;color:#758397;font-size:9px;line-height:1.3}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-panel{margin-top:13px;padding:17px}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-panel-heading{display:flex;align-items:center;gap:11px;margin-bottom:13px}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-icon{width:39px;height:39px;display:grid;place-items:center;border-radius:11px;background:#fff3c4;color:#17243a}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-panel-heading h3{margin:0;font-size:13px;font-weight:900}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-panel-heading p{margin:4px 0 0;color:#8794a4;font-size:10px}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-product{display:grid;grid-template-columns:55px minmax(0,1fr) auto;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #edf0f4}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-product>.customer-product-thumb{width:54px;height:54px;object-fit:contain;border-radius:10px;background:#f4f6f9}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-product-copy{display:grid;gap:4px}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-product-copy strong{font-size:11px;color:#263950}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-product-copy span,.store-page.is-account-route .buyer-account-workspace .buyer-order-product-copy small{font-size:9px;color:#8794a4}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-detail-row{display:flex;gap:11px;padding:10px 0;border-top:1px solid #edf0f4}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-detail-row>svg{flex:0 0 18px;color:#6c7d91}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-detail-row strong{font-size:10px;color:#263950}
+.store-page.is-account-route .buyer-account-workspace .buyer-order-detail-row p{margin:4px 0 0;color:#78879a;font-size:10px;line-height:1.5}
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-intro{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:18px 20px;border:1px solid #e4eaf1;border-radius:15px;background:#fff}
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-intro h2{margin:5px 0;font-size:21px;font-weight:950}
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-intro p{max-width:580px;margin:0;color:#7e8c9d;font-size:10px;line-height:1.5}
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-count{padding:7px 10px;border-radius:99px;background:#fff4c6;color:#685100;font-size:9px;font-weight:900;white-space:nowrap}
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,.7fr);gap:13px;margin-top:13px}
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-list{padding:15px}
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-list-heading{display:flex;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid #edf0f4;color:#263950;font-size:12px}
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-empty,.store-page.is-account-route .buyer-account-workspace .buyer-inbox-placeholder{min-height:235px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:24px;text-align:center}
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-empty>span,.store-page.is-account-route .buyer-account-workspace .buyer-inbox-placeholder>span{width:52px;height:52px;display:grid;place-items:center;border-radius:16px;background:#fff4c6;color:#17243a}
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-empty strong,.store-page.is-account-route .buyer-account-workspace .buyer-inbox-placeholder h3{margin:0;color:#17243a;font-size:14px;font-weight:900}
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-empty p,.store-page.is-account-route .buyer-account-workspace .buyer-inbox-placeholder p{max-width:330px;margin:0;color:#8290a0;font-size:10px;line-height:1.6}
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-thread{display:flex;gap:11px;padding:13px 0;border-bottom:1px solid #edf0f4}
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-thread-avatar{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border-radius:50%;background:#fff4c6;color:#17243a}
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-thread-content{min-width:0;flex:1}
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-thread-top{display:flex;justify-content:space-between;gap:10px}
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-thread-top strong{font-size:11px}
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-thread-top time,.store-page.is-account-route .buyer-account-workspace .buyer-inbox-thread-order{color:#8491a0;font-size:9px}
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-thread-content p{margin:6px 0;color:#596b80;font-size:10px}
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-thread-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-thread-bottom>span{color:#8b98a7;font-size:9px}
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-thread-bottom button{display:flex;align-items:center;gap:5px;border:0;background:none;color:#1759cf;font-size:10px;font-weight:850}
+.store-page.is-account-route .buyer-account-workspace .customer-account-detail{padding:20px}
+.store-page.is-account-route .buyer-account-workspace .customer-account-detail>h2{margin:0 0 8px;font-size:16px;font-weight:900}
+.store-page.is-account-route .buyer-account-workspace .customer-account-detail>p{color:#78879a;font-size:11px;line-height:1.6}
+.store-page.is-account-route .buyer-account-workspace .customer-account-detail .customer-contact-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.store-page.is-account-route .buyer-account-workspace .customer-recommendation-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.store-page.is-account-route .buyer-account-workspace .customer-recommendation-card{min-width:0;padding:12px;border:1px solid #e4eaf1;border-radius:12px;background:#fff}
+.store-page.is-account-route .buyer-account-workspace .customer-recommendation-card>.customer-product-thumb{width:100%;height:130px;object-fit:contain;border-radius:9px;background:#f5f7fa}
+.store-page.is-account-route .buyer-account-workspace .customer-recommendation-card>strong{display:block;margin:9px 0 5px;color:#263950;font-size:11px}
+.store-page.is-account-route .buyer-account-workspace .customer-recommendation-card>b{color:#17243a;font-size:12px}
+.store-page.is-account-route .buyer-account-workspace .customer-wishlist-actions{display:flex;gap:6px;margin-top:10px}
+.store-page.is-account-route .buyer-account-workspace .customer-wishlist-actions button{flex:1;min-width:0}
+.store-page.is-account-route .buyer-account-workspace .customer-empty-state{min-height:250px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:25px;border:1px dashed #dce4ed;border-radius:14px;background:#fbfcfe;text-align:center}
+.store-page.is-account-route .buyer-account-workspace .customer-empty-state>span{width:54px;height:54px;display:grid;place-items:center;border-radius:17px;background:#fff4c6;color:#17243a}
+.store-page.is-account-route .buyer-account-workspace .customer-empty-state h2{margin:0;color:#17243a;font-size:15px;font-weight:900}
+.store-page.is-account-route .buyer-account-workspace .customer-empty-state p{max-width:360px;margin:0;color:#8390a0;font-size:10px;line-height:1.6}
+.store-page.is-account-route .buyer-account-workspace .buyer-reports-fullscreen{max-width:1050px}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;padding:12px 15px;border:1px solid #e4eaf1;border-radius:12px;background:#fff}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-topbar button{border:0;background:none;color:#263950;font-size:11px;font-weight:850}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-topbar>span{color:#8b98a7;font-size:9px;font-weight:900;letter-spacing:.12em}
+.store-page.is-account-route .buyer-account-workspace .buyer-account-workspace .buyer-support-hero{border-radius:16px;background:#17243a}
+.store-page.is-account-route .buyer-account-workspace .disputes-workspace{color:#17243a}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-hero{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:23px;border:0;border-radius:16px;background:linear-gradient(120deg,#17243a,#263b59);color:#fff}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-hero h2{margin:6px 0;color:#fff;font-size:23px;font-weight:950}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-hero p{max-width:520px;margin:0;color:#cbd5e1;font-size:10px;line-height:1.6}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-eyebrow{color:#ffd43b;font-size:9px;font-weight:950;letter-spacing:.15em}
+.store-page.is-account-route .buyer-account-workspace .buyer-support-new-button{min-height:40px;padding:0 15px;border:0;border-radius:9px;background:#ffc400;color:#17243a;font-size:11px;font-weight:950;white-space:nowrap}
+.store-page.is-account-route .buyer-account-workspace .disputes-report-list,.store-page.is-account-route .buyer-account-workspace .disputes-case-card,.store-page.is-account-route .buyer-account-workspace .disputes-create-card{border:1px solid #e4eaf1;border-radius:14px;background:#fff;box-shadow:0 5px 18px rgba(17,32,53,.035)}
+.store-page.is-account-route .buyer-account-workspace .disputes-create-card{padding:20px}
+.store-page.is-account-route .buyer-account-workspace .disputes-create-card input,.store-page.is-account-route .buyer-account-workspace .disputes-create-card select,.store-page.is-account-route .buyer-account-workspace .disputes-create-card textarea{border:1px solid #dfe6ee;border-radius:9px;background:#fbfcfe}
+.store-page.is-account-route .buyer-account-workspace .disputes-new-report-button{min-height:40px;border:0;border-radius:9px;background:#ffc400;color:#17243a;font-size:11px;font-weight:900}
+@media(max-width:760px){
+ .store-page.is-account-route .buyer-account-workspace .buyer-my-orders-heading{align-items:flex-start;padding:14px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-my-orders-heading h2{font-size:19px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-my-orders-tabs{gap:3px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-my-orders-tabs button{gap:4px;min-height:38px;font-size:9px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-my-order-card{padding:12px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-my-order-top{align-items:flex-start}
+ .store-page.is-account-route .buyer-account-workspace .buyer-my-order-status{font-size:8px;padding:5px 7px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-my-order-bottom{align-items:flex-start;flex-direction:column}
+ .store-page.is-account-route .buyer-account-workspace .buyer-my-order-actions{width:100%;display:grid;grid-template-columns:1fr 1fr}
+ .store-page.is-account-route .buyer-account-workspace .buyer-my-order-actions button{width:100%;padding:0 7px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-order-overview{padding:14px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-order-overview-main h2{font-size:18px;overflow-wrap:anywhere}
+ .store-page.is-account-route .buyer-account-workspace .buyer-order-total strong{font-size:20px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-order-progress{gap:0;margin:16px -5px 0}
+ .store-page.is-account-route .buyer-account-workspace .buyer-order-progress-step>span{width:26px;height:26px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-order-progress-step:before{top:12px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-order-progress-step small{font-size:7px;max-width:60px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-order-panel{padding:13px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-order-product{grid-template-columns:44px minmax(0,1fr) auto;gap:8px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-order-product>.customer-product-thumb{width:42px;height:42px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-inbox-intro{align-items:flex-start;padding:14px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-inbox-intro h2{font-size:18px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-inbox-layout{grid-template-columns:minmax(0,1fr)}
+ .store-page.is-account-route .buyer-account-workspace .buyer-inbox-placeholder{display:none}
+ .store-page.is-account-route .buyer-account-workspace .customer-account-detail{padding:14px}
+ .store-page.is-account-route .buyer-account-workspace .customer-account-detail .customer-contact-fields{grid-template-columns:minmax(0,1fr);gap:11px}
+ .store-page.is-account-route .buyer-account-workspace .customer-recommendation-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .store-page.is-account-route .buyer-account-workspace .customer-recommendation-card{padding:9px}
+ .store-page.is-account-route .buyer-account-workspace .customer-recommendation-card>.customer-product-thumb{height:110px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-support-hero{align-items:flex-start;flex-direction:column;padding:17px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-support-hero h2{font-size:19px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-support-hero-actions{width:100%;display:flex;gap:8px}
+ .store-page.is-account-route .buyer-account-workspace .buyer-support-new-button{flex:1}
+ .store-page.is-account-route .buyer-account-workspace .disputes-create-card{padding:13px}
+}
