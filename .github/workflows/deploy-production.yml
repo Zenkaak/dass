@@ -90,17 +90,46 @@ jobs:
           mkdir -p .vercel
           printf '{"projectId":"prj_vZuYn5UoOgZbJ9NGLvyiTAFHfWPe","orgId":"team_FUjJJLDSAITzmg32U4dQzNwD"}' > .vercel/project.json
 
-      - name: Deploy to Vercel production
+      - name: Deploy to Vercel production and verify every domain alias
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: team_FUjJJLDSAITzmg32U4dQzNwD
           VERCEL_PROJECT_ID: prj_vZuYn5UoOgZbJ9NGLvyiTAFHfWPe
+        shell: bash
         run: |
-          echo "Deploying DASNET production commit: $GITHUB_SHA"
+          set -euo pipefail
+          echo "Deploying DASMARKET production commit: $GITHUB_SHA"
           npx vercel deploy --prod --yes --scope=cheruiyott233-4429s-projects --token="$VERCEL_TOKEN" 2>&1 | tee /tmp/vercel-deploy.log
-          deployment_url=$(grep -Eo 'https://dass-[^[:space:]]+\.vercel\.app' /tmp/vercel-deploy.log | head -n1)
-          if [ -z "$deployment_url" ]; then
-            echo "::error::Could not identify the production deployment URL for domain aliasing."
+
+          # Vercel automatically assigns all project production domains to
+          # each production deployment. Verify the full configured set rather
+          # than manually re-aliasing only the apex domain.
+          deployment_host=$(grep -Eo 'https://[^[:space:]]+\.vercel\.app' /tmp/vercel-deploy.log | head -n1 | sed 's#^https://##' || true)
+          if [ -z "$deployment_host" ]; then
+            echo "::error::Vercel did not return a deployment hostname."
             exit 1
           fi
-          npx vercel alias set "$deployment_url" dasmarket.co.ke --scope=cheruiyott233-4429s-projects --token="$VERCEL_TOKEN"
+
+          deployment_json=$(curl --fail --silent --show-error "https://api.vercel.com/v13/deployments/$deployment_host?teamId=$VERCEL_ORG_ID" -H "Authorization: Bearer $VERCEL_TOKEN")
+          echo "$deployment_json" | jq -e --arg sha "$GITHUB_SHA" '.meta.githubCommitSha == $sha and .readyState == "READY"' >/dev/null
+
+          project_domains=$(curl --fail --silent --show-error "https://api.vercel.com/v9/projects/$VERCEL_PROJECT_ID/domains?teamId=$VERCEL_ORG_ID&limit=100" -H "Authorization: Bearer $VERCEL_TOKEN")
+          attached_domains=$(echo "$project_domains" | jq -r '.domains[].name')
+          deployed_aliases=$(echo "$deployment_json" | jq -r '.alias[]?')
+
+          missing_aliases=""
+          while IFS= read -r domain; do
+            [ -z "$domain" ] && continue
+            if ! grep -Fxq "$domain" <<< "$deployed_aliases"; then
+              missing_aliases+="$domain"$'\n'
+            fi
+          done <<< "$attached_domains"
+
+          if [ -n "$missing_aliases" ]; then
+            echo "::error::Production deployment is missing configured domain aliases:"
+            printf '%s' "$missing_aliases"
+            exit 1
+          fi
+
+          echo "Production deployment is READY and all configured project domains are assigned:"
+          printf '%s\n' "$attached_domains"
