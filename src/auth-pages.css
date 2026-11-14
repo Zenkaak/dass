@@ -1163,3 +1163,40 @@
     padding: 34px 44px 30px!important;
   }
 }
+
+
+/* Final desktop auth dialog sizing: generous laptop/desktop widths. */
+@media (min-width: 900px) {
+  .dm-auth-exact > .dm-auth-exact-panel {
+    width: min(760px, calc(100vw - 64px))!important;
+    max-width: 760px!important;
+  }
+  .dm-auth-exact > .dm-auth-exact-panel > .dm-auth-exact-inner {
+    max-width: none!important;
+    padding: 48px 76px 44px!important;
+  }
+  .buyer-auth-page.buyer-auth-exact > .buyer-auth-exact-panel {
+    width: min(900px, calc(100vw - 64px))!important;
+    max-width: 900px!important;
+  }
+  .buyer-auth-page.buyer-auth-exact .buyer-auth-exact-inner {
+    max-width: none!important;
+    padding: 52px 88px 46px!important;
+  }
+}
+@media (min-width: 1200px) {
+  .dm-auth-exact > .dm-auth-exact-panel {
+    width: min(840px, calc(100vw - 96px))!important;
+    max-width: 840px!important;
+  }
+  .dm-auth-exact > .dm-auth-exact-panel > .dm-auth-exact-inner {
+    padding: 54px 92px 50px!important;
+  }
+  .buyer-auth-page.buyer-auth-exact > .buyer-auth-exact-panel {
+    width: min(1000px, calc(100vw - 120px))!important;
+    max-width: 1000px!important;
+  }
+  .buyer-auth-page.buyer-auth-exact .buyer-auth-exact-inner {
+    padding: 58px 104px 52px!important;
+  }
+}
