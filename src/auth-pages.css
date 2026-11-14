@@ -851,3 +851,28 @@
   padding-left:18px!important;
   padding-right:18px!important;
 }
+
+
+/* Buyer auth: keep entered text clearly visible on the dark form surface. */
+.buyer-auth-page.buyer-auth-exact .buyer-auth-exact-form input,
+.buyer-auth-page.buyer-auth-exact .buyer-auth-exact-form input[type="text"],
+.buyer-auth-page.buyer-auth-exact .buyer-auth-exact-form input[type="email"],
+.buyer-auth-page.buyer-auth-exact .buyer-auth-exact-form input[type="tel"],
+.buyer-auth-page.buyer-auth-exact .buyer-auth-exact-form input[type="password"],
+.buyer-auth-page.buyer-auth-exact .buyer-auth-exact-form input[type="number"]{
+  color:#ffffff!important;
+  -webkit-text-fill-color:#ffffff!important;
+  caret-color:#ffffff!important;
+}
+.buyer-auth-page.buyer-auth-exact .buyer-auth-exact-form input::placeholder{
+  color:rgba(220,230,246,.58)!important;
+  -webkit-text-fill-color:rgba(220,230,246,.58)!important;
+  opacity:1!important;
+}
+.buyer-auth-page.buyer-auth-exact .buyer-auth-exact-form input:-webkit-autofill,
+.buyer-auth-page.buyer-auth-exact .buyer-auth-exact-form input:-webkit-autofill:hover,
+.buyer-auth-page.buyer-auth-exact .buyer-auth-exact-form input:-webkit-autofill:focus{
+  -webkit-text-fill-color:#ffffff!important;
+  caret-color:#ffffff!important;
+  transition:background-color 99999s ease-out 0s;
+}
