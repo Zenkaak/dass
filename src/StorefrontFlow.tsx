@@ -16,14 +16,11 @@ import {
   ShoppingBag,
   UserRound,
   WalletCards,
-  Flag,
   TicketPercent,
   Phone,
   Mail,
   MessageCircle,
   Heart,
-  Star,
-  Bell,
 } from 'lucide-react';
 
 // Buyer account navigation keeps the marketplace account destinations available as real URLs.
