@@ -3,6 +3,7 @@ import { marketplaceFaqs } from './marketplaceFaqs';
 import { DisputesPanel } from './DisputesPanel';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
+  Activity,
   ArrowLeft,
   ArrowRight,
   Check,
@@ -21,10 +22,8 @@ import {
   Mail,
   MessageCircle,
   Heart,
-  Store,
   Star,
   Bell,
-  Settings,
 } from 'lucide-react';
 
 // Buyer account navigation keeps the marketplace account destinations available as real URLs.
