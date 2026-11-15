@@ -7698,3 +7698,31 @@
     margin-top:10px!important;padding-top:9px!important;gap:8px!important;
   }
 }
+
+
+/* Buyer category drawer: keep the backdrop above page content but below the
+   opaque drawer so taps anywhere outside the drawer dismiss it. */
+.store-page.is-account-route .market-global-drawer-scrim,
+.store-page.is-buyer-reports-route .market-global-drawer-scrim{
+  position:fixed!important;
+  inset:56px 0 0!important;
+  z-index:2147483646!important;
+  display:none!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+  cursor:pointer!important;
+  background:rgba(13,27,39,.38)!important;
+}
+.store-page.is-account-route:has(.buyer-shop-drawer.is-mobile-open) .market-global-drawer-scrim,
+.store-page.is-buyer-reports-route:has(.buyer-shop-drawer.is-mobile-open) .market-global-drawer-scrim{
+  display:block!important;
+}
+.store-page.is-account-route .buyer-shop-drawer,
+.store-page.is-buyer-reports-route .buyer-shop-drawer{
+  z-index:2147483647!important;
+  pointer-events:auto!important;
+}
+.store-page.is-account-route .buyer-dashboard-header,
+.store-page.is-buyer-reports-route .buyer-dashboard-header{
+  z-index:2147483645!important;
+}
