@@ -7726,3 +7726,27 @@
 .store-page.is-buyer-reports-route .buyer-dashboard-header{
   z-index:2147483645!important;
 }
+
+
+/* The backdrop must never cover any part of the category drawer. Constrain
+   its hit area to the page area immediately to the right of the drawer. */
+@media(max-width:760px){
+  .store-page.is-account-route .market-global-drawer-scrim,
+  .store-page.is-buyer-reports-route .market-global-drawer-scrim{
+    left:min(86vw,350px)!important;
+    right:0!important;
+    top:56px!important;
+    bottom:0!important;
+    z-index:2147483646!important;
+    pointer-events:auto!important;
+    background:rgba(13,27,39,.38)!important;
+  }
+  .store-page.is-account-route .buyer-shop-drawer,
+  .store-page.is-buyer-reports-route .buyer-shop-drawer{
+    left:0!important;
+    width:min(86vw,350px)!important;
+    z-index:2147483647!important;
+    background:#fff!important;
+    pointer-events:auto!important;
+  }
+}
