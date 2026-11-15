@@ -1,5 +1,5 @@
 import { useCallback,useEffect,useState } from 'react';
-import { AlertTriangle,ArrowLeft,ArrowRight,Bell,Check,FileUp,MessageCircle,Paperclip,RefreshCw,Search,Send,ShieldCheck } from 'lucide-react';
+import { AlertTriangle,ArrowLeft,ArrowRight,Bell,Check,FileUp,MessageCircle,Paperclip,RefreshCw,Send,ShieldCheck } from 'lucide-react';
 
 type Report=any;
 async function api(slug:string,method:'GET'|'POST',payload:any={}){
@@ -11,7 +11,7 @@ async function api(slug:string,method:'GET'|'POST',payload:any={}){
 export function DisputesPanel({slug,viewerRole='seller',initialReportId,embedded=false,compactNotifications=false,onOpenReport,onRouteChange,orders=[]}:{slug:string;viewerRole?:'buyer'|'seller'|'admin';initialReportId?:string;embedded?:boolean;compactNotifications?:boolean;onOpenReport?:(id:string)=>void;onRouteChange?:(route:string)=>void;orders?:Array<{id:string;label:string}>}){
  const [reports,setReports]=useState<Report[]>([]),[active,setActive]=useState<Report|null>(null),[messages,setMessages]=useState<any[]>([]),[attachments,setAttachments]=useState<any[]>([]),[notifications,setNotifications]=useState<any[]>([]);
  const [draft,setDraft]=useState(''),[resolution,setResolution]=useState(''),[buyerPhone,setBuyerPhone]=useState(''),[details,setDetails]=useState(''),[issueType,setIssueType]=useState('other'),[orderId,setOrderId]=useState(''),[newFiles,setNewFiles]=useState<File[]>([]),[showCreate,setShowCreate]=useState(()=>window.location.pathname.endsWith('/new'));
- const [busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[serverNow,setServerNow]=useState(Date.now()),[reportSearch,setReportSearch]=useState(''),[reportFilter,setReportFilter]=useState('all');
+ const [busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[serverNow,setServerNow]=useState(Date.now()),[reportFilter,setReportFilter]=useState('all');
  const load=useCallback(async()=>{if(!slug)return;const d=await api(slug,'GET');setReports(d.reports||[]);setNotifications(d.notifications||[]);setServerNow(Date.now());},[slug]);
  const reportsBase=()=>{const path=window.location.pathname.replace(/\/$/,'');if(viewerRole==='buyer'){const at=path.indexOf('/my-reports');return at>=0?path.slice(0,at)+'/my-reports':'/my-reports';}return viewerRole==='admin'?'/platform-admin/reports':'/dashboard/reports';};
   function openCreateRoute(){setError('');setNotice('');setShowCreate(true);onRouteChange?.('new');const target=reportsBase()+'/new';if(window.location.pathname!==target)window.history.pushState({reportCreate:true},'',target);}
