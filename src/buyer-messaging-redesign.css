@@ -127,3 +127,49 @@
  .buyer-inbox-page .buyer-inbox-conversation .store-chat-compose button{width:100%}
 }
 @media(prefers-reduced-motion:reduce){.buyer-inbox-page *{scroll-behavior:auto!important;transition:none!important}}
+
+
+/* Final buyer inbox layout — the conversation canvas is always present on desktop. */
+.buyer-inbox-page{width:min(1200px,calc(100% - 40px))!important;max-width:1200px!important;margin:24px auto 64px!important;padding:0 0 30px!important}
+.buyer-inbox-page .buyer-inbox-intro{background:linear-gradient(115deg,#fffaf0 0%,#fff 68%,#f8fafc 100%)!important;border:1px solid #e8dfc9!important;box-shadow:0 12px 32px rgba(28,42,59,.055)!important}
+.buyer-inbox-page .buyer-inbox-layout{display:grid!important;grid-template-columns:minmax(280px,.82fr) minmax(0,1.45fr)!important;gap:18px!important;align-items:stretch!important}
+.buyer-inbox-page .buyer-inbox-list{min-width:0!important;padding:0 17px!important;border:1px solid #e5eaf0!important;border-radius:17px!important;background:#fff!important;box-shadow:0 8px 26px rgba(24,37,54,.045)!important}
+.buyer-inbox-page .buyer-inbox-list-heading{min-height:58px;padding:0 2px!important}
+.buyer-inbox-page .buyer-inbox-thread{padding:16px 2px!important}
+.buyer-inbox-page .buyer-inbox-thread-bottom button{min-height:36px;padding:0 10px!important;border:1px solid #eadcb8!important;border-radius:9px!important;background:#fffaf0!important}
+.buyer-inbox-page .buyer-inbox-active-conversation{display:flex!important;min-width:0!important;min-height:390px!important}
+.buyer-inbox-page .buyer-inbox-placeholder{width:100%!important;min-height:390px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:11px!important;padding:30px!important;border:1px solid #e5eaf0!important;border-radius:17px!important;background:linear-gradient(145deg,#fff 0%,#fbfcfd 100%)!important;box-shadow:0 8px 26px rgba(24,37,54,.045)!important;text-align:center!important}
+.buyer-inbox-page .buyer-inbox-placeholder>span{width:58px!important;height:58px!important;display:grid!important;place-items:center!important;border-radius:18px!important;background:#fff5dc!important;color:#9b7627!important}
+.buyer-inbox-page .buyer-inbox-placeholder h3{margin:0!important;color:#233247!important;font-size:17px!important;font-weight:850!important}
+.buyer-inbox-page .buyer-inbox-placeholder p{max-width:340px!important;margin:0!important;color:#7b8796!important;font-size:12px!important;line-height:1.7!important}
+.buyer-inbox-page .buyer-inbox-security{display:inline-flex;align-items:center;gap:7px;margin-top:7px;padding:8px 11px;border:1px solid #e7eee8;border-radius:99px;background:#f7fbf7;color:#4e8060;font-size:10px;font-weight:750}
+.buyer-inbox-page .buyer-inbox-active-conversation>.buyer-inbox-conversation,
+.buyer-inbox-page .buyer-inbox-active-conversation>.customer-panel{width:100%!important;min-width:0!important;max-width:none!important;border:1px solid #e5eaf0!important;border-radius:17px!important;background:#fff!important;box-shadow:0 8px 26px rgba(24,37,54,.045)!important;overflow:hidden!important}
+.buyer-inbox-page .buyer-inbox-active-conversation .store-chat-messages{min-height:260px;max-height:min(56vh,620px);padding:22px!important;background:#f8fafc!important}
+.buyer-inbox-page button{touch-action:manipulation}
+@media(max-width:900px){
+ .buyer-inbox-page{width:calc(100% - 30px)!important;margin:18px auto 48px!important}
+ .buyer-inbox-page .buyer-inbox-layout{grid-template-columns:minmax(0,1fr)!important;gap:13px!important}
+ .buyer-inbox-page .buyer-inbox-active-conversation{order:0;min-height:280px!important}
+ .buyer-inbox-page .buyer-inbox-placeholder{min-height:280px!important}
+ .buyer-inbox-page .buyer-inbox-list{order:1}
+}
+@media(max-width:600px){
+ .buyer-inbox-page{width:calc(100% - 22px)!important;margin:12px auto 34px!important}
+ .buyer-inbox-page .buyer-inbox-intro{padding:18px 16px!important;border-radius:15px!important}
+ .buyer-inbox-page .buyer-inbox-layout{gap:11px!important}
+ .buyer-inbox-page .buyer-inbox-active-conversation{min-height:230px!important}
+ .buyer-inbox-page .buyer-inbox-placeholder{min-height:230px!important;padding:22px 16px!important}
+ .buyer-inbox-page .buyer-inbox-list{padding:0 12px!important}
+ .buyer-inbox-page .buyer-inbox-thread{gap:9px!important;padding:13px 0!important}
+ .buyer-inbox-page .buyer-inbox-thread-bottom{align-items:center!important;flex-direction:row!important}
+ .buyer-inbox-page .buyer-inbox-thread-bottom button{min-height:40px!important}
+ .buyer-inbox-page .buyer-inbox-active-conversation .store-chat-compose{display:flex;gap:8px;padding:10px!important}
+ .buyer-inbox-page .buyer-inbox-active-conversation .store-chat-compose input{min-width:0;flex:1;font-size:16px!important}
+ .buyer-inbox-page .buyer-inbox-active-conversation .store-chat-compose button{min-height:44px}
+}
+@media(max-width:380px){
+ .buyer-inbox-page .buyer-inbox-thread-top{align-items:flex-start!important;flex-direction:column!important;gap:3px!important}
+ .buyer-inbox-page .buyer-inbox-thread-bottom{align-items:flex-start!important;flex-direction:column!important}
+ .buyer-inbox-page .buyer-inbox-thread-bottom button{width:100%;justify-content:center}
+}
