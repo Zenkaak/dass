@@ -271,7 +271,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
       {expandedCategory===category.name&&<div className="market-sidebar-subcategories">{category.subcategories.map(child=><button type="button" key={child} className={filter===child?'active':''} onClick={()=>{selectStoreCategory(child);setMobileSidebarOpen(false);setDesktopSidebarOpen(false)}}>{child}</button>)}</div>}
     </div>)}
     {buyerCustomer&&<div className="market-sidebar-account-footer"><button type="button" className="market-sidebar-logout" onClick={()=>{fetch('/api/buyer-auth?action=logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug}),credentials:'same-origin'}).finally(()=>{setBuyerCustomer(null);setCart({});navigateBuyerPage('store')})}}><LogOut size={17}/><span>Log out</span></button></div>}
-  </aside>))}
+  </aside>)}
 
   {!isBuyerAccountRoute&&buyerPage!=='store'&&buyerPage!=='buyer-login'&&buyerPage!=='buyer-signup'&&<nav className="buyer-account-routebar buyer-global-routebar" aria-label="Store navigation"><button type="button" className="buyer-account-home-link" onClick={()=>navigateBuyerPage('store')}><Home size={17}/><span>Shop home</span></button><span className="buyer-account-route-divider">/</span><button type="button" className="buyer-account-overview-link" onClick={()=>navigateBuyerPage(buyerCustomer?'account':'buyer-login')}><UserRound size={16}/><span>My account</span></button></nav>}
   {buyerPage==='store'?<>
