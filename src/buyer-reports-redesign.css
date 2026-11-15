@@ -572,3 +572,42 @@
  .buyer-reports-fullscreen .buyer-case-timeline{grid-column:auto!important}
  .buyer-reports-fullscreen .buyer-case-description,.buyer-reports-fullscreen .dispute-chat{padding:11px!important}
 }
+
+
+/* Final buyer reports polish: true grid cards, clear status hierarchy and responsive spacing. */
+.buyer-reports-fullscreen .buyer-support-hero{padding:22px 25px!important;border-radius:14px!important;box-shadow:none!important;background:#fff!important;border:1px solid #e8edf2!important}
+.buyer-reports-fullscreen .buyer-support-hero:after{display:none!important}
+.buyer-reports-fullscreen .buyer-support-hero h2{font-size:25px!important;letter-spacing:-.6px!important}
+.buyer-reports-fullscreen .buyer-support-hero p{font-size:12px!important;margin-top:5px!important}
+.buyer-reports-fullscreen .buyer-support-controls{padding:0!important;border:0!important;border-bottom:1px solid #e9edf2!important;border-radius:0!important;background:transparent!important}
+.buyer-reports-fullscreen .buyer-support-filters{gap:22px!important}
+.buyer-reports-fullscreen .buyer-support-filters button{position:relative!important;min-height:45px!important;padding:0 2px!important;border:0!important;border-radius:0!important;color:#7a8492!important;font-size:12px!important}
+.buyer-reports-fullscreen .buyer-support-filters button.active{background:transparent!important;color:#172033!important}
+.buyer-reports-fullscreen .buyer-support-filters button.active:after{position:absolute!important;right:0!important;bottom:-1px!important;left:0!important;height:3px!important;border-radius:3px 3px 0 0!important;background:#efb900!important;content:""!important}
+.buyer-reports-fullscreen .buyer-support-report-card{display:grid!important;grid-template-columns:42px minmax(0,1fr) 18px!important;align-items:center!important;gap:13px!important;min-height:84px!important;padding:14px 16px!important;border-radius:12px!important;box-shadow:none!important}
+.buyer-reports-fullscreen .buyer-support-report-main{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;column-gap:12px!important;row-gap:5px!important}
+.buyer-reports-fullscreen .buyer-support-report-topline{display:contents!important}
+.buyer-reports-fullscreen .buyer-support-report-topline>strong{grid-column:1!important;grid-row:1!important;font-size:12px!important}
+.buyer-reports-fullscreen .buyer-support-report-topline>.buyer-support-status{grid-column:2!important;grid-row:1!important}
+.buyer-reports-fullscreen .buyer-support-report-description{grid-column:1/-1!important;grid-row:2!important;font-size:12px!important;font-weight:750!important;color:#435064!important}
+.buyer-reports-fullscreen .buyer-support-report-main>.buyer-support-report-meta{grid-column:1/-1!important;grid-row:3!important;color:#8a94a2!important;font-size:10px!important}
+.buyer-reports-fullscreen .buyer-support-status{display:inline-flex!important;align-items:center!important;padding:5px 8px!important;border-radius:20px!important;font-size:9px!important;font-weight:800!important;white-space:nowrap!important}
+.buyer-reports-fullscreen .buyer-support-status.open{background:#fff5dc!important;color:#946800!important}
+.buyer-reports-fullscreen .buyer-support-status.in_progress,.buyer-reports-fullscreen .buyer-support-status.resolution_pending,.buyer-reports-fullscreen .buyer-support-status.under_review{background:#edf5ff!important;color:#2866a5!important}
+.buyer-reports-fullscreen .buyer-support-status.closed,.buyer-reports-fullscreen .buyer-support-status.resolved{background:#eaf7ef!important;color:#287548!important}
+.buyer-reports-fullscreen .buyer-support-status.escalated{background:#fff0ed!important;color:#a84c40!important}
+.buyer-reports-fullscreen .buyer-support-report-icon{width:42px!important;height:42px!important;border-radius:11px!important}
+.buyer-reports-fullscreen .buyer-support-report-arrow{width:17px!important;height:17px!important}
+@media(max-width:600px){
+ .buyer-reports-fullscreen{width:calc(100% - 24px)!important;margin:16px auto 36px!important}
+ .buyer-reports-fullscreen .buyer-support-hero{padding:13px 0!important;border:0!important;border-bottom:1px solid #e9edf2!important;border-radius:0!important}
+ .buyer-reports-fullscreen .buyer-support-hero-actions{gap:6px!important}
+ .buyer-reports-fullscreen .buyer-support-refresh{width:36px!important;height:36px!important}
+ .buyer-reports-fullscreen .buyer-support-filters{justify-content:space-between!important;gap:7px!important;width:100%!important}
+ .buyer-reports-fullscreen .buyer-support-filters button{font-size:10px!important}
+ .buyer-reports-fullscreen .buyer-support-report-card{grid-template-columns:36px minmax(0,1fr) 15px!important;gap:9px!important;min-height:80px!important;padding:11px 9px!important}
+ .buyer-reports-fullscreen .buyer-support-report-main{column-gap:6px!important}
+ .buyer-reports-fullscreen .buyer-support-report-topline>strong{font-size:10px!important}
+ .buyer-reports-fullscreen .buyer-support-status{padding:4px 6px!important;font-size:8px!important}
+ .buyer-reports-fullscreen .buyer-support-report-description{font-size:11px!important}
+}
