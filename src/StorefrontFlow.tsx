@@ -1032,7 +1032,16 @@ export function StorefrontFlow({
                 </article>
               )) : <div className="buyer-inbox-empty"><span><MessageCircle size={25}/></span><strong>No conversations yet</strong><p>Your inbox stays empty until you or the seller starts a conversation. Open an order and choose “Message seller” to begin.</p></div>}
             </div>
-            {chatPanel && <div className="buyer-inbox-active-conversation">{chatPanel}</div>}
+            <div className="buyer-inbox-active-conversation">
+              {chatPanel || (
+                <div className="buyer-inbox-placeholder">
+                  <span><MessageCircle size={27}/></span>
+                  <h3>Select a conversation</h3>
+                  <p>Choose a message thread to read and reply. Your private conversations with this shop will appear in the list.</p>
+                  <div className="buyer-inbox-security"><ShieldCheck size={15}/> Private buyer–seller messaging</div>
+                </div>
+              )}
+            </div>
           </div>
         </section>
       );
