@@ -510,3 +510,65 @@
  .buyer-reports-fullscreen .buyer-support-report-topline strong{font-size:12px!important}
  .buyer-reports-fullscreen .buyer-support-report-meta{font-size:10px!important}
 }
+
+
+/* Report detail: approved desktop two-column case workspace and mobile stack. */
+.buyer-reports-fullscreen .dispute-case{width:100%!important;max-width:1200px!important;margin:0 auto!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important}
+.buyer-reports-fullscreen .dispute-case-top{display:grid!important;grid-template-columns:minmax(0,1fr) auto auto!important;align-items:center!important;gap:14px!important;margin:0 0 14px!important;padding:0 0 12px!important;border-bottom:1px solid #e8edf2!important}
+.buyer-reports-fullscreen .buyer-case-page-heading small{color:#7b8492!important;font-size:10px!important;font-weight:750!important;letter-spacing:.5px!important}
+.buyer-reports-fullscreen .buyer-case-page-heading h1{margin:5px 0 2px!important;color:#121a28!important;font-size:23px!important;font-weight:850!important}
+.buyer-reports-fullscreen .buyer-case-page-heading p{margin:0!important;color:#788394!important;font-size:11px!important}
+.buyer-reports-fullscreen .dispute-case-summary{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important;margin:0 0 15px!important;padding:13px!important;border:1px solid #e8edf2!important;border-radius:11px!important;background:#fff!important}
+.buyer-reports-fullscreen .dispute-case-summary>div{display:flex!important;flex-direction:column!important;gap:5px!important;min-width:0!important}
+.buyer-reports-fullscreen .dispute-case-summary small{color:#8a94a2!important;font-size:9px!important;font-weight:750!important}
+.buyer-reports-fullscreen .dispute-case-summary strong{color:#172033!important;font-size:11px!important;font-weight:800!important;overflow-wrap:anywhere!important}
+.buyer-reports-fullscreen .buyer-case-workspace{display:grid!important;grid-template-columns:minmax(0,1.65fr) minmax(245px,.8fr)!important;align-items:start!important;gap:16px!important}
+.buyer-reports-fullscreen .buyer-case-main{display:flex!important;flex-direction:column!important;gap:13px!important;min-width:0!important}
+.buyer-reports-fullscreen .buyer-case-sidebar{display:flex!important;flex-direction:column!important;gap:12px!important;min-width:0!important}
+.buyer-reports-fullscreen .buyer-case-order-card,.buyer-reports-fullscreen .buyer-case-actions-card,.buyer-reports-fullscreen .buyer-case-timeline{padding:15px!important;border:1px solid #e8edf2!important;border-radius:11px!important;background:#fff!important;box-shadow:0 2px 8px rgba(20,35,55,.025)!important}
+.buyer-reports-fullscreen .buyer-case-order-card>small{display:block!important;margin-bottom:12px!important;color:#7b8492!important;font-size:10px!important;font-weight:800!important}
+.buyer-reports-fullscreen .buyer-case-order-card>div{display:flex!important;justify-content:space-between!important;gap:8px!important;padding:8px 0!important;border-top:1px solid #f0f2f5!important;font-size:11px!important}
+.buyer-reports-fullscreen .buyer-case-order-card>div span{color:#84909e!important}
+.buyer-reports-fullscreen .buyer-case-order-card>div strong{color:#1a2434!important;text-align:right!important}
+.buyer-reports-fullscreen .buyer-case-actions-card h3,.buyer-reports-fullscreen .buyer-case-timeline h3{margin:0 0 12px!important;color:#172033!important;font-size:13px!important;font-weight:850!important}
+.buyer-reports-fullscreen .buyer-case-actions-card p{color:#7b8492!important;font-size:11px!important;line-height:1.5!important}
+.buyer-reports-fullscreen .buyer-case-resolve-button{width:100%!important;min-height:40px!important;border:0!important;border-radius:8px!important;background:#16a34a!important;color:white!important;font-size:11px!important;font-weight:800!important}
+.buyer-reports-fullscreen .buyer-case-timeline ol{position:relative!important;display:flex!important;flex-direction:column!important;gap:0!important;margin:0!important;padding:0 0 0 5px!important;list-style:none!important}
+.buyer-reports-fullscreen .buyer-case-timeline li{position:relative!important;display:grid!important;grid-template-columns:13px minmax(0,1fr)!important;column-gap:9px!important;padding:0 0 17px!important}
+.buyer-reports-fullscreen .buyer-case-timeline li:not(:last-child):after{position:absolute!important;top:11px!important;bottom:0!important;left:5px!important;width:2px!important;background:#e5e9ef!important;content:""!important}
+.buyer-reports-fullscreen .buyer-case-timeline li i{z-index:1!important;width:11px!important;height:11px!important;border:2px solid #b8c1cc!important;border-radius:50%!important;background:#fff!important}
+.buyer-reports-fullscreen .buyer-case-timeline li.done i{border-color:#1684d5!important;background:#1684d5!important}
+.buyer-reports-fullscreen .buyer-case-timeline li strong,.buyer-reports-fullscreen .buyer-case-timeline li small{grid-column:2!important}
+.buyer-reports-fullscreen .buyer-case-timeline li strong{color:#354052!important;font-size:10px!important}
+.buyer-reports-fullscreen .buyer-case-timeline li small{margin-top:3px!important;color:#8993a0!important;font-size:9px!important}
+.buyer-reports-fullscreen .buyer-case-description,.buyer-reports-fullscreen .dispute-chat{margin:0!important;padding:15px!important;border:1px solid #e8edf2!important;border-radius:11px!important;background:#fff!important;box-shadow:none!important}
+.buyer-reports-fullscreen .buyer-case-description-head{display:flex!important;justify-content:space-between!important;gap:10px!important}
+.buyer-reports-fullscreen .buyer-case-description p{color:#465264!important;font-size:12px!important;line-height:1.6!important}
+.buyer-reports-fullscreen .dispute-chat-head{padding:0 0 12px!important;border-bottom:1px solid #edf0f3!important}
+.buyer-reports-fullscreen .dispute-messages{display:flex!important;flex-direction:column!important;gap:10px!important;max-height:420px!important;padding:13px 0!important;overflow-y:auto!important}
+.buyer-reports-fullscreen .dispute-message{max-width:90%!important;padding:10px 12px!important;border:1px solid #e8edf2!important;border-radius:10px!important;background:#f7f9fb!important}
+.buyer-reports-fullscreen .dispute-message.buyer{align-self:flex-start!important}
+.buyer-reports-fullscreen .dispute-message.seller,.buyer-reports-fullscreen .dispute-message.admin{align-self:flex-end!important;background:#fff8dc!important;border-color:#f2e6b8!important}
+.buyer-reports-fullscreen .dispute-compose{display:flex!important;flex-direction:column!important;gap:8px!important;padding-top:10px!important;border-top:1px solid #edf0f3!important}
+.buyer-reports-fullscreen .dispute-compose textarea{min-height:62px!important;border:1px solid #e0e6ed!important;border-radius:8px!important;padding:10px!important}
+.buyer-reports-fullscreen .dispute-compose-actions{display:flex!important;align-items:center!important;justify-content:space-between!important}
+.buyer-reports-fullscreen .dispute-compose-actions>button{min-width:74px!important;min-height:36px!important;border:0!important;border-radius:8px!important;background:#1684d5!important;color:#fff!important;font-weight:750!important}
+.buyer-reports-fullscreen .dispute-evidence{margin-top:10px!important}
+@media(max-width:760px){
+ .buyer-reports-fullscreen .dispute-case-top{grid-template-columns:minmax(0,1fr) auto!important}
+ .buyer-reports-fullscreen .dispute-case-top>.dispute-status{grid-column:2!important;grid-row:1!important}
+ .buyer-reports-fullscreen .dispute-case-summary{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .buyer-reports-fullscreen .buyer-case-workspace{grid-template-columns:minmax(0,1fr)!important;gap:11px!important}
+ .buyer-reports-fullscreen .buyer-case-sidebar{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .buyer-reports-fullscreen .buyer-case-timeline{grid-column:1/-1!important}
+}
+@media(max-width:480px){
+ .buyer-reports-fullscreen .dispute-case-top{gap:7px!important}
+ .buyer-reports-fullscreen .buyer-case-page-heading h1{font-size:19px!important}
+ .buyer-reports-fullscreen .buyer-case-page-heading p{font-size:10px!important}
+ .buyer-reports-fullscreen .dispute-case-summary{gap:9px!important;padding:10px!important}
+ .buyer-reports-fullscreen .dispute-case-summary strong{font-size:10px!important}
+ .buyer-reports-fullscreen .buyer-case-sidebar{grid-template-columns:minmax(0,1fr)!important}
+ .buyer-reports-fullscreen .buyer-case-timeline{grid-column:auto!important}
+ .buyer-reports-fullscreen .buyer-case-description,.buyer-reports-fullscreen .dispute-chat{padding:11px!important}
+}
