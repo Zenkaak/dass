@@ -173,3 +173,44 @@
  .buyer-inbox-page .buyer-inbox-thread-bottom{align-items:flex-start!important;flex-direction:column!important}
  .buyer-inbox-page .buyer-inbox-thread-bottom button{width:100%;justify-content:center}
 }
+
+
+/* Approved Messages screen reference. */
+.buyer-inbox-page{width:min(1200px,calc(100% - 36px))!important;margin:18px auto 48px!important;padding:0!important}
+.buyer-inbox-page .buyer-inbox-heading{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:16px!important;margin:0 0 15px!important}
+.buyer-inbox-page .buyer-inbox-heading h1{margin:0!important;color:#111827!important;font-size:26px!important;font-weight:850!important;letter-spacing:-.6px!important}
+.buyer-inbox-page .buyer-inbox-heading p{margin:3px 0 0!important;color:#7b8492!important;font-size:12px!important}
+.buyer-inbox-page .buyer-inbox-new-message{min-height:42px!important;padding:0 17px!important;border:0!important;border-radius:9px!important;background:#f5bd00!important;color:#171717!important;font-size:12px!important;font-weight:800!important}
+.buyer-inbox-page .buyer-inbox-layout{grid-template-columns:minmax(280px,.88fr) minmax(0,1.12fr)!important;gap:0!important;min-height:490px!important;border:1px solid #e5eaf0!important;border-radius:15px!important;background:#fff!important;box-shadow:0 5px 20px rgba(24,37,54,.035)!important;overflow:hidden!important}
+.buyer-inbox-page .buyer-inbox-list{padding:0 12px!important;border:0!important;border-right:1px solid #e8edf2!important;border-radius:0!important;box-shadow:none!important}
+.buyer-inbox-page .buyer-inbox-list-heading{min-height:51px!important;padding:0 5px!important;border-bottom:1px solid #edf0f3!important}
+.buyer-inbox-page .buyer-inbox-thread{display:flex!important;align-items:center!important;gap:11px!important;min-height:78px!important;padding:12px 5px!important;border-bottom:1px solid #f0f2f5!important}
+.buyer-inbox-page .buyer-inbox-thread-avatar{width:38px!important;height:38px!important;flex:0 0 38px!important;border-radius:50%!important;background:#e8f4ff!important;color:#167fc7!important}
+.buyer-inbox-page .buyer-inbox-thread-content{min-width:0!important;gap:3px!important}
+.buyer-inbox-page .buyer-inbox-thread-top{align-items:center!important}
+.buyer-inbox-page .buyer-inbox-thread-top strong{color:#172033!important;font-size:12px!important;font-weight:800!important}
+.buyer-inbox-page .buyer-inbox-thread-top time{color:#7d8794!important;font-size:10px!important}
+.buyer-inbox-page .buyer-inbox-thread-order{color:#798494!important;font-size:10px!important}
+.buyer-inbox-page .buyer-inbox-thread-content p{margin:0!important;color:#586577!important;font-size:11px!important}
+.buyer-inbox-page .buyer-inbox-thread-bottom{margin-top:2px!important}
+.buyer-inbox-page .buyer-inbox-thread-bottom>span{display:none!important}
+.buyer-inbox-page .buyer-inbox-thread-bottom button{min-height:28px!important;padding:0 8px!important;border:0!important;background:transparent!important;color:#b08000!important;font-size:10px!important}
+.buyer-inbox-page .buyer-inbox-active-conversation{min-height:490px!important;padding:0!important}
+.buyer-inbox-page .buyer-inbox-active-conversation>.buyer-inbox-conversation{border:0!important;border-radius:0!important;box-shadow:none!important}
+.buyer-inbox-page .buyer-inbox-placeholder{min-height:490px!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+@media(max-width:900px){
+ .buyer-inbox-page{width:calc(100% - 28px)!important}
+ .buyer-inbox-page .buyer-inbox-layout{grid-template-columns:minmax(0,1fr)!important}
+ .buyer-inbox-page .buyer-inbox-list{border-right:0!important}
+ .buyer-inbox-page .buyer-inbox-active-conversation{min-height:250px!important}
+ .buyer-inbox-page .buyer-inbox-placeholder{min-height:250px!important}
+}
+@media(max-width:600px){
+ .buyer-inbox-page{width:calc(100% - 22px)!important;margin:12px auto 30px!important}
+ .buyer-inbox-page .buyer-inbox-heading h1{font-size:22px!important}
+ .buyer-inbox-page .buyer-inbox-new-message{min-height:39px!important;padding:0 11px!important;font-size:11px!important}
+ .buyer-inbox-page .buyer-inbox-layout{border-radius:13px!important}
+ .buyer-inbox-page .buyer-inbox-list{padding:0 9px!important}
+ .buyer-inbox-page .buyer-inbox-active-conversation{min-height:220px!important}
+ .buyer-inbox-page .buyer-inbox-placeholder{min-height:220px!important}
+}
