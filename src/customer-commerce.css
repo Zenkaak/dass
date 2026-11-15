@@ -7247,3 +7247,38 @@
  .buyer-dashboard-sidebar.is-collapsed .buyer-dashboard-sidebar-help{display:flex}
  .store-page.is-account-route .customer-flow{width:calc(100% - 24px);margin:17px auto 38px}
 }
+
+
+
+/* Persistent shop-category drawer on buyer account and report routes */
+.store-page.is-account-route .buyer-shop-drawer{position:fixed!important;top:56px!important;bottom:0!important;left:0!important;z-index:2147483001!important;width:min(310px,86vw)!important;max-height:calc(100dvh - 56px)!important;overflow-y:auto!important;transform:translateX(-110%)!important;visibility:hidden!important;pointer-events:none!important;display:block!important;background:#fff!important;box-shadow:12px 0 36px rgba(15,32,47,.18)!important;transition:transform .22s ease,visibility .22s ease!important}
+.store-page.is-account-route .buyer-shop-drawer.is-mobile-open{transform:translateX(0)!important;visibility:visible!important;pointer-events:auto!important}
+.store-page.is-account-route .market-global-drawer-scrim{position:fixed!important;inset:56px 0 0!important;z-index:2147483000!important;background:rgba(13,27,39,.42)!important}
+.store-page.is-account-route .buyer-dashboard-header{z-index:2147483002!important}
+.store-page.is-account-route .buyer-dashboard-bottom-nav{display:none!important}
+.store-page.is-account-route .buyer-account-workspace{padding-bottom:36px}
+.store-page.is-account-route .buyer-inbox-conversation,.store-page.is-account-route .buyer-inbox-list,.store-page.is-account-route .buyer-inbox-placeholder{width:100%;max-width:100%;border:1px solid #e3eaf0!important;border-radius:16px!important;background:#fff!important;box-shadow:0 8px 26px rgba(27,48,67,.045)!important}
+.store-page.is-account-route .buyer-inbox-conversation{padding:clamp(14px,2.5vw,24px)!important}
+.store-page.is-account-route .store-chat-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:0 0 16px;border-bottom:1px solid #edf1f5}
+.store-page.is-account-route .store-chat-heading h2{margin:5px 0;color:#1c3045;font-size:clamp(18px,2.2vw,23px);font-weight:850}
+.store-page.is-account-route .store-chat-messages{min-height:240px;max-height:58vh;overflow:auto;padding:16px 4px}
+.store-page.is-account-route .store-chat-compose{display:flex;gap:9px;padding-top:12px;border-top:1px solid #edf1f5}
+.store-page.is-account-route .store-chat-compose input{flex:1;min-width:0;min-height:46px;padding:10px 13px;border:1px solid #dce5ec;border-radius:10px;background:#fbfcfd}
+.store-page.is-account-route .store-chat-compose button{min-height:44px;padding:0 16px;border:0;border-radius:10px;background:#e98217;color:#fff;font-weight:800}
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen{width:min(100% - 28px,1180px)!important;padding:22px 0 44px!important}
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen .disputes-heading{align-items:center;padding:clamp(16px,2.6vw,26px);border-radius:16px}
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen .disputes-heading h2{color:#17283b;font-size:clamp(20px,2.5vw,28px);font-weight:850;letter-spacing:-.03em}
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen .disputes-card,.store-page.is-buyer-reports-route .buyer-reports-fullscreen .dispute-card{border:1px solid #e5ebf1;border-radius:14px;background:#fff;box-shadow:0 5px 20px rgba(20,38,60,.04)}
+.store-page.is-account-route .customer-flow:has(.customer-form-label){max-width:1080px}
+.store-page.is-account-route .customer-flow .customer-panel{padding:clamp(16px,2.4vw,26px);border:1px solid #e4eaf0;border-radius:16px;background:#fff;box-shadow:0 7px 24px rgba(20,38,60,.04)}
+.store-page.is-account-route .customer-flow .customer-form-label{margin-bottom:16px}
+.store-page.is-account-route .customer-flow .customer-form-label input,.store-page.is-account-route .customer-flow .customer-form-label select,.store-page.is-account-route .customer-flow .customer-form-label textarea{min-height:48px;border:1px solid #dce5ec;border-radius:10px;background:#fbfcfd}
+@media(max-width:760px){
+ .store-page.is-account-route .buyer-shop-drawer{top:56px!important;width:min(86vw,310px)!important}
+ .store-page.is-account-route .buyer-inbox-conversation{margin:12px auto!important}
+ .store-page.is-account-route .store-chat-compose{flex-wrap:wrap}
+ .store-page.is-account-route .store-chat-compose input{flex:1 1 100%}
+ .store-page.is-account-route .store-chat-compose button{width:100%}
+ .store-page.is-buyer-reports-route .buyer-reports-fullscreen{width:calc(100% - 24px)!important;padding-top:14px!important}
+ .store-page.is-buyer-reports-route .buyer-reports-fullscreen .disputes-heading{display:block}
+}
