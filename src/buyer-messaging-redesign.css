@@ -75,3 +75,55 @@
  .buyer-inbox-page .buyer-inbox-conversation .store-chat-compose{padding:11px}
  .buyer-inbox-page .buyer-inbox-conversation .store-chat-compose button{min-width:68px}
 }
+
+
+/* Responsive inbox refinement: consistent desktop workspace and touch-first mobile. */
+.buyer-inbox-page{width:min(1180px,100%);max-width:1180px;margin:0 auto;padding:0 2px 24px;color:#1d2b3d}
+.buyer-inbox-page *,
+.buyer-inbox-page *:before,
+.buyer-inbox-page *:after{box-sizing:border-box}
+.buyer-inbox-page .buyer-inbox-intro{min-height:158px;padding:28px 30px;border-radius:20px;box-shadow:0 8px 26px rgba(24,37,54,.04)}
+.buyer-inbox-page .buyer-inbox-intro h2{font-size:clamp(24px,2.6vw,31px)}
+.buyer-inbox-page .buyer-inbox-layout{grid-template-columns:minmax(290px,.78fr) minmax(0,1.55fr);gap:18px}
+.buyer-inbox-page .buyer-inbox-list{padding:18px}
+.buyer-inbox-page .buyer-inbox-thread{padding:16px 3px}
+.buyer-inbox-page .buyer-inbox-thread:hover{background:#fcfbf7}
+.buyer-inbox-page .buyer-inbox-active-conversation{min-width:0;width:100%}
+.buyer-inbox-page .buyer-inbox-active-conversation>.buyer-inbox-conversation,
+.buyer-inbox-page .buyer-inbox-active-conversation>.customer-panel{min-width:0;width:100%;overflow:hidden;border:1px solid #e7ecf1;border-radius:17px;background:#fff;box-shadow:0 8px 26px rgba(24,37,54,.045)}
+.buyer-inbox-page .buyer-inbox-placeholder{min-height:390px;padding:32px}
+.buyer-inbox-page button{touch-action:manipulation}
+.buyer-inbox-page :focus-visible{outline:3px solid rgba(197,151,48,.42);outline-offset:2px}
+@media(max-width:900px){
+ .buyer-inbox-page .buyer-inbox-layout{grid-template-columns:minmax(250px,.85fr) minmax(0,1.15fr);gap:12px}
+ .buyer-inbox-page .buyer-inbox-intro{padding:23px}
+ .buyer-inbox-page .buyer-inbox-list{padding:13px}
+ .buyer-inbox-page .buyer-inbox-thread{gap:8px}
+}
+@media(max-width:760px){
+ .buyer-inbox-page{padding:0 0 18px}
+ .buyer-inbox-page .buyer-inbox-intro{margin:2px 0 13px;padding:19px 17px;border-radius:16px;gap:12px}
+ .buyer-inbox-page .buyer-inbox-count{align-self:flex-start}
+ .buyer-inbox-page .buyer-inbox-layout{display:flex;flex-direction:column;gap:12px}
+ .buyer-inbox-page .buyer-inbox-active-conversation{order:0}
+ .buyer-inbox-page .buyer-inbox-list{order:1;width:100%;padding:13px;border-radius:15px}
+ .buyer-inbox-page .buyer-inbox-thread{padding:13px 2px}
+ .buyer-inbox-page .buyer-inbox-thread-avatar{width:36px;height:36px;flex-basis:36px}
+ .buyer-inbox-page .buyer-inbox-placeholder{min-height:260px;padding:23px 17px}
+ .buyer-inbox-page .buyer-inbox-conversation .store-chat-heading{padding:14px}
+ .buyer-inbox-page .buyer-inbox-conversation .store-chat-messages{min-height:210px;max-height:52dvh;padding:12px}
+ .buyer-inbox-page .buyer-inbox-conversation .store-chat-message{max-width:90%}
+ .buyer-inbox-page .buyer-inbox-conversation .store-chat-compose{gap:7px;padding:10px}
+ .buyer-inbox-page .buyer-inbox-conversation .store-chat-compose input{height:44px;font-size:16px}
+ .buyer-inbox-page .buyer-inbox-conversation .store-chat-compose button{min-width:66px;min-height:44px}
+ .buyer-inbox-page .buyer-inbox-conversation .chat-file-upload{padding:0 12px 12px}
+}
+@media(max-width:380px){
+ .buyer-inbox-page .buyer-inbox-intro h2{font-size:22px}
+ .buyer-inbox-page .buyer-inbox-thread-top{align-items:flex-start;flex-direction:column;gap:3px}
+ .buyer-inbox-page .buyer-inbox-thread-bottom{align-items:flex-start;flex-direction:column;gap:4px}
+ .buyer-inbox-page .buyer-inbox-conversation .store-chat-compose{flex-wrap:wrap}
+ .buyer-inbox-page .buyer-inbox-conversation .store-chat-compose input{flex-basis:100%}
+ .buyer-inbox-page .buyer-inbox-conversation .store-chat-compose button{width:100%}
+}
+@media(prefers-reduced-motion:reduce){.buyer-inbox-page *{scroll-behavior:auto!important;transition:none!important}}
