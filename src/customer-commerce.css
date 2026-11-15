@@ -7329,3 +7329,86 @@
  .store-page.is-account-route .customer-flow:has(> .customer-flow-heading + form.customer-panel) .customer-contact-fields{grid-template-columns:minmax(0,1fr)}
  .store-page.is-account-route .customer-flow:has(> .customer-flow-heading + form.customer-panel) .customer-flow-actions .customer-primary-button{width:100%}
 }
+
+
+
+/* Buyer routes: compact reports hero, redesigned profile, persistent shop drawer */
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen .buyer-support-hero{
+  min-height:0!important;display:flex!important;align-items:center!important;gap:18px!important;
+  padding:18px 20px!important;border-radius:15px!important;box-shadow:0 5px 18px rgba(26,37,53,.045)!important;
+}
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen .buyer-support-hero:after{width:130px!important;height:130px!important;top:-94px!important;right:13%!important}
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen .buyer-support-hero-copy{max-width:680px!important}
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen .buyer-support-eyebrow{margin-bottom:5px!important;font-size:9px!important}
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen .buyer-support-hero h2{font-size:clamp(19px,2.1vw,25px)!important;line-height:1.18!important}
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen .buyer-support-hero p{margin-top:6px!important;font-size:12px!important;line-height:1.5!important}
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen .buyer-support-new-button{min-height:39px!important;padding:0 13px!important;border-radius:9px!important;font-size:11px!important}
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen .buyer-support-refresh{width:38px!important;height:38px!important;border-radius:9px!important}
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen .buyer-support-stats{gap:10px!important}
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen .buyer-support-stat{min-height:70px!important;padding:12px 14px!important;border-radius:12px!important}
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen .buyer-support-stat-icon{width:35px!important;height:35px!important;border-radius:10px!important}
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen .buyer-support-stat strong{font-size:19px!important}
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen .buyer-support-report-card{padding:14px 15px!important;border-radius:13px!important}
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen .buyer-support-report-icon{width:38px!important;height:38px!important;flex-basis:38px!important;border-radius:10px!important}
+
+/* The category drawer remains available on every buyer account/report route.
+   The backdrop is a real close target; keep it above page content and below drawer/header. */
+.store-page.is-account-route .buyer-shop-drawer,
+.store-page.is-buyer-reports-route .buyer-shop-drawer{
+  display:block!important;position:fixed!important;top:56px!important;bottom:0!important;left:0!important;
+  z-index:2147483001!important;width:min(310px,86vw)!important;max-height:calc(100dvh - 56px)!important;
+  overflow-y:auto!important;background:#fff!important;box-shadow:12px 0 36px rgba(15,32,47,.18)!important;
+}
+.store-page.is-account-route .buyer-shop-drawer:not(.is-mobile-open),
+.store-page.is-buyer-reports-route .buyer-shop-drawer:not(.is-mobile-open){
+  transform:translateX(-110%)!important;visibility:hidden!important;pointer-events:none!important;
+}
+.store-page.is-account-route .buyer-shop-drawer.is-mobile-open,
+.store-page.is-buyer-reports-route .buyer-shop-drawer.is-mobile-open{
+  transform:translateX(0)!important;visibility:visible!important;pointer-events:auto!important;
+}
+.store-page.is-account-route .market-global-drawer-scrim,
+.store-page.is-buyer-reports-route .market-global-drawer-scrim{
+  display:block!important;position:fixed!important;inset:56px 0 0!important;
+  z-index:2147483000!important;background:rgba(13,27,39,.42)!important;cursor:pointer;
+}
+.store-page.is-account-route .buyer-dashboard-header{z-index:2147483002!important}
+.store-page.is-account-route .buyer-profile-page{max-width:960px!important}
+.store-page.is-account-route .buyer-profile-intro{
+  display:flex;align-items:center;gap:16px;margin:0 0 18px;padding:20px 22px;
+  border:1px solid #e6ebf0;border-radius:16px;background:linear-gradient(110deg,#fff 0%,#fbfcfe 100%);
+}
+.store-page.is-account-route .buyer-profile-avatar{
+  width:58px;height:58px;flex:0 0 58px;display:grid;place-items:center;border-radius:17px;
+  background:#fff1ca;color:#8b6200;font-size:25px;font-weight:900;
+}
+.store-page.is-account-route .buyer-profile-intro span{color:#a17b2a;font-size:9px;font-weight:900;letter-spacing:.15em}
+.store-page.is-account-route .buyer-profile-intro h2{margin:4px 0;color:#1d2d40;font-size:19px;font-weight:850}
+.store-page.is-account-route .buyer-profile-intro p{margin:0;color:#718093;font-size:12px;line-height:1.5}
+.store-page.is-account-route .buyer-profile-form{padding:clamp(18px,3vw,30px)!important;border:1px solid #e5ebf0!important;border-radius:17px!important;background:#fff!important;box-shadow:0 8px 26px rgba(25,43,60,.045)!important}
+.store-page.is-account-route .buyer-profile-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid #edf1f4}
+.store-page.is-account-route .buyer-profile-section-heading strong{color:#26384b;font-size:14px;font-weight:850}
+.store-page.is-account-route .buyer-profile-section-heading span{color:#8a96a4;font-size:10px}
+.store-page.is-account-route .buyer-profile-form .customer-contact-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:19px 20px}
+.store-page.is-account-route .buyer-profile-form .customer-form-label{display:flex;flex-direction:column;gap:7px;color:#43596c;font-size:12px;font-weight:800}
+.store-page.is-account-route .buyer-profile-form .customer-form-label em{color:#b27a19;font-size:9px;font-style:normal;font-weight:800}
+.store-page.is-account-route .buyer-profile-form .customer-form-label small{color:#8a96a4;font-size:10px;font-weight:500}
+.store-page.is-account-route .buyer-profile-form .customer-form-label input{
+  width:100%;min-height:50px;padding:0 14px;border:1px solid #dfe6ec;border-radius:10px;
+  background:#fbfcfd;color:#24394d;font-size:14px;font-weight:650;outline:none;
+}
+.store-page.is-account-route .buyer-profile-form .customer-form-label input:focus{border-color:#d0a443;box-shadow:0 0 0 3px rgba(208,164,67,.12);background:#fff}
+.store-page.is-account-route .buyer-profile-form .customer-form-label input:disabled{background:#f1f4f7;color:#69798a}
+.store-page.is-account-route .buyer-profile-form-footer{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-top:24px;padding-top:18px;border-top:1px solid #edf1f4}
+.store-page.is-account-route .buyer-profile-form-footer>span{color:#8793a1;font-size:10px;line-height:1.5}
+.store-page.is-account-route .buyer-profile-form-footer .customer-primary-button{min-height:46px;padding:0 23px;border-radius:10px;font-size:12px;font-weight:850}
+@media(max-width:760px){
+ .store-page.is-buyer-reports-route .buyer-reports-fullscreen .buyer-support-hero{align-items:flex-start!important;flex-direction:column!important;padding:15px!important;gap:12px!important}
+ .store-page.is-buyer-reports-route .buyer-reports-fullscreen .buyer-support-hero-actions{width:100%!important}
+ .store-page.is-buyer-reports-route .buyer-reports-fullscreen .buyer-support-new-button{flex:1}
+ .store-page.is-account-route .buyer-profile-intro{padding:15px;gap:12px}
+ .store-page.is-account-route .buyer-profile-avatar{width:48px;height:48px;flex-basis:48px;font-size:21px}
+ .store-page.is-account-route .buyer-profile-form .customer-contact-fields{grid-template-columns:minmax(0,1fr)}
+ .store-page.is-account-route .buyer-profile-form-footer{align-items:stretch;flex-direction:column}
+ .store-page.is-account-route .buyer-profile-form-footer .customer-primary-button{width:100%}
+}
