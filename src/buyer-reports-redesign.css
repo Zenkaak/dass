@@ -282,3 +282,105 @@
 @media(prefers-reduced-motion:reduce){
  .buyer-reports-fullscreen .buyer-support-report-card{transition:none}
 }
+
+
+/* DASMARKET responsive refinement — inbox, reports and standalone case pages. */
+.buyer-reports-fullscreen,
+.buyer-inbox-page{box-sizing:border-box}
+.buyer-reports-fullscreen *,
+.buyer-inbox-page *{box-sizing:border-box}
+.buyer-reports-fullscreen{width:min(1180px,calc(100% - 48px))!important;max-width:1180px!important;margin:28px auto 72px!important}
+.buyer-reports-fullscreen .disputes-workspace{gap:22px}
+.buyer-reports-fullscreen .buyer-support-hero{min-height:190px;padding:34px 38px}
+.buyer-reports-fullscreen .buyer-support-hero-actions{align-self:center}
+.buyer-reports-fullscreen .buyer-support-stat,
+.buyer-reports-fullscreen .buyer-support-report-card,
+.buyer-reports-fullscreen .dispute-case-top,
+.buyer-reports-fullscreen .buyer-case-description,
+.buyer-reports-fullscreen .dispute-chat,
+.buyer-reports-fullscreen .dispute-resolution,
+.buyer-reports-fullscreen .dispute-propose,
+.buyer-reports-fullscreen .dispute-verdict,
+.buyer-reports-fullscreen .dispute-escalated,
+.buyer-reports-fullscreen .dispute-new-form.dispute-create-page{box-shadow:0 8px 26px rgba(24,37,54,.045)}
+.buyer-reports-fullscreen .buyer-support-report-card{min-height:94px;padding:20px 22px}
+.buyer-reports-fullscreen .dispute-case{gap:18px}
+.buyer-reports-fullscreen .dispute-case-top{min-height:140px;padding:28px 30px}
+.buyer-reports-fullscreen .dispute-case-summary{box-shadow:0 5px 20px rgba(24,37,54,.025)}
+.buyer-reports-fullscreen .dispute-chat-head{padding:20px 24px}
+.buyer-reports-fullscreen .dispute-messages{min-height:260px;padding:24px;scroll-behavior:smooth}
+.buyer-reports-fullscreen .dispute-compose{padding:18px 22px}
+.buyer-reports-fullscreen .dispute-evidence{padding:18px 22px}
+.buyer-reports-fullscreen button,
+.buyer-reports-fullscreen a,
+.buyer-inbox-page button{touch-action:manipulation}
+.buyer-reports-fullscreen :focus-visible,
+.buyer-inbox-page :focus-visible{outline:3px solid rgba(197,151,48,.42);outline-offset:2px}
+@media(min-width:1100px){
+ .buyer-reports-fullscreen .dispute-case{grid-template-columns:minmax(0,1fr)}
+ .buyer-reports-fullscreen .dispute-messages{max-height:min(56vh,620px)}
+}
+@media(max-width:900px){
+ .buyer-reports-fullscreen{width:calc(100% - 32px)!important;margin:20px auto 52px!important}
+ .buyer-reports-fullscreen .buyer-support-hero{padding:26px}
+ .buyer-reports-fullscreen .buyer-support-controls{align-items:stretch}
+ .buyer-reports-fullscreen .buyer-support-search{max-width:100%}
+ .buyer-reports-fullscreen .dispute-case-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .buyer-reports-fullscreen .dispute-case-summary>div:nth-child(2){border-right:0}
+ .buyer-reports-fullscreen .dispute-case-summary>div:nth-child(3),
+ .buyer-reports-fullscreen .dispute-case-summary>div:nth-child(4){border-top:1px solid #edf0f3}
+}
+@media(max-width:600px){
+ .buyer-reports-fullscreen{width:calc(100% - 22px)!important;margin:12px auto 34px!important}
+ .buyer-reports-fullscreen .buyer-support-topbar{margin-bottom:14px;padding-bottom:10px}
+ .buyer-reports-fullscreen .buyer-support-hero{padding:20px 17px;gap:15px}
+ .buyer-reports-fullscreen .buyer-support-hero h2{font-size:25px}
+ .buyer-reports-fullscreen .buyer-support-hero p{font-size:12px}
+ .buyer-reports-fullscreen .buyer-support-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+ .buyer-reports-fullscreen .buyer-support-stat{display:grid;justify-items:start;gap:7px;min-height:90px;padding:10px 9px}
+ .buyer-reports-fullscreen .buyer-support-stat-icon{width:30px;height:30px}
+ .buyer-reports-fullscreen .buyer-support-stat strong{font-size:18px}
+ .buyer-reports-fullscreen .buyer-support-stat small{font-size:9px;line-height:1.25}
+ .buyer-reports-fullscreen .buyer-support-list-heading{align-items:flex-start;flex-direction:column;gap:4px}
+ .buyer-reports-fullscreen .buyer-support-filters{display:flex;overflow-x:auto;flex-wrap:nowrap;padding-bottom:3px;scrollbar-width:thin}
+ .buyer-reports-fullscreen .buyer-support-filters button{flex:0 0 auto;min-height:36px;padding:0 11px}
+ .buyer-reports-fullscreen .buyer-support-report-card{gap:10px;padding:13px 11px}
+ .buyer-reports-fullscreen .buyer-support-report-icon{width:34px;height:34px;flex-basis:34px}
+ .buyer-reports-fullscreen .buyer-support-report-topline{flex-direction:row;align-items:center;flex-wrap:wrap}
+ .buyer-reports-fullscreen .buyer-support-report-topline>strong{min-width:0;overflow-wrap:anywhere}
+ .buyer-reports-fullscreen .buyer-support-status{font-size:9px;padding:4px 7px}
+ .buyer-reports-fullscreen .dispute-case-top{gap:12px;padding:17px 15px}
+ .buyer-reports-fullscreen .buyer-case-page-heading h1{font-size:22px;overflow-wrap:anywhere}
+ .buyer-reports-fullscreen .dispute-case-summary>div{padding:12px 10px}
+ .buyer-reports-fullscreen .dispute-case-summary small{font-size:8px}
+ .buyer-reports-fullscreen .dispute-case-summary strong{font-size:11px}
+ .buyer-reports-fullscreen .buyer-case-description,
+ .buyer-reports-fullscreen .dispute-resolution,
+ .buyer-reports-fullscreen .dispute-propose,
+ .buyer-reports-fullscreen .dispute-verdict,
+ .buyer-reports-fullscreen .dispute-escalated{padding:14px}
+ .buyer-reports-fullscreen .dispute-chat-head{padding:14px}
+ .buyer-reports-fullscreen .dispute-messages{min-height:220px;max-height:52vh;padding:11px}
+ .buyer-reports-fullscreen .dispute-message{max-width:94%;padding:10px 11px}
+ .buyer-reports-fullscreen .dispute-compose{padding:11px;gap:9px}
+ .buyer-reports-fullscreen .dispute-compose-actions{align-items:stretch;flex-wrap:wrap}
+ .buyer-reports-fullscreen .dispute-compose-actions>button{flex:1}
+ .buyer-reports-fullscreen .dispute-create-heading{flex-direction:column}
+ .buyer-reports-fullscreen .dispute-create-heading strong{font-size:18px}
+ .buyer-reports-fullscreen .dispute-new-form.dispute-create-page{padding:14px;gap:14px}
+ .buyer-reports-fullscreen .dispute-file-picker>span{flex-wrap:wrap}
+ .buyer-reports-fullscreen .dispute-file-picker>span small{margin-left:0}
+ .buyer-reports-fullscreen .dispute-evidence{padding:13px}
+ .buyer-reports-fullscreen .dispute-evidence>div{align-items:flex-start;flex-wrap:wrap}
+}
+@media(max-width:380px){
+ .buyer-reports-fullscreen .buyer-support-stats{gap:5px}
+ .buyer-reports-fullscreen .buyer-support-stat{padding:9px 7px}
+ .buyer-reports-fullscreen .buyer-support-stat strong{font-size:16px}
+ .buyer-reports-fullscreen .buyer-support-stat small{font-size:8px}
+ .buyer-reports-fullscreen .buyer-support-report-topline{align-items:flex-start;flex-direction:column}
+ .buyer-reports-fullscreen .dispute-case-summary{grid-template-columns:1fr 1fr}
+}
+@media(prefers-reduced-motion:reduce){
+ .buyer-reports-fullscreen .dispute-messages{scroll-behavior:auto}
+}
