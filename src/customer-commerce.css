@@ -7417,3 +7417,36 @@
  .store-page.is-account-route .buyer-profile-form-footer{align-items:stretch;flex-direction:column}
  .store-page.is-account-route .buyer-profile-form-footer .customer-primary-button{width:100%}
 }
+
+
+/* Correct the real marketplace category drawer layering on buyer routes. */
+.store-page.is-account-route .market-sidebar,
+.store-page.is-buyer-reports-route .market-sidebar,
+.store-page.is-account-route .market-global-drawer,
+.store-page.is-buyer-reports-route .market-global-drawer {
+  position:fixed!important;top:74px!important;bottom:0!important;left:0!important;
+  z-index:2147483002!important;width:min(300px,86vw)!important;
+  height:calc(100dvh - 74px)!important;max-height:none!important;
+  background:#fff!important;opacity:1!important;filter:none!important;
+  transform:translateX(-110%)!important;visibility:hidden!important;pointer-events:none!important;
+  transition:transform .22s ease,visibility .22s ease!important;
+}
+.store-page.is-account-route .market-sidebar.is-mobile-open,
+.store-page.is-buyer-reports-route .market-sidebar.is-mobile-open,
+.store-page.is-account-route .market-global-drawer.is-mobile-open,
+.store-page.is-buyer-reports-route .market-global-drawer.is-mobile-open {
+  transform:translateX(0)!important;visibility:visible!important;pointer-events:auto!important;
+}
+.store-page.is-account-route .market-sidebar-scrim,
+.store-page.is-buyer-reports-route .market-sidebar-scrim,
+.store-page.is-account-route .market-global-drawer-scrim,
+.store-page.is-buyer-reports-route .market-global-drawer-scrim {
+  display:none!important;position:fixed!important;inset:74px 0 0!important;
+  z-index:2147483000!important;background:rgba(13,27,39,.42)!important;
+}
+.store-page.is-account-route:has(.market-sidebar.is-mobile-open) .market-sidebar-scrim,
+.store-page.is-account-route:has(.market-global-drawer.is-mobile-open) .market-global-drawer-scrim,
+.store-page.is-buyer-reports-route:has(.market-sidebar.is-mobile-open) .market-sidebar-scrim,
+.store-page.is-buyer-reports-route:has(.market-global-drawer.is-mobile-open) .market-global-drawer-scrim {
+  display:block!important;
+}
