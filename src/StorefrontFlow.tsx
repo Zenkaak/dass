@@ -1020,11 +1020,10 @@ export function StorefrontFlow({
     if (view === 'inbox') {
       return (
         <section className="customer-flow buyer-inbox-page">
-          <FlowHeading title="Inbox & messages" onBack={() => onNavigate('account')} backLabel="My account" />
-          <div className="buyer-inbox-intro"><div><span className="buyer-section-kicker">PRIVATE SHOP MESSAGES</span><h2>Your conversations</h2><p>Only conversations where you or the seller has sent at least one message appear here. Placing an order never creates a chat by itself.</p></div><span className="buyer-inbox-count">{chatThreads.length} {chatThreads.length===1?'conversation':'conversations'}</span></div>
+          <div className="buyer-inbox-heading"><div><h1>Messages</h1><p>Your conversations and messages</p></div><button type="button" className="buyer-inbox-new-message" onClick={()=>onNavigate('orders')}>＋ New Message</button></div>
           <div className="buyer-inbox-layout">
             <div className="customer-panel buyer-inbox-list">
-              <div className="buyer-inbox-list-heading"><strong>Messages</strong><span>{chatThreads.length}</span></div>
+              <div className="buyer-inbox-list-heading"><strong>Conversations</strong><span>{chatThreads.length}</span></div>
               {chatThreads.length ? chatThreads.map((thread:any) => (
                 <article className="buyer-inbox-thread" key={thread.order_id}>
                   <div className="buyer-inbox-thread-avatar"><MessageCircle size={19}/></div>
