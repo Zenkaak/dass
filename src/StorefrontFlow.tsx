@@ -1025,9 +1025,9 @@ export function StorefrontFlow({
             <div className="customer-panel buyer-inbox-list">
               <div className="buyer-inbox-list-heading"><strong>Conversations</strong><span>{chatThreads.length}</span></div>
               {chatThreads.length ? chatThreads.map((thread:any) => (
-                <article className="buyer-inbox-thread" key={thread.order_id}>
+                <article className="buyer-inbox-thread" key={thread.order_id} role="button" tabIndex={0} onClick={()=>onOpenChat?.('',thread.order_number,thread.order_id)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onOpenChat?.('',thread.order_number,thread.order_id)}}}>
                   <div className="buyer-inbox-thread-avatar"><MessageCircle size={19}/></div>
-                  <div className="buyer-inbox-thread-content"><div className="buyer-inbox-thread-top"><strong>{shopName}</strong><time>{thread.last_message_at?new Date(thread.last_message_at).toLocaleDateString('en-KE',{day:'numeric',month:'short'}):''}</time></div><span className="buyer-inbox-thread-order">Order #{thread.order_number}</span><p>{thread.last_message||'Conversation started'}</p><div className="buyer-inbox-thread-bottom"><span>Private conversation</span><button type="button" onClick={()=>onOpenChat?.('',thread.order_number,thread.order_id)}>Open messages <ArrowRight size={14}/></button></div></div>
+                  <div className="buyer-inbox-thread-content"><div className="buyer-inbox-thread-top"><strong>{shopName}</strong><time>{thread.last_message_at?new Date(thread.last_message_at).toLocaleDateString('en-KE',{day:'numeric',month:'short'}):''}</time></div><span className="buyer-inbox-thread-order">Order #{thread.order_number}</span><p>{thread.last_message||'Conversation started'}</p><div className="buyer-inbox-thread-bottom"><span>Private conversation</span><span className="buyer-inbox-open-link">Open conversation <ArrowRight size={14}/></span></div></div>
                 </article>
               )) : <div className="buyer-inbox-empty"><span><MessageCircle size={25}/></span><strong>No conversations yet</strong><p>Your inbox stays empty until you or the seller starts a conversation. Open an order and choose “Message seller” to begin.</p></div>}
             </div>
