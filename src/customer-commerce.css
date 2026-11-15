@@ -7369,8 +7369,13 @@
 }
 .store-page.is-account-route .market-global-drawer-scrim,
 .store-page.is-buyer-reports-route .market-global-drawer-scrim{
-  display:block!important;position:fixed!important;inset:56px 0 0!important;
+  display:none!important;position:fixed!important;inset:56px 0 0!important;
   z-index:2147483000!important;background:rgba(13,27,39,.42)!important;cursor:pointer;
+}
+/* Only expose the backdrop while the category drawer is actually open. */
+.store-page.is-account-route:has(.buyer-shop-drawer.is-mobile-open) .market-global-drawer-scrim,
+.store-page.is-buyer-reports-route:has(.buyer-shop-drawer.is-mobile-open) .market-global-drawer-scrim{
+  display:block!important;
 }
 .store-page.is-account-route .buyer-dashboard-header{z-index:2147483002!important}
 .store-page.is-account-route .buyer-profile-page{max-width:960px!important}
