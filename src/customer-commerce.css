@@ -7282,3 +7282,50 @@
  .store-page.is-buyer-reports-route .buyer-reports-fullscreen{width:calc(100% - 24px)!important;padding-top:14px!important}
  .store-page.is-buyer-reports-route .buyer-reports-fullscreen .disputes-heading{display:block}
 }
+
+
+
+/* Buyer account polish pass: shop identity, clean inbox, compact reports and profile */
+.store-page.is-account-route .buyer-dashboard-header{gap:10px}
+.store-page.is-account-route .buyer-dashboard-brand{max-width:min(58vw,360px);min-width:0}
+.store-page.is-account-route .buyer-dashboard-brand strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.store-page.is-account-route .buyer-dashboard-header-actions{margin-left:auto}
+.store-page.is-account-route .buyer-dashboard-sidebar{z-index:2147482992}
+.store-page.is-account-route .market-global-drawer-scrim{z-index:2147482990!important;inset:56px 0 0!important;cursor:pointer}
+.store-page.is-account-route .buyer-dashboard-sidebar:not(.is-collapsed){z-index:2147482992}
+.store-page.is-account-route .buyer-inbox-page .buyer-inbox-intro{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 16px;padding:15px 18px;border:1px solid #e7edf2;border-radius:14px;background:#fff}
+.store-page.is-account-route .buyer-inbox-page .buyer-inbox-intro h2{margin:4px 0;color:#1d3044;font-size:20px;font-weight:850}
+.store-page.is-account-route .buyer-inbox-page .buyer-inbox-intro p{margin:5px 0 0;color:#6b7888;font-size:12px;line-height:1.5}
+.store-page.is-account-route .buyer-inbox-page .buyer-inbox-count{flex:0 0 auto;padding:7px 10px;border-radius:999px;background:#f2f5f8;color:#526174;font-size:11px;font-weight:800}
+.store-page.is-account-route .buyer-inbox-page .buyer-inbox-layout{display:block!important;grid-template-columns:minmax(0,1fr)!important}
+.store-page.is-account-route .buyer-inbox-page .buyer-inbox-list{width:100%;max-width:none;min-height:220px}
+.store-page.is-account-route .buyer-inbox-page .buyer-inbox-thread{padding:15px 18px;border-bottom:1px solid #edf1f5}
+.store-page.is-account-route .buyer-inbox-page .buyer-inbox-empty{min-height:190px;padding:28px 18px;display:flex;align-items:center;justify-content:center;text-align:center}
+.store-page.is-account-route .buyer-inbox-active-conversation{margin-top:16px}
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen{min-height:0!important;padding:18px 0 34px!important}
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen>.buyer-support-topbar{margin-bottom:12px}
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen .disputes-heading{min-height:0!important;margin:0 0 14px!important;padding:15px 18px!important;gap:14px!important;border-radius:13px!important}
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen .disputes-heading h2{margin:4px 0!important;font-size:clamp(18px,2vw,23px)!important}
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen .disputes-heading p{font-size:12px!important;line-height:1.45!important}
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen .disputes-new-report-button,
+.store-page.is-buyer-reports-route .buyer-reports-fullscreen .disputes-refresh{min-height:38px!important;padding:0 12px!important;font-size:12px!important}
+.store-page.is-account-route .customer-flow:has(> .customer-flow-heading + form.customer-panel){max-width:900px!important;margin-left:auto!important;margin-right:auto!important}
+.store-page.is-account-route .customer-flow:has(> .customer-flow-heading + form.customer-panel)>.customer-flow-heading{margin-bottom:18px;padding-bottom:15px;border-bottom:1px solid #e7edf2}
+.store-page.is-account-route .customer-flow:has(> .customer-flow-heading + form.customer-panel)>.customer-flow-heading h1{font-size:clamp(23px,2.5vw,30px);font-weight:850;letter-spacing:-.035em;color:#17283b}
+.store-page.is-account-route .customer-flow:has(> .customer-flow-heading + form.customer-panel) form.customer-account-detail{padding:clamp(20px,3vw,34px)!important;border-radius:18px!important;box-shadow:0 12px 34px rgba(24,43,62,.06)!important}
+.store-page.is-account-route .customer-flow:has(> .customer-flow-heading + form.customer-panel) .customer-contact-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 20px}
+.store-page.is-account-route .customer-flow:has(> .customer-flow-heading + form.customer-panel) .customer-form-label{display:flex;flex-direction:column;gap:8px;color:#465b6d;font-size:13px;font-weight:750}
+.store-page.is-account-route .customer-flow:has(> .customer-flow-heading + form.customer-panel) .customer-form-label input{min-height:52px;padding:0 15px;font-size:15px;font-weight:650;color:#20364a}
+.store-page.is-account-route .customer-flow:has(> .customer-flow-heading + form.customer-panel) .customer-form-label input:disabled{background:#f2f5f8;color:#657589}
+.store-page.is-account-route .customer-flow:has(> .customer-flow-heading + form.customer-panel) .customer-flow-actions{margin-top:24px;padding-top:18px;border-top:1px solid #edf1f5}
+.store-page.is-account-route .customer-flow:has(> .customer-flow-heading + form.customer-panel) .customer-primary-button{min-height:48px;padding:0 24px;border-radius:10px;font-weight:850}
+@media(max-width:760px){
+ .store-page.is-account-route .buyer-dashboard-header{gap:7px}
+ .store-page.is-account-route .buyer-dashboard-brand{flex:1;max-width:none;justify-content:flex-start}
+ .store-page.is-account-route .buyer-dashboard-brand strong{font-size:12px}
+ .store-page.is-account-route .buyer-inbox-page .buyer-inbox-intro{align-items:flex-start;padding:13px}
+ .store-page.is-account-route .buyer-inbox-page .buyer-inbox-count{font-size:10px}
+ .store-page.is-buyer-reports-route .buyer-reports-fullscreen .disputes-heading{align-items:flex-start;flex-direction:column}
+ .store-page.is-account-route .customer-flow:has(> .customer-flow-heading + form.customer-panel) .customer-contact-fields{grid-template-columns:minmax(0,1fr)}
+ .store-page.is-account-route .customer-flow:has(> .customer-flow-heading + form.customer-panel) .customer-flow-actions .customer-primary-button{width:100%}
+}
