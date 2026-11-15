@@ -238,3 +238,33 @@
  .buyer-inbox-page .buyer-inbox-conversation{min-height:320px!important}
  .buyer-inbox-page .buyer-inbox-thread{min-height:73px!important}
 }
+
+
+/* Messages final polish: whole conversation row is interactive and the pane has a clear hierarchy. */
+.buyer-inbox-page .buyer-inbox-layout{border-radius:13px!important;border-color:#e4e9ef!important;box-shadow:0 3px 14px rgba(20,35,55,.035)!important}
+.buyer-inbox-page .buyer-inbox-thread{cursor:pointer!important;outline:none!important;transition:background .15s ease,border-color .15s ease!important}
+.buyer-inbox-page .buyer-inbox-thread:hover,.buyer-inbox-page .buyer-inbox-thread:focus-visible{background:#fff9e8!important}
+.buyer-inbox-page .buyer-inbox-thread:focus-visible{box-shadow:inset 0 0 0 2px #e5b62d!important}
+.buyer-inbox-page .buyer-inbox-thread-avatar{background:#fff5d7!important;color:#a77900!important}
+.buyer-inbox-page .buyer-inbox-thread-top strong{font-size:13px!important}
+.buyer-inbox-page .buyer-inbox-thread-order{display:inline-block!important;margin:2px 0!important;padding:3px 6px!important;border-radius:5px!important;background:#f3f5f7!important;color:#667386!important;font-size:9px!important;font-weight:700!important}
+.buyer-inbox-page .buyer-inbox-thread-content p{font-size:11px!important;color:#687486!important}
+.buyer-inbox-page .buyer-inbox-open-link{display:inline-flex!important;align-items:center!important;gap:5px!important;color:#a77b08!important;font-size:10px!important;font-weight:800!important}
+.buyer-inbox-page .buyer-inbox-thread-bottom button{display:none!important}
+.buyer-inbox-page .buyer-inbox-active-conversation{background:#fff!important}
+.buyer-inbox-page .buyer-inbox-placeholder{background:#fbfcfd!important}
+.buyer-inbox-page .buyer-inbox-placeholder>span{width:58px!important;height:58px!important;background:#fff5d2!important;color:#a77b08!important}
+.buyer-inbox-page .buyer-inbox-placeholder h3{font-size:16px!important}
+@media(max-width:900px){
+ .buyer-inbox-page .buyer-inbox-layout{display:flex!important;flex-direction:column!important}
+ .buyer-inbox-page .buyer-inbox-active-conversation{order:2!important;min-height:210px!important}
+ .buyer-inbox-page .buyer-inbox-list{order:1!important}
+ .buyer-inbox-page .buyer-inbox-thread{min-height:78px!important}
+}
+@media(max-width:600px){
+ .buyer-inbox-page .buyer-inbox-heading{align-items:center!important}
+ .buyer-inbox-page .buyer-inbox-heading h1{font-size:23px!important}
+ .buyer-inbox-page .buyer-inbox-thread{grid-template-columns:36px minmax(0,1fr)!important;gap:9px!important;padding:12px 4px!important}
+ .buyer-inbox-page .buyer-inbox-thread-avatar{width:36px!important;height:36px!important}
+ .buyer-inbox-page .buyer-inbox-open-link{font-size:10px!important}
+}
