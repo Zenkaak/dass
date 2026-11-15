@@ -470,3 +470,43 @@
  .buyer-reports-fullscreen .buyer-support-stat small{font-size:8px!important}
  .buyer-reports-fullscreen .buyer-support-report-topline{align-items:flex-start!important;flex-direction:column!important}
 }
+
+
+/* Approved buyer reports reference: compact tabs and case rows. */
+.buyer-reports-fullscreen .buyer-support-hero{display:flex!important;align-items:center!important;justify-content:space-between!important;min-height:72px!important;margin:0 0 12px!important;padding:8px 0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+.buyer-reports-fullscreen .buyer-support-hero-copy h2{margin:0!important;color:#111827!important;font-size:27px!important;font-weight:850!important;letter-spacing:-.7px!important}
+.buyer-reports-fullscreen .buyer-support-hero-copy p{margin:3px 0 0!important;color:#7b8492!important;font-size:13px!important}
+.buyer-reports-fullscreen .buyer-support-new-button{min-height:42px!important;padding:0 18px!important;border-radius:9px!important;background:#f5bd00!important;color:#171717!important;font-weight:800!important;box-shadow:0 3px 8px rgba(184,137,0,.13)!important}
+.buyer-reports-fullscreen .buyer-support-refresh{display:none!important}
+.buyer-reports-fullscreen .buyer-support-controls{margin:0!important;padding:0!important;border:0!important;border-bottom:1px solid #e9edf2!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+.buyer-reports-fullscreen .buyer-support-filters{display:flex!important;gap:25px!important;overflow-x:auto!important;white-space:nowrap!important}
+.buyer-reports-fullscreen .buyer-support-filters button{position:relative!important;min-height:48px!important;padding:0 2px!important;border:0!important;border-radius:0!important;background:transparent!important;color:#4b5563!important;font-size:12px!important;font-weight:700!important}
+.buyer-reports-fullscreen .buyer-support-filters button.active{color:#111827!important}
+.buyer-reports-fullscreen .buyer-support-filters button.active:after{position:absolute!important;right:0!important;bottom:-1px!important;left:0!important;height:3px!important;border-radius:3px 3px 0 0!important;background:#f3bd00!important;content:""!important}
+.buyer-reports-fullscreen .disputes-list{display:flex!important;flex-direction:column!important;gap:0!important;border:1px solid #e8edf2!important;border-radius:14px!important;background:#fff!important;overflow:hidden!important}
+.buyer-reports-fullscreen .buyer-support-report-card{display:grid!important;grid-template-columns:46px minmax(0,1fr) 28px!important;align-items:center!important;gap:15px!important;width:100%!important;min-height:88px!important;padding:13px 18px!important;border:0!important;border-bottom:1px solid #edf0f3!important;border-radius:0!important;box-shadow:none!important;background:#fff!important}
+.buyer-reports-fullscreen .buyer-support-report-card:last-child{border-bottom:0!important}
+.buyer-reports-fullscreen .buyer-support-report-icon{display:grid!important;place-items:center!important;width:42px!important;height:42px!important;border-radius:50%!important;background:#e9f5ff!important;color:#1684d5!important}
+.buyer-reports-fullscreen .buyer-support-report-icon.payment{background:#e9f5ff!important;color:#1684d5!important}
+.buyer-reports-fullscreen .buyer-support-report-icon.delivery{background:#e8f5ff!important;color:#1484d6!important}
+.buyer-reports-fullscreen .buyer-support-report-icon.product_quality,.buyer-reports-fullscreen .buyer-support-report-icon.wrong_item{background:#fff4d8!important;color:#c18a0b!important}
+.buyer-reports-fullscreen .buyer-support-report-icon.other{background:#fff0ef!important;color:#dc514b!important}
+.buyer-reports-fullscreen .buyer-support-report-main{display:flex!important;min-width:0!important;flex-direction:column!important;gap:5px!important}
+.buyer-reports-fullscreen .buyer-support-report-topline{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important}
+.buyer-reports-fullscreen .buyer-support-report-topline strong{color:#161d29!important;font-size:13px!important;font-weight:850!important}
+.buyer-reports-fullscreen .buyer-support-report-meta{color:#8a929e!important;font-size:11px!important;white-space:nowrap!important}
+.buyer-reports-fullscreen .buyer-support-report-description{color:#687384!important;font-size:12px!important;line-height:1.4!important}
+.buyer-reports-fullscreen .buyer-support-report-arrow{color:#8c96a3!important}
+.buyer-reports-fullscreen .buyer-support-report-card:hover{background:#fffdf7!important;border-color:#edf0f3!important;box-shadow:none!important}
+.buyer-reports-fullscreen .buyer-support-report-card:focus-visible{outline:3px solid rgba(197,151,48,.35)!important;outline-offset:-3px!important}
+@media(max-width:600px){
+ .buyer-reports-fullscreen .buyer-support-hero{min-height:64px!important;align-items:center!important;flex-direction:row!important;padding:4px 0 10px!important}
+ .buyer-reports-fullscreen .buyer-support-hero-copy h2{font-size:22px!important}
+ .buyer-reports-fullscreen .buyer-support-new-button{min-height:40px!important;padding:0 12px!important;font-size:11px!important}
+ .buyer-reports-fullscreen .buyer-support-filters{gap:19px!important}
+ .buyer-reports-fullscreen .buyer-support-filters button{min-height:44px!important;font-size:11px!important}
+ .buyer-reports-fullscreen .buyer-support-report-card{grid-template-columns:38px minmax(0,1fr) 18px!important;gap:10px!important;min-height:76px!important;padding:11px 10px!important}
+ .buyer-reports-fullscreen .buyer-support-report-icon{width:36px!important;height:36px!important}
+ .buyer-reports-fullscreen .buyer-support-report-topline strong{font-size:12px!important}
+ .buyer-reports-fullscreen .buyer-support-report-meta{font-size:10px!important}
+}
