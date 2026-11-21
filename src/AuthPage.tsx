@@ -1,3 +1,4 @@
+import './auth-pages.css';
 import { useState } from 'react';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 type Mode = 'signup'|'login'|'reset';

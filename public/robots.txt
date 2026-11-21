@@ -1,4 +1,10 @@
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /platform-admin
+Disallow: /login
+Disallow: /signup
+Disallow: /reset-password
 
 Sitemap: https://dasmarket.co.ke/sitemap.xml

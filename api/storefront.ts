@@ -34,17 +34,20 @@ export default async function handler(req:any,res:any){
  res.setHeader('Cache-Control','public, s-maxage=60, stale-while-revalidate=300');
  if(req.method!=='GET'){res.setHeader('Allow','GET');return send(res,405,{error:'Method not allowed'});}
  try{
-  const sql=db();
+  let sql:any=null;
   let slug=String(req.query?.slug||'').toLowerCase().trim();
   const host=String(req.headers['x-forwarded-host']||req.headers.host||'').split(',')[0].trim().split(':')[0].toLowerCase();
   const customHost=Boolean(host&&host!=='dasmarket.co.ke'&&host!=='www.dasmarket.co.ke'&&!host.endsWith('.dasmarket.co.ke')&&!host.endsWith('.vercel.app')&&host!=='localhost'&&host!=='127.0.0.1');
   if(customHost){
+   sql=db();
    const mapped=await sql`SELECT t.slug FROM public.domains d JOIN public.tenants t ON t.id=d.tenant_id WHERE lower(d.hostname)=${host} AND d.verified_at IS NOT NULL AND COALESCE(d.status,'active')='active' AND t.status IN ('trial','active') LIMIT 1`;
    const mappedSlug=String(mapped[0]?.slug||'');
-   if(!mappedSlug|| (slug&&slug!==mappedSlug))return send(res,404,{error:'This domain is not connected to this shop.'});
+   if(!mappedSlug|| (slug&&slug!==mappedSlug)){res.setHeader('Cache-Control','no-store');return send(res,404,{error:'This domain is not connected to this shop.'});}
    slug=mappedSlug;res.setHeader('Cache-Control','private, no-store, max-age=0');
   }
-  if(!slug)return send(res,400,{error:'Shop slug is required'});
+  if(!slug){res.setHeader('Cache-Control','no-store');return send(res,400,{error:'Shop slug is required'});}
+  if(!/^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/.test(slug)){res.setHeader('Cache-Control','no-store');return send(res,400,{error:'Invalid shop slug'});}
+  if(!sql)sql=db();
   // Enforce trial and paid-period expiry on every storefront request, including custom shop domains.
   await sql`UPDATE public.tenants t SET status='past_due',updated_at=now() WHERE t.slug=${slug} AND t.status IN ('trial','active') AND NOT EXISTS (SELECT 1 FROM public.subscriptions s WHERE s.tenant_id=t.id AND ((s.status='trialing' AND COALESCE(s.trial_ends_at,s.current_period_end)>now()) OR (s.status='active' AND s.current_period_end>now())))`;
   const requestedLimit=Math.max(1,Math.min(60,Number(req.query?.limit)||35));
@@ -96,7 +99,7 @@ export default async function handler(req:any,res:any){
   FROM target_tenant t
   LEFT JOIN public.sites s ON s.tenant_id=t.id
   CROSS JOIN page_data pd CROSS JOIN product_total pt`;
-  if(!rows.length)return send(res,404,{error:'Shop not found'});
+  if(!rows.length){res.setHeader('Cache-Control','no-store');return send(res,404,{error:'Shop not found'});}
   const row=rows[0];
   res.setHeader('Cache-Control','public, s-maxage=30, stale-while-revalidate=120');
   return send(res,200,{shop:{name:row.shop_name,slug:row.slug,description:row.description||'',logoUrl:typeof row.logo_url==='string'&&row.logo_url.startsWith('data:')&&row.logo_url.length>65536?'':row.logo_url||'',whatsappNumber:row.contact_phone||row.whatsapp_number||'',contactPhone:row.contact_phone||row.whatsapp_number||'',contactEmail:row.contact_email||'',termsAndConditions:row.terms_and_conditions||'',privacyPolicy:row.privacy_policy||'',returnPolicy:row.return_policy||'',deliveryPolicy:row.delivery_policy||'',deliveryHomeFee:Number(row.delivery_home_fee_minor||0)/100,deliveryPickupFee:Number(row.delivery_pickup_fee_minor||0)/100,cashOnDeliveryEnabled:!!row.cash_on_delivery_enabled,cashOnPickupEnabled:!!row.cash_on_pickup_enabled,faqs:Array.isArray(row.storefront_faqs)?row.storefront_faqs:[],theme:/^#[0-9a-f]{6}$/i.test(String(row.storefront_theme||''))?row.storefront_theme:'#e47a13'},products:(row.products||[]).map((p:any)=>productOut(p,false)),totalProducts:Number(row.product_total||0),nextOffset:requestedOffset+(row.products||[]).length,hasMore:requestedOffset+(row.products||[]).length<Number(row.product_total||0)});

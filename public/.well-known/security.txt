@@ -1,0 +1,5 @@
+Contact: https://dasmarket.co.ke/contact/
+Contact: mailto:support@dasmarket.co.ke
+Expires: 2027-11-21T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://dasmarket.co.ke/.well-known/security.txt

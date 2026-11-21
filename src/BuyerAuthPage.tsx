@@ -1,3 +1,4 @@
+import './auth-pages.css';
 import { useState } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 

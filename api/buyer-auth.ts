@@ -47,15 +47,16 @@ export default async function handler(req:any,res:any){
  res.setHeader('Cache-Control','no-store');
  if(!['GET','POST'].includes(req.method))return send(res,405,{error:'Method not allowed'});
  const body=req.body||{},action=String(req.query?.action||body.action||''),slug=String(req.method==='GET'?req.query?.slug:body.slug||'').toLowerCase().trim();
+ if(!/^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/.test(slug)){res.setHeader('Cache-Control','no-store');return send(res,400,{error:'Invalid shop.'});}
  try{
   const sql=db();
-  await sql`UPDATE public.store_customers SET is_banned=false,ban_reason=NULL,banned_until=NULL,updated_at=now() WHERE is_banned=true AND banned_until IS NOT NULL AND banned_until<=now()`;
-  await sql`UPDATE public.tenants SET status=COALESCE(NULLIF(status_before_ban,'banned'),'active'),status_before_ban=NULL,ban_reason=NULL,ban_expires_at=NULL,updated_at=now() WHERE status='banned' AND ban_expires_at IS NOT NULL AND ban_expires_at<=now()`;
-  await sql`UPDATE public.store_customers SET is_banned=false,ban_reason=NULL,banned_until=NULL,updated_at=now() WHERE is_banned=true AND banned_until IS NOT NULL AND banned_until<=now()`;
-  if(!/^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/.test(slug))return send(res,400,{error:'Invalid shop.'});
+  // Expire only this shop's temporary suspension before resolving its buyer tenant.
+  await sql`UPDATE public.tenants SET status=COALESCE(NULLIF(status_before_ban,'banned'),'active'),status_before_ban=NULL,ban_reason=NULL,ban_expires_at=NULL,updated_at=now() WHERE slug=${slug} AND status='banned' AND ban_expires_at IS NOT NULL AND ban_expires_at<=now()`;
   const shops=await sql`SELECT id,name FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
-  if(!shops.length)return send(res,404,{error:'Shop not found.'});
+  if(!shops.length){res.setHeader('Cache-Control','no-store');return send(res,404,{error:'Shop not found.'});}
   const tenant=shops[0],tenantId=tenant.id;
+  // Expire buyer restrictions only inside the resolved shop; never scan every shop per request.
+  await sql`UPDATE public.store_customers SET is_banned=false,ban_reason=NULL,banned_until=NULL,updated_at=now() WHERE tenant_id=${tenantId} AND is_banned=true AND banned_until IS NOT NULL AND banned_until<=now()`;
 
   if(req.method==='POST'&&action==='send-code'){
    const phone=phoneOf(body.phone);if(!phone)return send(res,400,{error:'Enter a valid Kenyan mobile number.'});if(await restricted(sql,'buyer',phone,String(body.email||'').trim().toLowerCase(),requestIp(req)))return send(res,403,{error:'This buyer identity is restricted. Contact DASNET support.'});
