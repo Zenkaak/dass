@@ -1,0 +1,88 @@
+/* A light, brand-consistent polish for existing buyer screens. No layout or behavior changes. */
+.store-page .ds-store-navigation,
+.store-page .buyer-dashboard-header {
+  box-shadow: 0 3px 14px rgba(26, 43, 34, 0.06);
+}
+
+.store-page .ds-store-search:focus-within,
+.store-page .buyer-dashboard-search:focus-within {
+  border-color: var(--store-accent, #078b2c);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--store-accent, #078b2c) 13%, transparent);
+}
+
+@media (hover: hover) {
+  .store-page .ds-store-card,
+  .store-page .market-home-product-card,
+  .store-page .market-product-card-approved,
+  .store-page .buyer-account-discovery-card {
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  }
+
+  .store-page .ds-store-card:hover,
+  .store-page .market-home-product-card:hover,
+  .store-page .market-product-card-approved:hover,
+  .store-page .buyer-account-discovery-card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--store-accent, #078b2c) 30%, #e5ebe7);
+    box-shadow: 0 8px 20px rgba(25, 48, 36, 0.09);
+  }
+}
+
+.store-page.is-account-route .buyer-dashboard-nav-item:hover,
+.store-page.is-account-route .buyer-dashboard-nav-item.active {
+  background: color-mix(in srgb, var(--store-accent, #078b2c) 10%, white);
+  color: color-mix(in srgb, var(--store-accent, #078b2c) 74%, #20352a);
+}
+
+.store-page.is-account-route .buyer-dashboard-nav-item.active {
+  box-shadow: inset 3px 0 0 var(--store-accent, #078b2c);
+}
+
+.store-page.is-account-route .buyer-dashboard-nav-item.active svg,
+.store-page.is-account-route .buyer-dashboard-nav-item:hover svg {
+  color: var(--store-accent, #078b2c);
+}
+
+.store-page.is-account-route .buyer-account-workspace .customer-account-welcome {
+  min-height: 144px;
+  padding: 23px 27px;
+  border-radius: 16px;
+  box-shadow: 0 7px 22px rgba(25, 48, 36, 0.05);
+}
+
+.store-page.is-account-route .buyer-account-workspace .customer-account-welcome > span {
+  background: var(--store-accent, #078b2c);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--store-accent, #078b2c) 20%, transparent);
+}
+
+.store-page .market-checkout-redesign .market-checkout-card,
+.store-page .market-checkout-redesign .market-checkout-order-card,
+.store-page .market-checkout-redesign .customer-summary-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(25, 48, 36, 0.045);
+}
+
+.store-page .market-checkout-redesign .customer-form-label input:focus-visible,
+.store-page .market-checkout-redesign .customer-form-label select:focus-visible,
+.store-page .market-checkout-redesign .customer-form-label textarea:focus-visible,
+.store-page button:focus-visible,
+.store-page a:focus-visible {
+  outline: 2px solid var(--store-accent, #078b2c);
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+  .store-page.is-account-route .buyer-account-workspace .customer-account-welcome {
+    min-height: 0;
+    padding: 17px 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .store-page .ds-store-card,
+  .store-page .market-home-product-card,
+  .store-page .market-product-card-approved,
+  .store-page .buyer-account-discovery-card {
+    transition: none;
+  }
+}
