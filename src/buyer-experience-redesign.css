@@ -1,0 +1,476 @@
+/* DASMARKET buyer experience refresh.
+   Presentation-only overrides: preserve existing routes, state, APIs and payment handlers. */
+
+.store-page .market-products-grid > .market-product-card,
+.store-page .market-products-row > .market-product-card {
+  display: flex !important;
+  min-width: 0 !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  border: 1px solid #e4e9ee !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+  box-shadow: 0 2px 8px rgba(20, 36, 52, .035) !important;
+}
+.store-page .market-products-grid .market-product-info,
+.store-page .market-products-row .market-product-info {
+  display: flex !important;
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 7px !important;
+  padding: 11px 12px 9px !important;
+}
+.store-page .market-products-grid .market-product-info h3,
+.store-page .market-products-row .market-product-info h3 {
+  display: block !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  color: #243447 !important;
+  font-size: 14px !important;
+  font-weight: 650 !important;
+  line-height: 1.38 !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+  text-overflow: clip !important;
+  -webkit-line-clamp: unset !important;
+  -webkit-box-orient: initial !important;
+}
+.store-page .market-products-grid .market-product-info > strong,
+.store-page .market-products-row .market-product-info > strong {
+  margin-top: auto !important;
+  color: #172433 !important;
+  font-size: 18px !important;
+  line-height: 1.2 !important;
+  font-weight: 850 !important;
+}
+.store-page .market-products-grid .market-product-info > small,
+.store-page .market-products-row .market-product-info > small {
+  color: #7d8995 !important;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+}
+.store-page .market-products-grid .market-product-art,
+.store-page .market-products-row .market-product-art {
+  flex: 0 0 auto !important;
+  height: clamp(130px, 18vw, 210px) !important;
+  margin: 10px 10px 0 !important;
+  overflow: hidden !important;
+  border-radius: 10px !important;
+  background: #f5f7f9 !important;
+}
+.store-page .market-products-grid .market-product-art img,
+.store-page .market-products-row .market-product-art img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}
+.store-page .market-products-grid .market-product-add,
+.store-page .market-products-row .market-product-add {
+  min-height: 43px !important;
+  width: calc(100% - 24px) !important;
+  margin: 0 12px 12px !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+}
+@media (max-width: 760px) {
+  .store-page .market-products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 11px !important;
+  }
+  .store-page .market-products-grid .market-product-art {
+    height: clamp(128px, 38vw, 178px) !important;
+    margin: 8px 8px 0 !important;
+  }
+  .store-page .market-products-grid .market-product-info {
+    padding: 9px 10px 8px !important;
+    gap: 6px !important;
+  }
+  .store-page .market-products-grid .market-product-info h3 {
+    font-size: 13px !important;
+    line-height: 1.35 !important;
+  }
+  .store-page .market-products-grid .market-product-info > strong {
+    font-size: 16px !important;
+  }
+  .store-page .market-products-grid .market-product-info > small {
+    font-size: 11px !important;
+  }
+  .store-page .market-products-grid .market-product-add {
+    min-height: 40px !important;
+    width: calc(100% - 16px) !important;
+    margin: 0 8px 8px !important;
+    font-size: 12px !important;
+  }
+}
+
+/* Compact, deliberate merchant footer on small screens. */
+.store-page .ds-store-footer-expanded {
+  margin-top: 28px !important;
+  padding: 30px clamp(18px, 3vw, 38px) 18px !important;
+  border-radius: 0 !important;
+}
+.store-page .ds-store-footer-grid {
+  display: grid !important;
+  grid-template-columns: minmax(240px, 1.5fr) repeat(3, minmax(120px, 1fr)) !important;
+  gap: 22px !important;
+  align-items: start !important;
+}
+.store-page .ds-store-footer-grid > div {
+  display: flex !important;
+  min-width: 0 !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 9px !important;
+}
+.store-page .ds-store-footer-grid > div > b {
+  margin-bottom: 3px !important;
+  font-size: 14px !important;
+}
+.store-page .ds-store-footer-grid > div > button,
+.store-page .ds-store-footer-grid > div > a:not(:first-child) {
+  padding: 0 !important;
+  color: #bdcbd5 !important;
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+  text-align: left !important;
+}
+.store-page .ds-store-footer-brand p {
+  max-width: 310px !important;
+  margin: 2px 0 4px !important;
+  font-size: 12px !important;
+  line-height: 1.55 !important;
+}
+.store-page .ds-store-footer-brand .ds-store-footer-whatsapp {
+  min-height: 40px !important;
+  padding: 8px 11px !important;
+  font-size: 12px !important;
+}
+.store-page .ds-store-footer-bottom {
+  margin-top: 22px !important;
+  padding-top: 14px !important;
+  font-size: 10px !important;
+}
+@media (max-width: 760px) {
+  .store-page .ds-store-footer-expanded {
+    margin-top: 22px !important;
+    padding: 22px 18px 15px !important;
+  }
+  .store-page .ds-store-footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 18px 15px !important;
+  }
+  .store-page .ds-store-footer-grid > div:first-child {
+    grid-column: 1 / -1 !important;
+    padding-bottom: 3px !important;
+  }
+  .store-page .ds-store-footer-brand > a:first-child {
+    gap: 10px !important;
+  }
+  .store-page .ds-store-footer-mark {
+    width: 42px !important;
+    height: 42px !important;
+    flex: 0 0 42px !important;
+  }
+  .store-page .ds-store-footer-brand > a:first-child b {
+    font-size: 14px !important;
+  }
+  .store-page .ds-store-footer-brand p {
+    max-width: 360px !important;
+    font-size: 11px !important;
+  }
+  .store-page .ds-store-footer-grid > div > b {
+    font-size: 13px !important;
+  }
+  .store-page .ds-store-footer-grid > div > button,
+  .store-page .ds-store-footer-grid > div > a:not(:first-child) {
+    font-size: 11px !important;
+  }
+  .store-page .ds-store-footer-bottom {
+    flex-direction: column !important;
+    gap: 5px !important;
+    margin-top: 17px !important;
+    line-height: 1.5 !important;
+  }
+}
+
+/* Product details: stronger purchase hierarchy and a touch-first gallery. */
+.store-page .market-product-detail-route {
+  width: min(1240px, 100%) !important;
+  padding: 20px clamp(14px, 2.5vw, 30px) 44px !important;
+}
+.store-page .market-product-detail-main {
+  gap: clamp(20px, 3vw, 38px) !important;
+  border-color: #e5eaf0 !important;
+  border-radius: 18px !important;
+  box-shadow: 0 8px 28px rgba(22, 38, 54, .055) !important;
+}
+.store-page .market-detail-main-image {
+  min-height: 340px !important;
+  border: 1px solid #edf0f3 !important;
+  background: #f7f8fa !important;
+}
+.store-page .market-detail-summary {
+  gap: 14px !important;
+}
+.store-page .market-detail-summary h1 {
+  color: #172536 !important;
+  font-size: clamp(25px, 3vw, 36px) !important;
+  line-height: 1.2 !important;
+  overflow-wrap: anywhere !important;
+}
+.store-page .market-detail-price {
+  font-size: clamp(26px, 3vw, 34px) !important;
+  font-weight: 850 !important;
+}
+.store-page .market-detail-description-panel,
+.store-page .market-detail-specifications,
+.store-page .market-detail-delivery,
+.store-page .market-detail-seller,
+.store-page .market-detail-reviews,
+.store-page .market-detail-safety {
+  border-radius: 14px !important;
+}
+.store-page .market-detail-add-inline {
+  min-height: 50px !important;
+  border-radius: 11px !important;
+  font-size: 15px !important;
+  font-weight: 850 !important;
+}
+.store-page .market-detail-save {
+  min-height: 44px !important;
+  border-radius: 10px !important;
+}
+.store-page .market-related-grid {
+  gap: 12px !important;
+  scroll-snap-type: x mandatory !important;
+}
+.store-page .market-related-card {
+  scroll-snap-align: start !important;
+}
+@media (max-width: 760px) {
+  .store-page .market-product-detail-route {
+    padding: 12px 12px 30px !important;
+  }
+  .store-page .market-product-detail-main {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 14px !important;
+    padding: 12px !important;
+    border-radius: 15px !important;
+  }
+  .store-page .market-detail-main-image {
+    min-height: 0 !important;
+    height: min(78vw, 330px) !important;
+    border-radius: 12px !important;
+  }
+  .store-page .market-detail-main-image img {
+    max-height: 100% !important;
+  }
+  .store-page .market-detail-thumbnails {
+    gap: 8px !important;
+    margin-top: 8px !important;
+  }
+  .store-page .market-detail-summary {
+    gap: 11px !important;
+    padding: 2px 1px !important;
+  }
+  .store-page .market-detail-summary h1 {
+    font-size: 23px !important;
+  }
+  .store-page .market-detail-price {
+    font-size: 27px !important;
+  }
+  .store-page .market-detail-reviews,
+  .store-page .market-detail-safety {
+    margin-top: 14px !important;
+    padding: 16px !important;
+  }
+  .store-page .market-detail-related {
+    margin-top: 18px !important;
+  }
+}
+
+/* Shared buyer workspace language across orders, profile, messages and reports. */
+.store-page.is-account-route .buyer-account-workspace,
+.store-page.is-fullscreen-route .customer-flow {
+  color: #1d2c3d !important;
+}
+.store-page.is-account-route .buyer-account-workspace .customer-account-welcome {
+  min-height: 118px !important;
+  margin: 0 0 16px !important;
+  padding: 20px 22px !important;
+  border: 1px solid #f0e3c8 !important;
+  border-radius: 16px !important;
+  background: linear-gradient(110deg, #fffaf0, #fff 78%) !important;
+}
+.store-page.is-account-route .buyer-account-workspace .customer-account-welcome h1 {
+  font-size: clamp(20px, 2.5vw, 27px) !important;
+  line-height: 1.2 !important;
+}
+.store-page.is-account-route .buyer-account-workspace .customer-account-groups {
+  gap: 14px !important;
+}
+.store-page.is-account-route .buyer-account-workspace .customer-panel,
+.store-page.is-account-route .buyer-account-workspace .customer-credit-card,
+.store-page.is-account-route .buyer-account-workspace .buyer-order-card,
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-list,
+.store-page.is-account-route .buyer-account-workspace .buyer-inbox-conversation,
+.store-page.is-account-route .buyer-account-workspace .buyer-profile-card,
+.store-page.is-account-route .buyer-account-workspace .buyer-reports-panel,
+.store-page.is-account-route .buyer-account-workspace .customer-account-group {
+  border-color: #e5eaf0 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 16px rgba(22, 38, 54, .04) !important;
+}
+.store-page.is-account-route .buyer-account-workspace input,
+.store-page.is-account-route .buyer-account-workspace select,
+.store-page.is-account-route .buyer-account-workspace textarea,
+.store-page.is-fullscreen-route .customer-flow input,
+.store-page.is-fullscreen-route .customer-flow select,
+.store-page.is-fullscreen-route .customer-flow textarea {
+  border-radius: 9px !important;
+}
+.store-page.is-account-route .buyer-account-workspace button,
+.store-page.is-fullscreen-route .customer-flow button {
+  touch-action: manipulation;
+}
+.store-page.is-account-route .buyer-account-workspace :focus-visible,
+.store-page.is-fullscreen-route .customer-flow :focus-visible {
+  outline-color: color-mix(in srgb, var(--store-accent, #d99a25) 70%, #fff) !important;
+  outline-offset: 2px !important;
+}
+.store-page .buyer-inbox-page,
+.store-page .buyer-reports-fullscreen,
+.store-page .buyer-profile-page,
+.store-page .buyer-orders-page {
+  width: min(1180px, calc(100% - 32px)) !important;
+  max-width: 1180px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+.store-page .buyer-inbox-heading h1,
+.store-page .buyer-reports-fullscreen h1,
+.store-page .buyer-profile-page h1,
+.store-page .buyer-orders-page h1 {
+  letter-spacing: -.025em !important;
+}
+@media (max-width: 760px) {
+  .store-page.is-account-route .buyer-account-workspace {
+    padding: 0 12px 26px !important;
+  }
+  .store-page.is-account-route .buyer-account-workspace .customer-account-welcome {
+    min-height: 0 !important;
+    margin: 8px 0 12px !important;
+    padding: 17px 15px !important;
+    border-radius: 13px !important;
+  }
+  .store-page.is-account-route .buyer-account-workspace .customer-account-groups {
+    gap: 10px !important;
+  }
+  .store-page .buyer-inbox-page,
+  .store-page .buyer-reports-fullscreen,
+  .store-page .buyer-profile-page,
+  .store-page .buyer-orders-page {
+    width: calc(100% - 24px) !important;
+    margin-top: 12px !important;
+  }
+}
+
+/* Checkout: consistent step cards, clearer totals and mobile-safe action bar. */
+.store-page .market-checkout-page {
+  width: min(1120px, calc(100% - 36px)) !important;
+  max-width: 1120px !important;
+  margin: 18px auto 42px !important;
+  padding: 0 !important;
+}
+.store-page .market-checkout-page .market-checkout-intro {
+  margin: 12px 0 18px !important;
+  padding: 20px 22px !important;
+  border: 1px solid #e8edf1 !important;
+  border-radius: 15px !important;
+  background: linear-gradient(110deg, #fffaf0, #fff 75%) !important;
+}
+.store-page .market-checkout-page .market-checkout-intro h2 {
+  color: #172536 !important;
+  font-size: clamp(21px, 2.5vw, 28px) !important;
+  line-height: 1.25 !important;
+}
+.store-page .market-checkout-page .market-checkout-card,
+.store-page .market-checkout-page .market-checkout-order-card {
+  border: 1px solid #e5eaf0 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 5px 18px rgba(22, 38, 54, .045) !important;
+}
+.store-page .market-checkout-page .market-checkout-card {
+  padding: clamp(15px, 2vw, 22px) !important;
+}
+.store-page .market-checkout-page .market-checkout-card-heading h2 {
+  color: #203247 !important;
+  font-size: 16px !important;
+}
+.store-page .market-checkout-page .market-checkout-order-card {
+  padding: 18px !important;
+}
+.store-page .market-checkout-page .market-checkout-order-grand strong {
+  font-size: 22px !important;
+  font-weight: 850 !important;
+}
+.store-page .market-checkout-page .market-checkout-bottom-action {
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 40 !important;
+  margin: 18px 0 0 !important;
+  padding: 12px 14px calc(12px + env(safe-area-inset-bottom)) !important;
+  border: 1px solid #e4e9ee !important;
+  border-radius: 14px 14px 0 0 !important;
+  background: rgba(255,255,255,.97) !important;
+  box-shadow: 0 -8px 26px rgba(22, 38, 54, .08) !important;
+  backdrop-filter: blur(12px);
+}
+.store-page .market-checkout-page .market-checkout-bottom-action .customer-primary-button {
+  min-height: 48px !important;
+  border-radius: 10px !important;
+  font-weight: 850 !important;
+}
+@media (max-width: 760px) {
+  .store-page .market-checkout-page {
+    width: calc(100% - 22px) !important;
+    margin: 10px auto 24px !important;
+  }
+  .store-page .market-checkout-page .market-checkout-intro {
+    margin: 10px 0 12px !important;
+    padding: 16px !important;
+    border-radius: 12px !important;
+  }
+  .store-page .market-checkout-page .market-checkout-card,
+  .store-page .market-checkout-page .market-checkout-order-card {
+    border-radius: 12px !important;
+  }
+  .store-page .market-checkout-page .market-checkout-bottom-action {
+    gap: 10px !important;
+    margin: 12px -11px 0 !important;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom)) !important;
+  }
+  .store-page .market-checkout-page .market-checkout-bottom-action .customer-primary-button {
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    font-size: 12px !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .store-page .market-products-grid *,
+  .store-page .market-product-detail-route *,
+  .store-page .market-checkout-page *,
+  .store-page .buyer-account-workspace * {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+  }
+}
