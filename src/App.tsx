@@ -72,7 +72,7 @@ function ProductDetailPage({product,products,slug,shopName,cartQuantity,onBack,o
 }
 function readCachedStorefront(slug:string){try{const raw=localStorage.getItem('dasnet-storefront-cache-'+slug);if(!raw)return null;const value=JSON.parse(raw);if(!value||!Array.isArray(value.products)||!value.shop)return null;/* A legacy partial cache must never make a large catalogue look complete. */if(value.products.length<35)return null;return {shop:value.shop,products:value.products.slice(0,35) as LiveProduct[]}}catch{return null}}
 function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug: string; initialBuyerPage?: string }) {
- useEffect(()=>{void import('./customer-commerce.css');void import('./storefront-reference.css');void import('./storefront-performance.css');},[]);
+ useEffect(()=>{void Promise.all([import('./customer-commerce.css'),import('./storefront-reference.css'),import('./storefront-performance.css')]).then(()=>import('./buyer-visual-polish.css'));},[]);
  const [slug,setSlug]=useState(initialSlug);
  const cachedStorefront=readCachedStorefront(slug);
  const previousPaymentStatus=useRef<string|null>(null);const [chatToken,setChatToken]=useState(''),[chatOrderId,setChatOrderId]=useState(''),[chatOrderNumber,setChatOrderNumber]=useState(''),[chatOrder,setChatOrder]=useState<any>(null),[chatMessages,setChatMessages]=useState<any[]>([]),[chatAttachments,setChatAttachments]=useState<any[]>([]),[chatDraft,setChatDraft]=useState(''),[chatSending,setChatSending]=useState(false),[paymentCelebration,setPaymentCelebration]=useState(false),[chatError,setChatError]=useState('');
