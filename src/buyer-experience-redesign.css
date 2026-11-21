@@ -390,3 +390,83 @@
  .store-page .market-product-detail-main .market-detail-delivery,
  .store-page .market-product-detail-main .market-detail-seller{padding:11px 12px!important}
 }
+
+/* Compact mobile product detail: remove vertical filler and oversized card padding. */
+@media (max-width:760px) {
+  .store-page .market-product-detail-route,
+  .store-page.is-fullscreen-route .market-product-detail-route {
+    min-height:0!important;
+    height:auto!important;
+    padding:4px 10px 18px!important;
+    margin:0!important;
+  }
+  .store-page .market-product-detail-main,
+  .store-page.is-fullscreen-route .market-product-detail-main {
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:stretch!important;
+    gap:9px!important;
+    min-height:0!important;
+    height:auto!important;
+    margin:0!important;
+    padding:0!important;
+  }
+  .store-page .market-detail-gallery {margin:0!important;padding:0!important}
+  .store-page .market-detail-main-image {
+    height:min(68vw,280px)!important;
+    min-height:190px!important;
+    max-height:280px!important;
+    margin:0!important;
+  }
+  .store-page .market-detail-main-image img {padding:8px!important}
+  .store-page .market-detail-thumbnails {padding:6px 0 2px!important;gap:6px!important}
+  .store-page .market-detail-thumbnails button {width:52px!important;height:52px!important;flex-basis:52px!important}
+  .store-page .market-detail-summary {
+    display:flex!important;flex-direction:column!important;align-items:stretch!important;
+    gap:7px!important;margin:0!important;padding:0 2px!important;
+    min-height:0!important;height:auto!important;
+  }
+  .store-page .market-detail-badges {margin:0!important;gap:5px!important}
+  .store-page .market-detail-category,
+  .store-page .market-detail-store-badge {min-height:24px!important;padding:4px 8px!important;font-size:9px!important}
+  .store-page .market-detail-summary h1 {font-size:20px!important;line-height:1.18!important;margin:0!important}
+  .store-page .market-detail-review-summary {margin:0!important;min-height:0!important;font-size:11px!important}
+  .store-page .market-detail-sku {margin:0!important;padding:0 0 6px!important;font-size:10px!important}
+  .store-page .market-detail-price-panel {
+    display:flex!important;align-items:center!important;justify-content:space-between!important;
+    gap:6px 10px!important;min-height:0!important;height:auto!important;
+    margin:0!important;padding:10px 11px!important;border-radius:9px!important;
+  }
+  .store-page .market-detail-price {font-size:24px!important;line-height:1.1!important}
+  .store-page .market-detail-stock {font-size:10px!important}
+  .store-page .market-detail-description-panel,
+  .store-page .market-detail-specifications,
+  .store-page .market-detail-delivery,
+  .store-page .market-detail-seller {
+    min-height:0!important;height:auto!important;margin:0!important;
+    padding:9px 10px!important;border-radius:9px!important;
+  }
+  .store-page .market-detail-description-panel h2,
+  .store-page .market-detail-specifications h2 {font-size:12px!important;margin:0 0 4px!important}
+  .store-page .market-detail-description-panel p {font-size:11px!important;line-height:1.45!important;margin:0!important}
+  .store-page .market-detail-specifications>div {padding:5px 0!important;font-size:10px!important}
+  .store-page .market-detail-delivery p {font-size:10px!important;line-height:1.4!important;margin:3px 0 0!important}
+  .store-page .market-detail-seller {display:flex!important;align-items:center!important;gap:9px!important}
+  .store-page .market-detail-seller strong {font-size:12px!important}
+  .store-page .market-detail-seller small {font-size:10px!important}
+  .store-page .market-detail-quantity {
+    display:grid!important;grid-template-columns:1fr auto!important;grid-template-areas:"label control" "hint hint"!important;
+    gap:5px 8px!important;min-height:0!important;height:auto!important;margin:0!important;padding:8px 0!important;
+  }
+  .store-page .market-detail-quantity>span {font-size:12px!important}
+  .store-page .market-detail-quantity-control button {width:32px!important;height:32px!important}
+  .store-page .market-detail-quantity-control output {min-width:32px!important}
+  .store-page .market-detail-quantity small {font-size:9px!important}
+  .store-page .market-detail-add,
+  .store-page .market-detail-add-inline,
+  .store-page .market-detail-add-desktop {min-height:42px!important;height:auto!important;margin:0!important;padding:9px 12px!important;font-size:13px!important}
+  .store-page .market-detail-save {min-height:38px!important;height:auto!important;margin:0!important;padding:8px 10px!important;font-size:12px!important}
+  .store-page .market-detail-assurance {margin:0!important;padding:8px 9px!important;font-size:9px!important;line-height:1.35!important}
+  .store-page .market-detail-reviews,
+  .store-page .market-detail-related {margin-top:12px!important;padding:11px!important}
+}
