@@ -470,3 +470,57 @@
   .store-page .market-detail-reviews,
   .store-page .market-detail-related {margin-top:12px!important;padding:11px!important}
 }
+
+/* Category catalogue cards must fill their grid tracks on narrow screens. */
+.store-page .ds-store-catalogue-rows,
+.store-page .ds-store-catalogue-row {
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+}
+.store-page .ds-store-catalogue-row {
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  justify-content:stretch!important;
+  justify-items:stretch!important;
+  align-items:stretch!important;
+}
+.store-page .ds-store-catalogue-row > .ds-store-card {
+  display:flex!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+  justify-self:stretch!important;
+  box-sizing:border-box!important;
+}
+.store-page .ds-store-catalogue-row > .ds-store-card > .ds-store-product {
+  display:flex!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+.store-page .ds-store-catalogue-row > .ds-store-card .ds-store-product-image {
+  width:calc(100% - 16px)!important;
+  max-width:100%!important;
+  flex:0 0 auto!important;
+}
+@media(max-width:760px) {
+  .store-page .ds-store-catalogue-row {
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    column-gap:10px!important;
+    row-gap:12px!important;
+    justify-content:stretch!important;
+    justify-items:stretch!important;
+  }
+  .store-page .ds-store-catalogue-row > .ds-store-card {
+    width:100%!important;
+    min-width:0!important;
+    max-width:none!important;
+  }
+  .store-page .ds-store-catalogue-row > .ds-store-card .ds-store-product-name {
+    overflow-wrap:break-word!important;
+    word-break:normal!important;
+  }
+}
