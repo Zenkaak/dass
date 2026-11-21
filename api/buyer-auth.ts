@@ -52,7 +52,7 @@ export default async function handler(req:any,res:any){
   const sql=db();
   // Expire only this shop's temporary suspension before resolving its buyer tenant.
   await sql`UPDATE public.tenants SET status=COALESCE(NULLIF(status_before_ban,'banned'),'active'),status_before_ban=NULL,ban_reason=NULL,ban_expires_at=NULL,updated_at=now() WHERE slug=${slug} AND status='banned' AND ban_expires_at IS NOT NULL AND ban_expires_at<=now()`;
-  const shops=await sql`SELECT id,name FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
+  const shops=await sql`SELECT id,name,slug FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
   if(!shops.length){res.setHeader('Cache-Control','no-store');return send(res,404,{error:'Shop not found.'});}
   const tenant=shops[0],tenantId=tenant.id;
   // Expire buyer restrictions only inside the resolved shop; never scan every shop per request.
@@ -106,7 +106,7 @@ export default async function handler(req:any,res:any){
     SELECT p.* FROM profile p JOIN session s ON true
    `;
    if(!rows.length)return send(res,409,{error:'This phone could not be linked safely. Sign in to the existing DASNET account or contact support.'});
-   await recordSignals(sql,rows[0].id,phone,email,requestIp(req));cookie(res,token,604800);try{const welcome=brandedEmail(tenant.name,'Welcome to '+tenant.name,'Hi '+name+', your buyer account is ready. You can now place orders, track deliveries and receive updates from the shop.');await sendTenantTransactionalEmail(sql,tenantId,{to:email,subject:'Welcome to '+tenant.name,...welcome,idempotencyKey:'buyer-welcome-'+rows[0].id});}catch(emailError:any){console.error('Buyer welcome email could not be sent',String(emailError?.message||emailError).slice(0,200));}return send(res,201,{ok:true,customer:customer(rows[0])});
+   await recordSignals(sql,rows[0].id,phone,email,requestIp(req));cookie(res,token,604800);try{const welcome=brandedEmail(tenant.name,'Welcome to '+tenant.name,'Hi '+name+', your buyer account is ready. You can now place orders, track deliveries and receive updates from the shop.',{}, {buttonLabel:'Visit your shop',buttonUrl:'https://'+encodeURIComponent(String(tenant.slug||slug))+'.dasmarket.co.ke/'});await sendTenantTransactionalEmail(sql,tenantId,{to:email,subject:'Welcome to '+tenant.name,...welcome,idempotencyKey:'buyer-welcome-'+rows[0].id});}catch(emailError:any){console.error('Buyer welcome email could not be sent',String(emailError?.message||emailError).slice(0,200));}return send(res,201,{ok:true,customer:customer(rows[0])});
   }
   if(req.method==='POST'&&action==='login'){
    const identifier=String(body.phone||'').trim(),isEmail=identifier.includes('@'),email=isEmail?identifier.toLowerCase():'',phone=isEmail?'':phoneOf(identifier),password=String(body.password||'');
