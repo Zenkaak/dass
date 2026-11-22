@@ -37,7 +37,7 @@ export default async function handler(req:any,res:any){
     try{adm=await inspectDomain(admin)}catch{adm={verified:false,configured:false,config:{misconfigured:true},verification:[]}}
     const storefrontReady=root.verified&&root.configured,adminReady=adm.verified&&adm.configured,fullyConnected=storefrontReady&&adminReady,verification={...saved,adminHostname:admin,config:root.config,adminConfig:adm.config};
     await sql`UPDATE public.domains SET verified_at=CASE WHEN ${storefrontReady} THEN COALESCE(verified_at,now()) ELSE NULL END,status=${storefrontReady?'active':'pending'},verification_data=${JSON.stringify(verification)}::jsonb,last_checked_at=now(),updated_at=now() WHERE tenant_id=${me.tenant_id} AND hostname=${r.hostname}`;
-    domains.push({hostname:r.hostname,adminHostname:admin,isPrimary:r.is_primary,verified:storefrontReady,storefrontVerified:storefrontReady,adminVerified:adminReady,fullyConnected,verifiedAt:storefrontReady?(r.verified_at||new Date().toISOString()):null,status:storefrontReady?'active':'pending',verification,lastCheckedAt:r.last_checked_at});}
+    domains.push({hostname:r.hostname,adminHostname:admin,isPrimary:r.is_primary,verified:fullyConnected,storefrontVerified:storefrontReady,adminVerified:adminReady,fullyConnected,verifiedAt:storefrontReady?(r.verified_at||new Date().toISOString()):null,status:fullyConnected?'active':'pending',verification,lastCheckedAt:r.last_checked_at});}
    return send(res,200,{domains});
   }
   const body=req.body||{},hostname=cleanHost(String(body.hostname||body.domain||''));
