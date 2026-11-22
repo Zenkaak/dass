@@ -6848,3 +6848,52 @@ body:has(.buyer-account-workspace) {
     padding-bottom: 8px !important;
   }
 }
+
+
+/* Storefront route height normalization: short buyer pages should end at their real content,
+   not reserve a viewport-sized panel before the footer. Keep fixed checkout bars intact. */
+@media (max-width:760px) {
+  body:has(.ds-store-footer),
+  #root:has(.ds-store-footer) {
+    min-height:0!important;
+  }
+  #root:has(.ds-store-footer) {
+    display:block!important;
+  }
+  .store-page[data-store-theme="marketplace"] {
+    min-height:0!important;
+    height:auto!important;
+    padding-bottom:0!important;
+    margin-bottom:0!important;
+  }
+  .store-page.is-fullscreen-route .customer-workspace-shell,
+  .store-page.is-account-route .customer-workspace-shell,
+  .store-page.is-fullscreen-route .buyer-account-layout,
+  .store-page.is-account-route .buyer-account-layout,
+  .store-page.is-account-route .buyer-account-workspace {
+    min-height:0!important;
+    height:auto!important;
+    padding-bottom:0!important;
+    margin-bottom:0!important;
+  }
+  .store-page.is-fullscreen-route .customer-flow,
+  .store-page.is-account-route .customer-flow {
+    min-height:0!important;
+    height:auto!important;
+    margin-bottom:8px!important;
+    padding-bottom:12px!important;
+  }
+  .store-page.is-fullscreen-route .market-main,
+  .store-page.is-fullscreen-route .market-product-detail-route,
+  .store-page.is-fullscreen-route .ds-store-collection-page {
+    min-height:0!important;
+    height:auto!important;
+    margin-bottom:0!important;
+    padding-bottom:14px!important;
+  }
+  .store-page .buyer-flow-route-wrap {
+    min-height:0!important;
+    margin-bottom:0!important;
+    padding-bottom:0!important;
+  }
+}
