@@ -6791,30 +6791,10 @@ button,input,select,textarea{font:inherit;}
 }
 
 
-/* DASMARKET shared visual baseline: one type family and no exposed page-end canvas. */
-:root {
-  font-family: "DM Sans", Arial, sans-serif !important;
-  font-synthesis: none;
-}
+/* Keep the document canvas sized to the viewport without overriding each
+   page's original typography choices. */
 html, body, #root {
   min-height: 100%;
-}
-body {
-  font-family: "DM Sans", Arial, sans-serif !important;
-}
-#root, #root * {
-  font-family: "DM Sans", Arial, sans-serif;
-}
-#root svg, #root svg * {
-  font-family: inherit;
-}
-#root :is(button, input, select, textarea) {
-  font: inherit;
-}
-/* Remove the isolated serif typography so the landing page, storefront,
-   buyer account, product details and checkout share the same font system. */
-#root :is(h1,h2,h3,h4,h5,h6,.brand,.das-art-card b,.das-visual-feature strong) {
-  font-family: "DM Sans", Arial, sans-serif !important;
 }
 /* The footer and the page canvas use the same surface colour. This also
    prevents a white/contrasting strip appearing below short routes. */
