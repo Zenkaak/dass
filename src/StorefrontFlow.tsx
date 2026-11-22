@@ -874,7 +874,6 @@ export function StorefrontFlow({
     const isDelivered = (order: BuyerOrder) => { const s=stateOf(order); return s.delivery==='delivered'||['fulfilled','delivered'].includes(s.order); };
     const activeOrderTab = view.startsWith('orders/') ? (view.split('/')[1] as 'ongoing'|'delivered'|'cancelled') : 'ongoing';
     const tabOrders = orders.filter(order => order.orderNumber && (activeOrderTab==='ongoing' ? !isCancelled(order)&&!isDelivered(order) : activeOrderTab==='delivered' ? isDelivered(order) : isCancelled(order)));
-    const suggestions = products.filter(product => product.stockQuantity !== 0).slice(0,12);
     return (
       <section className="customer-flow buyer-my-orders-v2">
         <FlowHeading title="My orders" onBack={() => onNavigate('account')} backLabel="My account" />
@@ -902,7 +901,7 @@ export function StorefrontFlow({
             <div className="buyer-my-order-bottom"><div><small>ORDER TOTAL</small><strong>{formatKes(order.total)}</strong></div><div className="buyer-my-order-actions"><button type="button" className="customer-secondary-button" onClick={()=>openOrder(order,'order-detail')}>View details</button>{isDelivered(order)?<button type="button" className="customer-primary-button" onClick={()=>onNavigate('store')}>Shop again <ArrowRight size={15}/></button>:<button type="button" className="customer-primary-button" onClick={()=>{if(isCancelled(order)){const restartCart=Object.fromEntries(order.lines.filter(line=>products.some(product=>product.id===line.product.id)).map(line=>[line.product.id,line.quantity]));if(Object.keys(restartCart).length){onCartChange(restartCart);setDeliveryMethod(order.deliveryMethod);setDeliveryCounty(order.deliveryCounty||'');setDeliverySubCounty(order.deliverySubCounty||'');setDeliveryEstate(order.deliveryEstate||'');setDeliveryAddress(order.deliveryAddress||'');setDeliveryDirections(order.deliveryDirections||'');setPickupStation(order.pickupStation||'');onNavigate('checkout/delivery');}else{onNavigate('store');}}else{openOrder(order,'order-detail');}}}>Complete order <ArrowRight size={15}/></button>}</div></div>
           </article>;
         })}</div> : <div className="buyer-my-orders-empty"><span><Package size={28}/></span><h2>{activeOrderTab==='ongoing'?'No ongoing orders yet':activeOrderTab==='delivered'?'No delivered orders yet':'No cancelled or returned orders'}</h2><p>{activeOrderTab==='ongoing'?'When you place an order, you can follow its payment and delivery progress here.':'Orders matching this status will appear here.'}</p><button type="button" className="customer-primary-button" onClick={()=>onNavigate('store')}>Shop again <ArrowRight size={16}/></button></div>}
-        {suggestions.length>0&&<section className="customer-recommendations customer-orders-recommendations"><div className="customer-section-title"><h2>You may also like</h2><button type="button" onClick={()=>onNavigate('store')}>View shop <ArrowRight size={14}/></button></div><div className="customer-recommendation-row">{suggestions.map(product=><button type="button" className="customer-recommendation-card" key={product.id} onClick={()=>onNavigate('store')}><ProductThumb product={product}/><strong>{product.name}</strong><b>{formatKes(product.price)}</b></button>)}</div></section>}
+
       </section>
     );
   }
@@ -986,15 +985,38 @@ export function StorefrontFlow({
   async function saveAddress(e:any){e.preventDefault();if(profileSaving)return;setProfileSaving(true);setProfileMessage('');try{const r=await fetch('/api/buyer-auth?action=update-profile&slug='+encodeURIComponent(slug),{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug,name:profileName,email:profileEmail,alternativePhone:profilePhoneAlt,address:profileAddress})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Address could not be saved.');onProfileUpdated?.(d.customer);setProfileMessage('Your delivery address has been saved to your buyer account.');}catch(e:any){setProfileMessage(e.message||'Address could not be saved.')}finally{setProfileSaving(false)}}
   function renderAddressEditor(){return <section className="customer-flow customer-address-editor"><FlowHeading title="Edit delivery address" onBack={()=>onNavigate('address-book')} backLabel="Address book"/><form className="customer-panel customer-account-detail" onSubmit={saveAddress}><p className="customer-preview-note">This address is saved to your buyer account and can be used as your default for future orders in this shop.</p><label className="customer-form-label">Default delivery address<textarea rows={5} required maxLength={300} value={profileAddress} onChange={e=>setProfileAddress(e.target.value)} placeholder="County, sub-county, estate, street, building or house number"/></label>{profileMessage&&<p role="status" className="customer-preview-note">{profileMessage}</p>}<div className="customer-flow-actions"><button type="button" className="customer-secondary-button" onClick={()=>onNavigate('address-book')}>Cancel</button><button className="customer-primary-button" type="submit" disabled={profileSaving}>{profileSaving?'Saving…':'Save address'}</button></div></form></section>}
   function renderAccount() {
+    const savedCount = serverWishlistLoaded ? serverWishlist.length : wishlistIds.length;
+    const shortcuts = [
+      { label: 'My orders', description: 'Track purchases and delivery', view: 'orders', icon: Package, count: orders.length },
+      { label: 'Saved items', description: 'Products you have saved', view: 'wishlist', icon: ShoppingBag, count: savedCount },
+      { label: 'Messages', description: 'Conversations with this shop', view: 'inbox', icon: MessageCircle },
+      { label: 'Reports & support', description: 'Get help with an order or shop', view: 'my-reports', icon: Flag },
+    ];
     return (
-      <section className="customer-flow customer-account-page">
-        <div className="customer-account-welcome"><span><UserRound size={27} /></span><div><small>MY ACCOUNT</small><h1>{customerName.trim() ? `Welcome back, ${customerName.trim()}` : 'Welcome back'}</h1><p>Manage your orders, saved items and account settings.</p><small>{initialCustomerPhone}{initialCustomerEmail?' · '+initialCustomerEmail:''}</small></div><button type="button" className="customer-secondary-button" onClick={onSignOut}>Sign out</button></div>
-        <button type="button" className="buyer-account-orders-shortcut" onClick={()=>onNavigate('orders')}><span className="buyer-account-orders-icon"><Package size={20}/></span><span><strong>My Orders</strong><small>View purchases, payment and delivery updates</small></span><b>{orders.length}</b><ChevronRight size={18}/></button>
-        <div className="customer-account-groups">
-          {accountGroups.map((group) => <section className="customer-panel" key={group.title}>
-            <h2 className="customer-account-group-title">{group.title}</h2>
-            {group.links.map((link) => <button type="button" className="customer-account-link" key={link.view} onClick={() => onNavigate(link.view)}><link.icon size={18} /><span>{link.label}</span><ChevronRight size={16} /></button>)}
-          </section>)}
+      <section className="customer-flow buyer-hub-page">
+        <div className="buyer-hub-heading">
+          <div><span className="buyer-hub-eyebrow">YOUR SHOP ACCOUNT</span><h1>Welcome{customerName.trim() ? ', '+customerName.trim().split(/\\s+/)[0] : ' back'}</h1><p>Everything you need to manage your shopping in one place.</p></div>
+          <button type="button" className="buyer-hub-signout" onClick={onSignOut}>Sign out</button>
+        </div>
+        <section className="buyer-hub-profile">
+          <span className="buyer-hub-avatar">{(customerName||'B').trim().charAt(0).toUpperCase()}</span>
+          <div className="buyer-hub-profile-copy"><strong>{customerName||'Buyer account'}</strong><span>{initialCustomerPhone||'Phone not available'}</span>{initialCustomerEmail&&<span>{initialCustomerEmail}</span>}</div>
+          <button type="button" onClick={()=>onNavigate('profile')}>Edit profile <ChevronRight size={15}/></button>
+        </section>
+        <div className="buyer-hub-shortcuts" aria-label="Account shortcuts">
+          {shortcuts.map(item=><button type="button" className="buyer-hub-shortcut" key={item.view} onClick={()=>onNavigate(item.view)}>
+            <span className="buyer-hub-shortcut-icon"><item.icon size={19}/></span><span className="buyer-hub-shortcut-copy"><strong>{item.label}</strong><small>{item.description}</small></span>{item.count!==undefined&&<b>{item.count}</b>}<ChevronRight size={16}/>
+          </button>)}
+        </div>
+        <div className="buyer-hub-sections">
+          {accountGroups.filter(group=>group.title!=='SHOPPING').map(group=><section className="buyer-hub-section" key={group.title}><h2>{group.title}</h2><div>{group.links.map(link=><button type="button" key={link.view} onClick={()=>onNavigate(link.view)}><link.icon size={18}/><span>{link.label}</span><ChevronRight size={16}/></button>)}</div></section>)}
+          <section className="buyer-hub-section"><h2>MORE ACCOUNT SETTINGS</h2><div>
+            <button type="button" onClick={()=>onNavigate('address-book')}><MapPin size={18}/><span>Delivery addresses</span><ChevronRight size={16}/></button>
+            <button type="button" onClick={()=>onNavigate('vouchers')}><TicketPercent size={18}/><span>Vouchers & offers</span><ChevronRight size={16}/></button>
+            <button type="button" onClick={()=>onNavigate('reviews')}><Check size={18}/><span>My reviews</span><ChevronRight size={16}/></button>
+            <button type="button" onClick={()=>onNavigate('notifications')}><ShieldCheck size={18}/><span>Notifications</span><ChevronRight size={16}/></button>
+            <button type="button" onClick={()=>onNavigate('account-management')}><UserRound size={18}/><span>Account & security</span><ChevronRight size={16}/></button>
+          </div></section>
         </div>
       </section>
     );
@@ -1151,35 +1173,6 @@ export function StorefrontFlow({
 
   if (view === 'store') return null;
   const pageContent = view === 'cart' ? renderCart() : view === 'checkout/delivery' ? (lines.length ? renderCheckoutDelivery() : renderCart()) : view === 'checkout/payment' ? (lines.length ? renderCheckoutPayment() : renderCart()) : view === 'checkout/review' ? (lines.length ? renderReview() : renderCart()) : view === 'checkout/processing' ? renderPaymentProcessing() : view === 'checkout/complete' ? renderSuccess() : view === 'orders' || view.startsWith('orders/') ? renderOrders() : view === 'order-detail' ? renderOrderDetail() : view === 'order-tracking' ? renderTracking() : view === 'account' ? renderAccount() : view === 'profile' ? renderProfile() : renderAccountSection() || (<section className="customer-flow"><FlowHeading title="Shopping assistant" onBack={() => onNavigate('store')} /><div className="customer-panel customer-account-detail"><Search size={24} /><p>{accountSectionCopy.assistant.description}</p><button type="button" className="customer-secondary-button" onClick={() => onNavigate('store')}>Back to the store</button></div></section>);
-  // Add product discovery beneath buyer-account content without interrupting account tasks.
-  const buyerDashboardViews = new Set([
-    'account','orders','order-detail','order-tracking','inbox','wishlist','recently-viewed',
-    'address-book','address-book/edit','vouchers','reviews','notifications','my-reports','report-shop','followed-shops',
-    'newsletter','notification-settings','public-profile','account-management','close-account','assistant',
-  ]);
-  const showProductDiscovery = buyerDashboardViews.has(view) || view.startsWith('orders/');
-  const viewedCategories = new Set(recentlyViewedProducts.map(product => String(product.category || '').toLowerCase()).filter(Boolean));
-  const discoveryProducts = products
-    .filter(product => product.stockQuantity !== 0)
-    .slice()
-    .sort((a,b) => Number(viewedCategories.has(String(b.category || '').toLowerCase())) - Number(viewedCategories.has(String(a.category || '').toLowerCase())) || Number(Boolean((b as any).spotlight)) - Number(Boolean((a as any).spotlight)))
-    .slice(0,8);
-  // Each account destination is its own full-screen page. Navigation lives on the account overview;
-  // individual pages use their own back action instead of a persistent sub-tab rail.
-  return <div className={`customer-workspace-shell${showProductDiscovery ? " has-product-discovery" : ""}`}>
-    {pageContent}
-    {showProductDiscovery && discoveryProducts.length > 0 && <section className="buyer-account-discovery" aria-label="Product recommendations">
-      <div className="buyer-account-discovery-heading"><div><span>MORE TO EXPLORE</span><h2>Discover more products</h2><p>Handpicked from this shop, with more from categories you have viewed.</p></div><button type="button" onClick={() => onNavigate('collection/all-products')}>View all <ArrowRight size={15}/></button></div>
-      <div className="buyer-account-discovery-track" role="region" aria-label="Recommended products. Scroll horizontally to explore.">
-        {discoveryProducts.map(product => <article className="buyer-account-discovery-card" key={product.id}>
-          <button type="button" className="buyer-account-discovery-open" onClick={() => onOpenProduct?.(product)} aria-label={'View '+product.name}>
-            <span className="buyer-account-discovery-image"><ProductThumb product={product}/></span>
-            <strong>{product.name}</strong><b>{formatKes(product.price)}</b>
-            <small>{product.stockQuantity == null ? 'Available' : product.stockQuantity+' in stock'}</small>
-          </button>
-          <button type="button" className="buyer-account-discovery-add" disabled={product.stockQuantity === 0} onClick={() => onCartChange({...cart,[product.id]:Math.min(99,product.stockQuantity ?? 99,(cart[product.id]||0)+1)})}>Add to cart</button>
-        </article>)}
-      </div>
-    </section>}
-  </div>;
+  // Buyer account pages are standalone destinations; keep storefront discovery off account routes.
+  return <div className="customer-workspace-shell buyer-account-workspace">{pageContent}</div>;
 }

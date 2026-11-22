@@ -6789,3 +6789,62 @@ button,input,select,textarea{font:inherit;}
  .buyer-account-redesign .buyer-order-bottom-actions>*{flex:1 1 100%}
  .buyer-account-redesign .customer-flow .customer-account-detail{padding:16px}
 }
+
+
+/* Keep the document canvas sized to the viewport without overriding each
+   page's original typography choices. */
+html, body, #root {
+  min-height: 100%;
+}
+/* The footer and the page canvas use the same surface colour. This also
+   prevents a white/contrasting strip appearing below short routes. */
+body:has(.ds-store-footer),
+body:has(.store-page),
+body:has(.buyer-account-workspace) {
+  background: #f7f8fa !important;
+}
+#root:has(.ds-store-footer),
+#root:has(.store-page),
+#root:has(.buyer-account-workspace) {
+  min-height: 100vh;
+  background: #f7f8fa;
+}
+.ds-store-footer,
+.store-merchant-footer {
+  margin-bottom: 0 !important;
+}
+
+
+/* Shared route spacing: prevent the storefront content wrapper from reserving
+   a large blank block before the footer on short pages and detail routes. */
+.store-page[data-store-theme="marketplace"] .customer-workspace-shell {
+  margin-bottom: 20px !important;
+}
+@media (max-width:760px) {
+  .store-page[data-store-theme="marketplace"] .customer-workspace-shell {
+    margin-bottom: 14px !important;
+  }
+}
+/* Buyer routes have an outer route frame and an inner workspace shell.
+   Collapse the duplicated shell spacing so report details and account tabs
+   finish close to their actual content, without changing checkout spacing. */
+.store-page[data-store-theme="marketplace"] .buyer-account-redesign {
+  padding-bottom: 14px !important;
+}
+.store-page[data-store-theme="marketplace"] .buyer-account-redesign .customer-workspace-shell.buyer-account-workspace {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+}
+.store-page[data-store-theme="marketplace"] .buyer-account-redesign .customer-flow {
+  padding-bottom: 12px !important;
+}
+@media (max-width:760px) {
+  .store-page[data-store-theme="marketplace"] .buyer-account-redesign {
+    padding-bottom: 10px !important;
+  }
+  .store-page[data-store-theme="marketplace"] .buyer-account-redesign .customer-flow {
+    padding-bottom: 8px !important;
+  }
+}
