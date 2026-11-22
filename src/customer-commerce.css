@@ -8167,7 +8167,5 @@
 .ds-store-load-skeleton-line{height:10px;width:88%;}
 .ds-store-load-skeleton-line.short{width:56%;}
 .ds-store-load-skeleton-price{height:14px;width:38%;margin-top:2px;}
-.ds-store-load-skeleton-image:after,.ds-store-load-skeleton-line:after,.ds-store-load-skeleton-price:after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.78),transparent);animation:ds-store-skeleton-shimmer 1.25s ease-in-out infinite;}
 .ds-store-end-of-products{text-align:center;color:#7b8490;font-size:12px;padding:8px 16px 24px;margin:0;}
-@keyframes ds-store-skeleton-shimmer{100%{transform:translateX(100%);}}
 @media(max-width:640px){.ds-store-load-skeleton{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:0 12px;}.ds-store-load-skeleton-card{padding:8px;border-radius:11px;}.ds-store-load-more-wrap{margin:14px auto 20px;}}
