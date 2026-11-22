@@ -7934,3 +7934,52 @@
  .buyer-account-workspace .customer-flow-actions{display:grid;grid-template-columns:1fr}
  .buyer-account-workspace .customer-flow-actions button{width:100%}
 }
+
+
+/* Mobile storefront finish: remove the trailing white tail and make the shop footer compact. */
+@media(max-width:760px){
+  .store-page:not(.is-fullscreen-route){
+    min-height:100dvh!important;
+    padding-bottom:0!important;
+    margin-bottom:0!important;
+    background:#fff!important;
+  }
+  .store-page:not(.is-fullscreen-route)>.ds-store-footer:last-child,
+  .store-page:not(.is-fullscreen-route)>.ds-store-customer-footer{
+    margin-bottom:0!important;
+  }
+  .store-page .ds-store-footer-expanded{
+    margin-top:18px!important;
+    padding:20px 14px 12px!important;
+  }
+  .store-page .ds-store-footer-grid{
+    gap:15px 12px!important;
+  }
+  .store-page .ds-store-footer-grid>div{
+    gap:7px!important;
+  }
+  .store-page .ds-store-footer-grid>div>b{
+    margin-bottom:1px!important;
+    font-size:12px!important;
+  }
+  .store-page .ds-store-footer-grid a,
+  .store-page .ds-store-footer-grid button{
+    font-size:11px!important;
+    line-height:1.35!important;
+  }
+  .store-page .ds-store-footer-brand p{
+    margin:1px 0!important;
+    font-size:11px!important;
+    line-height:1.45!important;
+  }
+  .store-page .ds-store-footer-brand .ds-store-footer-whatsapp{
+    padding:7px 10px!important;
+  }
+  .store-page .ds-store-footer-bottom{
+    margin-top:14px!important;
+    padding-top:10px!important;
+    gap:5px!important;
+    font-size:10px!important;
+    line-height:1.4!important;
+  }
+}
