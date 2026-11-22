@@ -874,7 +874,6 @@ export function StorefrontFlow({
     const isDelivered = (order: BuyerOrder) => { const s=stateOf(order); return s.delivery==='delivered'||['fulfilled','delivered'].includes(s.order); };
     const activeOrderTab = view.startsWith('orders/') ? (view.split('/')[1] as 'ongoing'|'delivered'|'cancelled') : 'ongoing';
     const tabOrders = orders.filter(order => order.orderNumber && (activeOrderTab==='ongoing' ? !isCancelled(order)&&!isDelivered(order) : activeOrderTab==='delivered' ? isDelivered(order) : isCancelled(order)));
-    const suggestions = products.filter(product => product.stockQuantity !== 0).slice(0,12);
     return (
       <section className="customer-flow buyer-my-orders-v2">
         <FlowHeading title="My orders" onBack={() => onNavigate('account')} backLabel="My account" />
