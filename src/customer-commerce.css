@@ -7983,3 +7983,96 @@
     line-height:1.4!important;
   }
 }
+
+
+/* Storefront mobile correction: remove the obsolete reserved bottom dock,
+   compact the footer, and let complete product names remain readable. */
+@media(max-width:760px){
+  body:has(.ds-store) .ds-store,
+  body:has(.ds-store) .store-page{
+    padding-bottom:0!important;
+    margin-bottom:0!important;
+  }
+  body:has(.ds-store) .ds-store-footer-expanded{
+    margin-top:12px!important;
+    padding:14px 14px 9px!important;
+  }
+  body:has(.ds-store) .ds-store-footer-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:12px 14px!important;
+  }
+  body:has(.ds-store) .ds-store-footer-grid>div:first-child{
+    grid-column:1/-1!important;
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    flex-wrap:wrap!important;
+    gap:7px 10px!important;
+    padding-bottom:8px!important;
+    border-bottom:1px solid #344858!important;
+  }
+  body:has(.ds-store) .ds-store-footer-brand>a:first-child{
+    gap:8px!important;
+  }
+  body:has(.ds-store) .ds-store-footer-mark{
+    width:30px!important;height:30px!important;border-radius:8px!important;font-size:17px!important;
+  }
+  body:has(.ds-store) .ds-store-footer-brand>a:first-child b{
+    font-size:12px!important;line-height:1.15!important;
+  }
+  body:has(.ds-store) .ds-store-footer-brand>a:first-child small{
+    font-size:8px!important;
+  }
+  body:has(.ds-store) .ds-store-footer-brand p,
+  body:has(.ds-store) .ds-store-footer-brand .ds-store-footer-whatsapp{
+    display:none!important;
+  }
+  body:has(.ds-store) .ds-store-footer-grid>div{
+    gap:5px!important;
+    min-width:0!important;
+  }
+  body:has(.ds-store) .ds-store-footer-grid>div>b{
+    margin:0 0 2px!important;
+    font-size:11px!important;
+    line-height:1.25!important;
+  }
+  body:has(.ds-store) .ds-store-footer-grid a,
+  body:has(.ds-store) .ds-store-footer-grid button{
+    min-height:0!important;
+    padding:0!important;
+    font-size:10px!important;
+    line-height:1.3!important;
+  }
+  body:has(.ds-store) .ds-store-footer-bottom{
+    flex-direction:column!important;
+    gap:3px!important;
+    margin-top:9px!important;
+    padding-top:8px!important;
+    font-size:9px!important;
+    line-height:1.3!important;
+  }
+  body:has(.ds-store) .ds-store-product-name{
+    display:block!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:visible!important;
+    white-space:normal!important;
+    text-overflow:clip!important;
+    -webkit-line-clamp:unset!important;
+    -webkit-box-orient:initial!important;
+    overflow-wrap:anywhere!important;
+    word-break:normal!important;
+    line-height:1.35!important;
+    padding:0 2px!important;
+  }
+  body:has(.ds-store) .ds-store-spotlight-card .ds-store-product-name,
+  body:has(.ds-store) .ds-store-card .ds-store-product-name{
+    display:block!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:visible!important;
+    -webkit-line-clamp:unset!important;
+    white-space:normal!important;
+  }
+}
