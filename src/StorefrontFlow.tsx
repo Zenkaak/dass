@@ -902,7 +902,7 @@ export function StorefrontFlow({
             <div className="buyer-my-order-bottom"><div><small>ORDER TOTAL</small><strong>{formatKes(order.total)}</strong></div><div className="buyer-my-order-actions"><button type="button" className="customer-secondary-button" onClick={()=>openOrder(order,'order-detail')}>View details</button>{isDelivered(order)?<button type="button" className="customer-primary-button" onClick={()=>onNavigate('store')}>Shop again <ArrowRight size={15}/></button>:<button type="button" className="customer-primary-button" onClick={()=>{if(isCancelled(order)){const restartCart=Object.fromEntries(order.lines.filter(line=>products.some(product=>product.id===line.product.id)).map(line=>[line.product.id,line.quantity]));if(Object.keys(restartCart).length){onCartChange(restartCart);setDeliveryMethod(order.deliveryMethod);setDeliveryCounty(order.deliveryCounty||'');setDeliverySubCounty(order.deliverySubCounty||'');setDeliveryEstate(order.deliveryEstate||'');setDeliveryAddress(order.deliveryAddress||'');setDeliveryDirections(order.deliveryDirections||'');setPickupStation(order.pickupStation||'');onNavigate('checkout/delivery');}else{onNavigate('store');}}else{openOrder(order,'order-detail');}}}>Complete order <ArrowRight size={15}/></button>}</div></div>
           </article>;
         })}</div> : <div className="buyer-my-orders-empty"><span><Package size={28}/></span><h2>{activeOrderTab==='ongoing'?'No ongoing orders yet':activeOrderTab==='delivered'?'No delivered orders yet':'No cancelled or returned orders'}</h2><p>{activeOrderTab==='ongoing'?'When you place an order, you can follow its payment and delivery progress here.':'Orders matching this status will appear here.'}</p><button type="button" className="customer-primary-button" onClick={()=>onNavigate('store')}>Shop again <ArrowRight size={16}/></button></div>}
-        {suggestions.length>0&&<section className="customer-recommendations customer-orders-recommendations"><div className="customer-section-title"><h2>You may also like</h2><button type="button" onClick={()=>onNavigate('store')}>View shop <ArrowRight size={14}/></button></div><div className="customer-recommendation-row">{suggestions.map(product=><button type="button" className="customer-recommendation-card" key={product.id} onClick={()=>onNavigate('store')}><ProductThumb product={product}/><strong>{product.name}</strong><b>{formatKes(product.price)}</b></button>)}</div></section>}
+
       </section>
     );
   }
@@ -1174,35 +1174,6 @@ export function StorefrontFlow({
 
   if (view === 'store') return null;
   const pageContent = view === 'cart' ? renderCart() : view === 'checkout/delivery' ? (lines.length ? renderCheckoutDelivery() : renderCart()) : view === 'checkout/payment' ? (lines.length ? renderCheckoutPayment() : renderCart()) : view === 'checkout/review' ? (lines.length ? renderReview() : renderCart()) : view === 'checkout/processing' ? renderPaymentProcessing() : view === 'checkout/complete' ? renderSuccess() : view === 'orders' || view.startsWith('orders/') ? renderOrders() : view === 'order-detail' ? renderOrderDetail() : view === 'order-tracking' ? renderTracking() : view === 'account' ? renderAccount() : view === 'profile' ? renderProfile() : renderAccountSection() || (<section className="customer-flow"><FlowHeading title="Shopping assistant" onBack={() => onNavigate('store')} /><div className="customer-panel customer-account-detail"><Search size={24} /><p>{accountSectionCopy.assistant.description}</p><button type="button" className="customer-secondary-button" onClick={() => onNavigate('store')}>Back to the store</button></div></section>);
-  // Add product discovery beneath buyer-account content without interrupting account tasks.
-  const buyerDashboardViews = new Set([
-    'account','orders','order-detail','order-tracking','inbox','wishlist','recently-viewed',
-    'address-book','address-book/edit','vouchers','reviews','notifications','my-reports','report-shop','followed-shops',
-    'newsletter','notification-settings','public-profile','account-management','close-account','assistant',
-  ]);
-  const showProductDiscovery = buyerDashboardViews.has(view) || view.startsWith('orders/');
-  const viewedCategories = new Set(recentlyViewedProducts.map(product => String(product.category || '').toLowerCase()).filter(Boolean));
-  const discoveryProducts = products
-    .filter(product => product.stockQuantity !== 0)
-    .slice()
-    .sort((a,b) => Number(viewedCategories.has(String(b.category || '').toLowerCase())) - Number(viewedCategories.has(String(a.category || '').toLowerCase())) || Number(Boolean((b as any).spotlight)) - Number(Boolean((a as any).spotlight)))
-    .slice(0,8);
-  // Each account destination is its own full-screen page. Navigation lives on the account overview;
-  // individual pages use their own back action instead of a persistent sub-tab rail.
-  return <div className={`customer-workspace-shell${showProductDiscovery ? " has-product-discovery" : ""}`}>
-    {pageContent}
-    {showProductDiscovery && discoveryProducts.length > 0 && <section className="buyer-account-discovery" aria-label="Product recommendations">
-      <div className="buyer-account-discovery-heading"><div><span>MORE TO EXPLORE</span><h2>Discover more products</h2><p>Handpicked from this shop, with more from categories you have viewed.</p></div><button type="button" onClick={() => onNavigate('collection/all-products')}>View all <ArrowRight size={15}/></button></div>
-      <div className="buyer-account-discovery-track" role="region" aria-label="Recommended products. Scroll horizontally to explore.">
-        {discoveryProducts.map(product => <article className="buyer-account-discovery-card" key={product.id}>
-          <button type="button" className="buyer-account-discovery-open" onClick={() => onOpenProduct?.(product)} aria-label={'View '+product.name}>
-            <span className="buyer-account-discovery-image"><ProductThumb product={product}/></span>
-            <strong>{product.name}</strong><b>{formatKes(product.price)}</b>
-            <small>{product.stockQuantity == null ? 'Available' : product.stockQuantity+' in stock'}</small>
-          </button>
-          <button type="button" className="buyer-account-discovery-add" disabled={product.stockQuantity === 0} onClick={() => onCartChange({...cart,[product.id]:Math.min(99,product.stockQuantity ?? 99,(cart[product.id]||0)+1)})}>Add to cart</button>
-        </article>)}
-      </div>
-    </section>}
-  </div>;
+  // Buyer account pages are standalone destinations; keep storefront discovery off account routes.
+  return <div className="customer-workspace-shell buyer-account-workspace">{pageContent}</div>;
 }
