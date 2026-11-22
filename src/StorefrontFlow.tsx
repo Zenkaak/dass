@@ -986,15 +986,38 @@ export function StorefrontFlow({
   async function saveAddress(e:any){e.preventDefault();if(profileSaving)return;setProfileSaving(true);setProfileMessage('');try{const r=await fetch('/api/buyer-auth?action=update-profile&slug='+encodeURIComponent(slug),{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug,name:profileName,email:profileEmail,alternativePhone:profilePhoneAlt,address:profileAddress})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Address could not be saved.');onProfileUpdated?.(d.customer);setProfileMessage('Your delivery address has been saved to your buyer account.');}catch(e:any){setProfileMessage(e.message||'Address could not be saved.')}finally{setProfileSaving(false)}}
   function renderAddressEditor(){return <section className="customer-flow customer-address-editor"><FlowHeading title="Edit delivery address" onBack={()=>onNavigate('address-book')} backLabel="Address book"/><form className="customer-panel customer-account-detail" onSubmit={saveAddress}><p className="customer-preview-note">This address is saved to your buyer account and can be used as your default for future orders in this shop.</p><label className="customer-form-label">Default delivery address<textarea rows={5} required maxLength={300} value={profileAddress} onChange={e=>setProfileAddress(e.target.value)} placeholder="County, sub-county, estate, street, building or house number"/></label>{profileMessage&&<p role="status" className="customer-preview-note">{profileMessage}</p>}<div className="customer-flow-actions"><button type="button" className="customer-secondary-button" onClick={()=>onNavigate('address-book')}>Cancel</button><button className="customer-primary-button" type="submit" disabled={profileSaving}>{profileSaving?'Saving…':'Save address'}</button></div></form></section>}
   function renderAccount() {
+    const savedCount = serverWishlistLoaded ? serverWishlist.length : wishlistIds.length;
+    const shortcuts = [
+      { label: 'My orders', description: 'Track purchases and delivery', view: 'orders', icon: Package, count: orders.length },
+      { label: 'Saved items', description: 'Products you have saved', view: 'wishlist', icon: ShoppingBag, count: savedCount },
+      { label: 'Messages', description: 'Conversations with this shop', view: 'inbox', icon: MessageCircle },
+      { label: 'Reports & support', description: 'Get help with an order or shop', view: 'my-reports', icon: Flag },
+    ];
     return (
-      <section className="customer-flow customer-account-page">
-        <div className="customer-account-welcome"><span><UserRound size={27} /></span><div><small>MY ACCOUNT</small><h1>{customerName.trim() ? `Welcome back, ${customerName.trim()}` : 'Welcome back'}</h1><p>Manage your orders, saved items and account settings.</p><small>{initialCustomerPhone}{initialCustomerEmail?' · '+initialCustomerEmail:''}</small></div><button type="button" className="customer-secondary-button" onClick={onSignOut}>Sign out</button></div>
-        <button type="button" className="buyer-account-orders-shortcut" onClick={()=>onNavigate('orders')}><span className="buyer-account-orders-icon"><Package size={20}/></span><span><strong>My Orders</strong><small>View purchases, payment and delivery updates</small></span><b>{orders.length}</b><ChevronRight size={18}/></button>
-        <div className="customer-account-groups">
-          {accountGroups.map((group) => <section className="customer-panel" key={group.title}>
-            <h2 className="customer-account-group-title">{group.title}</h2>
-            {group.links.map((link) => <button type="button" className="customer-account-link" key={link.view} onClick={() => onNavigate(link.view)}><link.icon size={18} /><span>{link.label}</span><ChevronRight size={16} /></button>)}
-          </section>)}
+      <section className="customer-flow buyer-hub-page">
+        <div className="buyer-hub-heading">
+          <div><span className="buyer-hub-eyebrow">YOUR SHOP ACCOUNT</span><h1>Welcome{customerName.trim() ? ', '+customerName.trim().split(/\\s+/)[0] : ' back'}</h1><p>Everything you need to manage your shopping in one place.</p></div>
+          <button type="button" className="buyer-hub-signout" onClick={onSignOut}>Sign out</button>
+        </div>
+        <section className="buyer-hub-profile">
+          <span className="buyer-hub-avatar">{(customerName||'B').trim().charAt(0).toUpperCase()}</span>
+          <div className="buyer-hub-profile-copy"><strong>{customerName||'Buyer account'}</strong><span>{initialCustomerPhone||'Phone not available'}</span>{initialCustomerEmail&&<span>{initialCustomerEmail}</span>}</div>
+          <button type="button" onClick={()=>onNavigate('profile')}>Edit profile <ChevronRight size={15}/></button>
+        </section>
+        <div className="buyer-hub-shortcuts" aria-label="Account shortcuts">
+          {shortcuts.map(item=><button type="button" className="buyer-hub-shortcut" key={item.view} onClick={()=>onNavigate(item.view)}>
+            <span className="buyer-hub-shortcut-icon"><item.icon size={19}/></span><span className="buyer-hub-shortcut-copy"><strong>{item.label}</strong><small>{item.description}</small></span>{item.count!==undefined&&<b>{item.count}</b>}<ChevronRight size={16}/>
+          </button>)}
+        </div>
+        <div className="buyer-hub-sections">
+          {accountGroups.filter(group=>group.title!=='SHOPPING').map(group=><section className="buyer-hub-section" key={group.title}><h2>{group.title}</h2><div>{group.links.map(link=><button type="button" key={link.view} onClick={()=>onNavigate(link.view)}><link.icon size={18}/><span>{link.label}</span><ChevronRight size={16}/></button>)}</div></section>)}
+          <section className="buyer-hub-section"><h2>MORE ACCOUNT SETTINGS</h2><div>
+            <button type="button" onClick={()=>onNavigate('address-book')}><MapPin size={18}/><span>Delivery addresses</span><ChevronRight size={16}/></button>
+            <button type="button" onClick={()=>onNavigate('vouchers')}><TicketPercent size={18}/><span>Vouchers & offers</span><ChevronRight size={16}/></button>
+            <button type="button" onClick={()=>onNavigate('reviews')}><Check size={18}/><span>My reviews</span><ChevronRight size={16}/></button>
+            <button type="button" onClick={()=>onNavigate('notifications')}><ShieldCheck size={18}/><span>Notifications</span><ChevronRight size={16}/></button>
+            <button type="button" onClick={()=>onNavigate('account-management')}><UserRound size={18}/><span>Account & security</span><ChevronRight size={16}/></button>
+          </div></section>
         </div>
       </section>
     );
