@@ -681,7 +681,7 @@ export default function App() {
   const isCustomDomain=!isPlatformHost&&!tenantSubdomain;
   const isAdminCustomHost=hostname.startsWith('adm.')&&isCustomDomain;
   // Warm the storefront UI chunks while the shop data request is in flight.
-  useEffect(()=>{if(tenantSubdomain){import('./StorefrontFlow').catch(()=>{});import('./BuyerAuthPage').catch(()=>{});}},[tenantSubdomain]);
+  useEffect(()=>{if(tenantSubdomain||(isCustomDomain&&!hostname.startsWith('adm.'))){import('./StorefrontFlow').catch(()=>{});import('./BuyerAuthPage').catch(()=>{});}},[tenantSubdomain,isCustomDomain,hostname]);
   useEffect(()=>{if(hostname==='mambu.dasmarket.co.ke'||hostname.startsWith('adm.')||path==='dashboard'||path.startsWith('dashboard/')||path==='platform-admin')import('./mambu-admin.css').catch(()=>{});},[hostname,path]);
   if (hostname === 'mambu.dasmarket.co.ke') {
     if (path === 'login') return <Deferred><AuthPage initial="login" /></Deferred>;
