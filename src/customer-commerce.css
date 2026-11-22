@@ -7794,3 +7794,52 @@
   .store-page .market-detail-assurance {margin:0!important;padding:8px 9px!important;font-size:9px!important;line-height:1.35!important}
   .store-page .market-detail-reviews,.store-page .market-detail-related {margin-top:12px!important;padding:11px!important}
 }
+
+
+/* Buyer dashboard foundation — clean, compact account hub */
+.buyer-hub-page{width:min(100% - 40px,1040px)!important;margin:24px auto 34px!important;padding:0!important;color:#172b3b}
+.buyer-hub-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin:0 0 18px}
+.buyer-hub-eyebrow{display:block;margin:0 0 6px;color:#b66a1b;font-size:10px;font-weight:900;letter-spacing:.14em}
+.buyer-hub-heading h1{margin:0;color:#172b3b;font-size:clamp(23px,3vw,30px);font-weight:850;letter-spacing:-.035em;line-height:1.15}
+.buyer-hub-heading p{margin:7px 0 0;color:#71808d;font-size:13px;line-height:1.5}
+.buyer-hub-signout{flex:0 0 auto;min-height:36px;padding:0 13px;border:1px solid #e7d9d2;border-radius:9px;background:#fff;color:#a34d32;font-size:11px;font-weight:800}
+.buyer-hub-profile{display:flex;align-items:center;gap:13px;padding:15px 17px;margin-bottom:15px;border:1px solid #e8edf0;border-radius:14px;background:#fff}
+.buyer-hub-avatar{width:46px;height:46px;display:grid;place-items:center;flex:0 0 46px;border-radius:13px;background:#fff1df;color:#a65b13;font-size:20px;font-weight:900}
+.buyer-hub-profile-copy{display:grid;gap:3px;flex:1;min-width:0}
+.buyer-hub-profile-copy strong{color:#233c4e;font-size:13px;font-weight:850}
+.buyer-hub-profile-copy span{overflow-wrap:anywhere;color:#7a8792;font-size:11px}
+.buyer-hub-profile>button{display:inline-flex;align-items:center;gap:4px;min-height:34px;padding:0 9px;border:1px solid #e7edf0;border-radius:8px;background:#fff;color:#9c5719;font-size:11px;font-weight:800}
+.buyer-hub-shortcuts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:21px}
+.buyer-hub-shortcut{display:flex;align-items:center;gap:11px;min-width:0;min-height:76px;padding:12px 13px;border:1px solid #e7edf0;border-radius:12px;background:#fff;text-align:left;color:#30485a}
+.buyer-hub-shortcut-icon{width:38px;height:38px;display:grid;place-items:center;flex:0 0 38px;border-radius:11px;background:#f4f7f8;color:#a35b19}
+.buyer-hub-shortcut-copy{display:grid;gap:4px;flex:1;min-width:0}
+.buyer-hub-shortcut-copy strong{font-size:12px;font-weight:850}
+.buyer-hub-shortcut-copy small{color:#84909a;font-size:10px;line-height:1.35}
+.buyer-hub-shortcut>b{min-width:24px;height:24px;display:grid;place-items:center;border-radius:99px;background:#f4f6f7;color:#526474;font-size:10px}
+.buyer-hub-shortcut>svg:last-child{flex:0 0 auto;color:#9ba7af}
+.buyer-hub-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.buyer-hub-section{min-width:0;overflow:hidden;border:1px solid #e7edf0;border-radius:12px;background:#fff}
+.buyer-hub-section h2{margin:0;padding:13px 15px 10px;color:#87939c;font-size:9px;font-weight:900;letter-spacing:.13em}
+.buyer-hub-section>div{display:grid}
+.buyer-hub-section>div>button{display:flex;align-items:center;gap:10px;min-width:0;min-height:46px;padding:9px 14px;border:0;border-top:1px solid #f0f2f4;background:#fff;color:#405768;text-align:left}
+.buyer-hub-section>div>button>svg:first-child{flex:0 0 auto;color:#a5652a}
+.buyer-hub-section>div>button>span{flex:1;min-width:0;font-size:11px;font-weight:700}
+.buyer-hub-section>div>button>svg:last-child{flex:0 0 auto;color:#a5afb6}
+.buyer-hub-shortcut:focus-visible,.buyer-hub-section button:focus-visible,.buyer-hub-profile button:focus-visible,.buyer-hub-signout:focus-visible{outline:2px solid #d97706;outline-offset:2px}
+@media(max-width:650px){
+ .buyer-hub-page{width:100%!important;margin:0 auto 24px!important;padding:16px 13px 22px!important}
+ .buyer-hub-heading{margin-bottom:13px}
+ .buyer-hub-heading h1{font-size:22px}
+ .buyer-hub-heading p{font-size:11px}
+ .buyer-hub-profile{gap:10px;padding:12px;margin-bottom:12px}
+ .buyer-hub-avatar{width:40px;height:40px;flex-basis:40px}
+ .buyer-hub-profile>button{font-size:10px;padding:0 7px}
+ .buyer-hub-shortcuts{gap:8px;margin-bottom:16px}
+ .buyer-hub-shortcut{min-height:70px;gap:8px;padding:9px}
+ .buyer-hub-shortcut-icon{width:32px;height:32px;flex-basis:32px}
+ .buyer-hub-shortcut-copy strong{font-size:11px}
+ .buyer-hub-shortcut-copy small{font-size:9px}
+ .buyer-hub-sections{grid-template-columns:1fr;gap:10px}
+ .buyer-hub-section h2{padding:11px 13px 8px}
+ .buyer-hub-section>div>button{min-height:43px;padding:8px 12px}
+}
