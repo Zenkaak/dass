@@ -6789,3 +6789,47 @@ button,input,select,textarea{font:inherit;}
  .buyer-account-redesign .buyer-order-bottom-actions>*{flex:1 1 100%}
  .buyer-account-redesign .customer-flow .customer-account-detail{padding:16px}
 }
+
+
+/* DASMARKET shared visual baseline: one type family and no exposed page-end canvas. */
+:root {
+  font-family: "DM Sans", Arial, sans-serif !important;
+  font-synthesis: none;
+}
+html, body, #root {
+  min-height: 100%;
+}
+body {
+  font-family: "DM Sans", Arial, sans-serif !important;
+}
+#root, #root * {
+  font-family: "DM Sans", Arial, sans-serif;
+}
+#root svg, #root svg * {
+  font-family: inherit;
+}
+#root :is(button, input, select, textarea) {
+  font: inherit;
+}
+/* Remove the isolated serif typography so the landing page, storefront,
+   buyer account, product details and checkout share the same font system. */
+#root :is(h1,h2,h3,h4,h5,h6,.brand,.das-art-card b,.das-visual-feature strong) {
+  font-family: "DM Sans", Arial, sans-serif !important;
+}
+/* The footer and the page canvas use the same surface colour. This also
+   prevents a white/contrasting strip appearing below short routes. */
+body:has(.ds-store-footer),
+body:has(.store-page),
+body:has(.buyer-account-workspace) {
+  background: #f7f8fa !important;
+}
+#root:has(.ds-store-footer),
+#root:has(.store-page),
+#root:has(.buyer-account-workspace) {
+  min-height: 100vh;
+  background: #f7f8fa;
+}
+.ds-store-footer,
+.store-merchant-footer {
+  margin-bottom: 0 !important;
+}
