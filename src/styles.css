@@ -7239,3 +7239,25 @@ body:has(.buyer-account-workspace) {
     overflow-wrap:break-word!important;
   }
 }
+
+
+/* Mobile catalogue: three compact columns, readable two-line product names. */
+@media (max-width:760px) {
+  body:has(.ds-store) .ds-store-home-mix-grid,
+  body:has(.ds-store) .ds-store-grid {
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    align-items:stretch!important;
+    gap:6px!important;
+  }
+  body:has(.ds-store) .ds-store-card {min-width:0!important;padding:5px!important;border-radius:8px!important}
+  body:has(.ds-store) .ds-store-card .ds-store-product-image {height:92px!important;min-height:92px!important;padding:2px!important}
+  body:has(.ds-store) .ds-store-card .ds-store-product-name {
+    min-height:2.56em!important;max-height:2.56em!important;margin:5px 1px 0!important;
+    font-size:12.5px!important;font-weight:600!important;line-height:1.28!important;letter-spacing:-.1px!important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-product>b {margin:5px 1px 0!important;font-size:13.5px!important;font-weight:700!important}
+  body:has(.ds-store) .ds-store-card .ds-store-product>small:not(.ds-store-rating),
+  body:has(.ds-store) .ds-store-card .ds-store-rating {font-size:9px!important}
+  body:has(.ds-store) .ds-store-card .ds-store-add {min-height:30px!important;height:30px!important;margin-top:5px!important;font-size:10px!important}
+}
