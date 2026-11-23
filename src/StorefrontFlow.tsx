@@ -173,7 +173,7 @@ function ProductRecommendationShelf({products,cart,onAdd,onOpenProduct,title='Yo
   return <section className="market-recommendation-shelf" aria-label={title}>
     <div className="market-recommendation-heading"><div><span>MORE TO DISCOVER</span><h2>{title}</h2><p>{subtitle}</p></div><small>{recommendations.length} products</small></div>
     <div className="market-recommendation-grid">{recommendations.map(product=><article className="market-recommendation-card" key={product.id}>
-      <button type="button" className="market-recommendation-product" onClick={()=>onOpenProduct?.(product)} aria-label={'View '+product.name}><ProductThumb product={product}/><strong>{product.name}</strong><b>{formatKes(product.price)}</b><small>{product.category||'Shop product'}</small></button>
+      <button type="button" className="market-recommendation-product" onClick={()=>onOpenProduct?.(product)} aria-label={'View '+product.name}><ProductThumb product={product}/><strong className="market-card-product-title" title={product.name}>{product.name}</strong><b>{formatKes(product.price)}</b><small>{product.category||'Shop product'}</small></button>
       <button type="button" className="market-recommendation-add" onClick={()=>onAdd(product.id)}>Add to cart</button>
     </article>)}</div>
   </section>;
@@ -1175,7 +1175,7 @@ export function StorefrontFlow({
                 <article className="market-product-card" key={product.id}>
                   <button type="button" className="market-home-product-open" onClick={() => onOpenProduct?.(product)}>
                     <ProductThumb product={product}/>
-                    <strong>{product.name}</strong>
+                    <strong className="market-card-product-title" title={product.name}>{product.name}</strong>
                     <b>{formatKes(product.price)}</b>
                     <small>{product.stockQuantity === 0 ? 'Out of stock' : product.stockQuantity == null ? 'Available' : product.stockQuantity + ' in stock'}</small>
                   </button>
