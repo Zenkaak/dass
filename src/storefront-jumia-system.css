@@ -1,0 +1,191 @@
+/* Shared Jumia-inspired storefront presentation.
+   Applied only inside the storefront; seller branding, routes, checkout and data remain intact. */
+.store-page {
+  --store-text: #282d32;
+  --store-muted: #70777d;
+  --store-border: #dedfe1;
+  --store-surface: #fff;
+  color: var(--store-text);
+  font-family: Roboto, "Arial", sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+.store-page button,
+.store-page input,
+.store-page select { font: inherit; }
+
+/* Jumia-like compact, mobile-first catalogue grid. */
+.store-page .market-products-grid:not(.market-related-grid),
+.store-page .customer-collection-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 9px !important;
+  align-items: stretch !important;
+}
+.store-page .market-product-card {
+  display: flex !important;
+  min-width: 0 !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  border: 1px solid #d8dadd !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+.store-page .market-home-product-open {
+  display: flex !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: #fff !important;
+  color: #30363b !important;
+  text-align: left !important;
+  cursor: pointer;
+}
+.store-page .market-home-product-open .customer-product-thumb {
+  display: block !important;
+  width: 100% !important;
+  height: clamp(148px, 46vw, 218px) !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 9px !important;
+  object-fit: contain !important;
+  background: #fff !important;
+}
+.store-page .market-home-product-open strong {
+  display: -webkit-box !important;
+  min-height: 2.7em !important;
+  max-height: 2.7em !important;
+  margin: 0 !important;
+  padding: 10px 10px 0 !important;
+  overflow: hidden !important;
+  color: #555b60 !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0 !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+  text-overflow: ellipsis !important;
+  overflow-wrap: anywhere !important;
+}
+.store-page .market-home-product-open b {
+  display: block !important;
+  margin: 8px 10px 0 !important;
+  color: #252a2e !important;
+  font-size: 18px !important;
+  font-weight: 750 !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+}
+.store-page .market-home-product-open small {
+  display: block !important;
+  min-height: 28px !important;
+  margin: 7px 10px 0 !important;
+  color: #747b80 !important;
+  font-size: 10px !important;
+  line-height: 1.35 !important;
+}
+.store-page .market-product-add {
+  min-height: 38px !important;
+  margin: 8px 9px 9px !important;
+  width: calc(100% - 18px) !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+
+/* Sidebar: white Jumia-style account/category panel with legible touch targets. */
+.store-page .market-sidebar {
+  background: #fff !important;
+  color: #30363b !important;
+  border-right: 1px solid #e7e7e7 !important;
+  box-shadow: 5px 0 22px rgba(0,0,0,.07) !important;
+}
+.store-page .market-sidebar-title {
+  padding: 17px 16px 8px !important;
+  color: #777e83 !important;
+  font-size: 11px !important;
+  font-weight: 750 !important;
+  letter-spacing: .035em !important;
+}
+.store-page .market-sidebar-category-button {
+  min-height: 48px !important;
+  width: calc(100% - 18px) !important;
+  margin: 1px 9px !important;
+  padding: 8px 11px !important;
+  gap: 12px !important;
+  border-radius: 7px !important;
+  color: #353a3e !important;
+  font-size: 14px !important;
+  font-weight: 450 !important;
+}
+.store-page .market-sidebar-category-icon {
+  width: 27px !important;
+  height: 27px !important;
+  flex-basis: 27px !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #454b50 !important;
+  font-size: 17px !important;
+}
+.store-page .market-sidebar-category-button:hover,
+.store-page .market-sidebar-category-button.active {
+  background: #fff5eb !important;
+  color: var(--store-accent, #e47a13) !important;
+}
+.store-page .market-sidebar-subcategories {
+  margin-left: 47px !important;
+}
+.store-page .market-sidebar-subcategories button {
+  min-height: 38px !important;
+  font-size: 13px !important;
+}
+.store-page .market-sidebar-shop {
+  padding: 16px !important;
+}
+.store-page .market-sidebar-shop > a b { font-size: 14px !important; }
+.store-page .market-sidebar-shop > a small { font-size: 11px !important; }
+
+/* Compact Jumia-style type scale and separators across storefront pages. */
+.store-page .market-section-heading h2,
+.store-page .customer-flow h1,
+.store-page .customer-flow h2 {
+  letter-spacing: 0 !important;
+}
+.store-page .market-section-heading h2 { font-size: 18px !important; }
+.store-page .market-section-heading p,
+.store-page .market-catalogue-count,
+.store-page .market-search-results-count { font-size: 12px !important; }
+.store-page .market-product-detail-breadcrumb { font-size: 12px !important; }
+.store-page .market-product-detail-main { border-radius: 10px !important; box-shadow: none !important; }
+.store-page .market-detail-summary h1 {
+  font-size: clamp(20px, 4vw, 28px) !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0 !important;
+}
+.store-page .market-detail-price { font-size: 25px !important; }
+
+@media (min-width: 761px) {
+  .store-page .market-products-grid:not(.market-related-grid),
+  .store-page .customer-collection-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 14px !important;
+  }
+  .store-page .market-home-product-open .customer-product-thumb {
+    height: clamp(170px, 18vw, 230px) !important;
+  }
+  .store-page .market-home-product-open strong { font-size: 14px !important; }
+}
+@media (max-width: 380px) {
+  .store-page .market-products-grid:not(.market-related-grid),
+  .store-page .customer-collection-grid { gap: 7px !important; }
+  .store-page .market-home-product-open .customer-product-thumb { height: 145px !important; }
+  .store-page .market-home-product-open strong { font-size: 12px !important; }
+  .store-page .market-home-product-open b { font-size: 16px !important; }
+}
