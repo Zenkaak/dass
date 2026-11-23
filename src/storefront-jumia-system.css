@@ -1206,3 +1206,88 @@
   margin: 5px 10px 8px !important;
   line-height: 1.3 !important;
 }
+
+
+/* Mobile catalogue repair: the row wrappers were retaining flex sizing, so
+   grid-template-columns alone did not create the intended two-column layout. */
+.store-page .ds-store-home-mix-grid,
+.store-page .ds-store-catalogue-row,
+.store-page .ds-store-collection-row,
+.store-page .ds-store-featured-grid,
+.store-page .ds-store-collection-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  align-items: stretch !important;
+  gap: 10px !important;
+  width: 100% !important;
+}
+.store-page .ds-store-card {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+.store-page .ds-store-product {
+  min-width: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+.store-page .ds-store-product-image {
+  height: clamp(145px, 42vw, 190px) !important;
+  min-height: clamp(145px, 42vw, 190px) !important;
+  box-sizing: border-box !important;
+  padding: 8px !important;
+}
+.store-page .ds-store-product-name {
+  min-height: 2.8em !important;
+  max-height: 2.8em !important;
+  height: 2.8em !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+  overflow-wrap: break-word !important;
+  word-break: normal !important;
+}
+.store-page .ds-store-product > b {
+  font-size: 15px !important;
+  line-height: 1.3 !important;
+  overflow-wrap: anywhere !important;
+}
+.store-page .ds-store-product > small:not(.ds-store-rating) {
+  min-height: 1.4em !important;
+  font-size: 11px !important;
+}
+.store-page .ds-store-add {
+  flex: 0 0 auto !important;
+  min-height: 40px !important;
+  margin: 7px 8px 8px !important;
+  width: calc(100% - 16px) !important;
+  font-size: 12px !important;
+}
+.store-page:has(.ds-store-cartbar) {
+  padding-bottom: calc(112px + env(safe-area-inset-bottom)) !important;
+}
+.store-page .ds-store-cartbar {
+  position: fixed !important;
+  left: max(12px, env(safe-area-inset-left)) !important;
+  right: max(12px, env(safe-area-inset-right)) !important;
+  bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+  z-index: 80 !important;
+  box-sizing: border-box !important;
+}
+.store-page:has(.ds-store-cartbar) .store-whatsapp-float {
+  bottom: calc(112px + env(safe-area-inset-bottom)) !important;
+}
+@media (min-width: 761px) {
+  .store-page .ds-store-home-mix-grid,
+  .store-page .ds-store-catalogue-row,
+  .store-page .ds-store-collection-row,
+  .store-page .ds-store-featured-grid,
+  .store-page .ds-store-collection-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 14px !important;
+  }
+  .store-page .ds-store-product-image {
+    height: 180px !important;
+    min-height: 180px !important;
+  }
+}
