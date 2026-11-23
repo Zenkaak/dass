@@ -1,3 +1,4 @@
+import './storefront-jumia-system.css';
 import './buyer-orders-redesign.css';
 import './buyer-order-detail-redesign.css';
 import './buyer-reports-redesign.css';
