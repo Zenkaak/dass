@@ -6897,3 +6897,200 @@ body:has(.buyer-account-workspace) {
     padding-bottom:0!important;
   }
 }
+
+
+/* Desktop/tablet correction pass: the catalogue is rendered as fixed batches
+   of four in React. Flatten those wrappers into one real grid so the final
+   row can never reserve empty columns or overflow at tablet widths. */
+@media (min-width:761px) {
+  body:has(.ds-store) .ds-store-catalogue-rows {
+    display:grid!important;
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr))!important;
+    grid-auto-flow:row!important;
+    align-content:start!important;
+    align-items:stretch!important;
+    gap:18px!important;
+    width:100%!important;
+    max-width:100%!important;
+    overflow:visible!important;
+  }
+  body:has(.ds-store) .ds-store-catalogue-row {
+    display:contents!important;
+  }
+  body:has(.ds-store) .ds-store-catalogue-rows > .ds-store-catalogue-row > .ds-store-card,
+  body:has(.ds-store) .ds-store-catalogue-rows > .ds-store-card {
+    width:100%!important;
+    min-width:0!important;
+    max-width:none!important;
+    height:100%!important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-product-image {
+    height:clamp(170px,17vw,250px)!important;
+    aspect-ratio:1/1!important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-product {
+    min-width:0!important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-product-name {
+    min-height:2.8em!important;
+  }
+
+  /* Product detail should use the desktop canvas instead of a narrow
+     1,240px island, while keeping a readable gallery/summary split. */
+  .store-page .market-product-detail-main-shell {
+    width:min(1600px,calc(100% - 64px))!important;
+    max-width:1600px!important;
+    margin:0 auto 36px!important;
+    padding:0!important;
+  }
+  .store-page .market-product-detail-route {
+    width:100%!important;
+    max-width:none!important;
+    min-height:0!important;
+    margin:0 auto 32px!important;
+    padding:0 0 48px!important;
+  }
+  .store-page .market-product-detail-main {
+    grid-template-columns:minmax(0,1.12fr) minmax(420px,.88fr)!important;
+    gap:clamp(28px,3vw,52px)!important;
+    padding:clamp(22px,2vw,34px)!important;
+    align-items:start!important;
+  }
+  .store-page .market-detail-gallery,
+  .store-page .market-detail-summary {
+    min-width:0!important;
+    width:100%!important;
+  }
+  .store-page .market-detail-main-image {
+    height:clamp(420px,38vw,680px)!important;
+    min-height:420px!important;
+  }
+  .store-page .market-detail-main-image img {
+    height:100%!important;
+    max-height:none!important;
+    object-fit:contain!important;
+  }
+}
+@media (min-width:761px) and (max-width:1100px) {
+  body:has(.ds-store) .ds-store-catalogue-rows {
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,205px),1fr))!important;
+    gap:14px!important;
+  }
+  .store-page .market-product-detail-main-shell {
+    width:calc(100% - 36px)!important;
+  }
+  .store-page .market-product-detail-main {
+    grid-template-columns:minmax(0,1fr) minmax(300px,.9fr)!important;
+    gap:20px!important;
+    padding:18px!important;
+  }
+  .store-page .market-detail-main-image {
+    height:clamp(340px,40vw,460px)!important;
+    min-height:340px!important;
+  }
+}
+
+
+/* Product detail: keep purchase information beside the gallery, but move
+   long-form content beneath both columns so the gallery is not stranded
+   beside a tall description column. */
+@media (min-width:761px) {
+  .store-page .market-product-detail-main {
+    display:grid!important;
+    grid-template-columns:minmax(0,1.08fr) minmax(380px,.92fr)!important;
+    grid-template-areas:
+      "gallery summary"
+      "description description"
+      "specifications specifications"
+      "delivery delivery"
+      "seller purchase"
+      "safety safety"!important;
+    align-items:start!important;
+    row-gap:22px!important;
+  }
+  .store-page .market-detail-gallery {grid-area:gallery!important;align-self:start!important}
+  .store-page .market-detail-summary {display:contents!important}
+  .store-page .market-detail-summary > .market-detail-badges,
+  .store-page .market-detail-summary > h1,
+  .store-page .market-detail-summary > .market-detail-review-summary,
+  .store-page .market-detail-summary > .market-detail-sku,
+  .store-page .market-detail-summary > .market-detail-price-panel,
+  .store-page .market-detail-summary > .market-detail-quantity,
+  .store-page .market-detail-summary > .market-detail-add-inline,
+  .store-page .market-detail-summary > .market-detail-cart-preview,
+  .store-page .market-detail-summary > .market-detail-save,
+  .store-page .market-detail-summary > .market-detail-assurance {
+    grid-column:2!important;
+  }
+  .store-page .market-detail-summary > .market-detail-description-panel {
+    grid-area:description!important;
+    grid-column:1/-1!important;
+    width:100%!important;
+    margin:0!important;
+    padding:22px 24px!important;
+    border:1px solid #e8edf1!important;
+    border-radius:12px!important;
+    background:#fff!important;
+  }
+  .store-page .market-detail-summary > .market-detail-specifications {
+    grid-area:specifications!important;
+    grid-column:1/-1!important;
+    width:100%!important;
+    margin:0!important;
+    padding:20px 24px!important;
+    border:1px solid #e8edf1!important;
+    border-radius:12px!important;
+    background:#fff!important;
+  }
+  .store-page .market-detail-summary > .market-detail-delivery {
+    grid-area:delivery!important;
+    grid-column:1/-1!important;
+    width:100%!important;
+    margin:0!important;
+  }
+  .store-page .market-detail-summary > .market-detail-seller {
+    grid-column:1!important;
+    align-self:center!important;
+  }
+  .store-page .market-detail-summary > .market-detail-quantity,
+  .store-page .market-detail-summary > .market-detail-add-inline,
+  .store-page .market-detail-summary > .market-detail-cart-preview,
+  .store-page .market-detail-summary > .market-detail-save,
+  .store-page .market-detail-summary > .market-detail-assurance {
+    grid-column:2!important;
+  }
+  .store-page .market-detail-safety,
+  .store-page .market-detail-reviews,
+  .store-page .market-detail-related {
+    width:min(100%,1600px)!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+}
+@media (min-width:761px) and (max-width:1100px) {
+  .store-page .market-product-detail-main {
+    grid-template-columns:minmax(0,1fr) minmax(310px,.95fr)!important;
+    column-gap:20px!important;
+  }
+}
+
+
+/* Explicit row placement prevents the summary's display:contents children
+   from auto-flowing into the full-width description rows. */
+@media (min-width:761px) {
+  .store-page .market-detail-gallery {grid-column:1!important;grid-row:1 / span 5!important}
+  .store-page .market-detail-summary > .market-detail-badges {grid-column:2!important;grid-row:1!important}
+  .store-page .market-detail-summary > h1 {grid-column:2!important;grid-row:2!important}
+  .store-page .market-detail-summary > .market-detail-review-summary {grid-column:2!important;grid-row:3!important}
+  .store-page .market-detail-summary > .market-detail-sku {grid-column:2!important;grid-row:4!important}
+  .store-page .market-detail-summary > .market-detail-price-panel {grid-column:2!important;grid-row:5!important}
+  .store-page .market-detail-summary > .market-detail-description-panel {grid-column:1/-1!important;grid-row:6!important}
+  .store-page .market-detail-summary > .market-detail-specifications {grid-column:1/-1!important;grid-row:7!important}
+  .store-page .market-detail-summary > .market-detail-delivery {grid-column:1/-1!important;grid-row:8!important}
+  .store-page .market-detail-summary > .market-detail-seller {grid-column:1!important;grid-row:9!important}
+  .store-page .market-detail-summary > .market-detail-quantity {grid-column:2!important;grid-row:9!important}
+  .store-page .market-detail-summary > .market-detail-add-inline {grid-column:2!important;grid-row:10!important}
+  .store-page .market-detail-summary > .market-detail-cart-preview {grid-column:2!important;grid-row:11!important}
+  .store-page .market-detail-summary > .market-detail-save {grid-column:2!important;grid-row:12!important}
+  .store-page .market-detail-summary > .market-detail-assurance {grid-column:2!important;grid-row:13!important}
+}
