@@ -291,3 +291,188 @@
   .store-page .ds-store-product-image { height: clamp(170px, 18vw, 230px) !important; }
   .store-page .ds-store-product-name { font-size: 14px !important; }
 }
+
+/* Storefront shell: compact marketplace masthead, search and mobile filter controls. */
+.store-page .ds-store-navigation {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 40 !important;
+  padding: 8px 12px 10px !important;
+  background: #fff !important;
+  border-bottom: 1px solid #eceeef !important;
+  box-shadow: none !important;
+}
+.store-page .ds-store-navigation-main {
+  min-height: 44px !important;
+  gap: 12px !important;
+}
+.store-page .ds-store-menu-trigger {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  border: 0 !important;
+  border-radius: 7px !important;
+  background: #fff !important;
+  color: #30363b !important;
+}
+.store-page .ds-store-brand {
+  min-width: 0 !important;
+  gap: 8px !important;
+}
+.store-page .ds-store-brand-word {
+  max-width: 40vw !important;
+  overflow: hidden !important;
+  color: #282d32 !important;
+  font-size: 19px !important;
+  font-weight: 800 !important;
+  line-height: 1.1 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+.store-page .ds-store-header-actions { gap: 15px !important; }
+.store-page .ds-store-header-actions > button {
+  width: 36px !important;
+  height: 38px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #30363b !important;
+}
+.store-page .ds-store-search {
+  display: flex !important;
+  min-height: 46px !important;
+  margin: 9px 0 0 !important;
+  padding: 0 14px !important;
+  border: 0 !important;
+  border-radius: 28px !important;
+  background: #f0f1f2 !important;
+  color: #30363b !important;
+}
+.store-page .ds-store-search input {
+  min-width: 0 !important;
+  min-height: 44px !important;
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  color: #30363b !important;
+  font-size: 15px !important;
+}
+.store-page .ds-store-search button {
+  min-height: 34px !important;
+  border: 0 !important;
+  border-radius: 18px !important;
+  background: var(--store-accent, #e47a13) !important;
+  color: #fff !important;
+  font-size: 12px !important;
+}
+.store-page .ds-store-browse-controls {
+  margin: 12px 0 !important;
+  padding: 10px 12px !important;
+  background: #fff !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+.store-page .ds-store-browse-controls-heading {
+  display: none !important;
+}
+.store-page .ds-store-filter-row {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 8px !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+}
+.store-page .ds-store-filter-row::-webkit-scrollbar { display: none !important; }
+.store-page .ds-store-filter-row > label,
+.store-page .ds-store-filter-row > select {
+  flex: 0 0 auto !important;
+  min-width: 112px !important;
+  min-height: 40px !important;
+  padding: 0 13px !important;
+  border: 1px solid #cfd3d6 !important;
+  border-radius: 22px !important;
+  background: #fff !important;
+  color: #42484d !important;
+  font-size: 13px !important;
+}
+.store-page .ds-store-filter-row > label {
+  min-width: 170px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+.store-page .ds-store-filter-row > label input {
+  min-width: 0 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  font-size: 13px !important;
+}
+.store-page .ds-store-filter-result-count { font-size: 11px !important; }
+
+/* Sidebar hierarchy mirrors the reference: account area, destination links, then categories. */
+.store-page .market-sidebar-links {
+  display: grid !important;
+  gap: 2px !important;
+  padding: 0 9px 10px !important;
+}
+.store-page .market-sidebar-links button {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-height: 46px !important;
+  padding: 8px 10px !important;
+  border: 0 !important;
+  border-radius: 7px !important;
+  background: #fff !important;
+  color: #343a3e !important;
+  font-size: 14px !important;
+  font-weight: 450 !important;
+  text-align: left !important;
+}
+.store-page .market-sidebar-links button:hover {
+  background: #f7f7f7 !important;
+}
+.store-page .market-sidebar-title {
+  padding: 17px 16px 8px !important;
+  border-top: 1px solid #eceeef !important;
+  color: #777e83 !important;
+  font-size: 11px !important;
+  font-weight: 750 !important;
+  letter-spacing: .02em !important;
+}
+.store-page .ds-store-drawer-account {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+  padding: 14px 15px !important;
+  border-bottom: 1px solid #eceeef !important;
+}
+.store-page .market-sidebar-category-button {
+  min-height: 48px !important;
+  font-size: 14px !important;
+  font-weight: 450 !important;
+}
+.store-page .market-sidebar-subcategories button {
+  min-height: 38px !important;
+  font-size: 13px !important;
+}
+.store-page .market-sidebar-scrim {
+  background: rgba(0,0,0,.48) !important;
+}
+.store-page .market-sidebar {
+  width: min(86vw, 340px) !important;
+  max-width: 340px !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+}
+@media (min-width: 761px) {
+  .store-page .ds-store-navigation { padding: 12px 22px !important; }
+  .store-page .ds-store-navigation-main { max-width: 1320px !important; margin: 0 auto !important; }
+  .store-page .ds-store-search { max-width: 1320px !important; margin: 10px auto 0 !important; }
+  .store-page .ds-store-browse-controls { max-width: 1320px !important; margin: 16px auto !important; }
+  .store-page .ds-store-filter-row { overflow: visible !important; }
+}
+@media (max-width: 380px) {
+  .store-page .ds-store-brand-word { font-size: 16px !important; }
+  .store-page .ds-store-header-actions { gap: 8px !important; }
+  .store-page .ds-store-search { min-height: 42px !important; }
+}
