@@ -1206,3 +1206,241 @@
   .store-page .ds-store-catalogue-grid .ds-store-product-image { height:190px !important; min-height:190px !important; }
   .store-page .ds-store-catalogue-grid .ds-store-product-name { font-size:13px !important; }
 }
+
+
+/* Unified Jumia.co.ke storefront system — all product discovery surfaces. */
+.store-page {
+  --jumia-orange: #f68b1f;
+  --jumia-orange-dark: #e87912;
+  --jumia-ink: #282828;
+  --jumia-muted: #757575;
+  --jumia-line: #eeeeee;
+  --jumia-surface: #ffffff;
+}
+.store-page .market-products-grid,
+.store-page .customer-collection-grid,
+.store-page .ds-store-home-mix-grid,
+.store-page .ds-store-catalogue-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  align-items: stretch !important;
+  gap: 9px !important;
+  width: 100% !important;
+}
+.store-page .market-product-card,
+.store-page .market-recommendation-card,
+.store-page .ds-store-card {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  height: auto !important;
+  border: 1px solid #ededed !important;
+  border-radius: 5px !important;
+  background: #fff !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,.045) !important;
+  overflow: hidden !important;
+}
+.store-page .market-home-product-open,
+.store-page .market-recommendation-product {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: auto !important;
+  padding: 0 0 9px !important;
+  background: #fff !important;
+  color: var(--jumia-ink) !important;
+  text-align: left !important;
+  overflow: visible !important;
+}
+.store-page .market-home-product-open > .customer-product-thumb,
+.store-page .market-recommendation-product > .customer-product-thumb,
+.store-page .ds-store-product-image {
+  display: block !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  height: clamp(155px, 43vw, 205px) !important;
+  min-height: clamp(155px, 43vw, 205px) !important;
+  margin: 0 !important;
+  padding: 9px !important;
+  box-sizing: border-box !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  background: #fff !important;
+}
+.store-page .market-home-product-open > .market-card-product-title,
+.store-page .market-recommendation-product > .market-card-product-title,
+.store-page .ds-store-product-name,
+.store-page .market-related-name {
+  display: block !important;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 10px !important;
+  padding: 7px 0 0 !important;
+  overflow: visible !important;
+  color: #333 !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 1.4 !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+  text-overflow: clip !important;
+  -webkit-line-clamp: unset !important;
+}
+.store-page .market-home-product-open > b,
+.store-page .market-recommendation-product > b,
+.store-page .ds-store-product > b,
+.store-page .market-related-price {
+  display: block !important;
+  flex: 0 0 auto !important;
+  height: auto !important;
+  min-height: 20px !important;
+  margin: 7px 10px 0 !important;
+  padding: 0 !important;
+  color: #282828 !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  font-variant-numeric: tabular-nums !important;
+  overflow-wrap: anywhere !important;
+}
+.store-page .market-home-product-open > small,
+.store-page .market-recommendation-product > small,
+.store-page .ds-store-product > small:not(.ds-store-rating),
+.store-page .market-related-stock {
+  display: block !important;
+  flex: 0 0 auto !important;
+  min-height: 16px !important;
+  height: auto !important;
+  margin: 5px 10px 2px !important;
+  color: #777 !important;
+  font-size: 10px !important;
+  line-height: 1.35 !important;
+}
+.store-page .market-product-add,
+.store-page .market-recommendation-add,
+.store-page .ds-store-add {
+  flex: 0 0 auto !important;
+  width: calc(100% - 16px) !important;
+  min-height: 36px !important;
+  margin: 4px 8px 9px !important;
+  border: 0 !important;
+  border-radius: 3px !important;
+  background: var(--jumia-orange) !important;
+  color: #fff !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: .01em !important;
+  box-shadow: none !important;
+}
+.store-page .market-product-add:hover,
+.store-page .market-recommendation-add:hover,
+.store-page .ds-store-add:hover {
+  background: var(--jumia-orange-dark) !important;
+}
+.store-page .market-recommendation-grid {
+  display: grid !important;
+  grid-auto-flow: column !important;
+  grid-auto-columns: minmax(148px, 44%) !important;
+  grid-template-columns: none !important;
+  gap: 9px !important;
+  overflow-x: auto !important;
+  overscroll-behavior-x: contain !important;
+  scroll-snap-type: x mandatory !important;
+  padding: 2px 1px 8px !important;
+}
+.store-page .market-recommendation-grid > .market-recommendation-card {
+  scroll-snap-align: start !important;
+}
+.store-page .market-related-grid {
+  display: grid !important;
+  grid-auto-flow: column !important;
+  grid-auto-columns: minmax(148px, 44%) !important;
+  grid-template-columns: none !important;
+  gap: 9px !important;
+  overflow-x: auto !important;
+  scroll-snap-type: x mandatory !important;
+  padding: 2px 1px 8px !important;
+}
+.store-page .market-related-card { scroll-snap-align: start !important; }
+.store-page .market-related-open {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  min-width: 0 !important;
+  padding: 0 0 9px !important;
+  background: #fff !important;
+  color: var(--jumia-ink) !important;
+  text-align: left !important;
+}
+.store-page .market-related-image {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 150px !important;
+  padding: 8px !important;
+  box-sizing: border-box !important;
+  background: #fff !important;
+}
+.store-page .market-related-image img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}
+.store-page .market-related-category {
+  margin: 7px 10px 0 !important;
+  color: #888 !important;
+  font-size: 10px !important;
+}
+.store-page .market-related-action {
+  display: block !important;
+  flex: 0 0 auto !important;
+  margin: 8px 10px 0 !important;
+  color: #e87912 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+.store-page .ds-store-fav {
+  z-index: 2 !important;
+  top: 8px !important;
+  right: 8px !important;
+  width: 30px !important;
+  height: 30px !important;
+  border: 1px solid #eee !important;
+  border-radius: 50% !important;
+  background: rgba(255,255,255,.96) !important;
+  color: #777 !important;
+}
+.store-page .ds-store-fav.active { color: #e34b55 !important; }
+@media (min-width: 761px) {
+  .store-page .market-products-grid,
+  .store-page .customer-collection-grid,
+  .store-page .ds-store-home-mix-grid,
+  .store-page .ds-store-catalogue-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 14px !important;
+  }
+  .store-page .market-home-product-open > .customer-product-thumb,
+  .store-page .market-recommendation-product > .customer-product-thumb,
+  .store-page .ds-store-product-image {
+    height: 190px !important;
+    min-height: 190px !important;
+  }
+  .store-page .market-related-image { height: 170px !important; }
+  .store-page .market-recommendation-grid,
+  .store-page .market-related-grid {
+    grid-auto-columns: minmax(190px, 23%) !important;
+    gap: 14px !important;
+  }
+}
