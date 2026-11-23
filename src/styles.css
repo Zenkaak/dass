@@ -7094,3 +7094,148 @@ body:has(.buyer-account-workspace) {
   .store-page .market-detail-summary > .market-detail-save {grid-column:2!important;grid-row:12!important}
   .store-page .market-detail-summary > .market-detail-assurance {grid-column:2!important;grid-row:13!important}
 }
+
+
+/* 2026-11-23 storefront production correction: keep catalogue filters visible
+   and compact the actual ds-store card markup used by the public shop route. */
+@media (max-width:760px) {
+  body:has(.ds-store) .ds-store-browse-controls {
+    display:block!important;
+    visibility:visible!important;
+    height:auto!important;
+    min-height:0!important;
+    margin:8px 10px 12px!important;
+    padding:9px 10px!important;
+    overflow:visible!important;
+    background:#fff!important;
+    border:1px solid #e7e9ec!important;
+    border-radius:10px!important;
+  }
+  body:has(.ds-store) .ds-store-filter-row {
+    display:flex!important;
+    flex-flow:row nowrap!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    gap:7px!important;
+    margin:0!important;
+    overflow-x:auto!important;
+    scrollbar-width:none!important;
+  }
+  body:has(.ds-store) .ds-store-filter-row::-webkit-scrollbar {display:none!important}
+  body:has(.ds-store) .ds-store-filter-row .ds-store-filter-label {display:none!important}
+  body:has(.ds-store) .ds-store-filter-row select {
+    display:block!important;
+    flex:0 0 auto!important;
+    width:auto!important;
+    min-width:0!important;
+    max-width:48vw!important;
+    height:36px!important;
+    min-height:36px!important;
+    padding:0 25px 0 10px!important;
+    border:1px solid #d7dce1!important;
+    border-radius:19px!important;
+    background:#fff!important;
+    color:#30363b!important;
+    font-size:12px!important;
+  }
+  body:has(.ds-store) .ds-store-filter-row .ds-store-filter-clear {
+    flex:0 0 auto!important;
+    min-height:34px!important;
+    padding:0 11px!important;
+    border:1px solid #d7dce1!important;
+    border-radius:18px!important;
+    background:#fff!important;
+    color:#4b535a!important;
+    font-size:12px!important;
+  }
+  body:has(.ds-store) .ds-store-home-mix-grid {
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    align-items:stretch!important;
+    gap:8px!important;
+  }
+  body:has(.ds-store) .ds-store-card {
+    display:flex!important;
+    min-width:0!important;
+    flex-direction:column!important;
+    padding:7px!important;
+    border:1px solid #e1e4e7!important;
+    border-radius:10px!important;
+    background:#fff!important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-product-image {
+    display:block!important;
+    width:100%!important;
+    height:116px!important;
+    min-height:116px!important;
+    aspect-ratio:auto!important;
+    padding:4px!important;
+    overflow:hidden!important;
+    background:#fff!important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-product-image img {
+    display:block!important;
+    width:100%!important;
+    height:100%!important;
+    object-fit:contain!important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-product-name {
+    display:-webkit-box!important;
+    min-height:2.6em!important;
+    max-height:2.6em!important;
+    margin:5px 2px 0!important;
+    padding:0!important;
+    overflow:hidden!important;
+    color:#50575d!important;
+    font-size:12px!important;
+    font-weight:500!important;
+    line-height:1.3!important;
+    white-space:normal!important;
+    overflow-wrap:break-word!important;
+    word-break:normal!important;
+    -webkit-box-orient:vertical!important;
+    -webkit-line-clamp:2!important;
+    text-overflow:ellipsis!important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-product>b {
+    margin:6px 2px 0!important;
+    font-size:15px!important;
+    line-height:1.2!important;
+    white-space:nowrap!important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-product>small:not(.ds-store-rating) {
+    min-height:16px!important;
+    margin:4px 2px 0!important;
+    font-size:10px!important;
+    line-height:1.25!important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-rating {
+    min-height:15px!important;
+    margin:4px 2px 0!important;
+    font-size:10px!important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-add {
+    width:100%!important;
+    min-height:34px!important;
+    height:34px!important;
+    margin:7px 0 0!important;
+    padding:0 5px!important;
+    font-size:11px!important;
+  }
+}
+@media (min-width:761px) {
+  body:has(.ds-store) .ds-store-browse-controls {
+    display:block!important;
+    visibility:visible!important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-product-name {
+    display:-webkit-box!important;
+    min-height:2.6em!important;
+    max-height:2.6em!important;
+    overflow:hidden!important;
+    -webkit-box-orient:vertical!important;
+    -webkit-line-clamp:2!important;
+    text-overflow:ellipsis!important;
+    overflow-wrap:break-word!important;
+  }
+}
