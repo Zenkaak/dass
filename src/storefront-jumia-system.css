@@ -775,3 +775,73 @@
   color: #a95a0b !important;
   font-weight: 700 !important;
 }
+
+
+/* Corrective pass: target the actual shared StorefrontFlow card markup (no fragile title selector). */
+.store-page .market-card-product-title {
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+  box-orient: vertical !important;
+  line-clamp: 2 !important;
+  height: 2.75em !important;
+  min-height: 2.75em !important;
+  max-height: 2.75em !important;
+  overflow: hidden !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  text-overflow: ellipsis !important;
+  line-height: 1.375em !important;
+  text-align: left !important;
+}
+.store-page .ds-store-browse-controls {
+  display: block !important;
+  visibility: visible !important;
+  position: relative !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 8px 12px 10px !important;
+  background: #fff !important;
+  border-bottom: 1px solid #eceeef !important;
+}
+.store-page .ds-store-filter-row {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  gap: 8px !important;
+  width: 100% !important;
+  overflow-x: auto !important;
+}
+.store-page .ds-store-filter-label {
+  flex: 0 0 auto !important;
+  color: #5d656b !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+.store-page .ds-store-filter-row > select {
+  display: block !important;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  width: auto !important;
+  min-height: 40px !important;
+  border: 1px solid #d6dadd !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  color: #30363b !important;
+  padding: 0 10px !important;
+  font-size: 13px !important;
+}
+.store-page .ds-store-filter-clear {
+  flex: 0 0 auto !important;
+  min-height: 38px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #a95a0b !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+@media (max-width: 480px) {
+  .store-page .ds-store-filter-row { gap: 6px !important; }
+  .store-page .ds-store-filter-label { display: none !important; }
+  .store-page .ds-store-filter-row > select { max-width: 50% !important; }
+}
