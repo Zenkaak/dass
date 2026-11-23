@@ -208,7 +208,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
       <span className="ds-store-mark">{shop?.logoUrl?<img src={shop?.logoUrl||''} alt=""/>:<Store size={21}/>}</span>
       <span><strong>{shop?.name||'DASMARKET STORE'}</strong><small>Shop direct · Trusted marketplace</small></span>
     </a>
-    <label className="ds-store-search"><Search size={18}/><input aria-label="Search this store" value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){setFilter('All products');navigateBuyerPage('store')}}} placeholder="Search products"/><button type="button" onClick={()=>{setFilter('All products');navigateBuyerPage('store')}}>Search</button></label>
+    <label className="ds-store-search"><Search size={18}/><input aria-label="Search this store" value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){setFilter('All products');setSelectedProduct(null);setBuyerPage('store');if(window.location.pathname!==buyerPath('store'))window.history.pushState({buyerPage:'store'},'',buyerPath('store'));}}} placeholder="Search products"/><button type="button" onClick={()=>{setFilter('All products');navigateBuyerPage('store')}}>Search</button></label>
     <div className="ds-store-route-actions">
       <button type="button" className="ds-store-route-home" onClick={()=>navigateBuyerPage('store')} aria-label="Shop home"><Home size={18}/></button>
       
@@ -293,14 +293,14 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
         </div>
         <label className="ds-store-search">
           <Search size={18}/>
-          <input aria-label="Search products" value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){setFilter('All products');navigateBuyerPage('store')}}} placeholder="Search products"/>
-          <button type="button" aria-label="Search" onClick={()=>{setFilter('All products');navigateBuyerPage('store');document.getElementById('market-products-grid')?.scrollIntoView({behavior:'smooth',block:'start'})}}><Search size={20}/></button>
+          <input aria-label="Search products" value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){setFilter('All products');setSelectedProduct(null);setBuyerPage('store');if(window.location.pathname!==buyerPath('store'))window.history.pushState({buyerPage:'store'},'',buyerPath('store'));}}} placeholder="Search products"/>
+          <button type="button" aria-label="Search" onClick={()=>{setFilter('All products');setSelectedProduct(null);setBuyerPage('store');if(window.location.pathname!==buyerPath('store'))window.history.pushState({buyerPage:'store'},'',buyerPath('store'));window.setTimeout(()=>document.getElementById('market-products-grid')?.scrollIntoView({behavior:'smooth',block:'start'}),80)}}><Search size={20}/></button>
         </label>
       </header>
       <section className="ds-store-browse-controls" aria-label="Product filters">
         <div className="ds-store-filter-row">
           <span className="ds-store-filter-label">Filter products</span>
-          <select aria-label="Filter products by category" value={filter} onChange={e=>{setFilter(e.target.value);navigateBuyerPage('store')}}><option value="All products">All categories</option>{storefrontCategories.map(category=><optgroup key={category.name} label={category.name}><option value={category.name}>{category.name}</option>{category.subcategories.map(child=><option key={child} value={child}>{child}</option>)}</optgroup>)}</select>
+          <select aria-label="Filter products by category" value={filter} onChange={e=>{setFilter(e.target.value);setSelectedProduct(null);if(buyerPage!=='store'){setBuyerPage('store');if(window.location.pathname!==buyerPath('store'))window.history.pushState({buyerPage:'store'},'',buyerPath('store'));}}}><option value="All products">All categories</option>{storefrontCategories.map(category=><optgroup key={category.name} label={category.name}><option value={category.name}>{category.name}</option>{category.subcategories.map(child=><option key={child} value={child}>{child}</option>)}</optgroup>)}</select>
           <select aria-label="Sort products" value={sortOrder} onChange={e=>setSortOrder(e.target.value)}><option value="recommended">Recommended</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="name">Name: A to Z</option></select>
           <button type="button" className="ds-store-filter-clear" onClick={()=>{setFilter('All products');setSortOrder('recommended');setSearch('');navigateBuyerPage('store')}}>Clear</button>
         </div>
