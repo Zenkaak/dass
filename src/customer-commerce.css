@@ -8453,3 +8453,59 @@
     z-index: 1 !important;
   }
 }
+
+
+/* Compact payment-status experience: keep the poll state focused and remove the tall success-page spacing. */
+.market-payment-processing-redesign{
+  width:min(100% - 32px,680px)!important;
+  max-width:680px!important;
+  min-height:0!important;
+  margin:24px auto 32px!important;
+  padding:24px clamp(16px,3vw,30px)!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  gap:0!important;
+  border:1px solid #e7edf1;
+  border-radius:20px;
+  background:#fff;
+  box-shadow:0 12px 36px rgba(20,42,58,.07);
+  text-align:center;
+}
+.market-payment-processing-redesign .market-payment-processing-heading{display:flex;flex-direction:column;align-items:center}
+.market-payment-processing-redesign .market-payment-processing-icon{width:62px;height:62px;margin:0 auto 14px}
+.market-payment-processing-redesign .market-payment-processing-icon span{width:29px;height:29px}
+.market-payment-processing-redesign .buyer-section-kicker{display:inline-flex;align-items:center;min-height:25px;padding:4px 10px;border-radius:999px;background:#fff5e9;color:#a85b13;font-size:10px;font-weight:850;letter-spacing:.09em}
+.market-payment-processing-redesign h1{margin:12px 0 8px;font-size:clamp(22px,4vw,30px);line-height:1.18;letter-spacing:-.035em;color:#1d3445}
+.market-payment-processing-redesign .market-payment-processing-copy{max-width:510px;margin:0 auto 20px;font-size:13px;line-height:1.55;color:#647789}
+.market-payment-processing-order{padding:16px 18px 14px;border:1px solid #e8edf1;border-radius:14px;background:#f9fbfc;text-align:left}
+.market-payment-processing-order-top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-bottom:12px;border-bottom:1px solid #e7edf1}
+.market-payment-processing-order-top span{font-size:10px;font-weight:850;letter-spacing:.08em;color:#82919d}
+.market-payment-processing-order-top strong{font-size:12px;color:#344d60;overflow-wrap:anywhere;text-align:right}
+.market-payment-processing-redesign .market-payment-processing-card{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:14px 0;margin:0;border:0;background:transparent;box-shadow:none}
+.market-payment-processing-redesign .market-payment-processing-card>div{display:flex;flex-direction:column;gap:5px;min-width:0}
+.market-payment-processing-redesign .market-payment-processing-card small{font-size:9px;letter-spacing:.07em;color:#85939e}
+.market-payment-processing-redesign .market-payment-processing-card strong{font-size:13px;color:#263f50;overflow-wrap:anywhere}
+.market-payment-processing-redesign .market-payment-poll-status{display:flex;align-items:center;justify-content:flex-start;gap:9px;margin:0;padding-top:12px;border-top:1px solid #e7edf1;font-size:12px;line-height:1.45;color:#9a5a14}
+.market-payment-poll-dot{width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:#e39a31;box-shadow:0 0 0 4px rgba(227,154,49,.13)}
+.market-payment-processing-redesign .market-payment-poll-status.is-confirmed{color:#247344}
+.market-payment-processing-redesign .market-payment-poll-status.is-confirmed .market-payment-poll-dot{background:#27864c;box-shadow:0 0 0 4px rgba(39,134,76,.12)}
+.market-payment-processing-redesign .market-payment-poll-status.is-failed{color:#a12c3b}
+.market-payment-processing-redesign .market-payment-poll-status.is-failed .market-payment-poll-dot{background:#c44755;box-shadow:0 0 0 4px rgba(196,71,85,.12)}
+.market-payment-processing-safety{display:flex;align-items:flex-start;justify-content:center;gap:8px;margin:14px 4px 0;color:#647789;font-size:11px;line-height:1.5;text-align:left}
+.market-payment-processing-safety svg{flex:0 0 16px;color:#31805a;margin-top:1px}
+.market-payment-processing-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin:18px 0 0}
+.market-payment-processing-actions button{min-height:42px}
+.market-payment-processing-help{margin:13px 0 0;color:#8a98a3;font-size:11px;line-height:1.45}
+.market-payment-processing-redesign.is-paid .buyer-section-kicker{background:#edf8f0;color:#247344}
+.market-payment-processing-redesign.is-terminal .buyer-section-kicker{background:#fff0f1;color:#a12c3b}
+.market-payment-processing-loading{min-height:260px!important;justify-content:center!important;align-items:center!important}
+@media(max-width:600px){
+ .market-payment-processing-redesign{width:calc(100% - 24px)!important;margin:14px auto 24px!important;padding:20px 14px!important;border-radius:16px}
+ .market-payment-processing-redesign .market-payment-processing-card{grid-template-columns:1fr;gap:10px;padding:12px 0}
+ .market-payment-processing-redesign .market-payment-processing-card>div{display:grid;grid-template-columns:112px minmax(0,1fr);align-items:center;gap:8px}
+ .market-payment-processing-redesign .market-payment-processing-card strong{text-align:right}
+ .market-payment-processing-order{padding:13px}
+ .market-payment-processing-actions{display:grid;grid-template-columns:1fr;width:100%}
+ .market-payment-processing-actions button{width:100%;justify-content:center}
+}
