@@ -167,3 +167,70 @@
 @media(prefers-reduced-motion:reduce){
   .buyer-my-order-card,.buyer-my-orders-tabs button{transition:none}
 }
+
+
+/* Orders list refinement: clearer hierarchy and robust narrow-screen wrapping. */
+.buyer-my-orders-v2 .buyer-my-orders-heading{
+  align-items:center;
+  min-height:132px;
+}
+.buyer-my-orders-v2 .buyer-my-orders-tabs{
+  position:relative;
+  top:auto;
+  backdrop-filter:none;
+}
+.buyer-my-orders-v2 .buyer-my-order-card{
+  overflow:hidden;
+}
+.buyer-my-orders-v2 .buyer-my-order-top>div{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+}
+.buyer-my-orders-v2 .buyer-my-order-top strong{
+  overflow-wrap:anywhere;
+}
+.buyer-my-orders-v2 .buyer-my-order-status{
+  display:inline-flex;
+  align-items:center;
+}
+.buyer-my-orders-v2 .buyer-my-order-item{
+  min-width:0;
+}
+.buyer-my-orders-v2 .buyer-my-order-item>div{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+}
+.buyer-my-orders-v2 .buyer-my-order-item>div strong{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  overflow:hidden;
+  white-space:normal;
+}
+.buyer-my-orders-v2 .buyer-my-order-item>b{
+  white-space:nowrap;
+}
+.buyer-my-orders-v2 .buyer-my-order-bottom>div:first-child{
+  display:flex;
+  flex-direction:column;
+}
+.buyer-my-orders-v2 .buyer-my-order-actions{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+@media(max-width:650px){
+  .buyer-my-orders-v2 .buyer-my-orders-heading{min-height:0;align-items:center}
+  .buyer-my-orders-v2 .buyer-my-order-top{align-items:center}
+  .buyer-my-orders-v2 .buyer-my-order-bottom{align-items:stretch}
+  .buyer-my-orders-v2 .buyer-my-order-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .buyer-my-orders-v2 .buyer-my-order-actions>*{min-width:0}
+}
+@media(max-width:380px){
+  .buyer-my-orders-v2 .buyer-my-order-top{align-items:flex-start;flex-direction:column}
+  .buyer-my-orders-v2 .buyer-my-order-status{max-width:100%}
+  .buyer-my-orders-v2 .buyer-my-order-actions{grid-template-columns:minmax(0,1fr)}
+}
