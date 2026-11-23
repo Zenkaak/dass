@@ -297,6 +297,14 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
           <button type="button" aria-label="Search" onClick={()=>{setFilter('All products');navigateBuyerPage('store');document.getElementById('market-products-grid')?.scrollIntoView({behavior:'smooth',block:'start'})}}><Search size={20}/></button>
         </label>
       </header>
+      <section className="ds-store-browse-controls" aria-label="Product filters">
+        <div className="ds-store-filter-row">
+          <span className="ds-store-filter-label">Filter products</span>
+          <select aria-label="Filter products by category" value={filter} onChange={e=>{setFilter(e.target.value);navigateBuyerPage('store')}}><option value="All products">All categories</option>{storefrontCategories.map(category=><optgroup key={category.name} label={category.name}><option value={category.name}>{category.name}</option>{category.subcategories.map(child=><option key={child} value={child}>{child}</option>)}</optgroup>)}</select>
+          <select aria-label="Sort products" value={sortOrder} onChange={e=>setSortOrder(e.target.value)}><option value="recommended">Recommended</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="name">Name: A to Z</option></select>
+          <button type="button" className="ds-store-filter-clear" onClick={()=>{setFilter('All products');setSortOrder('recommended');setSearch('');navigateBuyerPage('store')}}>Clear</button>
+        </div>
+      </section>
       {buyerNotificationsOpen&&buyerCustomer&&<section className="ds-store-notification-popover" aria-label="Recent notifications"><div className="ds-store-notification-popover-head"><div><strong>Notifications</strong><small>{buyerNotifications.length} recent updates</small></div><button type="button" aria-label="Close notifications" onClick={()=>setBuyerNotificationsOpen(false)}>×</button></div>{buyerNotifications.length?buyerNotifications.slice(0,8).map((item:any,index:number)=><button type="button" className="ds-store-notification-item" key={item.id||item.orderId||item.complaintId||index} onClick={()=>{setBuyerNotificationsOpen(false);navigateBuyerPage(item.complaint_id||item.complaintId?'my-reports':'orders')}}><span className="ds-store-notification-item-icon"><Bell size={15}/></span><span><strong>{item.title||'Order update'}</strong><small>{item.detail||'There is an update on your account.'}</small><time>{item.created_at?new Date(item.created_at).toLocaleString('en-KE'):item.updatedAt?new Date(item.updatedAt).toLocaleString('en-KE'):'Recently'}</time></span><ChevronRight size={15}/></button>):<div className="ds-store-notification-empty"><Bell size={22}/><strong>You’re all caught up</strong><p>Payment, order and delivery updates will appear here.</p></div>}<button type="button" className="ds-store-notification-viewall" onClick={()=>{setBuyerNotificationsOpen(false);navigateBuyerPage('notifications')}}>View all updates <ArrowRight size={15}/></button></section>}
       <section className="ds-store-hero" key={homeHeroProduct?.id||"featured-empty"}>
         <div className="ds-store-hero-copy">
@@ -326,15 +334,6 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
       <section className="ds-store-mobile-promo">
         <div><span>SHOP WITH CONFIDENCE</span><h2>Find your next favourite</h2><p>Discover more from {shop?.name||'this shop'}.</p><button type="button" onClick={()=>{setSearch('');setFilter('All products');navigateBuyerPage('collection/all-products')}}>Explore all products <ArrowRight size={14}/></button></div>
         <span className="ds-store-mobile-promo-art"><ShoppingBag size={42}/></span>
-      </section>
-      <section className={"ds-store-browse-controls"+((search.trim()||filter!=='All products')?' is-active':'')} aria-label="Product filters">
-        <div className="ds-store-browse-controls-heading"><div><span className="ds-eyebrow">FIND WHAT YOU NEED</span><h2>Browse the shop</h2></div><button type="button" onClick={()=>{setSearch('');setFilter('All products');setSortOrder('recommended');navigateBuyerPage('collection/all-products')}}>View all products <ArrowRight size={15}/></button></div>
-        <div className="ds-store-filter-row">
-          <label><Search size={16}/><input aria-label="Search products" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search products e.g. phone"/></label>
-          <select aria-label="Filter products by category" value={filter} onChange={e=>setFilter(e.target.value)}><option value="All products">All categories</option>{storefrontCategories.map(category=><optgroup key={category.name} label={category.name}><option value={category.name}>{category.name}</option>{category.subcategories.map(child=><option key={child} value={child}>{child}</option>)}</optgroup>)}</select>
-          <select aria-label="Sort products" value={sortOrder} onChange={e=>setSortOrder(e.target.value)}><option value="recommended">Recommended</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="name">Name: A to Z</option></select>
-        </div>
-        <p className="ds-store-filter-result-count">{mixedProducts.length} matching products</p>
       </section>
       {filter==='All products'&&!search.trim()&&<>
        <section className="ds-store-section ds-store-latest-arrivals">
