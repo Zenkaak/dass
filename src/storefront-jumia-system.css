@@ -1315,3 +1315,53 @@
   line-clamp: unset !important;
   -webkit-box-orient: initial !important;
 }
+
+
+/* Final responsive catalogue safeguard: Android tablets and large phones can
+   report a CSS viewport above the old 761px desktop breakpoint. Keep the
+   searchable catalogue readable until a genuinely wider desktop viewport. */
+@media (max-width: 900px) {
+  .store-page .ds-store-catalogue-row,
+  .store-page .ds-store-home-mix-grid,
+  .store-page .ds-store-collection-row,
+  .store-page .ds-store-featured-grid,
+  .store-page .ds-store-collection-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-auto-flow: row !important;
+    justify-content: stretch !important;
+    align-content: start !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .store-page .ds-store-catalogue-row > .ds-store-card,
+  .store-page .ds-store-home-mix-grid > .ds-store-card,
+  .store-page .ds-store-collection-row > .ds-store-card,
+  .store-page .ds-store-featured-grid > .ds-store-card,
+  .store-page .ds-store-collection-grid > .ds-store-card {
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    flex: none !important;
+    box-sizing: border-box !important;
+  }
+  .store-page .ds-store-card > .ds-store-product {
+    width: 100% !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+  }
+  .store-page .ds-store-card > .ds-store-product > .ds-store-product-name {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    -webkit-line-clamp: unset !important;
+    line-height: 1.4 !important;
+  }
+}
