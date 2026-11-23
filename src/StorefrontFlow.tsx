@@ -294,7 +294,9 @@ export function StorefrontFlow({
   const [voucherMessage, setVoucherMessage] = useState('');
   const [appliedCoupon,setAppliedCoupon]=useState<any>(null),[shopCoupons,setShopCoupons]=useState<any[]>([]);
   const [reportShop,setReportShop]=useState(shopName),[reportOrderId,setReportOrderId]=useState(''),[reportProductId,setReportProductId]=useState(''),[reportIssue,setReportIssue]=useState('payment'),[reportPaymentMade,setReportPaymentMade]=useState(false),[reportPaymentAmount,setReportPaymentAmount]=useState(''),[reportPaymentReference,setReportPaymentReference]=useState(''),[reportDetails,setReportDetails]=useState(''),[reportFiles,setReportFiles]=useState<File[]>([]),[reportBusy,setReportBusy]=useState(false),[reportMessage,setReportMessage]=useState('');
-  const [activeOrderNumber, setActiveOrderNumber] = useState('');
+  const [activeOrderNumber, setActiveOrderNumber] = useState(()=>{try{return localStorage.getItem('dasmarket-active-order-'+slug+'-'+initialCustomerPhone)||''}catch{return ''}});
+  const checkoutDraftKey='dasmarket-checkout-draft-'+slug+'-'+(initialCustomerPhone||'guest');
+  const [checkoutDraftReady,setCheckoutDraftReady]=useState(false);
   const [newsletterEnabled, setNewsletterEnabled] = useState(false);
   const [isShopFollowed, setIsShopFollowed] = useState(false);
   const [buyerFeatureMessage,setBuyerFeatureMessage]=useState('');
@@ -339,6 +341,10 @@ export function StorefrontFlow({
 
   useEffect(()=>{let live=true;fetch('/api/buyer?action=coupons-public&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'}).then(r=>r.json()).then(d=>{if(live)setShopCoupons(Array.isArray(d.coupons)?d.coupons:[])}).catch(()=>{});return()=>{live=false}},[slug]);
   useEffect(() => { setCustomerName(initialCustomerName); setCustomerPhone(initialCustomerPhone); setPaymentPhone(initialCustomerPhone); setCustomerEmail(initialCustomerEmail); setProfileName(initialCustomerName); setProfileEmail(initialCustomerEmail); setProfileAddress(initialCustomerAddress); setProfilePhoneAlt(initialCustomerAlternativePhone); if(initialCustomerAddress&&!deliveryAddress)setDeliveryAddress(initialCustomerAddress); }, [initialCustomerName,initialCustomerPhone,initialCustomerEmail,initialCustomerAddress,initialCustomerAlternativePhone]);
+  useEffect(()=>{if(!slug)return;setCheckoutDraftReady(false);try{const raw=localStorage.getItem(checkoutDraftKey);if(raw){const draft=JSON.parse(raw);if(draft&&draft.version===1){setDeliveryMethod(draft.deliveryMethod==='home'?'home':'pickup');setPaymentMethod(['mpesa','airtel','card','delivery'].includes(draft.paymentMethod)?draft.paymentMethod:'mpesa');setDeliveryCounty(draft.deliveryCounty||'');setDeliverySubCounty(draft.deliverySubCounty||'');setDeliveryEstate(draft.deliveryEstate||'');setDeliveryDirections(draft.deliveryDirections||'');setCustomerName(draft.customerName||initialCustomerName);setCustomerPhone(draft.customerPhone||initialCustomerPhone);setPaymentPhone(draft.paymentPhone||initialCustomerPhone);setCustomerEmail(draft.customerEmail||initialCustomerEmail);setDeliveryAddress(draft.deliveryAddress||initialCustomerAddress);setPickupStation(draft.pickupStation||'');setVoucherCode(draft.voucherCode||'');}}}catch(error){console.warn('Checkout draft restoration failed:',error)}setCheckoutDraftReady(true);},[slug,initialCustomerPhone]);
+  useEffect(()=>{if(!slug||!checkoutDraftReady)return;try{localStorage.setItem(checkoutDraftKey,JSON.stringify({version:1,deliveryMethod,paymentMethod,deliveryCounty,deliverySubCounty,deliveryEstate,deliveryDirections,customerName,customerPhone,paymentPhone,customerEmail,deliveryAddress,pickupStation,voucherCode,savedAt:Date.now()}));}catch(error){console.warn('Checkout draft save failed:',error)}},[slug,checkoutDraftReady,deliveryMethod,paymentMethod,deliveryCounty,deliverySubCounty,deliveryEstate,deliveryDirections,customerName,customerPhone,paymentPhone,customerEmail,deliveryAddress,pickupStation,voucherCode]);
+  useEffect(()=>{if(!slug||!activeOrderNumber)return;try{localStorage.setItem('dasmarket-active-order-'+slug+'-'+initialCustomerPhone,activeOrderNumber)}catch{}},[slug,initialCustomerPhone,activeOrderNumber]);
+
   useEffect(() => {
     let live = true;
     let requestInFlight = false;
@@ -588,6 +594,7 @@ export function StorefrontFlow({
       setActiveOrderNumber(order.orderNumber);
       checkoutIdempotency.current=null;
       onCartChange({});
+      try{localStorage.removeItem(checkoutDraftKey)}catch{}
       if (isCash) {
         setPaymentPollMessage(deliveryMethod === 'pickup' ? 'Order placed. Pay in cash when you collect it; the seller must accept the order first.' : 'Order placed. Pay the seller in cash when it arrives; the seller must accept the order first.');
         onNavigate('orders');
@@ -834,24 +841,35 @@ export function StorefrontFlow({
   }
 
   function renderPaymentProcessing() {
-    if(!activeOrder)return <section className="customer-flow"><FlowHeading title="Payment processing" onBack={()=>onNavigate('cart')}/><div className="customer-empty-state"><p>Loading…</p></div></section>;
+    if(!activeOrder)return <section className="customer-flow market-payment-processing market-payment-processing-loading"><div className="market-payment-processing-icon"><span/></div><span className="buyer-section-kicker">SECURE PAYMENT CHECK</span><h1>Retrieving your order</h1><p className="market-payment-processing-copy">We’re reconnecting to your order and checking the latest payment status.</p><div className="market-payment-poll-status" role="status">Please wait while we restore your payment details…</div><button type="button" className="customer-secondary-button" onClick={()=>onNavigate('orders')}>View my orders</button></section>;
     const paymentState=String(activeOrder.paymentStatus||'pending').toLowerCase();
     const paymentTerminal=['cancelled','failed','reversed'].includes(paymentState);
     const paymentSucceeded=paymentState==='succeeded';
     const paymentWaiting=!paymentTerminal&&!paymentSucceeded;
-    return <section className={"customer-flow customer-success-page market-payment-processing"+(paymentProviderResponded?" has-provider-response":"")+(paymentTerminal?" is-terminal":"")+(paymentSucceeded?" is-paid":"")}>
-      <div className="market-payment-processing-icon" aria-hidden="true"><span/></div>
-      <span className="buyer-section-kicker">{paymentSucceeded?'PAYMENT CONFIRMED':paymentTerminal?'PAYMENT NOT COMPLETED':'SECURE PAYMENT CHECK'}</span>
-      <h1>{paymentSucceeded?'Your payment is confirmed':paymentState==='cancelled'?'You cancelled the M-PESA prompt':paymentState==='failed'?'M-PESA payment failed':paymentState==='reversed'?'Payment reversed':'Confirming your M-PESA payment'}</h1>
-      <p className="market-payment-processing-copy">{paymentSucceeded?(activeOrder.receipt?'Safaricom confirmed your payment. Receipt: '+activeOrder.receipt:'Safaricom confirmed your payment.') : paymentTerminal?(paymentState==='cancelled'?'Safaricom confirmed that you cancelled the prompt. No payment was collected. You can safely request a new prompt when ready.':'Safaricom confirmed that this payment did not complete. No payment was collected. You can retry when ready.') : paymentProviderResponded?"Safaricom has responded. We are verifying the M-PESA receipt before confirming your order.":"Keep this page open while we wait for the payment confirmation."}</p>
-      <div className="customer-panel market-payment-processing-card">
-        <div><small>ORDER NUMBER</small><strong>{activeOrder.orderNumber}</strong></div>
-        <div><small>AMOUNT</small><strong>{formatKes(activeOrder.total)}</strong></div>
-        <div><small>PAYMENT PHONE</small><strong>{paymentPhone||activeOrder.customerPhone}</strong></div>
+    const statusTitle=paymentSucceeded?'Payment confirmed':paymentState==='cancelled'?'Payment was cancelled':paymentState==='failed'?'Payment was not completed':paymentState==='reversed'?'Payment reversed':'We’re confirming your payment';
+    const statusCopy=paymentSucceeded?(activeOrder.receipt?'Safaricom confirmed your payment. Receipt: '+activeOrder.receipt:'Safaricom confirmed your payment.') : paymentTerminal?(paymentState==='cancelled'?'The payment prompt was cancelled. No payment was collected. You can safely retry when ready.':'This payment did not complete. No payment was collected. You can retry when ready.') : paymentProviderResponded?"Safaricom has responded. We’re verifying the M-PESA receipt before confirming your order.":"We’re checking with Safaricom. Keep this page open, or return later — your order and payment check will remain available.";
+    return <section className={"customer-flow market-payment-processing market-payment-processing-redesign"+(paymentProviderResponded?" has-provider-response":"")+(paymentTerminal?" is-terminal":"")+(paymentSucceeded?" is-paid":"")}>
+      <div className="market-payment-processing-heading">
+        <div className="market-payment-processing-icon" aria-hidden="true"><span/></div>
+        <span className="buyer-section-kicker">{paymentSucceeded?'PAYMENT CONFIRMED':paymentTerminal?'PAYMENT NOT COMPLETED':'SECURE PAYMENT CHECK'}</span>
+        <h1>{statusTitle}</h1>
+        <p className="market-payment-processing-copy">{statusCopy}</p>
       </div>
-      <p className="market-payment-poll-status" role="status">{paymentSucceeded?'Payment confirmed by Safaricom.':paymentTerminal?(paymentPollMessage||'Payment request ended.'):paymentPollMessage}</p>
-      {paymentWaiting&&<p className="customer-preview-note"><ShieldCheck size={15}/> Your order will only be marked paid after Safaricom’s payment receipt is verified. Do not send another payment prompt while this check is running.</p>}
-      <div className="customer-flow-actions"><button type="button" className="customer-secondary-button" onClick={()=>openOrder(activeOrder,'order-detail')}>{paymentTerminal?'View order and retry':'View order status'}</button></div>
+      <div className="market-payment-processing-order">
+        <div className="market-payment-processing-order-top"><span>ORDER SUMMARY</span><strong>{activeOrder.orderNumber}</strong></div>
+        <div className="market-payment-processing-card">
+          <div><small>AMOUNT DUE</small><strong>{formatKes(activeOrder.total)}</strong></div>
+          <div><small>PAYMENT METHOD</small><strong>{paymentLabels[activeOrder.paymentMethod]}</strong></div>
+          <div><small>PAYMENT PHONE</small><strong>{paymentPhone||activeOrder.customerPhone}</strong></div>
+        </div>
+        <div className={"market-payment-poll-status "+(paymentSucceeded?'is-confirmed':paymentTerminal?'is-failed':'is-waiting')} role="status"><span className="market-payment-poll-dot"/>{paymentSucceeded?'Payment confirmed by Safaricom.':paymentTerminal?(paymentPollMessage||'Payment request ended.'):paymentPollMessage}</div>
+      </div>
+      {paymentWaiting&&<p className="market-payment-processing-safety"><ShieldCheck size={16}/> Your order is only marked as paid after Safaricom’s receipt is verified. Please don’t request another prompt while this check is running.</p>}
+      <div className="market-payment-processing-actions">
+        <button type="button" className="customer-primary-button" onClick={()=>openOrder(activeOrder,'order-detail')}>{paymentTerminal?'View order & retry payment':paymentSucceeded?'View order details':'View order status'} <ArrowRight size={16}/></button>
+        <button type="button" className="customer-secondary-button" onClick={()=>openOrder(activeOrder,'orders')}>My orders</button>
+      </div>
+      <p className="market-payment-processing-help">You can safely leave this page and return to your orders later. We’ll keep the order status available.</p>
     </section>;
   }
 
