@@ -8423,3 +8423,23 @@
     min-height:340px!important;
   }
 }
+
+/* Product recommendations fill unused desktop space without interrupting checkout. */
+.market-recommendation-shelf{width:100%;margin:24px 0 20px;padding:20px;border:1px solid #e7ebef;border-radius:12px;background:#fff;box-shadow:0 3px 14px rgba(22,38,54,.035)}
+.market-recommendation-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:15px}
+.market-recommendation-heading>div>span{color:#8795a0;font-size:10px;font-weight:800;letter-spacing:.12em}
+.market-recommendation-heading h2{margin:5px 0;color:#20384a;font-size:19px;line-height:1.25}
+.market-recommendation-heading p{margin:0;color:#758592;font-size:12px}
+.market-recommendation-heading>small{color:#71818d;font-size:11px;white-space:nowrap}
+.market-recommendation-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+.market-recommendation-card{min-width:0;display:flex;flex-direction:column;gap:9px;padding:10px;border:1px solid #e9edf0;border-radius:9px;background:#fff}
+.market-recommendation-product{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:7px;padding:0;border:0;background:transparent;text-align:left;cursor:pointer}
+.market-recommendation-product .customer-product-thumb{width:100%;height:124px;object-fit:contain;padding:7px;background:#f7f9fa;border-radius:7px}
+.market-recommendation-product strong{display:-webkit-box;min-height:2.7em;overflow:hidden;-webkit-line-clamp:2;-webkit-box-orient:vertical;color:#293d4d;font-size:12px;line-height:1.35}
+.market-recommendation-product b{color:#123d59;font-size:13px}
+.market-recommendation-product small{color:#85929c;font-size:10px}
+.market-recommendation-add{width:100%;min-height:34px;padding:7px 9px;border:1px solid var(--store-accent,#e47a13);border-radius:6px;background:#fff;color:var(--store-accent,#e47a13);font-size:11px;font-weight:800;cursor:pointer}
+.market-recommendation-add:hover{background:var(--store-accent,#e47a13);color:#fff}
+@media(min-width:761px){.market-cart-page,.market-checkout-page{max-width:1240px!important}.market-cart-layout,.market-checkout-delivery-layout,.market-checkout-payment-layout,.market-checkout-review-layout{align-items:stretch}.market-recommendation-shelf{clear:both}}
+@media(max-width:1000px) and (min-width:761px){.market-recommendation-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.market-recommendation-product .customer-product-thumb{height:145px}}
+@media(max-width:760px){.market-recommendation-shelf{margin:14px 0;padding:14px;border-radius:0}.market-recommendation-heading h2{font-size:16px}.market-recommendation-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.market-recommendation-product .customer-product-thumb{height:112px}.market-recommendation-card{padding:8px}}
