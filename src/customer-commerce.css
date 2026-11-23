@@ -8278,3 +8278,53 @@
     padding-bottom:calc(16px + env(safe-area-inset-bottom))!important;
   }
 }
+
+
+/* Collection route responsive layout. These pages are also rendered outside
+   the .store-page homepage shell, so scope directly to the route container. */
+.customer-collection-page{
+  width:min(100%,1440px)!important;
+  max-width:1440px!important;
+  margin-inline:auto!important;
+  padding-inline:clamp(16px,2.2vw,32px)!important;
+}
+.customer-collection-page .customer-collection-grid{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  grid-auto-flow:row!important;
+  align-items:stretch!important;
+  gap:18px!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  overflow:visible!important;
+}
+.customer-collection-page .customer-collection-grid>.market-product-card{
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+}
+.customer-collection-page .market-product-card{
+  min-width:0!important;
+}
+@media(min-width:1500px){
+  .customer-collection-page .customer-collection-grid{
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+    gap:20px!important;
+  }
+}
+@media(min-width:761px) and (max-width:1100px){
+  .customer-collection-page{
+    padding-inline:18px!important;
+  }
+  .customer-collection-page .customer-collection-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:14px!important;
+  }
+}
+@media(min-width:761px) and (max-width:900px){
+  .customer-collection-page .customer-collection-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:14px!important;
+  }
+}
