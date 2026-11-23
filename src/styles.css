@@ -7464,7 +7464,7 @@ body:has(.buyer-account-workspace) {
 /* Screenshot-matched Jumia mobile storefront: slide-out account/category drawer
    and a focused two-column search-results page. */
 @media (max-width:760px) {
-  .store-page .market-global-drawer.jumia-drawer-brand {
+  .store-page .market-global-drawer .jumia-drawer-brand {
     display:flex!important;position:relative!important;top:auto!important;left:auto!important;bottom:auto!important;
     width:100%!important;height:auto!important;min-height:76px!important;max-height:none!important;
     flex-direction:row!important;align-items:center!important;gap:16px!important;padding:12px 18px!important;
