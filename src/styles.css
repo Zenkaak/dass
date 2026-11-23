@@ -7423,3 +7423,40 @@ body:has(.buyer-account-workspace) {
     margin-top:7px!important;
   }
 }
+
+
+/* FINAL OVERRIDE — Jumia mobile catalogue is two columns, not three.
+   This lives in the actually imported global stylesheet and deliberately
+   follows the legacy three-column rules above. */
+@media (max-width: 760px) {
+  body:has(.ds-store) .ds-store-home-mix-grid,
+  body:has(.ds-store) .ds-store-catalogue-grid,
+  body:has(.ds-store) .ds-store-grid,
+  body:has(.ds-store) .ds-store-catalogue-rows,
+  body:has(.ds-store) .ds-store-collection-rows,
+  body:has(.ds-store) .ds-store-collection-grid,
+  body:has(.ds-store) .ds-store-featured-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-auto-flow: row !important;
+    grid-auto-columns: auto !important;
+    align-items: stretch !important;
+    gap: 9px !important;
+    width: 100% !important;
+  }
+  body:has(.ds-store) .ds-store-catalogue-row,
+  body:has(.ds-store) .ds-store-collection-row {
+    display: contents !important;
+  }
+  body:has(.ds-store) .ds-store-card {
+    min-width: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-product-image {
+    height: clamp(145px, 42vw, 190px) !important;
+    min-height: clamp(145px, 42vw, 190px) !important;
+    flex-basis: auto !important;
+    padding: 7px !important;
+  }
+}
