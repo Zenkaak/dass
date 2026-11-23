@@ -7073,3 +7073,24 @@ body:has(.buyer-account-workspace) {
     column-gap:20px!important;
   }
 }
+
+
+/* Explicit row placement prevents the summary's display:contents children
+   from auto-flowing into the full-width description rows. */
+@media (min-width:761px) {
+  .store-page .market-detail-gallery {grid-column:1!important;grid-row:1 / span 5!important}
+  .store-page .market-detail-summary > .market-detail-badges {grid-column:2!important;grid-row:1!important}
+  .store-page .market-detail-summary > h1 {grid-column:2!important;grid-row:2!important}
+  .store-page .market-detail-summary > .market-detail-review-summary {grid-column:2!important;grid-row:3!important}
+  .store-page .market-detail-summary > .market-detail-sku {grid-column:2!important;grid-row:4!important}
+  .store-page .market-detail-summary > .market-detail-price-panel {grid-column:2!important;grid-row:5!important}
+  .store-page .market-detail-summary > .market-detail-description-panel {grid-column:1/-1!important;grid-row:6!important}
+  .store-page .market-detail-summary > .market-detail-specifications {grid-column:1/-1!important;grid-row:7!important}
+  .store-page .market-detail-summary > .market-detail-delivery {grid-column:1/-1!important;grid-row:8!important}
+  .store-page .market-detail-summary > .market-detail-seller {grid-column:1!important;grid-row:9!important}
+  .store-page .market-detail-summary > .market-detail-quantity {grid-column:2!important;grid-row:9!important}
+  .store-page .market-detail-summary > .market-detail-add-inline {grid-column:2!important;grid-row:10!important}
+  .store-page .market-detail-summary > .market-detail-cart-preview {grid-column:2!important;grid-row:11!important}
+  .store-page .market-detail-summary > .market-detail-save {grid-column:2!important;grid-row:12!important}
+  .store-page .market-detail-summary > .market-detail-assurance {grid-column:2!important;grid-row:13!important}
+}
