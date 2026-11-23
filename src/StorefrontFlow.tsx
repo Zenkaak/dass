@@ -167,7 +167,7 @@ function ProductThumb({ product }: { product: StoreProduct }) {
 }
 
 function ProductRecommendationShelf({products,cart,onAdd,onOpenProduct,title='You may also like',subtitle='Discover more from this shop'}:{products:StoreProduct[];cart:Record<string,number>;onAdd:(id:string)=>void;onOpenProduct?:(product:StoreProduct)=>void;title?:string;subtitle?:string}) {
-  const recommendations=products.filter(product=>!cart[product.id]&&(product.stockQuantity==null||product.stockQuantity>0)).slice(0,6);
+  const recommendations=products.filter(product=>!cart[product.id]&&(product.stockQuantity==null||product.stockQuantity>0)).slice(0,12);
   if(!recommendations.length)return null;
   return <section className="market-recommendation-shelf" aria-label={title}>
     <div className="market-recommendation-heading"><div><span>MORE TO DISCOVER</span><h2>{title}</h2><p>{subtitle}</p></div><small>{recommendations.length} products</small></div>
@@ -750,9 +750,9 @@ export function StorefrontFlow({
           <p className="market-checkout-order-secure"><ShieldCheck size={16}/> Your order details are protected. You will review the final amount before payment.</p>
         </aside></div>
         <ProductRecommendationShelf products={products} cart={cart} onAdd={id=>updateQuantity(id,(cart[id]||0)+1)} onOpenProduct={onOpenProduct} title="Add something extra" subtitle="A few more picks from this shop, available to add before you place your order."/>
-        <ProductRecommendationShelf products={products} cart={cart} onAdd={id=>updateQuantity(id,(cart[id]||0)+1)} onOpenProduct={onOpenProduct} title="Add something extra" subtitle="A few more picks from this shop, available to add before you place your order."/>
         {checkoutError&&<p className="customer-checkout-error" role="alert">{checkoutError}</p>}
         <div className="market-checkout-bottom-action"><div><small>ORDER TOTAL</small><strong>{formatKes(total)}</strong></div><button type="button" className="customer-primary-button" disabled={deliveryPreferenceLoading||!customerName.trim()||!customerPhone.trim()||(deliveryMethod==='pickup'&&(!pickupStation.trim()||!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))} onClick={async()=>{setCheckoutError('');try{await saveDeliveryPreference();setOrderConfirmed(false);onNavigate('checkout/payment')}catch(error:any){setCheckoutError(error.message||'Could not save your delivery details. Please try again.')}}}>{deliveryPreferenceLoading?'Saving delivery details…':'Continue to payment'} <ArrowRight size={18}/></button></div>
+<ProductRecommendationShelf products={products} cart={cart} onAdd={id=>updateQuantity(id,(cart[id]||0)+1)} onOpenProduct={onOpenProduct} title="Add something extra" subtitle="A few more picks from this shop, available to add before you place your order."/>
       </section>
     );
   }
@@ -794,6 +794,7 @@ export function StorefrontFlow({
         </div>
         {checkoutError&&<p className="customer-checkout-error" role="alert">{checkoutError}</p>}
         <div className="market-checkout-bottom-action"><div><small>AMOUNT TO PAY</small><strong>{formatKes(total)}</strong></div><button type="button" className="customer-primary-button" disabled={!lines.length} onClick={()=>onNavigate('checkout/review')}>Review your order <ArrowRight size={18}/></button></div>
+<ProductRecommendationShelf products={products} cart={cart} onAdd={id=>updateQuantity(id,(cart[id]||0)+1)} onOpenProduct={onOpenProduct} title="Add something extra" subtitle="A few more picks from this shop, available to add before you place your order."/>
         {paymentModal==='mpesa'&&<div className="customer-payment-modal-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setPaymentModal(null)}}><section className="customer-payment-modal market-checkout-payment-dialog" role="dialog" aria-modal="true" aria-labelledby="customer-payment-modal-title"><button type="button" className="customer-payment-modal-close" aria-label="Close payment window" onClick={()=>setPaymentModal(null)}>×</button><span className="customer-payment-modal-mark">M</span><h2 id="customer-payment-modal-title">M-PESA payment number</h2><p>Enter the Kenyan mobile number that should receive the STK payment prompt. It can be different from your buyer account number.</p><label className="customer-form-label">Phone number to pay with<input type="tel" inputMode="tel" autoComplete="tel" placeholder="07XX XXX XXX or 2547XXXXXXXX" value={paymentPhone} onChange={e=>setPaymentPhone(e.target.value)} required maxLength={16}/></label><small className="customer-payment-modal-note">Your order remains pending until Safaricom confirms payment.</small><div className="customer-payment-modal-actions"><button type="button" className="customer-secondary-button" onClick={()=>setPaymentModal(null)}>Cancel</button><button type="button" className="customer-primary-button" onClick={confirmMpesa}>Use this number <ArrowRight size={16}/></button></div></section></div>}
       </section>
     );
@@ -824,10 +825,10 @@ export function StorefrontFlow({
           </div>
           {renderSummary()}
         </div>
-        <ProductRecommendationShelf products={products} cart={cart} onAdd={id=>updateQuantity(id,(cart[id]||0)+1)} onOpenProduct={onOpenProduct} title="Add something extra" subtitle="A few more picks from this shop, available to add before you place your order."/>
         {checkoutError&&<p className="customer-preview-alert" role="alert">{checkoutError}</p>}
         {orderConfirmed&&<div className="market-checkout-confirmed" role="status"><Check size={18}/><div><strong>Order details confirmed</strong><small>Your delivery, items and payment number are ready. Continue when you are ready to request the M-PESA prompt.</small></div></div>}
         <div className="market-checkout-bottom-action"><div><small>{orderConfirmed?'READY TO PAY':'ORDER TOTAL'}</small><strong>{formatKes(total)}</strong></div><button type="button" className="customer-primary-button" disabled={!lines.length||!customerName.trim()||!customerPhone.trim()||paymentMethod!=='mpesa'||submitting||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))||(deliveryMethod==='pickup'&&(!pickupStation.trim()||!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))} onClick={orderConfirmed?placeOrder:()=>setOrderConfirmed(true)}>{submitting?(paymentMethod==='delivery'?'Placing order…':'Requesting M-PESA…'):orderConfirmed?(paymentMethod==='delivery'?'Place cash order':'Pay with M-PESA'):'Confirm order'} <ArrowRight size={18}/></button></div>
+<ProductRecommendationShelf products={products} cart={cart} onAdd={id=>updateQuantity(id,(cart[id]||0)+1)} onOpenProduct={onOpenProduct} title="Add something extra" subtitle="A few more picks from this shop, available to add before you place your order."/>
       </section>
     );
   }
