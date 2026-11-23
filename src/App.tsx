@@ -208,7 +208,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
       <span className="ds-store-mark">{shop?.logoUrl?<img src={shop?.logoUrl||''} alt=""/>:<Store size={21}/>}</span>
       <span><strong>{shop?.name||'DASMARKET STORE'}</strong><small>Shop direct · Trusted marketplace</small></span>
     </a>
-    <label className="ds-store-search"><Search size={18}/><input aria-label="Search this store" value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){setFilter('All products');setSelectedProduct(null);setBuyerPage('store');if(window.location.pathname!==buyerPath('store'))window.history.pushState({buyerPage:'store'},'',buyerPath('store'));}}} placeholder="Search products"/><button type="button" onClick={()=>{setFilter('All products');navigateBuyerPage('store')}}>Search</button></label>
+    <label className="ds-store-search"><Search size={18}/><input aria-label="Search this store" value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){setFilter('All products');setSelectedProduct(null);setBuyerPage('store');if(window.location.pathname!==buyerPath('store'))window.history.pushState({buyerPage:'store'},'',buyerPath('store'));}}} placeholder="Search products"/><button type="button" onClick={()=>{setFilter('All products');setSelectedProduct(null);setBuyerPage('store');if(window.location.pathname!==buyerPath('store'))window.history.pushState({buyerPage:'store'},'',buyerPath('store'));}}>Search</button></label>
     <div className="ds-store-route-actions">
       <button type="button" className="ds-store-route-home" onClick={()=>navigateBuyerPage('store')} aria-label="Shop home"><Home size={18}/></button>
       
