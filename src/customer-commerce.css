@@ -8239,3 +8239,42 @@
 .market-detail-cart-preview-total{display:flex;justify-content:space-between;gap:10px;padding:12px 0;color:#596b77;font-size:12px}
 .market-detail-cart-preview-total strong{color:#253a48;font-size:14px}
 .market-detail-cart-view{width:100%;min-height:42px;border:0;border-radius:6px;background:var(--store-accent,#e47a13);color:#fff;font-size:13px;font-weight:750;cursor:pointer}
+
+
+/* Storefront drawer: keep the sign-out row in normal layout flow.
+   The old sticky footer could sit on top of the last category links. */
+.store-page .market-sidebar.market-global-drawer{
+  display:flex!important;
+  flex-direction:column!important;
+  min-height:0!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+}
+.store-page .market-sidebar-account-footer{
+  position:static!important;
+  inset:auto!important;
+  z-index:auto!important;
+  flex:0 0 auto!important;
+  margin:14px 0 0!important;
+  padding:12px 14px calc(14px + env(safe-area-inset-bottom))!important;
+  background:#fff!important;
+  border-top:1px solid #e9edf0!important;
+  box-shadow:0 -5px 14px rgba(15,32,47,.035)!important;
+}
+.store-page .market-sidebar-logout{
+  min-height:46px!important;
+  border-radius:11px!important;
+}
+@media(max-width:760px){
+  .store-page .market-sidebar.market-global-drawer{
+    height:auto!important;
+    max-height:calc(100dvh - 112px)!important;
+    padding-bottom:0!important;
+  }
+  .store-page .market-sidebar-account-footer{
+    margin-top:14px!important;
+    padding-bottom:calc(16px + env(safe-area-inset-bottom))!important;
+  }
+}
