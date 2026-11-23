@@ -7372,3 +7372,54 @@ body:has(.buyer-account-workspace) {
     line-height:20px;
   }
 }
+
+
+/* Final mobile card spacing: reserve a real title slot and keep the price
+   below it so two-line names can never collide with the price. */
+@media (max-width:760px) {
+  body:has(.ds-store) .ds-store-card .ds-store-product {
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:stretch!important;
+    justify-content:flex-start!important;
+    gap:0!important;
+    min-width:0!important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-product-name {
+    box-sizing:border-box!important;
+    display:-webkit-box!important;
+    flex:0 0 34px!important;
+    height:34px!important;
+    min-height:34px!important;
+    max-height:34px!important;
+    margin:6px 1px 0!important;
+    padding:0!important;
+    line-height:16px!important;
+    overflow:hidden!important;
+    -webkit-box-orient:vertical!important;
+    -webkit-line-clamp:2!important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-product-name + b {
+    display:block!important;
+    position:static!important;
+    flex:0 0 auto!important;
+    height:auto!important;
+    min-height:18px!important;
+    margin:9px 1px 0!important;
+    padding:0!important;
+    line-height:18px!important;
+    white-space:nowrap!important;
+    overflow:visible!important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-product-name ~ small {
+    display:block!important;
+    position:static!important;
+    flex:0 0 auto!important;
+    margin:4px 1px 0!important;
+    line-height:13px!important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-add {
+    flex:0 0 30px!important;
+    margin-top:7px!important;
+  }
+}
