@@ -232,20 +232,20 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
     <div className="buyer-dashboard-sidebar-help"><strong>Need Help?</strong><span>Our support team is ready to assist you.</span><button type="button" onClick={()=>navigateBuyerPage('assistant')}>Contact Us</button></div>
     <button type="button" className="buyer-dashboard-logout" onClick={()=>{fetch('/api/buyer-auth?action=logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug}),credentials:'same-origin'}).finally(()=>{setBuyerCustomer(null);navigateBuyerPage('store')})}}><LogOut size={17}/> <span>Logout</span></button>
   </aside>:<aside className={"market-sidebar market-global-drawer"+(mobileSidebarOpen?" is-mobile-open":"")} aria-label="Shop navigation">
-    <div className="market-sidebar-shop"><a href={buyerPath('store')} onClick={e=>{e.preventDefault();navigateBuyerPage('store')}}><Store size={18}/><span><b>{shop?.name||'Shop categories'}</b><small>Browse this shop</small></span></a><button type="button" className="market-sidebar-close" aria-label="Close navigation" onClick={()=>{setMobileSidebarOpen(false);setDesktopSidebarOpen(false)}}><X size={16}/></button></div>
-    <div className="ds-store-drawer-account">
-      <span className="ds-store-drawer-avatar"><UserRound size={22}/></span>
-      <span><b>{buyerCustomer?.name||'Guest shopper'}</b><small>{buyerCustomer?.phone||'Sign in to manage your orders'}</small></span>
-      <button type="button" onClick={()=>{setBuyerReturnPage('account');navigateBuyerPage(buyerCustomer?'account':'buyer-login');setMobileSidebarOpen(false)}}>{buyerCustomer?'My account':'Sign in / Sign up'} <ArrowRight size={14}/></button>
+    <div className="market-sidebar-shop jumia-drawer-brand">
+      <button type="button" className="market-sidebar-close" aria-label="Close navigation" onClick={()=>{setMobileSidebarOpen(false);setDesktopSidebarOpen(false)}}><X size={22}/></button>
+      <a href={buyerPath('store')} onClick={e=>{e.preventDefault();navigateBuyerPage('store')}}><span className="jumia-drawer-logo">{shop?.logoUrl?<img src={shop.logoUrl} alt=""/>:<Store size={24}/>}</span><b>{shop?.name||'OUR STORE'}</b></a>
     </div>
-    <div className="market-sidebar-title">DISCOVER</div>
-    <nav className="market-sidebar-links" aria-label="Shop destinations">
-      <button type="button" onClick={()=>{navigateBuyerPage('collection/all-products');setMobileSidebarOpen(false)}}><ShoppingBag size={16}/> All products</button>
-      <button type="button" onClick={()=>{navigateBuyerPage('collection/top-picks');setMobileSidebarOpen(false)}}><Star size={16}/> Top picks</button>
-      <button type="button" onClick={()=>{navigateBuyerPage('collection/featured-products');setMobileSidebarOpen(false)}}><TicketPercent size={16}/> Featured products</button>
-      <button type="button" onClick={()=>{navigateBuyerPage('faqs');setMobileSidebarOpen(false)}}><HelpCircle size={16}/> Shopping help</button>
+    <div className="market-sidebar-title jumia-drawer-heading"><span>NEED HELP?</span><button type="button" aria-label="Shopping help" onClick={()=>{navigateBuyerPage('faqs');setMobileSidebarOpen(false)}}><ChevronRight size={20}/></button></div>
+    <div className="market-sidebar-title jumia-drawer-heading"><span>MY {String(shop?.name||'STORE').toUpperCase()} ACCOUNT</span><button type="button" aria-label="Open account" onClick={()=>{setBuyerReturnPage('account');navigateBuyerPage(buyerCustomer?'account':'buyer-login');setMobileSidebarOpen(false)}}><ChevronRight size={20}/></button></div>
+    <nav className="market-sidebar-links jumia-account-links" aria-label="My shop account">
+      <button type="button" onClick={()=>{navigateBuyerPage('orders');setMobileSidebarOpen(false)}}><ShoppingBag size={25}/> Orders</button>
+      <button type="button" onClick={()=>{navigateBuyerPage('inbox');setMobileSidebarOpen(false)}}><MessageCircle size={25}/> Inbox</button>
+      <button type="button" onClick={()=>{navigateBuyerPage('reviews');setMobileSidebarOpen(false)}}><Star size={25}/> Pending Reviews</button>
+      <button type="button" onClick={()=>{navigateBuyerPage('vouchers');setMobileSidebarOpen(false)}}><TicketPercent size={25}/> Vouchers</button>
+      <button type="button" onClick={()=>{navigateBuyerPage('wishlist');setMobileSidebarOpen(false)}}><Heart size={25}/> Wishlist</button>
     </nav>
-    <div className="market-sidebar-title">SHOP BY CATEGORY</div>
+    <div className="market-sidebar-title jumia-drawer-heading jumia-categories-heading"><span>OUR CATEGORIES</span><button type="button" onClick={()=>{selectStoreCategory('All products');setMobileSidebarOpen(false)}}>See All</button></div>
     <button type="button" className="market-sidebar-category-button" onClick={()=>{selectStoreCategory('All products');setMobileSidebarOpen(false)}}><span className="market-sidebar-category-icon" aria-hidden="true">▦</span><span>All categories</span></button>
     {storefrontCategories.map(category=><div className="market-sidebar-category" key={category.name}>
       <button type="button" className={"market-sidebar-category-button"+(filter===category.name?' active':'')} aria-expanded={expandedCategory===category.name} onClick={()=>setExpandedCategory(current=>current===category.name?'':category.name)}><span className="market-sidebar-category-icon" aria-hidden="true">{category.icon}</span><span>{category.name}</span><ChevronRight size={14} className="market-sidebar-category-chevron"/></button>
@@ -278,7 +278,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
 
   {!isBuyerAccountRoute&&buyerPage!=='store'&&buyerPage!=='buyer-login'&&buyerPage!=='buyer-signup'&&<nav className="buyer-account-routebar buyer-global-routebar" aria-label="Store navigation"><button type="button" className="buyer-account-home-link" onClick={()=>navigateBuyerPage('store')}><Home size={17}/><span>Shop home</span></button><span className="buyer-account-route-divider">/</span><button type="button" className="buyer-account-overview-link" onClick={()=>navigateBuyerPage(buyerCustomer?'account':'buyer-login')}><UserRound size={16}/><span>My account</span></button></nav>}
   {buyerPage==='store'?<>
-    <main className="ds-store">
+    <main className={"ds-store"+((filter!=='All products'||search.trim()||buyerPage.startsWith('collection/'))?" is-listing-mode":"")}>
       <header className="ds-store-navigation">
         <div className="ds-store-navigation-main">
           <button type="button" className="ds-store-menu-trigger" aria-label="Open shop categories" onClick={()=>{if(window.innerWidth>760)setDesktopSidebarOpen(v=>!v);else setMobileSidebarOpen(true)}}><Menu size={21}/></button>
@@ -298,12 +298,14 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
         </label>
       </header>
       <section className="ds-store-browse-controls" aria-label="Product filters">
-        <div className="ds-store-filter-row">
-          <span className="ds-store-filter-label">Filter products</span>
-          <select aria-label="Filter products by category" value={filter} onChange={e=>{setFilter(e.target.value);navigateBuyerPage('store')}}><option value="All products">All categories</option>{storefrontCategories.map(category=><optgroup key={category.name} label={category.name}><option value={category.name}>{category.name}</option>{category.subcategories.map(child=><option key={child} value={child}>{child}</option>)}</optgroup>)}</select>
-          <select aria-label="Sort products" value={sortOrder} onChange={e=>setSortOrder(e.target.value)}><option value="recommended">Recommended</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="name">Name: A to Z</option></select>
-          <button type="button" className="ds-store-filter-clear" onClick={()=>{setFilter('All products');setSortOrder('recommended');setSearch('');navigateBuyerPage('store')}}>Clear</button>
+        <div className="jumia-breadcrumb"><button type="button" onClick={()=>navigateBuyerPage('store')}>Home</button><span>›</span><button type="button" onClick={()=>{setFilter('All products');setSearch('');navigateBuyerPage('store')}}>All Products</button>{(filter!=='All products'||search.trim())&&<><span>›</span><strong>{search.trim()||filter}</strong></>}</div>
+        <div className="ds-store-filter-row jumia-filter-row">
+          <button type="button" className="jumia-filter-pill jumia-filter-primary" onClick={()=>{setFilter('All products');setSortOrder('recommended')}}>✦ <span>Recommended</span></button>
+          <select aria-label="Filter products by category" value={filter} onChange={e=>{setFilter(e.target.value);navigateBuyerPage('store')}}><option value="All products">Category</option>{storefrontCategories.map(category=><optgroup key={category.name} label={category.name}><option value={category.name}>{category.name}</option>{category.subcategories.map(child=><option key={child} value={child}>{child}</option>)}</optgroup>)}</select>
+          <select aria-label="Sort products" value={sortOrder} onChange={e=>setSortOrder(e.target.value)}><option value="recommended">Sort by</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="name">Name: A to Z</option></select>
+          <button type="button" className="jumia-filter-pill" onClick={()=>setSortOrder(v=>v==='price-low'?'price-high':'price-low')}>Price <ChevronRight size={14}/></button>
         </div>
+        {(filter!=='All products'||search.trim()||buyerPage.startsWith('collection/'))&&<div className="jumia-related-searches"><span>Related results:</span>{[...new Set(mixedProducts.slice(0,6).map(p=>p.name.split(' ').slice(0,2).join(' ')).filter(Boolean))].map(term=><button type="button" key={term} onClick={()=>{setSearch(term);setFilter('All products');navigateBuyerPage('store')}}>{term}</button>)}</div>}
       </section>
       {buyerNotificationsOpen&&buyerCustomer&&<section className="ds-store-notification-popover" aria-label="Recent notifications"><div className="ds-store-notification-popover-head"><div><strong>Notifications</strong><small>{buyerNotifications.length} recent updates</small></div><button type="button" aria-label="Close notifications" onClick={()=>setBuyerNotificationsOpen(false)}>×</button></div>{buyerNotifications.length?buyerNotifications.slice(0,8).map((item:any,index:number)=><button type="button" className="ds-store-notification-item" key={item.id||item.orderId||item.complaintId||index} onClick={()=>{setBuyerNotificationsOpen(false);navigateBuyerPage(item.complaint_id||item.complaintId?'my-reports':'orders')}}><span className="ds-store-notification-item-icon"><Bell size={15}/></span><span><strong>{item.title||'Order update'}</strong><small>{item.detail||'There is an update on your account.'}</small><time>{item.created_at?new Date(item.created_at).toLocaleString('en-KE'):item.updatedAt?new Date(item.updatedAt).toLocaleString('en-KE'):'Recently'}</time></span><ChevronRight size={15}/></button>):<div className="ds-store-notification-empty"><Bell size={22}/><strong>You’re all caught up</strong><p>Payment, order and delivery updates will appear here.</p></div>}<button type="button" className="ds-store-notification-viewall" onClick={()=>{setBuyerNotificationsOpen(false);navigateBuyerPage('notifications')}}>View all updates <ArrowRight size={15}/></button></section>}
       <section className="ds-store-hero" key={homeHeroProduct?.id||"featured-empty"}>
