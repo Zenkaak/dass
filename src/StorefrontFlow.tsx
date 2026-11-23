@@ -595,7 +595,6 @@ export function StorefrontFlow({
       checkoutIdempotency.current=null;
       onCartChange({});
       try{localStorage.removeItem(checkoutDraftKey)}catch{}
-      setCheckoutDraftReady(false);
       if (isCash) {
         setPaymentPollMessage(deliveryMethod === 'pickup' ? 'Order placed. Pay in cash when you collect it; the seller must accept the order first.' : 'Order placed. Pay the seller in cash when it arrives; the seller must accept the order first.');
         onNavigate('orders');
