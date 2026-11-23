@@ -562,3 +562,216 @@
   margin: 5px 10px 8px !important;
   font-size: 10px !important;
 }
+
+
+/* Follow-up storefront fixes from live mobile review (shared across every shop). */
+/* Product titles are names only in cards: never let long catalogue text expand a card. */
+.store-page .market-product-card,
+.store-page .market-recommendation-card,
+.store-page .ds-store-card {
+  min-width: 0 !important;
+  height: 100% !important;
+}
+.store-page .market-home-product-open > strong,
+.store-page .market-product-card > button strong,
+.store-page .market-recommendation-product > strong,
+.store-page .ds-store-product-name,
+.store-page .market-related-name {
+  display: -webkit-box !important;
+  min-height: 2.7em !important;
+  max-height: 2.7em !important;
+  height: 2.7em !important;
+  overflow: hidden !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+  text-overflow: ellipsis !important;
+  overflow-wrap: anywhere !important;
+  white-space: normal !important;
+}
+.store-page .market-home-product-open,
+.store-page .market-recommendation-product,
+.store-page .ds-store-product {
+  min-height: 0 !important;
+  height: 100% !important;
+}
+.store-page .market-home-product-open .customer-product-thumb {
+  flex: 0 0 auto !important;
+}
+
+/* Product detail gallery: use the entire available image frame, centered. */
+.store-page .market-product-detail-main {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+.store-page .market-detail-gallery,
+.store-page .market-detail-main-image {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+.store-page .market-detail-main-image {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+}
+.store-page .market-detail-main-image > img {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  margin: 0 auto !important;
+}
+
+/* Search-first filter strip: compact, directly associated with the storefront search. */
+.store-page .ds-store-browse-controls {
+  margin: 0 0 14px !important;
+  padding: 8px 12px !important;
+  border-bottom: 1px solid #eceeef !important;
+}
+.store-page .ds-store-browse-controls-heading,
+.store-page .ds-store-filter-result-count {
+  display: none !important;
+}
+.store-page .ds-store-filter-row {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 8px !important;
+  overflow-x: auto !important;
+  padding: 2px 0 5px !important;
+}
+.store-page .ds-store-filter-row > label {
+  display: none !important;
+}
+.store-page .ds-store-filter-row > select {
+  flex: 0 0 auto !important;
+  min-width: 112px !important;
+  min-height: 40px !important;
+  max-width: 48vw !important;
+  padding: 0 12px !important;
+  border: 1px solid #d6dadd !important;
+  border-radius: 22px !important;
+  background: #fff !important;
+  color: #30363b !important;
+  font-size: 13px !important;
+}
+
+/* Jumia-inspired drawer: account actions first, then destination links, then expandable categories. */
+.store-page .market-sidebar {
+  width: min(86vw, 340px) !important;
+  max-width: 340px !important;
+  padding: 0 !important;
+  background: #fff !important;
+  color: #282d32 !important;
+  border: 0 !important;
+  box-shadow: 8px 0 28px rgba(20, 28, 36, .16) !important;
+}
+.store-page .market-sidebar-shop {
+  min-height: 58px !important;
+  padding: 13px 16px !important;
+  border-bottom: 1px solid #eceeef !important;
+}
+.store-page .ds-store-drawer-account {
+  display: grid !important;
+  grid-template-columns: 40px minmax(0,1fr) !important;
+  align-items: center !important;
+  gap: 4px 10px !important;
+  padding: 15px 16px !important;
+  background: #fff !important;
+  border-bottom: 1px solid #eceeef !important;
+}
+.store-page .ds-store-drawer-avatar {
+  grid-row: span 2 !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important;
+  background: #f3f4f5 !important;
+  color: #343a3e !important;
+}
+.store-page .ds-store-drawer-account > span:nth-child(2) {
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+}
+.store-page .ds-store-drawer-account > span:nth-child(2) b {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+}
+.store-page .ds-store-drawer-account > span:nth-child(2) small {
+  color: #737a80 !important;
+  font-size: 11px !important;
+}
+.store-page .ds-store-drawer-account > button {
+  grid-column: 1 / -1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  min-height: 40px !important;
+  margin-top: 8px !important;
+  padding: 0 13px !important;
+  border: 1px solid #f0d7bd !important;
+  border-radius: 6px !important;
+  background: #fff7ef !important;
+  color: #a95a0b !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+.store-page .market-sidebar-title {
+  padding: 14px 16px 7px !important;
+  border-top: 0 !important;
+  color: #858b90 !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: .07em !important;
+}
+.store-page .market-sidebar-links {
+  padding: 0 9px 9px !important;
+}
+.store-page .market-sidebar-links button,
+.store-page .market-sidebar-category-button {
+  min-height: 46px !important;
+  width: calc(100% - 18px) !important;
+  margin: 1px 9px !important;
+  padding: 8px 11px !important;
+  border-radius: 6px !important;
+  color: #343a3e !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+.store-page .market-sidebar-category-button {
+  justify-content: flex-start !important;
+  gap: 12px !important;
+}
+.store-page .market-sidebar-category-button.active,
+.store-page .market-sidebar-category-button:hover,
+.store-page .market-sidebar-links button:hover {
+  background: #fff4e8 !important;
+  color: #a95a0b !important;
+}
+.store-page .market-sidebar-category-chevron {
+  margin-left: auto !important;
+  color: #8b9196 !important;
+}
+.store-page .market-sidebar-subcategories {
+  margin: 0 0 5px 47px !important;
+  padding-left: 10px !important;
+  border-left: 1px solid #eceeef !important;
+}
+.store-page .market-sidebar-subcategories button {
+  display: block !important;
+  width: 100% !important;
+  min-height: 38px !important;
+  padding: 7px 10px !important;
+  color: #626a70 !important;
+  text-align: left !important;
+  font-size: 13px !important;
+}
+.store-page .market-sidebar-subcategories button.active {
+  color: #a95a0b !important;
+  font-weight: 700 !important;
+}
