@@ -7399,7 +7399,7 @@ body:has(.buyer-account-workspace) {
     -webkit-box-orient:vertical!important;
     -webkit-line-clamp:2!important;
   }
-  body:has(.ds-store) .ds-store-card .ds-store-product-name + b {
+  body:has(.ds-store) .ds-store-card .ds-store-product-name ~ b {
     display:block!important;
     position:static!important;
     flex:0 0 auto!important;
