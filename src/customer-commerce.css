@@ -8328,3 +8328,98 @@
     gap:14px!important;
   }
 }
+
+
+/* Desktop/tablet catalogue: auto-fit the final row so category results never
+   reserve empty tracks or leave artificial blank product columns. */
+@media (min-width: 761px) {
+  .store-page .market-products-grid:not(.market-related-grid),
+  .customer-collection-page .customer-collection-grid {
+    display:grid!important;
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))!important;
+    grid-auto-flow:row!important;
+    grid-auto-columns:initial!important;
+    grid-template-rows:none!important;
+    align-content:start!important;
+    justify-content:stretch!important;
+    gap:clamp(14px,1.35vw,22px)!important;
+    width:100%!important;
+    max-width:100%!important;
+    overflow:visible!important;
+  }
+  .store-page .market-products-grid:not(.market-related-grid) > .market-product-card,
+  .customer-collection-page .customer-collection-grid > .market-product-card {
+    width:100%!important;
+    min-width:0!important;
+    max-width:none!important;
+    flex:initial!important;
+  }
+}
+
+/* Product detail: use the available desktop canvas instead of leaving a
+   narrow content island, with a balanced gallery and purchase column. */
+@media (min-width: 761px) {
+  .store-page .market-product-detail-route {
+    width:100%!important;
+    max-width:1560px!important;
+    margin-inline:auto!important;
+    padding:18px clamp(24px,3vw,52px) 48px!important;
+  }
+  .store-page .market-product-detail-main {
+    display:grid!important;
+    grid-template-columns:minmax(0,1.12fr) minmax(390px,.88fr)!important;
+    align-items:start!important;
+    gap:clamp(28px,3.2vw,54px)!important;
+    width:100%!important;
+    max-width:100%!important;
+  }
+  .store-page .market-detail-gallery {
+    width:100%!important;
+    min-width:0!important;
+  }
+  .store-page .market-detail-main-image {
+    width:100%!important;
+    height:clamp(440px,43vw,680px)!important;
+    min-height:440px!important;
+    max-height:680px!important;
+  }
+  .store-page .market-detail-main-image img {
+    width:100%!important;
+    height:100%!important;
+    max-height:none!important;
+    object-fit:contain!important;
+  }
+  .store-page .market-detail-summary {
+    position:static!important;
+    width:100%!important;
+    max-width:680px!important;
+    min-width:0!important;
+    gap:14px!important;
+    padding:0!important;
+  }
+  .store-page .market-detail-description-panel,
+  .store-page .market-detail-specifications,
+  .store-page .market-detail-price-panel,
+  .store-page .market-detail-delivery,
+  .store-page .market-detail-seller {
+    width:100%!important;
+  }
+}
+@media (min-width: 761px) and (max-width: 1100px) {
+  .store-page .market-products-grid:not(.market-related-grid),
+  .customer-collection-page .customer-collection-grid {
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr))!important;
+    gap:14px!important;
+  }
+  .store-page .market-product-detail-route {
+    padding-inline:20px!important;
+  }
+  .store-page .market-product-detail-main {
+    grid-template-columns:minmax(0,1fr) minmax(300px,.9fr)!important;
+    gap:20px!important;
+  }
+  .store-page .market-detail-main-image {
+    height:clamp(340px,42vw,460px)!important;
+    min-height:340px!important;
+  }
+}
