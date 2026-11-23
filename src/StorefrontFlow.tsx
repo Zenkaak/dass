@@ -881,6 +881,11 @@ export function StorefrontFlow({
           <div><span className="buyer-section-kicker">YOUR PURCHASES</span><h2>All orders</h2><p>View your purchases and follow their latest updates.</p></div>
           <span className="buyer-orders-total">{orders.length} {orders.length===1?'order':'orders'}</span>
         </div>
+        <div className="buyer-orders-overview" aria-label="Order summary">
+          <div><span className="buyer-orders-overview-icon">↗</span><span><small>ALL ORDERS</small><strong>{orders.length}</strong></span></div>
+          <div><span className="buyer-orders-overview-icon">◷</span><span><small>IN PROGRESS</small><strong>{orders.filter(o=>!isCancelled(o)&&!isDelivered(o)).length}</strong></span></div>
+          <div><span className="buyer-orders-overview-icon">✓</span><span><small>DELIVERED</small><strong>{orders.filter(isDelivered).length}</strong></span></div>
+        </div>
         {ordersLoading&&<p className="customer-preview-note">Refreshing your order history…</p>}
         {ordersError&&<p className="customer-preview-alert" role="alert">{ordersError}</p>}
         <nav className="buyer-my-orders-tabs" aria-label="Filter orders">
