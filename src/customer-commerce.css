@@ -8509,3 +8509,81 @@
  .market-payment-processing-actions{display:grid;grid-template-columns:1fr;width:100%}
  .market-payment-processing-actions button{width:100%;justify-content:center}
 }
+
+
+/* Related-products rail repair: one horizontal row of complete, equal-height
+   cards. The old two-row column-flow split cards across separate tracks. */
+.store-page .market-detail-related .market-related-grid {
+  display:grid!important;
+  grid-auto-flow:column!important;
+  grid-auto-columns:clamp(156px,19vw,210px)!important;
+  grid-template-columns:none!important;
+  grid-template-rows:minmax(0,1fr)!important;
+  align-items:stretch!important;
+  gap:12px!important;
+  width:100%!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  overscroll-behavior-inline:contain!important;
+  scroll-snap-type:x mandatory!important;
+  padding:2px 2px 12px!important;
+}
+.store-page .market-detail-related .market-related-card {
+  display:flex!important;
+  width:auto!important;
+  min-width:0!important;
+  height:100%!important;
+  min-height:0!important;
+  scroll-snap-align:start!important;
+}
+.store-page .market-detail-related .market-related-open {
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  padding:0!important;
+  text-align:left!important;
+}
+.store-page .market-detail-related .market-related-image {
+  display:block!important;
+  flex:0 0 auto!important;
+  width:100%!important;
+  height:clamp(112px,14vw,160px)!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+.store-page .market-detail-related .market-related-image img {
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+}
+.store-page .market-detail-related .market-related-name {
+  min-height:2.8em!important;
+  max-height:2.8em!important;
+  line-height:1.4!important;
+  overflow:hidden!important;
+}
+.store-page .market-detail-related .market-related-price,
+.store-page .market-detail-related .market-related-stock,
+.store-page .market-detail-related .market-related-action {
+  flex:0 0 auto!important;
+}
+@media(max-width:760px) {
+  .store-page .market-detail-related .market-related-grid {
+    grid-auto-columns:clamp(142px,44vw,176px)!important;
+    grid-template-rows:minmax(0,1fr)!important;
+    gap:9px!important;
+  }
+  .store-page .market-detail-related .market-related-image {
+    height:clamp(104px,32vw,138px)!important;
+  }
+}
+@media(max-width:380px) {
+  .store-page .market-detail-related .market-related-grid {
+    grid-auto-columns:78%!important;
+  }
+}
