@@ -7261,3 +7261,114 @@ body:has(.buyer-account-workspace) {
   body:has(.ds-store) .ds-store-card .ds-store-rating {font-size:9px!important}
   body:has(.ds-store) .ds-store-card .ds-store-add {min-height:30px!important;height:30px!important;margin-top:5px!important;font-size:10px!important}
 }
+
+
+/* Storefront consistency pass: every product-card variant shares the same
+   mobile title clamp and three-column sizing, including collection pages. */
+@media (max-width:760px) {
+  body:has(.ds-store) .ds-store-home-mix-grid,
+  body:has(.ds-store) .ds-store-catalogue-rows,
+  body:has(.ds-store) .ds-store-collection-rows,
+  body:has(.ds-store) .ds-store-collection-grid,
+  body:has(.ds-store) .ds-store-featured-grid {
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    align-items:stretch!important;
+    gap:7px!important;
+  }
+  body:has(.ds-store) .ds-store-catalogue-row,
+  body:has(.ds-store) .ds-store-collection-row {display:contents!important}
+  body:has(.ds-store) .ds-store-card {
+    display:flex!important;
+    width:auto!important;
+    min-width:0!important;
+    max-width:none!important;
+    flex-direction:column!important;
+    padding:5px!important;
+    border-radius:8px!important;
+    overflow:hidden!important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-product {
+    display:flex!important;
+    width:100%!important;
+    min-width:0!important;
+    flex-direction:column!important;
+    align-items:stretch!important;
+    overflow:hidden!important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-product-image {
+    display:block!important;
+    width:100%!important;
+    height:92px!important;
+    min-height:92px!important;
+    aspect-ratio:auto!important;
+    padding:2px!important;
+    flex:0 0 92px!important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-product-image img {
+    width:100%!important;height:100%!important;object-fit:contain!important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-product-name {
+    display:-webkit-box!important;
+    width:100%!important;
+    min-width:0!important;
+    min-height:2.56em!important;
+    max-height:2.56em!important;
+    height:2.56em!important;
+    margin:5px 1px 0!important;
+    padding:0!important;
+    overflow:hidden!important;
+    color:#424a51!important;
+    font-size:12.5px!important;
+    font-weight:600!important;
+    line-height:1.28!important;
+    white-space:normal!important;
+    overflow-wrap:anywhere!important;
+    word-break:normal!important;
+    -webkit-box-orient:vertical!important;
+    -webkit-line-clamp:2!important;
+    text-overflow:ellipsis!important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-product>b {
+    margin:5px 1px 0!important;
+    font-size:13.5px!important;
+    font-weight:700!important;
+    line-height:1.2!important;
+    white-space:nowrap!important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-product>small,
+  body:has(.ds-store) .ds-store-card .ds-store-rating {
+    max-width:100%!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+    font-size:9px!important;
+  }
+  body:has(.ds-store) .ds-store-card .ds-store-add {
+    width:100%!important;
+    min-height:30px!important;
+    height:30px!important;
+    margin:5px 0 0!important;
+    padding:0 3px!important;
+    font-size:10px!important;
+  }
+  /* Keep the pagination sentinel from injecting a large skeleton that
+     changes page height while someone is scrolling. */
+  body:has(.ds-store) .ds-store-load-more-wrap {
+    min-height:44px!important;
+    height:44px!important;
+    margin:12px 0!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    overflow:hidden!important;
+  }
+  body:has(.ds-store) .ds-store-load-skeleton {display:none!important}
+  body:has(.ds-store) .ds-store-load-more-wrap[aria-busy="true"]::after {
+    content:"Loading more products…";
+    display:block;
+    color:#68727b;
+    font-size:12px;
+    line-height:20px;
+  }
+}
