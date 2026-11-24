@@ -1075,7 +1075,7 @@ export default async function handler(req:any,res:any){
    if(!['central_subaccount','own_paystack'].includes(mode))return send(res,400,{error:'Choose a valid Paystack account mode.'});
    const existing=await sql`SELECT encrypted_credentials FROM public.tenant_paystack_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
    if(mode==='central_subaccount'){
-    await sql`INSERT INTO public.tenant_paystack_configs(tenant_id,account_mode,connection_status,updated_at) VALUES(${me.tenant_id},'central_subaccount','not_connected',now()) ON CONFLICT(tenant_id) DO UPDATE SET account_mode='central_subaccount',connection_status='not_connected',updated_at=now()`;
+    await sql`INSERT INTO public.tenant_paystack_configs(tenant_id,account_mode,connection_status,updated_at) VALUES(${me.tenant_id},'central_subaccount','not_connected',now()) ON CONFLICT(tenant_id) DO UPDATE SET account_mode='central_subaccount',encrypted_credentials='{}'::jsonb,account_email=NULL,connection_status='not_connected',updated_at=now()`;
     await audit(sql,me.tenant_id,me.user_id,'seller.paystack.mode_changed','paystack_config',me.tenant_id,{accountMode:mode});
     return send(res,200,{ok:true,accountMode:mode});
    }
@@ -1157,6 +1157,8 @@ export default async function handler(req:any,res:any){
    const resolvedResponse=await fetch(resolveUrl,{headers:{Authorization:'Bearer '+central.secretKey,Accept:'application/json'},signal:AbortSignal.timeout(12000)}),resolved:any=await resolvedResponse.json().catch(()=>({}));
    if(!resolvedResponse.ok||resolved?.status!==true||!resolved?.data?.account_number)return send(res,400,{error:String(resolved?.message||'Paystack could not verify this bank account. Check the bank code and account number.')});
    if(String(resolved.data.account_number)!==accountNumber)return send(res,400,{error:'Paystack returned a different account number. Please verify your details.'});
+   const normalizedAccountName=(v:string)=>String(v||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+   if(resolved.data.account_name&&normalizedAccountName(String(resolved.data.account_name))!==normalizedAccountName(accountName))return send(res,400,{error:'The account holder name returned by Paystack does not match the name entered. Check the bank details before continuing.'});
    const createdResponse=await fetch('https://api.paystack.co/subaccount',{method:'POST',headers:{Authorization:'Bearer '+central.secretKey,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({business_name:businessName,settlement_bank:bankCode,account_number:accountNumber,percentage_charge:0,primary_contact_email:email,primary_contact_name:accountName,phone}),signal:AbortSignal.timeout(15000)}),created:any=await createdResponse.json().catch(()=>({}));
    if(!createdResponse.ok||created?.status!==true||!created?.data?.subaccount_code)return send(res,502,{error:String(created?.message||'Paystack could not create the seller settlement subaccount.')});
    const encrypted=encryptPrivate({businessName,accountName,accountNumber,bankCode,bankName:String(b.bankName||'').slice(0,100)});
