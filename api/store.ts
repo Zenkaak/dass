@@ -1109,7 +1109,7 @@ export default async function handler(req:any,res:any){
    const rows=await sql`SELECT account_mode,account_email,connection_status,subaccount_status,paystack_subaccount_code,last_verified_at,updated_at,encrypted_credentials FROM public.tenant_paystack_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
     const commissionRows=await sql`SELECT commission_percent FROM public.platform_paystack_config WHERE id='central' LIMIT 1`;
    const c=rows[0]||{};
-   return send(res,200,{paystack:{accountMode:c.account_mode||'central_subaccount',accountEmail:c.account_email||'',connectionStatus:c.connection_status||'not_connected',subaccountStatus:c.subaccount_status||'not_created',subaccountCode:c.paystack_subaccount_code||null,lastVerifiedAt:c.last_verified_at||null,ownCredentialsConfigured:!!c.encrypted_credentials?.data,centralCommissionPercent:Number(commissionRows[0]?.commission_percent??5),updatedAt:c.updated_at||null,webhookUrl:(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/paystack/seller-webhook?shop='+encodeURIComponent(String(me.slug||'')),callbackUrl:(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/paystack/seller-callback?shop='+encodeURIComponent(String(me.slug||''))}});
+   return send(res,200,{paystack:{accountMode:c.account_mode||'central_subaccount',accountEmail:c.account_email||'',connectionStatus:c.connection_status||'not_connected',subaccountStatus:c.subaccount_status||'not_created',settlementStatus:c.settlement_status||'not_submitted',subaccountCode:c.paystack_subaccount_code||null,lastVerifiedAt:c.last_verified_at||null,ownCredentialsConfigured:!!c.encrypted_credentials?.data,centralCommissionPercent:Number(commissionRows[0]?.commission_percent??5),updatedAt:c.updated_at||null,webhookUrl:(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/paystack/seller-webhook?shop='+encodeURIComponent(String(me.slug||'')),callbackUrl:(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/paystack/seller-callback?shop='+encodeURIComponent(String(me.slug||''))}});
   }
   if(req.method==='POST'&&action==='paystack-seller'){
    if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner can manage Paystack settings.'});
@@ -1182,6 +1182,21 @@ export default async function handler(req:any,res:any){
    else await sql`UPDATE public.tenant_card_kyc SET business_document_object_key=${objectKey},updated_at=now() WHERE tenant_id=${me.tenant_id}`;
    return send(res,200,{ok:true,kind});
   }
+  if(req.method==='POST'&&action==='paystack-subaccount-status'){
+   if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner can check settlement status.'});
+   const rows=await sql`SELECT account_mode,paystack_subaccount_code FROM public.tenant_paystack_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
+   const code=String(rows[0]?.paystack_subaccount_code||'');
+   if(rows[0]?.account_mode!=='central_subaccount'||!code)return send(res,409,{error:'No DASMARKET seller subaccount has been created yet.'});
+   const central=await getCentralPaystackCredentials();
+   const response=await fetch('https://api.paystack.co/subaccount/'+encodeURIComponent(code),{headers:{Authorization:'Bearer '+central.secretKey,Accept:'application/json'},signal:AbortSignal.timeout(12000)}),payload:any=await response.json().catch(()=>({}));
+   if(!response.ok||payload?.status!==true||!payload?.data?.subaccount_code)return send(res,502,{error:String(payload?.message||'Paystack could not confirm this settlement subaccount. Try again later.')});
+   const verified=payload.data.is_verified===true&&payload.data.active!==false;
+   const status=verified?'active':payload.data.active===false?'inactive':'pending_verification';
+   const settlement=verified?'verified':payload.data.active===false?'action_required':'pending_verification';
+   await sql`UPDATE public.tenant_paystack_configs SET subaccount_status=${status},settlement_status=${settlement},last_verified_at=CASE WHEN ${verified} THEN now() ELSE last_verified_at END,last_error_code=CASE WHEN ${verified} THEN NULL ELSE ${status} END,updated_at=now() WHERE tenant_id=${me.tenant_id}`;
+   await audit(sql,me.tenant_id,me.user_id,'seller.paystack.subaccount.status_checked','paystack_subaccount',me.tenant_id,{subaccountStatus:status,settlementStatus:settlement});
+   return send(res,200,{ok:true,subaccountCode:code,subaccountStatus:status,settlementStatus:settlement,isVerified:verified,active:payload.data.active!==false});
+  }
   if(req.method==='POST'&&action==='paystack-subaccount'){
    if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner can configure settlement.'});
    const [config,kyc,user]=await Promise.all([
@@ -1200,15 +1215,16 @@ export default async function handler(req:any,res:any){
    if(!resolvedResponse.ok||resolved?.status!==true||!resolved?.data?.account_number)return send(res,400,{error:String(resolved?.message||'Paystack could not verify this bank account. Check the bank code and account number.')});
    if(String(resolved.data.account_number)!==accountNumber)return send(res,400,{error:'Paystack returned a different account number. Please verify your details.'});
    const normalizedAccountName=(v:string)=>String(v||'').toLowerCase().replace(/[^a-z0-9]/g,'');
-   if(resolved.data.account_name&&normalizedAccountName(String(resolved.data.account_name))!==normalizedAccountName(accountName))return send(res,400,{error:'The account holder name returned by Paystack does not match the name entered. Check the bank details before continuing.'});
+   if(!String(resolved.data.account_name||'').trim())return send(res,400,{error:'Paystack could not return the bank account holder name. Confirm the bank code and account number before continuing.'});
+   if(normalizedAccountName(String(resolved.data.account_name))!==normalizedAccountName(accountName))return send(res,400,{error:'The account holder name returned by Paystack does not match the name entered. Check the bank details before continuing.'});
    const commissionRows=await sql`SELECT commission_percent FROM public.platform_paystack_config WHERE id='central' LIMIT 1`;
    const commissionPercent=Math.min(20,Math.max(0,Number(commissionRows[0]?.commission_percent??5)));
-   const createdResponse=await fetch('https://api.paystack.co/subaccount',{method:'POST',headers:{Authorization:'Bearer '+central.secretKey,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({business_name:businessName,settlement_bank:bankCode,account_number:accountNumber,percentage_charge:commissionPercent,primary_contact_email:email,primary_contact_name:accountName,phone}),signal:AbortSignal.timeout(15000)}),created:any=await createdResponse.json().catch(()=>({}));
+   const createdResponse=await fetch('https://api.paystack.co/subaccount',{method:'POST',headers:{Authorization:'Bearer '+central.secretKey,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({business_name:businessName,settlement_bank:bankCode,account_number:accountNumber,percentage_charge:commissionPercent,primary_contact_email:email,primary_contact_name:accountName,primary_contact_phone:phone}),signal:AbortSignal.timeout(15000)}),created:any=await createdResponse.json().catch(()=>({}));
    if(!createdResponse.ok||created?.status!==true||!created?.data?.subaccount_code)return send(res,502,{error:String(created?.message||'Paystack could not create the seller settlement subaccount.')});
-   const encrypted=encryptPrivate({businessName,accountName,accountNumber,bankCode,bankName:String(b.bankName||'').slice(0,100)});
-   await sql`UPDATE public.tenant_paystack_configs SET encrypted_bank_details=${JSON.stringify(encrypted)}::jsonb,settlement_status='verified',paystack_subaccount_code=${String(created.data.subaccount_code)},subaccount_status='active',updated_at=now() WHERE tenant_id=${me.tenant_id}`;
-   await audit(sql,me.tenant_id,me.user_id,'seller.paystack.subaccount.created','paystack_subaccount',me.tenant_id,{subaccountCreated:true,bankAccountVerified:true,percentageCharge:commissionPercent});
-   return send(res,200,{ok:true,subaccountCode:String(created.data.subaccount_code),subaccountStatus:'active'});
+   const encrypted=encryptPrivate({businessName,accountName,accountNumber,bankCode,bankName:String(b.bankName||'').slice(0,100)}),verified=created.data.is_verified===true&&created.data.active!==false,status=verified?'active':created.data.active===false?'inactive':'pending_verification',settlement=verified?'verified':created.data.active===false?'action_required':'pending_verification';
+   await sql`UPDATE public.tenant_paystack_configs SET encrypted_bank_details=${JSON.stringify(encrypted)}::jsonb,settlement_status=${settlement},paystack_subaccount_code=${String(created.data.subaccount_code)},subaccount_status=${status},last_verified_at=CASE WHEN ${verified} THEN now() ELSE last_verified_at END,last_error_code=CASE WHEN ${verified} THEN NULL ELSE ${status} END,updated_at=now() WHERE tenant_id=${me.tenant_id}`;
+   await audit(sql,me.tenant_id,me.user_id,'seller.paystack.subaccount.created','paystack_subaccount',me.tenant_id,{subaccountCreated:true,bankAccountVerified:true,paystackVerified:verified,percentageCharge:commissionPercent});
+   return send(res,200,{ok:true,subaccountCode:String(created.data.subaccount_code),subaccountStatus:status,settlementStatus:settlement,isVerified:verified});
   }
   if(req.method==='GET'&&action==='card-kyc'){
    const rows=await sql`SELECT status,encrypted_identity,phone,phone_verified_at,id_front_object_key,id_back_object_key,business_document_object_key,submitted_at,reviewed_at,review_note FROM public.tenant_card_kyc WHERE tenant_id=${me.tenant_id} LIMIT 1`;
