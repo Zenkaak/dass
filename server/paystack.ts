@@ -32,22 +32,15 @@ export async function getCentralPaystackCredentials():Promise<PaystackCredential
 }
 export async function getUsdKesRate():Promise<{rate:number;source:string}> {
  const now=Date.now();
- if(fxMemory&&now-fxMemory.fetchedAt<15*60*1000)return {rate:fxMemory.rate,source:fxMemory.source};
+ // Platform-controlled USD/KES rate. Defaults to the currently approved KES 130 rate.
+ // Updating PAYSTACK_USD_KES_RATE changes new quotes; prior transactions retain their snapshot.
+ const configured=Number(env('PAYSTACK_USD_KES_RATE')||'130');
+ if(!Number.isFinite(configured)||configured<50||configured>300)throw new Error('Configured USD/KES rate is invalid.');
+ if(fxMemory&&now-fxMemory.fetchedAt<15*60*1000&&fxMemory.rate===configured)return {rate:fxMemory.rate,source:fxMemory.source};
  const sql=getDb();
- const cached=await sql`SELECT rate,source,fetched_at FROM public.fx_rate_cache WHERE base_currency='USD' AND quote_currency='KES' LIMIT 1`;
- if(cached.length&&now-new Date(cached[0].fetched_at).getTime()<30*60*1000){
-  const rate=Number(cached[0].rate);
-  if(Number.isFinite(rate)&&rate>=50&&rate<=300){fxMemory={rate,fetchedAt:now,source:String(cached[0].source||'cache')};return {rate,source:fxMemory.source};}
- }
- const response=await fetch('https://open.er-api.com/v6/latest/USD',{headers:{Accept:'application/json'},signal:AbortSignal.timeout(8000)});
- if(!response.ok)throw new Error('USD/KES exchange rate service is unavailable.');
- const payload:any=await response.json();
- const rate=Number(payload?.rates?.KES);
- if(payload?.result!=='success'||!Number.isFinite(rate)||rate<50||rate>300)throw new Error('USD/KES exchange rate response failed validation.');
- const source='open.er-api.com';
- await sql`INSERT INTO public.fx_rate_cache(base_currency,quote_currency,rate,source,fetched_at) VALUES('USD','KES',${rate},${source},now()) ON CONFLICT(base_currency,quote_currency) DO UPDATE SET rate=EXCLUDED.rate,source=EXCLUDED.source,fetched_at=EXCLUDED.fetched_at`;
- fxMemory={rate,fetchedAt:now,source};
- return {rate,source};
+ await sql`INSERT INTO public.fx_rate_cache(base_currency,quote_currency,rate,source,fetched_at) VALUES('USD','KES',${configured},'platform_config',now()) ON CONFLICT(base_currency,quote_currency) DO UPDATE SET rate=EXCLUDED.rate,source=EXCLUDED.source,fetched_at=EXCLUDED.fetched_at`;
+ fxMemory={rate:configured,fetchedAt:now,source:'platform_config'};
+ return {rate:configured,source:'platform_config'};
 }
 export async function quoteUsdInKes(usdAmount:number):Promise<KESQuote>{
  if(!Number.isFinite(usdAmount)||usdAmount<=0||usdAmount>10000000)throw new Error('USD amount is invalid.');
