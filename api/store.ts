@@ -1392,7 +1392,9 @@ export default async function handler(req:any,res:any){
     amountMinor=fx.amountSubunits;
    }else if(currency!=='KES')return send(res,400,{error:'Paystack checkout currently supports KES plans and USD plans converted to KES.'});
    const isLifetime=plan.code==='lifetime-license',reference='DASPS_'+crypto.randomBytes(18).toString('hex');
-   // DASMARKET subscription fees are platform revenue: always charge the central platform Paystack account, never a seller account or subaccount.\n   const paymentRoute='central_paystack';\n   const paymentId=crypto.randomUUID(),meta={source:isLifetime?'seller_lifetime_license':'seller_subscription',planId:plan.id,intervalDays:isLifetime?36500:Number(plan.interval_days),subscriptionId:subs[0]?.id||null,paymentRoute,originalCurrency:currency};
+   // DASMARKET subscription fees are platform revenue: always charge the central platform Paystack account, never a seller account or subaccount.
+   const paymentRoute='central_paystack';
+   const paymentId=crypto.randomUUID(),meta={source:isLifetime?'seller_lifetime_license':'seller_subscription',planId:plan.id,intervalDays:isLifetime?36500:Number(plan.interval_days),subscriptionId:subs[0]?.id||null,paymentRoute,originalCurrency:currency};
    const inserted=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,amount_minor,currency,status,idempotency_key,provider_reference,payment_route,original_usd_amount,fx_rate_used,charged_kes_amount,provider_result)
     VALUES(${me.tenant_id},NULL,'paystack',${amountMinor},'KES','initiated',${paymentId},${reference},${paymentRoute},${fx?.originalUsdAmount??null},${fx?.fxRateUsed??null},${fx?.chargedKesAmount??(amountMinor/100)},${JSON.stringify(meta)}::jsonb) RETURNING id`;
    try{
