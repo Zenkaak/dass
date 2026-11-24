@@ -14,6 +14,10 @@ if(!warningProcess.__dasnetDep0169Trace){
 const env=(k:string)=>(process.env[k]||'').trim();
 const send=(res:any,s:number,b:unknown)=>res.status(s).json(b);
 const hash=(s:string)=>crypto.createHash('sha256').update(s).digest('hex');
+function credentialsKey():Buffer{const raw=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');const key=/^[a-f0-9]{64}$/i.test(raw)?Buffer.from(raw,'hex'):Buffer.from(raw,'base64');if(key.length!==32)throw Error('Credential encryption is not configured correctly.');return key;}
+function encryptPrivate(value:any){const iv=crypto.randomBytes(12),cipher=crypto.createCipheriv('aes-256-gcm',credentialsKey(),iv),data=Buffer.concat([cipher.update(JSON.stringify(value),'utf8'),cipher.final()]);return {v:1,iv:iv.toString('base64'),tag:cipher.getAuthTag().toString('base64'),data:data.toString('base64')};}
+function decryptPrivate(blob:any){if(!blob?.iv||!blob?.tag||!blob?.data)return {};const decipher=crypto.createDecipheriv('aes-256-gcm',credentialsKey(),Buffer.from(blob.iv,'base64'));decipher.setAuthTag(Buffer.from(blob.tag,'base64'));return JSON.parse(Buffer.concat([decipher.update(Buffer.from(blob.data,'base64')),decipher.final()]).toString('utf8'));}
+
 const db=()=>getDb();
 function token(req:any){const c=String(req.headers.cookie||'').split(';').map((s:string)=>s.trim()).find((s:string)=>s.startsWith('das_session='));try{return c?decodeURIComponent(c.slice(12)):''}catch{return ''}}
 async function buyerSession(sql:any,req:any,tenantId:string){
@@ -1051,6 +1055,48 @@ export default async function handler(req:any,res:any){
    if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission to delete coupons.'});
    const id=String(req.query?.id||''),r=await sql`DELETE FROM public.store_coupons WHERE id=${id} AND tenant_id=${me.tenant_id} RETURNING id`;
    return r.length?send(res,200,{ok:true}):send(res,404,{error:'Coupon not found.'});
+  }
+  if(req.method==='GET'&&action==='paystack-seller'){
+   const rows=await sql`SELECT account_mode,account_email,connection_status,subaccount_status,paystack_subaccount_code,last_verified_at,updated_at,encrypted_credentials FROM public.tenant_paystack_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
+   const c=rows[0]||{};
+   return send(res,200,{paystack:{accountMode:c.account_mode||'central_subaccount',accountEmail:c.account_email||'',connectionStatus:c.connection_status||'not_connected',subaccountStatus:c.subaccount_status||'not_created',subaccountCode:c.paystack_subaccount_code||null,lastVerifiedAt:c.last_verified_at||null,ownCredentialsConfigured:!!c.encrypted_credentials?.data,updatedAt:c.updated_at||null,webhookUrl:(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/paystack/seller-webhook?shop='+encodeURIComponent(String(me.slug||''),),callbackUrl:(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/paystack/seller-callback?shop='+encodeURIComponent(String(me.slug||''))}});
+  }
+  if(req.method==='POST'&&action==='paystack-seller'){
+   if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner can manage Paystack settings.'});
+   const mode=String(req.body?.accountMode||'central_subaccount');
+   if(!['central_subaccount','own_paystack'].includes(mode))return send(res,400,{error:'Choose a valid Paystack account mode.'});
+   const existing=await sql`SELECT encrypted_credentials FROM public.tenant_paystack_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
+   if(mode==='central_subaccount'){
+    await sql`INSERT INTO public.tenant_paystack_configs(tenant_id,account_mode,connection_status,updated_at) VALUES(${me.tenant_id},'central_subaccount','not_connected',now()) ON CONFLICT(tenant_id) DO UPDATE SET account_mode='central_subaccount',connection_status='not_connected',updated_at=now()`;
+    await audit(sql,me.tenant_id,me.user_id,'seller.paystack.mode_changed','paystack_config',me.tenant_id,{accountMode:mode});
+    return send(res,200,{ok:true,accountMode:mode});
+   }
+   const email=String(req.body?.accountEmail||'').trim().toLowerCase(),secretKey=String(req.body?.secretKey||'').trim();
+   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return send(res,400,{error:'Enter the email address registered with your Paystack account.'});
+   if(!/^sk_(test|live)_[A-Za-z0-9]+$/.test(secretKey))return send(res,400,{error:'Enter a valid Paystack secret key. Do not use your public key.'});
+   const response=await fetch('https://api.paystack.co/balance',{headers:{Authorization:'Bearer '+secretKey,Accept:'application/json'},signal:AbortSignal.timeout(12000)});
+   const verified:any=await response.json().catch(()=>({}));
+   if(!response.ok||verified?.status!==true)return send(res,400,{error:'Paystack could not verify this secret key. Check the key and account environment.'});
+   const stored=decryptPrivate(existing[0]?.encrypted_credentials),encrypted=encryptPrivate({secretKey,environment:secretKey.startsWith('sk_live_')?'live':'test'});
+   await sql`INSERT INTO public.tenant_paystack_configs(tenant_id,account_mode,encrypted_credentials,account_email,connection_status,connected_at,last_verified_at,updated_at) VALUES(${me.tenant_id},'own_paystack',${JSON.stringify(encrypted)}::jsonb,${email},'connected',now(),now(),now()) ON CONFLICT(tenant_id) DO UPDATE SET account_mode='own_paystack',encrypted_credentials=EXCLUDED.encrypted_credentials,account_email=EXCLUDED.account_email,connection_status='connected',connected_at=COALESCE(public.tenant_paystack_configs.connected_at,now()),last_verified_at=now(),last_error_code=NULL,updated_at=now()`;
+   await audit(sql,me.tenant_id,me.user_id,'seller.paystack.connected','paystack_config',me.tenant_id,{accountMode:mode,environment:secretKey.startsWith('sk_live_')?'live':'test',credentialEncrypted:true});
+   return send(res,200,{ok:true,accountMode:mode,connectionStatus:'connected'});
+  }
+  if(req.method==='GET'&&action==='card-kyc'){
+   const rows=await sql`SELECT status,phone,phone_verified_at,submitted_at,reviewed_at,review_note FROM public.tenant_card_kyc WHERE tenant_id=${me.tenant_id} LIMIT 1`;
+   const k=rows[0]||{};
+   return send(res,200,{kyc:{status:k.status||'not_submitted',phone:k.phone||'',phoneVerified:!!k.phone_verified_at,submittedAt:k.submitted_at||null,reviewedAt:k.reviewed_at||null,reviewNote:k.review_note||''}});
+  }
+  if(req.method==='POST'&&action==='card-kyc'){
+   if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner can submit card KYC.'});
+   const fullName=String(req.body?.fullName||'').trim().slice(0,140),idNumber=String(req.body?.idNumber||'').trim().replace(/\s/g,'').slice(0,40),phoneRaw=String(req.body?.phone||'').trim(),phone=normalizePhone(phoneRaw),businessName=String(req.body?.businessName||'').trim().slice(0,140);
+   if(fullName.length<3||idNumber.length<5||!phone||!businessName)return send(res,400,{error:'Enter your legal name, ID number, Kenyan phone number and registered business/shop name.'});
+   const user=await sql`SELECT phone FROM public.users WHERE id=${me.user_id} LIMIT 1`;
+   if(!user.length||normalizePhone(String(user[0].phone||''))!==phone)return send(res,400,{error:'Use the verified phone number already registered on your DASMARKET seller account.'});
+   const encrypted=encryptPrivate({fullName,idNumber,businessName});
+   await sql`INSERT INTO public.tenant_card_kyc(tenant_id,encrypted_identity,phone,status,submitted_at,updated_at) VALUES(${me.tenant_id},${JSON.stringify(encrypted)}::jsonb,${phone},'pending_review',now(),now()) ON CONFLICT(tenant_id) DO UPDATE SET encrypted_identity=EXCLUDED.encrypted_identity,phone=EXCLUDED.phone,status='pending_review',submitted_at=now(),reviewed_at=NULL,reviewed_by=NULL,review_note=NULL,updated_at=now()`;
+   await audit(sql,me.tenant_id,me.user_id,'seller.card_kyc.submitted','card_kyc',me.tenant_id,{phoneLast4:phone.slice(-4),identityEncrypted:true,documentsPending:true});
+   return send(res,200,{ok:true,status:'pending_review',message:'Your identity details were submitted. Upload of ID document images and phone OTP confirmation are still required before approval.'});
   }
   if(req.method==='GET'&&action==='payment-settings'){
    const rows=await sql`SELECT payout_method,party_b,account_reference,shortcode,account_type,environment,encrypted_credentials,till_party_b,paybill_party_b,default_payout_method FROM public.payment_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
