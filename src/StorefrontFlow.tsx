@@ -1009,7 +1009,7 @@ export function StorefrontFlow({
           couponCode: appliedCoupon?.code || '',
           customerName: customerName.trim(),
           customerPhone: customerPhone.trim(),
-          paymentPhone: isCash ? '' : paymentPhone.trim(),
+          paymentPhone: paymentMethod === 'mpesa' ? paymentPhone.trim() : '',
           customerEmail: customerEmail.trim(),
           deliveryMethod,
           deliveryCounty,
@@ -1775,7 +1775,7 @@ export function StorefrontFlow({
               <div className="sf-panel-head">
                 <div>
                   <h2>Choose a payment method</h2>
-                  <p>Secure payment via M-PESA{cashOptionEnabled ? ' or cash' : ''}.</p>
+                  <p>Choose M-PESA, bank card{cashOptionEnabled ? ' or cash' : ''}.</p>
                 </div>
               </div>
               <div className="sf-choice-grid" role="group" aria-label="Available payment methods">
