@@ -1389,9 +1389,18 @@ export default async function handler(req:any,res:any){
     }
    }
    const cfg=config[0]?.setting_value||{};
-   return send(res,200,{subscription:currentSubscription,plans,trialDays:Math.max(0,Math.min(30,Number(trialConfig[0]?.trial_days??7))),payment:{configured:!!(cfg.method&&cfg.destination),method:cfg.method||null},lastPayment:lastPayment[0]?{...lastPayment[0],amount:Number(lastPayment[0].amount_minor)/100}:null});
+   const billing=await sql`SELECT billing_email FROM public.tenants WHERE id=${me.tenant_id} LIMIT 1`;
+    return send(res,200,{subscription:currentSubscription,plans,trialDays:Math.max(0,Math.min(30,Number(trialConfig[0]?.trial_days??7))),payment:{configured:!!(cfg.method&&cfg.destination),method:cfg.method||null},billingEmail:String(billing[0]?.billing_email||''),lastPayment:lastPayment[0]?{...lastPayment[0],amount:Number(lastPayment[0].amount_minor)/100}:null});
   }
-  if(req.method==='POST'&&action==='subscription-paystack'){
+     if(req.method==='POST'&&action==='subscription-billing-email'){
+    if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner or admin can update billing details.'});
+    const email=String(req.body?.billingEmail||'').trim().toLowerCase().slice(0,254);
+    if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))return send(res,400,{error:'Enter a valid billing email address.'});
+    await sql`UPDATE public.tenants SET billing_email=${email},updated_at=now() WHERE id=${me.tenant_id}`;
+    await audit(sql,me.tenant_id,me.user_id,'subscription.billing_email.updated','tenant',me.tenant_id,{billingEmailChanged:true});
+    return send(res,200,{ok:true,billingEmail:email});
+   }
+if(req.method==='POST'&&action==='subscription-paystack'){
    const planId=String(req.body?.planId||'');
    if(!/^[0-9a-f-]{36}$/i.test(planId))return send(res,400,{error:'Choose a valid subscription plan.'});
    const [plans,subs]=await Promise.all([
@@ -1415,8 +1424,8 @@ export default async function handler(req:any,res:any){
     VALUES(${me.tenant_id},NULL,'paystack',${amountMinor},'KES','initiated',${paymentId},${reference},${paymentRoute},${fx?.originalUsdAmount??null},${fx?.fxRateUsed??null},${fx?.chargedKesAmount??(amountMinor/100)},${JSON.stringify(meta)}::jsonb) RETURNING id`;
    try{
     const callbackUrl=(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/paystack/callback';
-    const ownerRows=await sql`SELECT email FROM public.users WHERE id=${me.user_id} LIMIT 1`;
-    const ownerEmail=String(ownerRows[0]?.email||'').trim();if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(ownerEmail))throw Error('Add a valid billing email to your DASMARKET account before using card payments.');
+    const billingRows=await sql`SELECT billing_email FROM public.tenants WHERE id=${me.tenant_id} LIMIT 1`;
+    const ownerEmail=String(billingRows[0]?.billing_email||'').trim().toLowerCase();if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(ownerEmail))throw Error('Add a valid billing email for this shop before using card payments.');
     let initialized:any;
     const metadata={paymentId:inserted[0].id,tenantId:me.tenant_id,source:meta.source,planId:plan.id};
     initialized=await initializeCentralPaystack({email:ownerEmail,reference,amountSubunits:amountMinor,callbackUrl,metadata});
