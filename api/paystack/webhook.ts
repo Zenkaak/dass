@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { getDb, hasDatabaseConfig } from '../../server/db.js';
+import { getCentralPaystackCredentials } from '../../server/paystack.js';
 
 export const config = { api: { bodyParser: false } };
 const env=(key:string)=>(process.env[key]||'').trim();
@@ -53,8 +54,8 @@ export default async function handler(req:any,res:any){
  if(event?.event!=='charge.success')return res.status(200).json({received:true,ignored:true});
  const data=event.data||{},reference=String(data.reference||'').trim();
  if(!reference)return send(res,400,{error:'Missing transaction reference'});
- const secret=env('PAYSTACK_SECRET_KEY');
- if(!secret)return send(res,503,{error:'Payment verification is not configured'});
+ let secret='';
+ try{secret=(await getCentralPaystackCredentials()).secretKey;}catch{return send(res,503,{error:'Central Paystack credentials are not configured'});}
  try{
   const sql=getDb();
   const existing=await sql`SELECT p.id,p.tenant_id,p.order_id,p.amount_minor,p.currency,p.status,o.order_number FROM public.payments p JOIN public.orders o ON o.id=p.order_id AND o.tenant_id=p.tenant_id WHERE p.provider='paystack' AND p.provider_reference=${reference} LIMIT 1`;
@@ -62,7 +63,7 @@ export default async function handler(req:any,res:any){
   const payment=existing[0];
   if(payment.status==='succeeded')return res.status(200).json({received:true,duplicate:true});
   const verification=await verifyTransaction(reference,secret),tx=verification.data;
-  const matches=verification.ok&&tx?.status==='success'&&String(tx.reference)===reference&&Number(tx.amount)===Number(payment.amount_minor)&&String(tx.currency||'').toUpperCase()===String(payment.currency||'KES').trim().toUpperCase();
+  const matches=verification.ok&&tx?.status==='success'&&String(tx.reference)===reference&&String(tx.currency||'').toUpperCase()==='KES'&&String(payment.currency||'KES').toUpperCase()==='KES'&&Number(tx.amount)===Number(payment.amount_minor);
   if(!matches){
    await sql`UPDATE public.payments SET provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paystackVerification:'mismatch_or_pending',reference})}::jsonb,updated_at=now() WHERE id=${payment.id} AND tenant_id=${payment.tenant_id} AND status IN ('initiated','pending')`;
    return res.status(200).json({received:true,verified:false,reviewRequired:true});
