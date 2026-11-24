@@ -1,7 +1,7 @@
 import storeHandler from './store.js';
 
 const MERCHANT_ACTIONS=new Set([
- 'store-settings','coupons','coupon','payment-settings','payout-settings','subscription','subscription-stk','subscription-paystack','paystack-seller','card-kyc','card-kyc-otp',
+ 'store-settings','coupons','coupon','payment-settings','payout-settings','subscription','subscription-stk','subscription-paystack','paystack-seller','card-kyc','card-kyc-otp','card-kyc-document-upload','card-kyc-document-confirm',
  'api-credentials','email-credentials','email-test','transactions','tickets','ticket','profile','settings',
  'products','orders','product-image-upload','products-bulk','product',
  'product-status','order-chat','order-status','order-delivery-status',
