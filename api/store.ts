@@ -1384,10 +1384,6 @@ export default async function handler(req:any,res:any){
    ]);
    if(!plans.length)return send(res,404,{error:'That subscription plan is no longer available.'});
    if(subs[0]?.plan_code==='lifetime-license')return send(res,409,{error:'This shop already has a lifetime platform licence.'});
-   if(String(me.slug||'').toLowerCase()!=='kingsley'){
-    const kyc=await sql`SELECT status,phone_verified_at FROM public.tenant_card_kyc WHERE tenant_id=${me.tenant_id} LIMIT 1`;
-    if(kyc[0]?.status!=='approved'||!kyc[0]?.phone_verified_at)return send(res,403,{error:'Card payments are locked until this shop completes DASMARKET card KYC and phone verification. M-PESA remains available.'});
-   }
    const plan=plans[0],currency=String(plan.currency||'KES').trim().toUpperCase(),priceMinor=Number(plan.price_minor);
    if(!Number.isSafeInteger(priceMinor)||priceMinor<1)return send(res,400,{error:'This plan does not have a payable price.'});
    let amountMinor=priceMinor,fx:any=null;
@@ -1396,9 +1392,7 @@ export default async function handler(req:any,res:any){
     amountMinor=fx.amountSubunits;
    }else if(currency!=='KES')return send(res,400,{error:'Paystack checkout currently supports KES plans and USD plans converted to KES.'});
    const isLifetime=plan.code==='lifetime-license',reference='DASPS_'+crypto.randomBytes(18).toString('hex');
-   const routeRows=await sql`SELECT account_mode,connection_status FROM public.tenant_paystack_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
-   const paymentRoute=routeRows[0]?.account_mode==='own_paystack'&&routeRows[0]?.connection_status==='connected'?'own_paystack':'central_paystack';
-   const paymentId=crypto.randomUUID(),meta={source:isLifetime?'seller_lifetime_license':'seller_subscription',planId:plan.id,intervalDays:isLifetime?36500:Number(plan.interval_days),subscriptionId:subs[0]?.id||null,paymentRoute,originalCurrency:currency};
+   // DASMARKET subscription fees are platform revenue: always charge the central platform Paystack account, never a seller account or subaccount.\n   const paymentRoute='central_paystack';\n   const paymentId=crypto.randomUUID(),meta={source:isLifetime?'seller_lifetime_license':'seller_subscription',planId:plan.id,intervalDays:isLifetime?36500:Number(plan.interval_days),subscriptionId:subs[0]?.id||null,paymentRoute,originalCurrency:currency};
    const inserted=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,amount_minor,currency,status,idempotency_key,provider_reference,payment_route,original_usd_amount,fx_rate_used,charged_kes_amount,provider_result)
     VALUES(${me.tenant_id},NULL,'paystack',${amountMinor},'KES','initiated',${paymentId},${reference},${paymentRoute},${fx?.originalUsdAmount??null},${fx?.fxRateUsed??null},${fx?.chargedKesAmount??(amountMinor/100)},${JSON.stringify(meta)}::jsonb) RETURNING id`;
    try{
@@ -1407,14 +1401,7 @@ export default async function handler(req:any,res:any){
     const ownerEmail=String(ownerRows[0]?.email||'').trim();if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(ownerEmail))throw Error('Add a valid billing email to your DASMARKET account before using card payments.');
     let initialized:any;
     const metadata={paymentId:inserted[0].id,tenantId:me.tenant_id,source:meta.source,planId:plan.id};
-    if(paymentRoute==='own_paystack'){
-     const own=await getSellerPaystackCredentials(me.tenant_id);
-     const response=await fetch('https://api.paystack.co/transaction/initialize',{method:'POST',headers:{Authorization:'Bearer '+own.secretKey,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({email:ownerEmail,reference,amount:amountMinor,currency:'KES',callback_url:callbackUrl,metadata}),signal:AbortSignal.timeout(15000)});
-     const payload:any=await response.json().catch(()=>({}));
-     if(!response.ok||payload?.status!==true||!payload?.data?.authorization_url||!payload?.data?.access_code)throw Error(String(payload?.message||'Seller Paystack could not initialize this KES payment.'));
-     initialized={authorizationUrl:payload.data.authorization_url,accessCode:payload.data.access_code,reference:payload.data.reference};
-    }else{const settlement=await sql`SELECT paystack_subaccount_code,subaccount_status FROM public.tenant_paystack_configs WHERE tenant_id=${me.tenant_id} AND account_mode='central_subaccount' LIMIT 1`;if(!settlement[0]?.paystack_subaccount_code||settlement[0]?.subaccount_status!=='active')throw Error('Complete seller settlement bank onboarding before using central Paystack card checkout.');initialized=await initializeCentralPaystack({email:ownerEmail,reference,amountSubunits:amountMinor,callbackUrl,metadata,subaccountCode:String(settlement[0].paystack_subaccount_code)});}
-    await sql`UPDATE public.payments SET provider_checkout_id=${initialized.accessCode},status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({authorizationUrl:initialized.authorizationUrl,accessCode:initialized.accessCode,reference:initialized.reference})}::jsonb,updated_at=now() WHERE id=${inserted[0].id} AND status='initiated'`;
+    initialized=await initializeCentralPaystack({email:ownerEmail,reference,amountSubunits:amountMinor,callbackUrl,metadata});\n    await sql`UPDATE public.payments SET provider_checkout_id=${initialized.accessCode},status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({authorizationUrl:initialized.authorizationUrl,accessCode:initialized.accessCode,reference:initialized.reference})}::jsonb,updated_at=now() WHERE id=${inserted[0].id} AND status='initiated'`;
     await audit(sql,me.tenant_id,me.user_id,'subscription.paystack.initialized','subscription',subs[0]?.id||me.tenant_id,{planId:plan.id,amountMinor,currency:'KES',fxRate:fx?.fxRateUsed||null});
     return send(res,200,{ok:true,authorizationUrl:initialized.authorizationUrl,reference:initialized.reference,amountKes:amountMinor/100,currency:'KES'});
    }catch(error:any){
