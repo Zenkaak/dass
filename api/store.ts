@@ -1140,9 +1140,9 @@ export default async function handler(req:any,res:any){
    return send(res,200,{ok:true,kind});
   }
   if(req.method==='GET'&&action==='card-kyc'){
-   const rows=await sql`SELECT status,phone,phone_verified_at,submitted_at,reviewed_at,review_note FROM public.tenant_card_kyc WHERE tenant_id=${me.tenant_id} LIMIT 1`;
+   const rows=await sql`SELECT status,phone,phone_verified_at,id_front_object_key,id_back_object_key,business_document_object_key,submitted_at,reviewed_at,review_note FROM public.tenant_card_kyc WHERE tenant_id=${me.tenant_id} LIMIT 1`;
    const k=rows[0]||{};
-   return send(res,200,{kyc:{status:k.status||'not_submitted',phone:k.phone||'',phoneVerified:!!k.phone_verified_at,submittedAt:k.submitted_at||null,reviewedAt:k.reviewed_at||null,reviewNote:k.review_note||''}});
+   return send(res,200,{kyc:{status:k.status||'not_submitted',phone:k.phone||'',phoneVerified:!!k.phone_verified_at,idFrontUploaded:!!k.id_front_object_key,idBackUploaded:!!k.id_back_object_key,businessDocumentUploaded:!!k.business_document_object_key,submittedAt:k.submitted_at||null,reviewedAt:k.reviewed_at||null,reviewNote:k.review_note||''}});
   }
   if(req.method==='POST'&&action==='card-kyc'){
    if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner can submit card KYC.'});
