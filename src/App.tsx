@@ -303,21 +303,24 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
   </div>
  );
 
- const renderStoreHeader=()=>(
+ const isCheckoutFlowRoute=buyerPage.startsWith('checkout/');
+ const renderStoreHeader=(compact=false)=>(
   <>
-   <div className="sf-announcement">
-    <div className="sf-announcement-inner">
-     <button type="button" className="sf-announcement-left" onClick={()=>navigateBuyerPage('collection/all-products')}>
-      <ShoppingBag size={13}/> <span>Direct from {shop?.name||'this shop'}</span>
-     </button>
-     <span className="sf-announcement-center">{(shop?.name||'Official Store').toUpperCase()}</span>
-     <button type="button" className="sf-announcement-right" onClick={()=>navigateBuyerPage('faqs')}>
-      <HelpCircle size={13}/> <span>Buyer guide &amp; FAQs</span>
-     </button>
+   {!compact&&(
+    <div className="sf-announcement">
+     <div className="sf-announcement-inner">
+      <button type="button" className="sf-announcement-left" onClick={()=>navigateBuyerPage('collection/all-products')}>
+       <ShoppingBag size={13}/> <span>Direct from {shop?.name||'this shop'}</span>
+      </button>
+      <span className="sf-announcement-center">{(shop?.name||'Official Store').toUpperCase()}</span>
+      <button type="button" className="sf-announcement-right" onClick={()=>navigateBuyerPage('faqs')}>
+       <HelpCircle size={13}/> <span>Buyer guide &amp; FAQs</span>
+      </button>
+     </div>
     </div>
-   </div>
+   )}
    <header className="sf-header">
-    <div className="sf-header-inner">
+    <div className={'sf-header-inner'+(compact?' is-compact':'')}>
      <div className="sf-header-left">
       <button type="button" className="sf-icon-btn" aria-label="Browse shop categories" onClick={()=>{if(window.innerWidth>760)setDesktopSidebarOpen(v=>!v);else setMobileSidebarOpen(true)}}>
        <Menu size={20}/>
@@ -328,15 +331,17 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
        </span>
        <span className="sf-brand-text">
         <strong className="sf-brand-name">{shop?.name||'OUR STORE'}</strong>
-        <span className="sf-brand-sub">Official Storefront</span>
+        <span className="sf-brand-sub">{compact?'Secure Checkout':'Official Storefront'}</span>
        </span>
       </a>
      </div>
-     <form className="sf-search-form" onSubmit={e=>{e.preventDefault();setFilter('All products');navigateBuyerPage('store');window.setTimeout(()=>document.getElementById('market-products-grid')?.scrollIntoView({behavior:'smooth',block:'start'}),80)}}>
-      <Search size={17}/>
-      <input aria-label="Search products" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search products, categories and SKUs…"/>
-      <button type="submit" className="sf-search-submit">Search</button>
-     </form>
+     {!compact&&(
+      <form className="sf-search-form" onSubmit={e=>{e.preventDefault();setFilter('All products');navigateBuyerPage('store');window.setTimeout(()=>document.getElementById('market-products-grid')?.scrollIntoView({behavior:'smooth',block:'start'}),80)}}>
+       <Search size={17}/>
+       <input aria-label="Search products" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search products, categories and SKUs…"/>
+       <button type="submit" className="sf-search-submit">Search</button>
+      </form>
+     )}
      <div className="sf-header-actions">
       <button type="button" className="sf-header-action" onClick={()=>{setBuyerReturnPage('account');navigateBuyerPage(buyerCustomer?'account':'buyer-login')}} aria-label={buyerCustomer?'My account':'Account'}>
        <UserRound size={18}/>
@@ -880,21 +885,23 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
    ):(
     <>
      {renderShopDrawer()}
-     {renderStoreHeader()}
-     <nav className="sf-routebar" aria-label="Store navigation">
-      <div className="sf-routebar-inner">
-       <div className="sf-routebar-nav">
-        <button type="button" className="sf-routebar-link" onClick={()=>navigateBuyerPage('store')}><Home size={15}/> Shop home</button>
-        <span style={{color:'var(--sf-muted)'}}>/</span>
-        <button type="button" className="sf-routebar-link" onClick={()=>navigateBuyerPage(buyerCustomer?'account':'buyer-login')}><UserRound size={15}/> My account</button>
+     {renderStoreHeader(isCheckoutFlowRoute)}
+     {!isCheckoutFlowRoute&&(
+      <nav className="sf-routebar" aria-label="Store navigation">
+       <div className="sf-routebar-inner">
+        <div className="sf-routebar-nav">
+         <button type="button" className="sf-routebar-link" onClick={()=>navigateBuyerPage('store')}><Home size={15}/> Shop home</button>
+         <span style={{color:'var(--sf-muted)'}}>/</span>
+         <button type="button" className="sf-routebar-link" onClick={()=>navigateBuyerPage(buyerCustomer?'account':'buyer-login')}><UserRound size={15}/> My account</button>
+        </div>
        </div>
-      </div>
-     </nav>
+      </nav>
+     )}
      <Deferred>{renderFlow()}</Deferred>
      {renderFooter()}
     </>
    )}
-   {shop?.whatsappNumber&&shop.whatsappNumber.replace(/\D/g,'').length>=10&&(
+   {buyerPage!=='cart'&&!isCheckoutFlowRoute&&shop?.whatsappNumber&&shop.whatsappNumber.replace(/\D/g,'').length>=10&&(
     <a className="sf-whatsapp-float" href={`https://wa.me/${shop.whatsappNumber.replace(/\D/g,'')}?text=Hello%2C%20I%20need%20help%20with%20this%20storefront.`} target="_blank" rel="noopener noreferrer" aria-label={`Contact ${shop?.name||'this shop'} on WhatsApp`}>
      <MessageCircle size={18}/><span>Help</span>
     </a>
