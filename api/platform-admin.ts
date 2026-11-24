@@ -19,7 +19,7 @@ export default async function handler(req:any,res:any){
   const sql=db(),users=await sql`SELECT u.id,u.phone,u.display_name FROM public.users u JOIN public.auth_sessions s ON s.user_id=u.id WHERE s.token_hash=${hash(token)} AND s.expires_at>now() LIMIT 1`;
   if(!users.length||!allow.includes(phone(users[0].phone||'')))return send(res,403,{error:'Platform administrator access required.'});
   if(req.method==='GET'&&String(req.query?.action||'')==='paystack_config'){
-   const rows=await sql`SELECT environment,encrypted_credentials,updated_at FROM public.platform_paystack_config WHERE id='central' LIMIT 1`;
+   const rows=await sql`SELECT environment,encrypted_credentials,commission_percent,updated_at FROM public.platform_paystack_config WHERE id='central' LIMIT 1`;
    let saved:any={};
    const blob=rows[0]?.encrypted_credentials;
    if(blob?.data&&blob?.iv&&blob?.tag){
@@ -28,7 +28,7 @@ export default async function handler(req:any,res:any){
     if(keyBytes.length!==32)return send(res,503,{error:'Credential encryption is not configured correctly.'});
     try{const decipher=crypto.createDecipheriv('aes-256-gcm',keyBytes,Buffer.from(blob.iv,'base64'));decipher.setAuthTag(Buffer.from(blob.tag,'base64'));saved=JSON.parse(Buffer.concat([decipher.update(Buffer.from(blob.data,'base64')),decipher.final()]).toString('utf8'));}catch{return send(res,500,{error:'Saved Paystack configuration could not be decrypted.'});}
    }
-   return send(res,200,{paystack:{environment:rows[0]?.environment||'test',testConfigured:!!(saved.test?.secretKey&&saved.test?.publicKey),testWebhookConfigured:!!saved.test?.webhookSecret,liveConfigured:!!(saved.live?.secretKey&&saved.live?.publicKey),liveWebhookConfigured:!!saved.live?.webhookSecret,updatedAt:rows[0]?.updated_at||null}});
+   return send(res,200,{paystack:{environment:rows[0]?.environment||'test',testConfigured:!!(saved.test?.secretKey&&saved.test?.publicKey),testWebhookConfigured:!!saved.test?.webhookSecret,liveConfigured:!!(saved.live?.secretKey&&saved.live?.publicKey),liveWebhookConfigured:!!saved.live?.webhookSecret,commissionPercent:Number(rows[0]?.commission_percent??5),updatedAt:rows[0]?.updated_at||null}});
   }
   if(req.method==='GET'&&String(req.query?.action||'')==='card_kyc_queue'){
    const rows=await sql`SELECT k.tenant_id,k.encrypted_identity,k.id_front_object_key,k.id_back_object_key,k.business_document_object_key,k.phone,k.phone_verified_at,k.status,k.submitted_at,k.reviewed_at,k.review_note,t.name AS shop_name,t.slug FROM public.tenant_card_kyc k JOIN public.tenants t ON t.id=k.tenant_id ORDER BY CASE WHEN k.status='pending_review' THEN 0 ELSE 1 END,k.submitted_at DESC LIMIT 100`;
@@ -333,6 +333,8 @@ export default async function handler(req:any,res:any){
    if(keyBytes.length!==32)return send(res,503,{error:'DASNET_CREDENTIALS_ENCRYPTION_KEY must decode to exactly 32 bytes.'});
    const environment=String(req.body?.environment||'test');
    if(!['test','live'].includes(environment))return send(res,400,{error:'Choose Test or Live mode.'});
+   const commissionPercent=Number(req.body?.commissionPercent??5);
+   if(!Number.isFinite(commissionPercent)||commissionPercent<0||commissionPercent>20)return send(res,400,{error:'DASMARKET commission must be between 0% and 20%.'});
    const rows=await sql`SELECT encrypted_credentials FROM public.platform_paystack_config WHERE id='central' LIMIT 1`;
    let credentials:any={};const stored=rows[0]?.encrypted_credentials;
    if(stored?.data&&stored?.iv&&stored?.tag){try{const decipher=crypto.createDecipheriv('aes-256-gcm',keyBytes,Buffer.from(stored.iv,'base64'));decipher.setAuthTag(Buffer.from(stored.tag,'base64'));credentials=JSON.parse(Buffer.concat([decipher.update(Buffer.from(stored.data,'base64')),decipher.final()]).toString('utf8'));}catch{return send(res,500,{error:'Saved Paystack credentials could not be decrypted. Check the encryption key.'});}}
@@ -347,8 +349,8 @@ export default async function handler(req:any,res:any){
    credentials[mode]=next;
    const iv=crypto.randomBytes(12),cipher=crypto.createCipheriv('aes-256-gcm',keyBytes,iv),encrypted=Buffer.concat([cipher.update(JSON.stringify(credentials),'utf8'),cipher.final()]);
    const blob={v:1,iv:iv.toString('base64'),tag:cipher.getAuthTag().toString('base64'),data:encrypted.toString('base64')};
-   await sql`INSERT INTO public.platform_paystack_config(id,environment,encrypted_credentials,updated_by,updated_at) VALUES('central',${environment},${JSON.stringify(blob)}::jsonb,${users[0].id},now()) ON CONFLICT(id) DO UPDATE SET environment=EXCLUDED.environment,encrypted_credentials=EXCLUDED.encrypted_credentials,updated_by=EXCLUDED.updated_by,updated_at=now()`;
-   await sql`INSERT INTO public.audit_logs(actor_user_id,action,resource_type,resource_id,metadata) VALUES(${users[0].id},'platform.paystack.credentials.updated','payment_config','central-paystack',${JSON.stringify({environment,credentialsEncrypted:true,webhookSecretConfigured:!!next.webhookSecret})}::jsonb)`;
+   await sql`INSERT INTO public.platform_paystack_config(id,environment,encrypted_credentials,commission_percent,updated_by,updated_at) VALUES('central',${environment},${JSON.stringify(blob)}::jsonb,${commissionPercent},${users[0].id},now()) ON CONFLICT(id) DO UPDATE SET environment=EXCLUDED.environment,encrypted_credentials=EXCLUDED.encrypted_credentials,commission_percent=EXCLUDED.commission_percent,updated_by=EXCLUDED.updated_by,updated_at=now()`;
+   await sql`INSERT INTO public.audit_logs(actor_user_id,action,resource_type,resource_id,metadata) VALUES(${users[0].id},'platform.paystack.credentials.updated','payment_config','central-paystack',${JSON.stringify({environment,credentialsEncrypted:true,webhookSecretConfigured:!!next.webhookSecret,commissionPercent})}::jsonb)`;
    return send(res,200,{ok:true,environment,configured:true,webhookConfigured:!!next.webhookSecret});
   }
   if(req.body?.action==='save_daraja'){
