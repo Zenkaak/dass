@@ -30,7 +30,7 @@ const routes: Record<string, (req:any,res:any)=>unknown> = {
 
 export default async function handler(req:any,res:any) {
   const pathname = new URL(String(req.url || '/'), 'https://dasmarket.internal').pathname;
-  const route = pathname.replace(/^\\/api\\/?/, '').replace(/\\/+$/, '');
+  const route = pathname.replace(/^\/api\/?/, '').replace(/\/+$/, '');
   const target = routes[route];
   if (!target) return res.status(404).json({ error: 'Unknown API route.' });
   return target(req,res);
