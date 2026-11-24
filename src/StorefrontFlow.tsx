@@ -2060,7 +2060,7 @@ export function StorefrontFlow({
                         ? deliveryMethod === 'pickup'
                           ? 'Cash on pickup'
                           : 'Cash on delivery'
-                        : 'M-PESA · STK push'}
+                        : paymentMethod === 'card' ? 'Bank card · Paystack' : 'M-PESA · STK push'}
                     </p>
                   </div>
                   <button
@@ -2079,7 +2079,7 @@ export function StorefrontFlow({
                 <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--sf-muted)' }}>
                   {paymentMethod === 'delivery'
                     ? 'Cash due upon ' + (deliveryMethod === 'pickup' ? 'collection.' : 'delivery.')
-                    : `Prompt to ${paymentPhone || customerPhone}`}
+                    : paymentMethod === 'card' ? 'You will be redirected to Paystack’s secure card checkout.' : `Prompt to ${paymentPhone || customerPhone}`}
                 </p>
               </div>
             </div>
@@ -2161,7 +2161,7 @@ export function StorefrontFlow({
               !lines.length ||
               !customerName.trim() ||
               !customerPhone.trim() ||
-              (paymentMethod !== 'mpesa' && !cashReady) ||
+              (paymentMethod === 'delivery' && !cashOptionEnabled) ||
               submitting ||
               (deliveryMethod === 'home' &&
                 (!deliveryCounty || !deliverySubCounty.trim() || !deliveryEstate.trim() || !deliveryAddress.trim())) ||
@@ -2172,11 +2172,11 @@ export function StorefrontFlow({
             {submitting
               ? paymentMethod === 'delivery'
                 ? 'Placing order…'
-                : 'Requesting M-PESA…'
+                : paymentMethod === 'card' ? 'Opening secure card checkout…' : 'Requesting M-PESA…'
               : orderConfirmed
               ? paymentMethod === 'delivery'
                 ? 'Place cash order'
-                : 'Pay with M-PESA'
+                : paymentMethod === 'card' ? 'Continue to card payment' : 'Pay with M-PESA'
               : 'Confirm order'}{' '}
             <ArrowRight size={17} />
           </button>
