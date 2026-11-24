@@ -36,6 +36,8 @@ const accountGroups = [
   { title: 'ACCOUNT & SUPPORT', links: [
     { label: 'My profile & addresses', icon: UserRound, view: 'profile' },
     { label: 'Reports & Complaints', icon: Flag, view: 'my-reports' },
+    { label: 'Followed shops', icon: ShieldCheck, view: 'followed-shops' },
+    { label: 'Recently viewed', icon: Search, view: 'recently-viewed' },
     { label: 'Help & support', icon: ShieldCheck, view: 'assistant' },
   ]},
 ];
@@ -835,8 +837,8 @@ export function StorefrontFlow({
           {renderSummary()}
         </div>
         {checkoutError&&<p className="customer-preview-alert" role="alert">{checkoutError}</p>}
-        {orderConfirmed&&<div className="market-checkout-confirmed" role="status"><Check size={18}/><div><strong>Order details confirmed</strong><small>Your delivery, items and payment number are ready. Continue when you are ready to request the M-PESA prompt.</small></div></div>}
-        <div className="market-checkout-bottom-action"><div><small>{orderConfirmed?'READY TO PAY':'ORDER TOTAL'}</small><strong>{formatKes(total)}</strong></div><button type="button" className="customer-primary-button" disabled={!lines.length||!customerName.trim()||!customerPhone.trim()||paymentMethod!=='mpesa'||submitting||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))||(deliveryMethod==='pickup'&&(!pickupStation.trim()||!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))} onClick={orderConfirmed?placeOrder:()=>setOrderConfirmed(true)}>{submitting?(paymentMethod==='delivery'?'Placing order…':'Requesting M-PESA…'):orderConfirmed?(paymentMethod==='delivery'?'Place cash order':'Pay with M-PESA'):'Confirm order'} <ArrowRight size={18}/></button></div>
+        {orderConfirmed&&<div className="market-checkout-confirmed" role="status"><Check size={18}/><div><strong>Order details confirmed</strong><small>{paymentMethod==='delivery'?'Your delivery details and items are ready. Place the order now and pay only when the seller accepts it and you receive your items.':'Your delivery details, items and payment number are ready. Continue when you are ready to request the M-PESA prompt.'}</small></div></div>}
+        <div className="market-checkout-bottom-action"><div><small>{orderConfirmed?'READY TO PAY':'ORDER TOTAL'}</small><strong>{formatKes(total)}</strong></div><button type="button" className="customer-primary-button" disabled={!lines.length||!customerName.trim()||!customerPhone.trim()||(paymentMethod!=='mpesa'&&paymentMethod!=='delivery')||submitting||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))||(deliveryMethod==='pickup'&&(!pickupStation.trim()||!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))} onClick={orderConfirmed?placeOrder:()=>setOrderConfirmed(true)}>{submitting?(paymentMethod==='delivery'?'Placing order…':'Requesting M-PESA…'):orderConfirmed?(paymentMethod==='delivery'?'Place cash order':'Pay with M-PESA'):'Confirm order'} <ArrowRight size={18}/></button></div>
 <ProductRecommendationShelf products={products} cart={cart} onAdd={id=>updateQuantity(id,(cart[id]||0)+1)} onOpenProduct={onOpenProduct} title="Add something extra" subtitle="A few more picks from this shop, available to add before you place your order."/>
       </section>
     );
@@ -1058,6 +1060,9 @@ export function StorefrontFlow({
             <button type="button" onClick={()=>onNavigate('reviews')}><Check size={18}/><span>My reviews</span><ChevronRight size={16}/></button>
             <button type="button" onClick={()=>onNavigate('notifications')}><ShieldCheck size={18}/><span>Notifications</span><ChevronRight size={16}/></button>
             <button type="button" onClick={()=>onNavigate('account-management')}><UserRound size={18}/><span>Account & security</span><ChevronRight size={16}/></button>
+            <button type="button" onClick={()=>onNavigate('notification-settings')}><ShieldCheck size={18}/><span>Notification preferences</span><ChevronRight size={16}/></button>
+            <button type="button" onClick={()=>onNavigate('newsletter')}><Mail size={18}/><span>Shop updates &amp; offers</span><ChevronRight size={16}/></button>
+            <button type="button" onClick={()=>onNavigate('public-profile')}><UserRound size={18}/><span>Public profile</span><ChevronRight size={16}/></button>
           </div></section>
         </div>
       </section>
