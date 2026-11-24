@@ -171,3 +171,12 @@
  .ds-store-seller-stats span{font-size:9px}
  .ds-store-seller-products{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 }
+
+/* Seller profile and clickable seller identity */
+.ds-store-seller-back{display:inline-flex;align-items:center;min-height:36px;margin:0 0 12px;padding:0 4px;border:0;background:transparent;color:#667078;font-size:12px;font-weight:600;cursor:pointer}
+.ds-store-seller-contact{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+.ds-store-seller-contact a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 13px;border:1px solid #e5e8ea;border-radius:4px;background:#fff;color:#4d565c;font-size:12px;font-weight:650;text-decoration:none}
+.ds-store-seller-contact a:first-child{border-color:#f1a14d;background:#fff8f0;color:#bc6712}
+.market-detail-seller{width:100%;text-align:left;background:#fff;cursor:pointer;font:inherit}
+.market-detail-seller>svg:last-child{margin-left:auto;color:#8a9298}
+@media(max-width:760px){.ds-store-seller-contact{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.ds-store-seller-contact a{width:100%}}
