@@ -136,3 +136,45 @@
   .ds-store-category-tiles { grid-template-columns:repeat(8,minmax(0,1fr)); }
   .ds-store-hero,.ds-store-section,.ds-store-category-quicklinks { max-width:1240px;margin-left:auto;margin-right:auto; }
 }
+
+/* November 24 reference correction: Jumia's marketplace palette is orange-led,
+   with charcoal text, neutral grey separators and blue informational links. */
+.ds-store {
+  --ds-blue:#1675c5;
+  --ds-blue-deep:#252525;
+  --ds-blue-soft:#fff2e5;
+  --ds-gold:#f68b1e;
+  --ds-gold-soft:#fff1e2;
+  --ds-ink:#333333;
+  --ds-muted:#777777;
+  --ds-line:#e5e5e5;
+  --ds-canvas:#f2f2f2;
+}
+.ds-store-navigation { box-shadow:none; }
+.ds-store-menu-trigger { color:#292929; }
+.ds-store-mark { background:#f68b1e; }
+.ds-store-brand-word { color:#292929; }
+.ds-store-header-actions button { color:#292929; border-color:transparent; }
+.ds-store-header-actions .ds-store-cart { background:#f68b1e; border-color:#f68b1e; color:#fff; }
+.ds-store-cart b { background:#e86e00; }
+.ds-store-search { border:0; border-radius:28px; background:#f1f1f1; color:#333; }
+.ds-store-hero { border:0; border-radius:0; background:#fff; }
+.ds-store-hero-copy h1 { color:#252525; }
+.ds-store-hero-copy>strong { color:#f68b1e; }
+.ds-store-hero-copy>button { background:#f68b1e; color:#fff; border-radius:4px; }
+.ds-store-hero-dots button.active { background:#f68b1e; }
+.ds-store-section-title .ds-eyebrow { color:#f68b1e; }
+.ds-store-product>b { color:#292929; }
+.ds-store-add { background:#f68b1e; border-radius:4px; }
+.ds-store-fav { color:#333; }
+.ds-store-fav.active { color:#e43d57; }
+.ds-store-product-image { background:#fff; }
+.ds-store-category-tile { border-radius:4px; }
+.ds-store-category-tile>span { border-radius:4px; }
+.ds-store-footer { background:#303030; color:#fff; border:0; }
+.ds-store-footer-grid>div>b,.ds-store-footer-grid button,.ds-store-footer-grid a { color:#f4f4f4; }
+.ds-store-footer-bottom { border-color:#555; color:#aaa; }
+.ds-store-powered-link { color:#ff9b32!important; }
+.market-detail-price,.market-detail-price-panel strong { color:#292929!important; }
+.market-detail-add,.market-detail-cart-view { background:#f68b1e!important; color:#fff!important; border-radius:4px!important; }
+.market-detail-save { color:#1675c5!important; }
