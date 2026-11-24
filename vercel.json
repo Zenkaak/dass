@@ -1,6 +1,18 @@
 {
   "rewrites": [
     {
+      "source": "/api/buyer",
+      "destination": "/api/commerce?group=buyer"
+    },
+    {
+      "source": "/api/merchant",
+      "destination": "/api/commerce?group=merchant"
+    },
+    {
+      "source": "/api/payments",
+      "destination": "/api/commerce?group=payments"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
