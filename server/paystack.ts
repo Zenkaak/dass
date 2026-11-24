@@ -61,7 +61,7 @@ export async function initializeCentralPaystack(input:{email:string;reference:st
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.email)||!/^[A-Za-z0-9._:-]{8,100}$/.test(input.reference)||!Number.isSafeInteger(input.amountSubunits)||input.amountSubunits<=0)throw new Error('Invalid Paystack initialization details.');
  const credentials=await getCentralPaystackCredentials();
  const body:any={email:input.email,reference:input.reference,amount:input.amountSubunits,currency:'KES',callback_url:input.callbackUrl,metadata:input.metadata};
- if(input.subaccountCode)body.subaccount=input.subaccountCode;
+ if(input.subaccountCode){body.subaccount=input.subaccountCode;body.bearer='subaccount';}
  const response=await fetch('https://api.paystack.co/transaction/initialize',{method:'POST',headers:{Authorization:'Bearer '+credentials.secretKey,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(15000)});
  const payload:PaystackInitializeResult=await response.json().catch(()=>({status:false,message:'Invalid Paystack response'}));
  if(!response.ok||!payload.status||!payload.data?.authorization_url||!payload.data?.reference)throw new Error(String(payload.message||'Paystack could not initialize this KES payment.'));
