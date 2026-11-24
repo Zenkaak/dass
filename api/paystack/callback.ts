@@ -1,5 +1,5 @@
 import { getDb, hasDatabaseConfig } from '../../server/db.js';
-import { getCentralPaystackCredentials } from '../../server/paystack.js';
+import { getCentralPaystackCredentials, getSellerPaystackCredentials } from '../../server/paystack.js';
 
 export default async function handler(req:any,res:any){
  res.setHeader('Cache-Control','no-store');
@@ -9,9 +9,9 @@ export default async function handler(req:any,res:any){
  if(!hasDatabaseConfig())return res.status(503).send('Payment service temporarily unavailable.');
  try{
   const sql=getDb();
-  const rows=await sql`SELECT p.amount_minor,p.currency,p.status,p.provider_result,o.order_number,t.slug,d.hostname FROM public.payments p LEFT JOIN public.orders o ON o.id=p.order_id AND o.tenant_id=p.tenant_id JOIN public.tenants t ON t.id=p.tenant_id LEFT JOIN public.domains d ON d.tenant_id=t.id AND d.is_primary=true WHERE p.provider='paystack' AND p.provider_reference=${reference} LIMIT 1`;
+  const rows=await sql`SELECT p.amount_minor,p.currency,p.status,p.payment_route,p.provider_result,p.tenant_id,o.order_number,t.slug,d.hostname FROM public.payments p LEFT JOIN public.orders o ON o.id=p.order_id AND o.tenant_id=p.tenant_id JOIN public.tenants t ON t.id=p.tenant_id LEFT JOIN public.domains d ON d.tenant_id=t.id AND d.is_primary=true WHERE p.provider='paystack' AND p.provider_reference=${reference} LIMIT 1`;
   if(!rows.length)return res.status(404).send('We could not find this payment. Please contact the shop.');
-  const p=rows[0],credentials=await getCentralPaystackCredentials();
+  const p=rows[0],credentials=p.payment_route==='own_paystack'?await getSellerPaystackCredentials(String(p.tenant_id)):await getCentralPaystackCredentials();
   const response=await fetch('https://api.paystack.co/transaction/verify/'+encodeURIComponent(reference),{headers:{Authorization:'Bearer '+credentials.secretKey,Accept:'application/json'},signal:AbortSignal.timeout(12000)});
   const result:any=await response.json().catch(()=>({})),tx=result?.data;
   const verified=Boolean(response.ok&&result?.status&&tx?.status==='success'&&String(tx.reference)===reference&&Number(tx.amount)===Number(p.amount_minor)&&String(tx.currency||'').toUpperCase()==='KES'&&String(p.currency||'').trim().toUpperCase()==='KES');
