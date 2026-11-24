@@ -310,44 +310,55 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
         {(filter!=='All products'||search.trim()||buyerPage.startsWith('collection/'))&&<div className="jumia-related-searches"><span>Related results:</span>{[...new Set(mixedProducts.slice(0,6).map(p=>p.name.split(' ').slice(0,2).join(' ')).filter(Boolean))].map(term=><button type="button" key={term} onClick={()=>{setSearch(term);setFilter('All products');navigateBuyerPage('store')}}>{term}</button>)}</div>}
       </section>
       {buyerNotificationsOpen&&buyerCustomer&&<section className="ds-store-notification-popover" aria-label="Recent notifications"><div className="ds-store-notification-popover-head"><div><strong>Notifications</strong><small>{buyerNotifications.length} recent updates</small></div><button type="button" aria-label="Close notifications" onClick={()=>setBuyerNotificationsOpen(false)}>×</button></div>{buyerNotifications.length?buyerNotifications.slice(0,8).map((item:any,index:number)=><button type="button" className="ds-store-notification-item" key={item.id||item.orderId||item.complaintId||index} onClick={()=>{setBuyerNotificationsOpen(false);navigateBuyerPage(item.complaint_id||item.complaintId?'my-reports':'orders')}}><span className="ds-store-notification-item-icon"><Bell size={15}/></span><span><strong>{item.title||'Order update'}</strong><small>{item.detail||'There is an update on your account.'}</small><time>{item.created_at?new Date(item.created_at).toLocaleString('en-KE'):item.updatedAt?new Date(item.updatedAt).toLocaleString('en-KE'):'Recently'}</time></span><ChevronRight size={15}/></button>):<div className="ds-store-notification-empty"><Bell size={22}/><strong>You’re all caught up</strong><p>Payment, order and delivery updates will appear here.</p></div>}<button type="button" className="ds-store-notification-viewall" onClick={()=>{setBuyerNotificationsOpen(false);navigateBuyerPage('notifications')}}>View all updates <ArrowRight size={15}/></button></section>}
-      <section className="ds-store-hero" key={homeHeroProduct?.id||"featured-empty"}>
-        <div className="ds-store-hero-copy">
-          <span className="ds-eyebrow">WELCOME TO {String(shop?.name||'OUR STORE').toUpperCase()}</span>
-          <h1>{homeHeroProduct?.name||'Find something you’ll love.'}</h1>
-          <p>{homeHeroProduct?.description||shop?.description||'Explore the latest products, compare your options and shop directly from this store.'}</p>
-          {homeHeroProduct&&<strong>KES {homeHeroProduct.price.toLocaleString('en-KE')}</strong>}
-          <button type="button" onClick={()=>homeHeroProduct?openProduct(homeHeroProduct):selectStoreCategory('All products')}>Explore featured <ArrowRight size={16}/></button>
+      <div className="ds-store-home-layout">
+        <aside className="ds-store-home-sidebar" aria-label="Shop categories">
+          <div className="ds-store-home-sidebar-heading"><strong>Shop by category</strong><button type="button" onClick={()=>{selectStoreCategory('All products');setExpandedCategory('')}}>View all</button></div>
+          <button type="button" className="ds-store-home-category-all" onClick={()=>selectStoreCategory('All products')}><span>▦</span> All products <ChevronRight size={15}/></button>
+          {storefrontCategories.map(category=><div className="ds-store-home-category" key={category.name}>
+            <button type="button" aria-expanded={expandedCategory===category.name} className={filter===category.name?'active':''} onClick={()=>setExpandedCategory(current=>current===category.name?'':category.name)}><span>{category.icon}</span><b>{category.name}</b><ChevronRight size={15}/></button>
+            {expandedCategory===category.name&&<div className="ds-store-home-subcategories">{category.subcategories.map(child=><button type="button" key={child} onClick={()=>selectStoreCategory(child)}>{child}</button>)}</div>}
+          </div>)}
+        </aside>
+        <div className="ds-store-home-main">
+          <section className="ds-store-hero" key={homeHeroProduct?.id||"featured-empty"}>
+            <div className="ds-store-hero-copy">
+              <span className="ds-eyebrow">FEATURED FROM {String(shop?.name||'THIS SHOP').toUpperCase()}</span>
+              <h1>{homeHeroProduct?.name||'Discover products you’ll love.'}</h1>
+              <p>{homeHeroProduct?.description||shop?.description||'Explore selected products from this shop.'}</p>
+              {homeHeroProduct&&<strong>KES {homeHeroProduct.price.toLocaleString('en-KE')}</strong>}
+              <button type="button" onClick={()=>homeHeroProduct?openProduct(homeHeroProduct):selectStoreCategory('All products')}>Shop featured <ArrowRight size={16}/></button>
+            </div>
+            <button type="button" className="ds-store-hero-image" onClick={()=>homeHeroProduct&&openProduct(homeHeroProduct)} aria-label="View featured product">
+              {homeHeroProduct?(homeHeroProduct.images?.[0]||homeHeroProduct.imageUrl)?<img src={homeHeroProduct.images?.[0]||homeHeroProduct.imageUrl} alt={homeHeroProduct.name}/>:<img src={fallbackProductImage(homeHeroProduct.name)} alt={homeHeroProduct.name}/>:<span>✦</span>}
+            </button>
+            {homeHeroProducts.length>1&&<div className="ds-store-hero-dots">{homeHeroProducts.map((p,index)=><button type="button" key={p.id} aria-label={'Show featured product '+(index+1)} className={index===homeHeroIndex?'active':''} onClick={()=>setHomeHeroIndex(index)}/>)}</div>}
+          </section>
+          <section className="ds-store-section ds-store-featured-section">
+            <div className="ds-store-section-title"><div><span className="ds-eyebrow">SELECTED FOR YOU</span><h2>Featured products</h2></div><button type="button" onClick={()=>navigateBuyerPage('collection/featured-products')}>View all <ArrowRight size={15}/></button></div>
+            <div className="ds-store-rail">{(spotlightProducts.length?spotlightProducts:homeHeroProducts).slice(0,5).map(p=><article className="ds-store-card ds-store-spotlight-card" key={p.id}>
+              <button type="button" className={'ds-store-fav'+(wishlistIds.includes(p.id)?' active':'')} aria-label={'Toggle '+p.name+' favourite'} onClick={()=>toggleWishlist(p.id)}><Heart size={17} fill={wishlistIds.includes(p.id)?'currentColor':'none'}/></button>
+              <button type="button" className="ds-store-product" onClick={()=>openProduct(p)}><span className="ds-store-product-image">{(p.images?.[0]||p.imageUrl)?<img src={p.images?.[0]||p.imageUrl} alt={p.name} loading="lazy" onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src=fallbackProductImage(p.name)}}/>:<img src={fallbackProductImage(p.name)} alt={p.name}/>}</span><span className="ds-store-product-name">{p.name}</span>{(p.ratingCount??0)>0&&<small className="ds-store-rating"><Star size={12} fill="currentColor"/> {Number(p.ratingAverage||0).toFixed(1)} ({p.ratingCount})</small>}<b>KES {p.price.toLocaleString('en-KE')}</b><small>{p.stockQuantity===0?'Out of stock':'Available'}</small></button>
+              <button type="button" className="ds-store-add" disabled={p.stockQuantity===0||(p.stockQuantity!==null&&(cart[p.id]||0)>=p.stockQuantity)} onClick={()=>setCart(c=>({...c,[p.id]:Math.min(99,p.stockQuantity??99,(c[p.id]||0)+1)}))}>{p.stockQuantity===0?'Out of stock':cart[p.id]?'Added':'Add to cart'}</button>
+            </article>)}</div>
+          </section>
+          <section className="ds-store-trust-strip" aria-label="Shopping information">
+            <div><ShieldCheck size={20}/><span><strong>Secure checkout</strong><small>Protected order records</small></span></div>
+            <div><Package size={20}/><span><strong>Order tracking</strong><small>Follow delivery updates</small></span></div>
+            <div><MessageCircle size={20}/><span><strong>Shop support</strong><small>Contact the seller</small></span></div>
+            <div><RefreshCw size={20}/><span><strong>Shop policies</strong><small>Review delivery and returns</small></span></div>
+          </section>
+          {filter==='All products'&&!search.trim()&&<section className="ds-store-home-shelves">
+            {storefrontCategories.map(category=>{const items=storePreviewProducts.filter(p=>p.category===category.name||category.subcategories.includes(p.category)).slice(0,8);return items.length?<section className="ds-store-section ds-store-category-shelf" key={category.name}>
+              <div className="ds-store-section-title"><div><span className="ds-eyebrow">EXPLORE THE COLLECTION</span><h2>{category.name}</h2></div><button type="button" onClick={()=>selectStoreCategory(category.name)}>See all <ArrowRight size={15}/></button></div>
+              <div className="ds-store-rail">{items.map(p=><article className="ds-store-card" key={p.id}>
+                <button type="button" className={'ds-store-fav'+(wishlistIds.includes(p.id)?' active':'')} aria-label={'Toggle '+p.name+' favourite'} onClick={()=>toggleWishlist(p.id)}><Heart size={17} fill={wishlistIds.includes(p.id)?'currentColor':'none'}/></button>
+                <button type="button" className="ds-store-product" onClick={()=>openProduct(p)}><span className="ds-store-product-image">{(p.images?.[0]||p.imageUrl)?<img src={p.images?.[0]||p.imageUrl} alt={p.name} loading="lazy" onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src=fallbackProductImage(p.name)}}/>:<img src={fallbackProductImage(p.name)} alt={p.name}/>}</span><span className="ds-store-product-name">{p.name}</span><b>KES {p.price.toLocaleString('en-KE')}</b><small>{p.stockQuantity===0?'Out of stock':'Available'}</small></button>
+                <button type="button" className="ds-store-add" disabled={p.stockQuantity===0||(p.stockQuantity!==null&&(cart[p.id]||0)>=p.stockQuantity)} onClick={()=>setCart(c=>({...c,[p.id]:Math.min(99,p.stockQuantity??99,(c[p.id]||0)+1)}))}>{p.stockQuantity===0?'Out of stock':cart[p.id]?'Added':'Add to cart'}</button>
+              </article>)}</div>
+            </section>:null})}
+          </section>}
         </div>
-        <button type="button" className="ds-store-hero-image" onClick={()=>homeHeroProduct&&openProduct(homeHeroProduct)} aria-label="View featured product">
-          {homeHeroProduct?(homeHeroProduct.images?.[0]||homeHeroProduct.imageUrl)?<img src={homeHeroProduct.images?.[0]||homeHeroProduct.imageUrl} alt={homeHeroProduct.name}/>:<img src={fallbackProductImage(homeHeroProduct.name)} alt={homeHeroProduct.name}/>:<span>✦</span>}
-        </button>
-        {homeHeroProducts.length>1&&<div className="ds-store-hero-dots">{homeHeroProducts.map((p,index)=><button type="button" key={p.id} aria-label={'Show featured product '+(index+1)} className={index===homeHeroIndex?'active':''} onClick={()=>setHomeHeroIndex(index)}/>)}</div>}
-      </section>
-      <section className="ds-store-section ds-store-spotlight-section">
-        <div className="ds-store-section-title"><div><span className="ds-eyebrow">SHOP PICKS</span><h2>In the spotlight</h2></div><button type="button" onClick={()=>navigateBuyerPage('collection/featured-products')}>See all <ArrowRight size={15}/></button></div>
-        <div className="ds-store-rail">{(spotlightProducts.length?spotlightProducts:homeHeroProducts).slice(0,5).map(p=><article className="ds-store-card ds-store-spotlight-card" key={p.id}>
-          <button type="button" className="ds-store-fav" aria-label="Toggle favourite" onClick={()=>toggleWishlist(p.id)}><Heart size={17} fill={wishlistIds.includes(p.id)?'currentColor':'none'}/></button>
-          <button type="button" className="ds-store-product" onClick={()=>openProduct(p)}><span className="ds-store-product-image">{(p.images?.[0]||p.imageUrl)?<img src={p.images?.[0]||p.imageUrl} alt={p.name} loading="lazy" onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src=fallbackProductImage(p.name)}}/>:<img src={fallbackProductImage(p.name)} alt={p.name}/>}<i>✦ Spotlight</i></span><span className="ds-store-product-name">{p.name}</span>{(p.ratingCount??0)>0&&<small className="ds-store-rating"><Star size={12} fill="currentColor"/> {Number(p.ratingAverage||0).toFixed(1)} ({p.ratingCount})</small>}<b>KES {p.price.toLocaleString('en-KE')}</b><small>{p.category||'Shop collection'}</small></button>
-          <button type="button" className="ds-store-add" disabled={p.stockQuantity===0||(p.stockQuantity!==null&&(cart[p.id]||0)>=p.stockQuantity)} onClick={()=>setCart(c=>({...c,[p.id]:Math.min(99,p.stockQuantity??99,(c[p.id]||0)+1)}))}>{p.stockQuantity===0?'Out of stock':cart[p.id]?'Added':'Add to cart'}</button>
-        </article>)}</div>
-      </section>
-      <section className="ds-store-category-quicklinks" aria-label="Shop by category">
-        <div className="ds-store-category-heading"><h2>Shop by category</h2><button type="button" onClick={()=>setMobileSidebarOpen(true)}>View all <ArrowRight size={14}/></button></div>
-        <div className="ds-store-category-tiles">{storefrontCategories.slice(0,8).map(category=><button type="button" className="ds-store-category-tile" key={category.name} onClick={()=>selectStoreCategory(category.name)}><span>{category.icon}</span><b>{category.name}</b></button>)}</div>
-      </section>
-      <section className="ds-store-mobile-promo">
-        <div><span>SHOP WITH CONFIDENCE</span><h2>Find your next favourite</h2><p>Discover more from {shop?.name||'this shop'}.</p><button type="button" onClick={()=>{setSearch('');setFilter('All products');navigateBuyerPage('collection/all-products')}}>Explore all products <ArrowRight size={14}/></button></div>
-        <span className="ds-store-mobile-promo-art"><ShoppingBag size={42}/></span>
-      </section>
-      {filter==='All products'&&!search.trim()&&<>
-       <section className="ds-store-section ds-store-latest-arrivals">
-         <div className="ds-store-section-title"><div><span className="ds-eyebrow">A FEW GOOD FINDS</span><h2>Explore this shop</h2></div><button type="button" onClick={()=>{setSearch('');setFilter('All products');setSortOrder('recommended');navigateBuyerPage('collection/all-products')}}>View all products <ArrowRight size={15}/></button></div>
-         <div className="ds-store-home-mix-grid">{storePreviewProducts.slice(0,35).map(p=><article className="ds-store-card" key={p.id}>
-           <button type="button" className="ds-store-product" onClick={()=>openProduct(p)}><span className="ds-store-product-image">{(p.images?.[0]||p.imageUrl)?<img src={p.images?.[0]||p.imageUrl} alt={p.name} loading="lazy" onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src=fallbackProductImage(p.name)}}/>:<img src={fallbackProductImage(p.name)} alt={p.name}/>}</span><span className="ds-store-product-name">{p.name}</span><b>KES {p.price.toLocaleString('en-KE')}</b><small>{p.stockQuantity===0?'Out of stock':p.stockQuantity===null?'Available':p.stockQuantity+' in stock'}</small></button>
-           <button type="button" className="ds-store-add" disabled={p.stockQuantity===0||(p.stockQuantity!==null&&(cart[p.id]||0)>=p.stockQuantity)} onClick={()=>setCart(c=>({...c,[p.id]:Math.min(99,p.stockQuantity??99,(c[p.id]||0)+1)}))}>{p.stockQuantity===0?'Out of stock':cart[p.id]?'Added':'Add to cart'}</button>
-         </article>)}</div>
-       </section>
-       </>}
+      </div>
        {(filter!=='All products'||search.trim()||buyerPage.startsWith('collection/'))&&<section className="ds-store-section ds-store-catalogue" id="market-products-grid">
          <div className="ds-store-section-title"><div><span className="ds-eyebrow">THE FULL COLLECTION</span><h2>{search.trim()||filter!=='All products'?'Matching products':'Explore products'}</h2><p>Find the right product from this store.</p></div><span className="ds-store-count">{mixedProducts.length} products</span></div>
          {loading?<p className="catalogue-note">Loading products…</p>:error?<div className="auth-message error">{error}</div>:mixedProducts.length===0?<p className="catalogue-note">No products match your selection.</p>:<div className="ds-store-catalogue-grid">{mixedProducts.map(p=><article className="ds-store-card" key={p.id}>
