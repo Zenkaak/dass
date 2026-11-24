@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { getDb, hasDatabaseConfig } from '../server/db.js';
+import { quoteUsdInKes, initializeCentralPaystack } from '../server/paystack.js';
 import { sendTransactionalEmail, sendTenantTransactionalEmail, sendUsingResendConfig, brandedEmail, encryptTenantEmailConfig, decryptTenantEmailConfig, escapeEmailHtml } from '../server/email.js';
 
 // Keep a stack trace for legacy URL parser warnings so the originating dependency
@@ -1199,6 +1200,37 @@ export default async function handler(req:any,res:any){
    }
    const cfg=config[0]?.setting_value||{};
    return send(res,200,{subscription:currentSubscription,plans,trialDays:Math.max(0,Math.min(30,Number(trialConfig[0]?.trial_days??7))),payment:{configured:!!(cfg.method&&cfg.destination),method:cfg.method||null},lastPayment:lastPayment[0]?{...lastPayment[0],amount:Number(lastPayment[0].amount_minor)/100}:null});
+  }
+  if(req.method==='POST'&&action==='subscription-paystack'){
+   const planId=String(req.body?.planId||'');
+   if(!/^[0-9a-f-]{36}$/i.test(planId))return send(res,400,{error:'Choose a valid subscription plan.'});
+   const [plans,subs]=await Promise.all([
+    sql`SELECT id,code,name,price_minor,currency,interval_days FROM public.subscription_plans WHERE id=${planId} AND is_active=true LIMIT 1`,
+    sql`SELECT s.id,s.status,sp.code AS plan_code FROM public.subscriptions s JOIN public.subscription_plans sp ON sp.id=s.plan_id WHERE s.tenant_id=${me.tenant_id} ORDER BY s.created_at DESC LIMIT 1`
+   ]);
+   if(!plans.length)return send(res,404,{error:'That subscription plan is no longer available.'});
+   if(subs[0]?.plan_code==='lifetime-license')return send(res,409,{error:'This shop already has a lifetime platform licence.'});
+   const plan=plans[0],currency=String(plan.currency||'KES').trim().toUpperCase(),priceMinor=Number(plan.price_minor);
+   if(!Number.isSafeInteger(priceMinor)||priceMinor<1)return send(res,400,{error:'This plan does not have a payable price.'});
+   let amountMinor=priceMinor,fx:any=null;
+   if(currency==='USD'){
+    fx=await quoteUsdInKes(priceMinor/100);
+    amountMinor=fx.amountSubunits;
+   }else if(currency!=='KES')return send(res,400,{error:'Paystack checkout currently supports KES plans and USD plans converted to KES.'});
+   const isLifetime=plan.code==='lifetime-license',reference='DASPS_'+crypto.randomBytes(18).toString('hex');
+   const paymentId=crypto.randomUUID(),meta={source:isLifetime?'seller_lifetime_license':'seller_subscription',planId:plan.id,intervalDays:isLifetime?36500:Number(plan.interval_days),subscriptionId:subs[0]?.id||null,paymentRoute:'central_paystack',originalCurrency:currency};
+   const inserted=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,amount_minor,currency,status,idempotency_key,provider_reference,payment_route,original_usd_amount,fx_rate_used,charged_kes_amount,provider_result)
+    VALUES(${me.tenant_id},NULL,'paystack',${amountMinor},'KES','initiated',${paymentId},${reference},'central_paystack',${fx?.originalUsdAmount??null},${fx?.fxRateUsed??null},${fx?.chargedKesAmount??(amountMinor/100)},${JSON.stringify(meta)}::jsonb) RETURNING id`;
+   try{
+    const callbackUrl=(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/paystack/callback';
+    const initialized=await initializeCentralPaystack({email:String(me.email||''),reference,amountSubunits:amountMinor,callbackUrl,metadata:{paymentId:inserted[0].id,tenantId:me.tenant_id,source:meta.source,planId:plan.id}});
+    await sql`UPDATE public.payments SET provider_checkout_id=${initialized.accessCode},status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({authorizationUrl:initialized.authorizationUrl,accessCode:initialized.accessCode,reference:initialized.reference})}::jsonb,updated_at=now() WHERE id=${inserted[0].id} AND status='initiated'`;
+    await audit(sql,me.tenant_id,me.user_id,'subscription.paystack.initialized','subscription',subs[0]?.id||me.tenant_id,{planId:plan.id,amountMinor,currency:'KES',fxRate:fx?.fxRateUsed||null});
+    return send(res,200,{ok:true,authorizationUrl:initialized.authorizationUrl,reference:initialized.reference,amountKes:amountMinor/100,currency:'KES'});
+   }catch(error:any){
+    await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({initializationError:String(error?.message||error).slice(0,300)})}::jsonb,updated_at=now() WHERE id=${inserted[0].id} AND status='initiated'`;
+    return send(res,502,{error:String(error?.message||'Paystack could not initialize this subscription payment.')});
+   }
   }
   if(req.method==='POST'&&action==='subscription-stk'){
    const b=req.body||{},planId=String(b.planId||''),phone=normalizePhone(b.phone);
