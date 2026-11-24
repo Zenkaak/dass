@@ -1107,8 +1107,9 @@ export default async function handler(req:any,res:any){
   }
   if(req.method==='GET'&&action==='paystack-seller'){
    const rows=await sql`SELECT account_mode,account_email,connection_status,subaccount_status,paystack_subaccount_code,last_verified_at,updated_at,encrypted_credentials FROM public.tenant_paystack_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
+    const commissionRows=await sql`SELECT commission_percent FROM public.platform_paystack_config WHERE id='central' LIMIT 1`;
    const c=rows[0]||{};
-   return send(res,200,{paystack:{accountMode:c.account_mode||'central_subaccount',accountEmail:c.account_email||'',connectionStatus:c.connection_status||'not_connected',subaccountStatus:c.subaccount_status||'not_created',subaccountCode:c.paystack_subaccount_code||null,lastVerifiedAt:c.last_verified_at||null,ownCredentialsConfigured:!!c.encrypted_credentials?.data,updatedAt:c.updated_at||null,webhookUrl:(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/paystack/seller-webhook?shop='+encodeURIComponent(String(me.slug||'')),callbackUrl:(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/paystack/seller-callback?shop='+encodeURIComponent(String(me.slug||''))}});
+   return send(res,200,{paystack:{accountMode:c.account_mode||'central_subaccount',accountEmail:c.account_email||'',connectionStatus:c.connection_status||'not_connected',subaccountStatus:c.subaccount_status||'not_created',subaccountCode:c.paystack_subaccount_code||null,lastVerifiedAt:c.last_verified_at||null,ownCredentialsConfigured:!!c.encrypted_credentials?.data,centralCommissionPercent:Number(commissionRows[0]?.commission_percent??5),updatedAt:c.updated_at||null,webhookUrl:(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/paystack/seller-webhook?shop='+encodeURIComponent(String(me.slug||'')),callbackUrl:(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/paystack/seller-callback?shop='+encodeURIComponent(String(me.slug||''))}});
   }
   if(req.method==='POST'&&action==='paystack-seller'){
    if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner can manage Paystack settings.'});
@@ -1200,11 +1201,13 @@ export default async function handler(req:any,res:any){
    if(String(resolved.data.account_number)!==accountNumber)return send(res,400,{error:'Paystack returned a different account number. Please verify your details.'});
    const normalizedAccountName=(v:string)=>String(v||'').toLowerCase().replace(/[^a-z0-9]/g,'');
    if(resolved.data.account_name&&normalizedAccountName(String(resolved.data.account_name))!==normalizedAccountName(accountName))return send(res,400,{error:'The account holder name returned by Paystack does not match the name entered. Check the bank details before continuing.'});
-   const createdResponse=await fetch('https://api.paystack.co/subaccount',{method:'POST',headers:{Authorization:'Bearer '+central.secretKey,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({business_name:businessName,settlement_bank:bankCode,account_number:accountNumber,percentage_charge:0,primary_contact_email:email,primary_contact_name:accountName,phone}),signal:AbortSignal.timeout(15000)}),created:any=await createdResponse.json().catch(()=>({}));
+   const commissionRows=await sql`SELECT commission_percent FROM public.platform_paystack_config WHERE id='central' LIMIT 1`;
+   const commissionPercent=Math.min(20,Math.max(0,Number(commissionRows[0]?.commission_percent??5)));
+   const createdResponse=await fetch('https://api.paystack.co/subaccount',{method:'POST',headers:{Authorization:'Bearer '+central.secretKey,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({business_name:businessName,settlement_bank:bankCode,account_number:accountNumber,percentage_charge:commissionPercent,primary_contact_email:email,primary_contact_name:accountName,phone}),signal:AbortSignal.timeout(15000)}),created:any=await createdResponse.json().catch(()=>({}));
    if(!createdResponse.ok||created?.status!==true||!created?.data?.subaccount_code)return send(res,502,{error:String(created?.message||'Paystack could not create the seller settlement subaccount.')});
    const encrypted=encryptPrivate({businessName,accountName,accountNumber,bankCode,bankName:String(b.bankName||'').slice(0,100)});
    await sql`UPDATE public.tenant_paystack_configs SET encrypted_bank_details=${JSON.stringify(encrypted)}::jsonb,settlement_status='verified',paystack_subaccount_code=${String(created.data.subaccount_code)},subaccount_status='active',updated_at=now() WHERE tenant_id=${me.tenant_id}`;
-   await audit(sql,me.tenant_id,me.user_id,'seller.paystack.subaccount.created','paystack_subaccount',me.tenant_id,{subaccountCreated:true,bankAccountVerified:true,percentageCharge:0});
+   await audit(sql,me.tenant_id,me.user_id,'seller.paystack.subaccount.created','paystack_subaccount',me.tenant_id,{subaccountCreated:true,bankAccountVerified:true,percentageCharge:commissionPercent});
    return send(res,200,{ok:true,subaccountCode:String(created.data.subaccount_code),subaccountStatus:'active'});
   }
   if(req.method==='GET'&&action==='card-kyc'){
