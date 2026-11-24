@@ -401,7 +401,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
       <section className="ds-store-seller-hero">
         <span className="ds-store-seller-logo">{shop?.logoUrl?<img src={shop.logoUrl} alt={shop?.name||'Shop logo'}/>:String(shop?.name||'S').trim().charAt(0).toUpperCase()}</span>
         <div><span className="ds-eyebrow">SELLER PROFILE</span><h1>{shop?.name||'This shop'}</h1><p>{shop?.description||'Explore products and contact this independent seller directly through the shop.'}</p></div>
-        <div className="ds-store-seller-contact">{shop?.whatsappNumber&&<a href={'https://wa.me/'+shop.whatsappNumber.replace(/\\D/g,'')} target="_blank" rel="noopener noreferrer">Contact seller</a>}{shop?.contactEmail&&<a href={'mailto:'+shop.contactEmail}>Email seller</a>}</div>
+        <div className="ds-store-seller-contact">{shop?.whatsappNumber&&<a href={'https://wa.me/'+shop.whatsappNumber.replace(/\D/g,'')} target="_blank" rel="noopener noreferrer">Contact seller</a>}{shop?.contactEmail&&<a href={'mailto:'+shop.contactEmail}>Email seller</a>}</div>
       </section>
       <section className="ds-store-seller-stats">
         <article><strong>{products.length}</strong><span>Products in this shop</span></article>
