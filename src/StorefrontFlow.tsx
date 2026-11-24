@@ -1,9 +1,8 @@
-import './storefront-jumia-system.css';
-import './jumia-mobile-shopping.css';
 import './buyer-orders-redesign.css';
 import './buyer-order-detail-redesign.css';
 import './buyer-reports-redesign.css';
 import './buyer-messaging-redesign.css';
+import './storefront-reference-system.css';
 import { defaultTerms, defaultPrivacy, defaultReturns, defaultDelivery } from './shopPolicyDefaults';
 import { marketplaceFaqs } from './marketplaceFaqs';
 import { DisputesPanel } from './DisputesPanel';
