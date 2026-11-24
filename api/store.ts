@@ -1118,6 +1118,27 @@ export default async function handler(req:any,res:any){
    }
    return send(res,400,{error:'Choose request or verify.'});
   }
+
+  if(req.method==='POST'&&action==='card-kyc-document-upload'){
+   if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner can upload KYC documents.'});
+   const kind=String(req.body?.kind||''),name=String(req.body?.fileName||''),mime=String(req.body?.contentType||''),size=Number(req.body?.size||0),ext=(name.split('.').pop()||'').toLowerCase();
+   const allowed:any={jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',pdf:'application/pdf'};
+   if(!['id_front','id_back','business_document'].includes(kind)||!allowed[ext]||allowed[ext]!==mime)return send(res,415,{error:'Upload a JPG, PNG or PDF document.'});
+   if(!Number.isSafeInteger(size)||size<1||size>5242880)return send(res,413,{error:'Each KYC document must be 5 MB or smaller.'});
+   const objectKey=me.tenant_id+'/card-kyc/'+kind+'/'+crypto.randomUUID()+'-'+safeFileName(name);
+   return send(res,200,{ok:true,objectKey,uploadUrl:storageUrl(objectKey,'PUT',mime),expiresIn:300,contentType:mime,size});
+  }
+  if(req.method==='POST'&&action==='card-kyc-document-confirm'){
+   if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner can confirm KYC documents.'});
+   const kind=String(req.body?.kind||''),objectKey=String(req.body?.objectKey||''),mime=String(req.body?.contentType||''),size=Number(req.body?.size||0);
+   if(!['id_front','id_back','business_document'].includes(kind)||!objectKey.startsWith(me.tenant_id+'/card-kyc/'+kind+'/'))return send(res,400,{error:'Invalid KYC document reference.'});
+   if(!['image/jpeg','image/png','application/pdf'].includes(mime)||!Number.isSafeInteger(size)||size<1||size>5242880)return send(res,400,{error:'Invalid KYC document details.'});
+   try{await validateAttachmentObject(objectKey,mime,size);}catch{return send(res,400,{error:'The uploaded document could not be verified. Please upload it again.'});}
+   if(kind==='id_front')await sql`UPDATE public.tenant_card_kyc SET id_front_object_key=${objectKey},status=CASE WHEN id_back_object_key IS NOT NULL AND phone_verified_at IS NOT NULL THEN 'pending_review' ELSE 'more_information_required' END,updated_at=now() WHERE tenant_id=${me.tenant_id}`;
+   else if(kind==='id_back')await sql`UPDATE public.tenant_card_kyc SET id_back_object_key=${objectKey},status=CASE WHEN id_front_object_key IS NOT NULL AND phone_verified_at IS NOT NULL THEN 'pending_review' ELSE 'more_information_required' END,updated_at=now() WHERE tenant_id=${me.tenant_id}`;
+   else await sql`UPDATE public.tenant_card_kyc SET business_document_object_key=${objectKey},updated_at=now() WHERE tenant_id=${me.tenant_id}`;
+   return send(res,200,{ok:true,kind});
+  }
   if(req.method==='GET'&&action==='card-kyc'){
    const rows=await sql`SELECT status,phone,phone_verified_at,submitted_at,reviewed_at,review_note FROM public.tenant_card_kyc WHERE tenant_id=${me.tenant_id} LIMIT 1`;
    const k=rows[0]||{};
