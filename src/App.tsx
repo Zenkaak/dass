@@ -1038,7 +1038,7 @@ function SellerSubscriptionsPanel({data,onRefresh,phone,checkoutPlanId,onCheckou
    useEffect(()=>{setBillingEmail(String(data?.billingEmail||''))},[data?.billingEmail]);
   async function saveBillingEmail(){
    const value=billingEmail.trim().toLowerCase();
-   if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(value)){setError('Enter a valid billing email address.');return}
+   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)){setError('Enter a valid billing email address.');return}
    setBillingSaving(true);setError('');setMessage('');
    try{const r=await fetch('/api/merchant?action=subscription-billing-email',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({billingEmail:value})});const d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Could not save billing email.');setBillingEmail(d.billingEmail||value);setMessage('Billing email saved for this shop.');}
    catch(e:any){setError(e.message||'Could not save billing email.')}finally{setBillingSaving(false)}
