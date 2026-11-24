@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { unzipSync } from 'fflate';
-import { Activity, ArrowRight, ArrowUpRight, Baby, Bell, Briefcase, Building2, Car, Check, ChevronLeft, ChevronRight, CircleAlert, CreditCard, Download, Dumbbell, FileText, Flag, Gamepad2, Globe, Heart, HelpCircle, Home, Laptop, LayoutDashboard, LogOut, MapPin, Menu, MessageCircle, Package, PawPrint, Plus, RefreshCw, Refrigerator, Search, Send, Settings, ShieldCheck, Shirt, ShoppingBag, ShoppingCart, Smartphone, Sofa, Sparkles, Sprout, Star, Store, TicketPercent, Tv, UserRound, Wallet, WalletCards, Wrench, X } from 'lucide-react';
+import { Activity, ArrowRight, ArrowUpRight, Baby, Bell, Briefcase, Building2, Car, Check, ChevronLeft, ChevronRight, CircleAlert, CreditCard, Download, Dumbbell, FileText, Flag, Gamepad2, Globe, Heart, HelpCircle, Home, Laptop, LayoutDashboard, LogOut, MapPin, Menu, MessageCircle, Package, PawPrint, Plus, RefreshCw, Refrigerator, Search, Send, Settings, ShieldCheck, Shirt, ShoppingBag, ShoppingCart, Smartphone, Sofa, Sparkles, Sprout, Star, Store, TicketPercent, Tv, UserCheck, UserRound, Wallet, WalletCards, Wrench, X } from 'lucide-react';
 import { storefrontCategories } from './storefrontCatalog';
 import { marketplaceFaqs } from './marketplaceFaqs';
 import { AuthPage } from './AuthPage';
@@ -304,58 +304,70 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
  );
 
  const isCheckoutFlowRoute=buyerPage.startsWith('checkout/');
+ const promoPhoneRaw=(shop?.contactPhone||shop?.whatsappNumber||'').trim();
+ const promoWaDigits=promoPhoneRaw.replace(/\D/g,'');
  const renderStoreHeader=(compact=false)=>(
   <>
    {!compact&&(
     <div className="sf-announcement">
      <div className="sf-announcement-inner">
       <button type="button" className="sf-announcement-left" onClick={()=>navigateBuyerPage('collection/all-products')}>
-       <ShoppingBag size={13}/> <span>Direct from {shop?.name||'this shop'}</span>
+       <span>Direct from <b className="sf-announcement-accent">{shop?.name||'Store'}</b></span>
       </button>
-      <span className="sf-announcement-center">{(shop?.name||'Official Store').toUpperCase()}</span>
-      <button type="button" className="sf-announcement-right" onClick={()=>navigateBuyerPage('faqs')}>
-       <HelpCircle size={13}/> <span>Buyer guide &amp; FAQs</span>
-      </button>
+      <div className="sf-announcement-right-group">
+       {promoWaDigits.length>=9&&(
+        <a className="sf-announcement-call" href={`https://wa.me/${promoWaDigits.startsWith('0')?'254'+promoWaDigits.slice(1):promoWaDigits}?text=Hello%2C%20I%20would%20like%20to%20order%20from%20${encodeURIComponent(shop?.name||'your store')}.`} target="_blank" rel="noopener noreferrer">
+         <small>Call or WhatsApp</small>
+         <strong>{promoPhoneRaw}</strong>
+        </a>
+       )}
+       <button type="button" className="sf-announcement-right" onClick={()=>navigateBuyerPage('collection/all-products')}>
+        <span>Shop Now</span> <ArrowRight size={13}/>
+       </button>
+      </div>
      </div>
     </div>
    )}
    <header className="sf-header">
     <div className={'sf-header-inner'+(compact?' is-compact':'')}>
      <div className="sf-header-left">
-      <button type="button" className="sf-icon-btn" aria-label="Browse shop categories" onClick={()=>{if(window.innerWidth>760)setDesktopSidebarOpen(v=>!v);else setMobileSidebarOpen(true)}}>
-       <Menu size={20}/>
+      <button type="button" className="sf-icon-btn sf-menu-trigger" aria-label="Browse shop categories" onClick={()=>{if(window.innerWidth>760)setDesktopSidebarOpen(v=>!v);else setMobileSidebarOpen(true)}}>
+       <Menu size={22}/>
       </button>
       <a className="sf-brand" href={buyerPath('store')} onClick={e=>{e.preventDefault();navigateBuyerPage('store')}}>
-       <span className={'sf-brand-mark'+(shop?.logoUrl?' has-logo':'')}>
-        {shop?.logoUrl?<img src={shop.logoUrl} alt=""/>:(shop?.name||'S').trim().charAt(0).toUpperCase()}
-       </span>
-       <span className="sf-brand-text">
-        <strong className="sf-brand-name">{shop?.name||'OUR STORE'}</strong>
-        <span className="sf-brand-sub">{compact?'Secure Checkout':'Official Storefront'}</span>
+       <strong className="sf-brand-name">{shop?.name||'OUR STORE'}</strong>
+       <span className={'sf-brand-badge'+(shop?.logoUrl?' has-logo':'')} aria-hidden="true">
+        {shop?.logoUrl?<img src={shop.logoUrl} alt=""/>:<Star size={12} fill="#ffffff" strokeWidth={2}/>}
        </span>
       </a>
      </div>
      {!compact&&(
       <form className="sf-search-form" onSubmit={e=>{e.preventDefault();setFilter('All products');navigateBuyerPage('store');window.setTimeout(()=>document.getElementById('market-products-grid')?.scrollIntoView({behavior:'smooth',block:'start'}),80)}}>
-       <Search size={17}/>
-       <input aria-label="Search products" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search products, categories and SKUs…"/>
-       <button type="submit" className="sf-search-submit">Search</button>
+       <Search size={18}/>
+       <input aria-label="Search products" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search products, categories and SKUs"/>
+       {search.trim()&&(
+        <button type="button" className="sf-search-clear" aria-label="Clear search" onClick={()=>setSearch('')}>
+         <X size={16}/>
+        </button>
+       )}
       </form>
      )}
      <div className="sf-header-actions">
       <button type="button" className="sf-header-action" onClick={()=>{setBuyerReturnPage('account');navigateBuyerPage(buyerCustomer?'account':'buyer-login')}} aria-label={buyerCustomer?'My account':'Account'}>
-       <UserRound size={18}/>
+       {buyerCustomer?<UserCheck size={22}/>:<UserRound size={22}/>}
        <span className="sf-header-action-label">{buyerCustomer?`Hi, ${String(buyerCustomer.name||'Buyer').trim().split(' ')[0]}`:'Account'}</span>
       </button>
       <button type="button" className="sf-header-action" aria-label="Help & Notifications" aria-expanded={buyerNotificationsOpen} onClick={()=>{if(!buyerCustomer){navigateBuyerPage('faqs')}else setBuyerNotificationsOpen(v=>!v)}}>
-       <Bell size={18}/>
+       <Bell size={21}/>
        <span className="sf-header-action-label">Updates</span>
        {unreadNotifs&&<i className="sf-notif-badge"/>}
       </button>
       <button type="button" className="sf-header-action sf-header-cart" onClick={()=>navigateBuyerPage('cart')} aria-label="Shopping cart">
-       <ShoppingCart size={18}/>
+       <span className="sf-cart-icon-wrap">
+        <ShoppingCart size={22}/>
+        {totalCartUnits>0&&<span className="sf-cart-count">{totalCartUnits}</span>}
+       </span>
        <span className="sf-header-action-label">Cart</span>
-       {totalCartUnits>0&&<span className="sf-cart-count">{totalCartUnits}</span>}
       </button>
      </div>
     </div>
@@ -554,8 +566,10 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
         {unreadNotifs&&<i className="sf-notif-badge"/>}
        </button>
        <button type="button" className="sf-header-action sf-header-cart" style={{minHeight:36,padding:'0 10px'}} aria-label="Shopping cart" onClick={()=>navigateBuyerPage('cart')}>
-        <ShoppingCart size={17}/>
-        {totalCartUnits>0&&<span className="sf-cart-count">{totalCartUnits}</span>}
+        <span className="sf-cart-icon-wrap">
+         <ShoppingCart size={18}/>
+         {totalCartUnits>0&&<span className="sf-cart-count">{totalCartUnits}</span>}
+        </span>
        </button>
        <button type="button" className="sf-account-avatar-btn" aria-label="My account" onClick={()=>navigateBuyerPage('profile')}>
         {(buyerCustomer?.name||'B').trim().charAt(0).toUpperCase()}
