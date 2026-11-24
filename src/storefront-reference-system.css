@@ -178,3 +178,63 @@
 .market-detail-price,.market-detail-price-panel strong { color:#292929!important; }
 .market-detail-add,.market-detail-cart-view { background:#f68b1e!important; color:#fff!important; border-radius:4px!important; }
 .market-detail-save { color:#1675c5!important; }
+
+/* Catalogue controls and product-detail layout from the Nov 24 reference set. */
+.ds-store.is-listing-mode .ds-store-filter-row { display:flex; flex-wrap:nowrap; gap:8px; overflow-x:auto; padding:8px 0 5px; scrollbar-width:none; }
+.ds-store.is-listing-mode .ds-store-filter-row::-webkit-scrollbar { display:none; }
+.ds-store.is-listing-mode .ds-store-filter-row select,
+.ds-store.is-listing-mode .ds-store-filter-row .jumia-filter-pill {
+  flex:0 0 auto; min-height:36px; padding:0 13px; border:1px solid #dedede;
+  border-radius:5px; background:#fff; color:#333; font-size:12px; font-weight:650;
+}
+.ds-store.is-listing-mode .ds-store-filter-row .jumia-filter-primary { background:#fff2e5; border-color:#f68b1e; color:#a94e00; }
+.ds-store-browse-controls { padding-top:7px; padding-bottom:7px; }
+.ds-store-browse-controls .jumia-breadcrumb { display:flex; align-items:center; flex-wrap:wrap; gap:8px; color:#777; font-size:12px; }
+.ds-store-browse-controls .jumia-breadcrumb button { padding:0; border:0; background:none; color:#1675c5; font-size:12px; }
+.ds-store.is-listing-mode .ds-store-section-title { align-items:flex-end; }
+.ds-store.is-listing-mode .ds-store-count { color:#777; font-size:12px; white-space:nowrap; }
+.ds-store-catalogue-grid .ds-store-card { border-radius:4px; box-shadow:none; }
+.ds-store-catalogue-grid .ds-store-product-image { aspect-ratio:1/1; }
+.ds-store-catalogue-grid .ds-store-product-name { min-height:36px; }
+.ds-store-catalogue-grid .ds-store-add { width:calc(100% - 20px); min-height:34px; margin:0 10px 10px; }
+.market-product-detail-route { max-width:1240px; margin:0 auto; padding:14px clamp(12px,2vw,24px) 34px; }
+.market-product-detail-breadcrumb { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:14px; color:#777; font-size:12px; }
+.market-product-detail-breadcrumb button { border:0; background:transparent; color:#1675c5; padding:0; }
+.market-product-detail-main { display:grid; grid-template-columns:minmax(0,1.05fr) minmax(320px,.95fr); gap:24px; border:1px solid #e5e5e5; padding:18px; border-radius:4px; }
+.market-detail-gallery { min-width:0; }
+.market-detail-main-image { position:relative; display:grid; place-items:center; min-height:350px; background:#fff; }
+.market-detail-main-image img { width:100%; max-height:520px; object-fit:contain; }
+.market-detail-thumbnails { display:flex; gap:9px; overflow-x:auto; padding:12px 0; }
+.market-detail-thumbnails button { flex:0 0 68px; height:68px; padding:3px; border:1px solid #ddd; border-radius:3px; background:#fff; }
+.market-detail-thumbnails button.active { border:2px solid #f68b1e; }
+.market-detail-thumbnails img { width:100%; height:100%; object-fit:contain; }
+.market-detail-summary { min-width:0; border:0; padding:0; }
+.market-detail-summary h1 { color:#333; font-size:clamp(20px,2vw,26px); line-height:1.3; }
+.market-detail-price-panel { background:#fff7ef; border:1px solid #f8e0c9; border-radius:3px; padding:14px; }
+.market-detail-stock { color:#25834b; font-size:12px; }
+.market-detail-stock.out { color:#bd3434; }
+.market-detail-description-panel,.market-detail-specifications,.market-detail-delivery { border:1px solid #e7e7e7; border-radius:3px; padding:13px; margin-top:12px; }
+.market-detail-description-panel h2,.market-detail-specifications h2 { margin:0 0 8px; font-size:15px; color:#333; }
+.market-detail-specifications>div { display:flex; justify-content:space-between; gap:14px; padding:7px 0; border-bottom:1px solid #eee; font-size:12px; }
+.market-detail-specifications>div:last-child { border-bottom:0; }
+.market-detail-specifications>div span { color:#777; }
+.market-detail-seller { border-radius:3px; }
+.market-detail-quantity-control button { border-radius:3px; }
+.market-detail-add-inline { border-radius:4px!important; min-height:46px; font-size:15px; }
+.market-detail-save { border-radius:4px; }
+.market-detail-reviews,.market-detail-related,.market-detail-safety { margin-top:22px; border:1px solid #e5e5e5; border-radius:4px; padding:16px; }
+.market-detail-reviews-heading h2,.market-related-heading h2 { color:#333; }
+.market-related-grid { grid-auto-columns:minmax(170px,19%); }
+.market-related-card { border-radius:4px; }
+.ds-store-seller-profile { max-width:1240px; margin:0 auto; padding:18px; }
+.ds-store-seller-back { color:#1675c5; }
+.ds-store-seller-hero { border-radius:4px; }
+@media(max-width:760px) {
+ .ds-store.is-listing-mode .ds-store-filter-row { margin:0 -13px; padding:8px 13px 5px; }
+ .market-product-detail-main { grid-template-columns:1fr; gap:10px; padding:10px; border:0; }
+ .market-detail-main-image { min-height:260px; }
+ .market-detail-main-image img { max-height:390px; }
+ .market-detail-summary h1 { font-size:19px; }
+ .market-detail-reviews,.market-detail-related,.market-detail-safety { padding:12px; }
+ .market-related-grid { grid-auto-columns:48%; }
+}
