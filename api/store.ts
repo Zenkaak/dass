@@ -549,6 +549,7 @@ export default async function handler(req:any,res:any){
    return send(res,200,{ok:true,found:jobs.length,processed,failed,inventoryChecked,inventoryReleased,inventoryHeld});
   }
   const me=await seller(sql,req);
+  if(!me)return send(res,401,{error:'Sign in to manage your shop.'});
   if(req.method==='POST'&&action==='products-test-seed'){
    if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission to generate test products.'});
    const categories=[
@@ -1094,9 +1095,9 @@ export default async function handler(req:any,res:any){
    const user=await sql`SELECT phone FROM public.users WHERE id=${me.user_id} LIMIT 1`;
    if(!user.length||normalizePhone(String(user[0].phone||''))!==phone)return send(res,400,{error:'Use the verified phone number already registered on your DASMARKET seller account.'});
    const encrypted=encryptPrivate({fullName,idNumber,businessName});
-   await sql`INSERT INTO public.tenant_card_kyc(tenant_id,encrypted_identity,phone,status,submitted_at,updated_at) VALUES(${me.tenant_id},${JSON.stringify(encrypted)}::jsonb,${phone},'pending_review',now(),now()) ON CONFLICT(tenant_id) DO UPDATE SET encrypted_identity=EXCLUDED.encrypted_identity,phone=EXCLUDED.phone,status='pending_review',submitted_at=now(),reviewed_at=NULL,reviewed_by=NULL,review_note=NULL,updated_at=now()`;
+   await sql`INSERT INTO public.tenant_card_kyc(tenant_id,encrypted_identity,phone,status,submitted_at,updated_at) VALUES(${me.tenant_id},${JSON.stringify(encrypted)}::jsonb,${phone},'more_information_required',now(),now()) ON CONFLICT(tenant_id) DO UPDATE SET encrypted_identity=EXCLUDED.encrypted_identity,phone=EXCLUDED.phone,status='more_information_required',submitted_at=now(),reviewed_at=NULL,reviewed_by=NULL,review_note='ID document images and fresh phone OTP verification are still required.',updated_at=now()`;
    await audit(sql,me.tenant_id,me.user_id,'seller.card_kyc.submitted','card_kyc',me.tenant_id,{phoneLast4:phone.slice(-4),identityEncrypted:true,documentsPending:true});
-   return send(res,200,{ok:true,status:'pending_review',message:'Your identity details were submitted. Upload of ID document images and phone OTP confirmation are still required before approval.'});
+   return send(res,200,{ok:true,status:'more_information_required',message:'Your identity details were saved securely. ID document images and fresh phone OTP confirmation are still required before formal review.'});
   }
   if(req.method==='GET'&&action==='payment-settings'){
    const rows=await sql`SELECT payout_method,party_b,account_reference,shortcode,account_type,environment,encrypted_credentials,till_party_b,paybill_party_b,default_payout_method FROM public.payment_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
