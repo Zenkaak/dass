@@ -484,7 +484,6 @@ export function StorefrontFlow({
   const [pickupStation, setPickupStation] = useState('');
   const [deliveryPreferenceLoading, setDeliveryPreferenceLoading] = useState(false);
   const [pickupStationEditor, setPickupStationEditor] = useState(false);
-  const [pickupStationDraft, setPickupStationDraft] = useState('');
 
   const [voucherCode, setVoucherCode] = useState('');
   const [voucherMessage, setVoucherMessage] = useState('');
@@ -539,13 +538,25 @@ export function StorefrontFlow({
 
   useEffect(() => {
     let live = true;
+    const cacheKey = `dasnet-delivery-pref-${slug}`;
+    try {
+      const saved = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+      if (saved && typeof saved === 'object') {
+        setDeliveryMethod(saved.deliveryMethod === 'home' ? 'home' : 'pickup');
+        if (saved.deliveryCounty) setDeliveryCounty(saved.deliveryCounty);
+        if (saved.deliverySubCounty) setDeliverySubCounty(saved.deliverySubCounty);
+        if (saved.deliveryEstate) setDeliveryEstate(saved.deliveryEstate);
+        if (saved.deliveryAddress) setDeliveryAddress(saved.deliveryAddress);
+        if (saved.deliveryDirections) setDeliveryDirections(saved.deliveryDirections);
+        if (saved.pickupStation) setPickupStation(saved.pickupStation);
+      }
+    } catch {}
     if (!initialCustomerPhone) {
       setDeliveryPreferenceLoading(false);
       return () => {
         live = false;
       };
     }
-    setDeliveryPreferenceLoading(true);
     fetch('/api/buyer?action=buyer-delivery-preference&slug=' + encodeURIComponent(slug), {
       credentials: 'same-origin',
       cache: 'no-store',
@@ -565,6 +576,9 @@ export function StorefrontFlow({
         setDeliveryAddress(p.deliveryAddress || initialCustomerAddress);
         setDeliveryDirections(p.deliveryDirections || '');
         setPickupStation(p.pickupStation || '');
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify(p));
+        } catch {}
       })
       .catch((error) => {
         if (live) setCheckoutError(error.message || 'Could not load your saved delivery details.');
@@ -1145,6 +1159,7 @@ export function StorefrontFlow({
           backLabel="Continue shopping"
         />
         {lines.length ? (
+          <>
           <div className="sf-two-col">
             <div className="sf-panel">
               <div className="sf-panel-head">
@@ -1253,6 +1268,20 @@ export function StorefrontFlow({
               </div>
             </aside>
           </div>
+          <div className="sf-checkout-footer-bar">
+            <div>
+              <small>SUBTOTAL ({itemCount} {itemCount === 1 ? 'ITEM' : 'ITEMS'})</small>
+              <strong>{formatKes(subtotal)}</strong>
+            </div>
+            <button
+              type="button"
+              className="sf-btn sf-btn-accent"
+              onClick={() => onNavigate('checkout/delivery')}
+            >
+              Proceed to checkout <ArrowRight size={16} />
+            </button>
+          </div>
+        </>
         ) : (
           <div className="sf-state-box">
             <span className="sf-state-icon">
@@ -1270,28 +1299,61 @@ export function StorefrontFlow({
   }
 
   function renderCheckoutDelivery() {
-    const savePickupStation = (event: any) => {
-      event.preventDefault();
-      const value = pickupStationDraft.trim();
-      if (!value) return;
-      setPickupStation(value);
-      setPickupStationEditor(false);
-    };
-    const saveDeliveryPreference = async () => {
-      setDeliveryPreferenceLoading(true);
+    const syncLocalDeliveryCache = () => {
       try {
-        return await buyerFeatureRequest('buyer-delivery-preference', {
-          deliveryMethod,
-          deliveryCounty,
-          deliverySubCounty,
-          deliveryEstate,
-          deliveryAddress,
-          deliveryDirections,
-          pickupStation,
-        });
-      } finally {
-        setDeliveryPreferenceLoading(false);
+        localStorage.setItem(
+          `dasnet-delivery-pref-${slug}`,
+          JSON.stringify({
+            deliveryMethod,
+            deliveryCounty,
+            deliverySubCounty,
+            deliveryEstate,
+            deliveryAddress,
+            deliveryDirections,
+            pickupStation,
+          }),
+        );
+      } catch {}
+    };
+
+    const continueToPayment = () => {
+      setCheckoutError('');
+      if (!customerName.trim() || !customerPhone.trim()) {
+        setCheckoutError('Enter your full name and phone number under Contact information.');
+        document.getElementById('checkout-contact-panel')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
       }
+      if (deliveryMethod === 'pickup') {
+        if (!deliveryCounty) {
+          setCheckoutError('Select your county for collection.');
+          document.getElementById('checkout-delivery-panel')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+        if (!pickupStation.trim()) {
+          setCheckoutError('Enter your preferred pickup station or collection point.');
+          document.getElementById('checkout-delivery-panel')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+      } else {
+        if (!deliveryCounty || !deliverySubCounty.trim() || !deliveryEstate.trim() || !deliveryAddress.trim()) {
+          setCheckoutError('Complete your county, sub-county, estate/area and physical delivery address.');
+          document.getElementById('checkout-delivery-panel')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+      }
+
+      syncLocalDeliveryCache();
+      setOrderConfirmed(false);
+      onNavigate('checkout/payment');
+      void buyerFeatureRequest('buyer-delivery-preference', {
+        deliveryMethod,
+        deliveryCounty,
+        deliverySubCounty,
+        deliveryEstate,
+        deliveryAddress,
+        deliveryDirections,
+        pickupStation,
+      }).catch(() => {});
     };
 
     return (
@@ -1310,155 +1372,150 @@ export function StorefrontFlow({
             role="tab"
             aria-selected={deliveryMethod === 'pickup'}
             className={`sf-choice-card ${deliveryMethod === 'pickup' ? 'active' : ''}`}
-            onClick={() => setDeliveryMethod('pickup')}
+            onClick={() => {
+              setCheckoutError('');
+              setDeliveryMethod('pickup');
+            }}
           >
             <span className="sf-choice-icon">
               <MapPin size={20} />
             </span>
             <span className="sf-choice-copy">
-              <strong>Pickup station</strong>
-              <small>Collect your order from your preferred point</small>
+              <strong>
+                Pickup station{' '}
+                <span className="sf-choice-fee">
+                  {shopDeliveryPickupFee ? formatKes(shopDeliveryPickupFee) : 'Free'}
+                </span>
+              </strong>
+              <small>Collect from your preferred station or counter</small>
             </span>
-            <span className="sf-choice-check">{deliveryMethod === 'pickup' ? '✓' : ''}</span>
+            <span className="sf-choice-check">{deliveryMethod === 'pickup' ? <Check size={13} /> : ''}</span>
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={deliveryMethod === 'home'}
             className={`sf-choice-card ${deliveryMethod === 'home' ? 'active' : ''}`}
-            onClick={() => setDeliveryMethod('home')}
+            onClick={() => {
+              setCheckoutError('');
+              setDeliveryMethod('home');
+            }}
           >
             <span className="sf-choice-icon">
               <Package size={20} />
             </span>
             <span className="sf-choice-copy">
-              <strong>Door delivery</strong>
-              <small>Have your order brought to your address</small>
+              <strong>
+                Door delivery{' '}
+                <span className="sf-choice-fee">
+                  {shopDeliveryHomeFee ? formatKes(shopDeliveryHomeFee) : 'Free'}
+                </span>
+              </strong>
+              <small>Delivered directly to your home or office</small>
             </span>
-            <span className="sf-choice-check">{deliveryMethod === 'home' ? '✓' : ''}</span>
+            <span className="sf-choice-check">{deliveryMethod === 'home' ? <Check size={13} /> : ''}</span>
           </button>
         </div>
 
         <div className="sf-two-col">
           <div className="sf-checkout-stack">
             {deliveryMethod === 'pickup' ? (
-              <div className="sf-panel">
+              <div className="sf-panel" id="checkout-delivery-panel">
                 <div className="sf-panel-head">
                   <div>
                     <h2>Pickup location</h2>
-                    <p>Enter the collection station or preferred meeting point</p>
+                    <p>Choose your county and collection station</p>
                   </div>
+                  {pickupStation && !pickupStationEditor && deliveryCounty && (
+                    <button
+                      type="button"
+                      className="sf-btn sf-btn-ghost"
+                      style={{ minHeight: 34, padding: '0 10px', fontSize: 13 }}
+                      onClick={() => setPickupStationEditor(true)}
+                    >
+                      Edit
+                    </button>
+                  )}
                 </div>
-                {pickupStation && !pickupStationEditor ? (
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 12,
-                      flexWrap: 'wrap',
-                    }}
-                  >
-                    <div>
+                {pickupStation && !pickupStationEditor && deliveryCounty ? (
+                  <div className="sf-saved-location-box">
+                    <span className="sf-choice-icon" style={{ width: 36, height: 36 }}>
+                      <MapPin size={17} />
+                    </span>
+                    <div style={{ minWidth: 0, flex: 1 }}>
                       <strong>{pickupStation}</strong>
-                      <div style={{ fontSize: 13, color: 'var(--sf-muted)' }}>
-                        {[deliveryAddress, deliveryEstate, deliverySubCounty, deliveryCounty].filter(Boolean).join(', ') ||
-                          'Saved pickup location'}{' '}
-                        · Saved for future orders
-                      </div>
+                      <small>
+                        {[deliverySubCounty, deliveryCounty, deliveryDirections].filter(Boolean).join(' · ') ||
+                          'Saved pickup location'}
+                      </small>
                     </div>
                     <button
                       type="button"
                       className="sf-btn sf-btn-secondary"
-                      onClick={() => {
-                        setPickupStationDraft(pickupStation);
-                        setPickupStationEditor(true);
-                      }}
+                      style={{ minHeight: 36, padding: '0 12px', fontSize: 13 }}
+                      onClick={() => setPickupStationEditor(true)}
                     >
-                      Change location
+                      Change
                     </button>
                   </div>
-                ) : null}
-                {(!pickupStation || pickupStationEditor) && (
-                  <form className="sf-checkout-stack" onSubmit={savePickupStation}>
-                    <div className="sf-form-grid">
-                      <SearchableLocationSelect
-                        label="County"
-                        value={deliveryCounty}
-                        options={kenyanCounties}
-                        placeholder="Type to search counties…"
-                        onChange={(county) => {
-                          setDeliveryCounty(county);
-                          setDeliverySubCounty('');
-                        }}
+                ) : (
+                  <div className="sf-form-grid">
+                    <SearchableLocationSelect
+                      label="County"
+                      value={deliveryCounty}
+                      options={kenyanCounties}
+                      placeholder="Select county (e.g. Nairobi)"
+                      onChange={(county) => {
+                        setDeliveryCounty(county);
+                        setDeliverySubCounty('');
+                      }}
+                    />
+                    <SearchableLocationSelect
+                      label="Sub-county (optional)"
+                      value={deliverySubCounty}
+                      options={kenyanSubCounties[deliveryCounty] || []}
+                      placeholder={deliveryCounty ? 'Select sub-county' : 'Select a county first'}
+                      disabled={!deliveryCounty}
+                      onChange={setDeliverySubCounty}
+                    />
+                    <label className="sf-field sf-form-full">
+                      Pickup station / collection point
+                      <input
+                        required
+                        value={pickupStation}
+                        onChange={(e) => setPickupStation(e.target.value)}
+                        placeholder="e.g. Pick-up Mtaani CBD, G4S Westlands, or shop counter"
                       />
-                      <SearchableLocationSelect
-                        label="Sub-county"
-                        value={deliverySubCounty}
-                        options={kenyanSubCounties[deliveryCounty] || []}
-                        placeholder={deliveryCounty ? 'Type to search sub-counties…' : 'Select a county first'}
-                        disabled={!deliveryCounty}
-                        onChange={setDeliverySubCounty}
+                    </label>
+                    <label className="sf-field sf-form-full">
+                      Notes or nearby landmark <small>(optional)</small>
+                      <input
+                        value={deliveryDirections}
+                        onChange={(e) => setDeliveryDirections(e.target.value)}
+                        placeholder="Any collection instructions for the seller"
                       />
-                      <label className="sf-field sf-form-full">
-                        Pickup address / collection point
-                        <input
-                          required
-                          value={pickupStationDraft}
-                          onChange={(e) => setPickupStationDraft(e.target.value)}
-                          placeholder="Pickup station, building, shop or collection point"
-                        />
-                      </label>
-                      <label className="sf-field">
-                        Estate / area
-                        <input
-                          required
-                          value={deliveryEstate}
-                          onChange={(e) => setDeliveryEstate(e.target.value)}
-                          placeholder="Estate, town or neighbourhood"
-                        />
-                      </label>
-                      <label className="sf-field">
-                        Street / physical address
-                        <input
-                          required
-                          value={deliveryAddress}
-                          onChange={(e) => setDeliveryAddress(e.target.value)}
-                          placeholder="Street, building or nearby address"
-                        />
-                      </label>
-                      <label className="sf-field sf-form-full">
-                        Directions / landmark <small>(optional)</small>
-                        <textarea
-                          value={deliveryDirections}
-                          onChange={(e) => setDeliveryDirections(e.target.value)}
-                          placeholder="Add directions or a nearby landmark"
-                        />
-                      </label>
-                    </div>
-                    <div style={{ display: 'flex', gap: 10 }}>
-                      <button type="submit" className="sf-btn sf-btn-primary">
-                        Save pickup location
-                      </button>
-                      {pickupStationEditor && (
+                    </label>
+                    {pickupStationEditor && pickupStation.trim() && deliveryCounty && (
+                      <div className="sf-form-full" style={{ display: 'flex', justifyContent: 'flex-end' }}>
                         <button
                           type="button"
                           className="sf-btn sf-btn-secondary"
+                          style={{ minHeight: 36, padding: '0 14px', fontSize: 13 }}
                           onClick={() => setPickupStationEditor(false)}
                         >
-                          Cancel
+                          Done
                         </button>
-                      )}
-                    </div>
-                  </form>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             ) : (
-              <div className="sf-panel">
+              <div className="sf-panel" id="checkout-delivery-panel">
                 <div className="sf-panel-head">
                   <div>
                     <h2>Delivery address</h2>
-                    <p>Provide the location where the seller should deliver</p>
+                    <p>Provide the exact location for courier or rider drop-off</p>
                   </div>
                 </div>
                 <div className="sf-form-grid">
@@ -1466,7 +1523,7 @@ export function StorefrontFlow({
                     label="County"
                     value={deliveryCounty}
                     options={kenyanCounties}
-                    placeholder="Type to search counties…"
+                    placeholder="Select county (e.g. Nairobi)"
                     onChange={(county) => {
                       setDeliveryCounty(county);
                       setDeliverySubCounty('');
@@ -1476,7 +1533,7 @@ export function StorefrontFlow({
                     label="Sub-county"
                     value={deliverySubCounty}
                     options={kenyanSubCounties[deliveryCounty] || []}
-                    placeholder={deliveryCounty ? 'Type to search sub-counties…' : 'Select a county first'}
+                    placeholder={deliveryCounty ? 'Select sub-county' : 'Select a county first'}
                     disabled={!deliveryCounty}
                     onChange={setDeliverySubCounty}
                   />
@@ -1490,12 +1547,12 @@ export function StorefrontFlow({
                     />
                   </label>
                   <label className="sf-field">
-                    Physical address
+                    Street / building / house no.
                     <input
                       required
                       value={deliveryAddress}
                       onChange={(e) => setDeliveryAddress(e.target.value)}
-                      placeholder="Building, street, plot or house number"
+                      placeholder="Building, street, floor or gate"
                     />
                   </label>
                   <label className="sf-field sf-form-full">
@@ -1503,18 +1560,18 @@ export function StorefrontFlow({
                     <textarea
                       value={deliveryDirections}
                       onChange={(e) => setDeliveryDirections(e.target.value)}
-                      placeholder="Nearby landmark, gate details or directions"
+                      placeholder="Nearby landmark, gate details or delivery notes"
                     />
                   </label>
                 </div>
               </div>
             )}
 
-            <div className="sf-panel">
+            <div className="sf-panel" id="checkout-contact-panel">
               <div className="sf-panel-head">
                 <div>
                   <h2>Contact information</h2>
-                  <p>We will use these details for order updates</p>
+                  <p>Used for dispatch and delivery coordination</p>
                 </div>
               </div>
               <div className="sf-form-grid">
@@ -1570,31 +1627,10 @@ export function StorefrontFlow({
           <button
             type="button"
             className="sf-btn sf-btn-accent"
-            disabled={
-              deliveryPreferenceLoading ||
-              !customerName.trim() ||
-              !customerPhone.trim() ||
-              (deliveryMethod === 'pickup' &&
-                (!pickupStation.trim() ||
-                  !deliveryCounty ||
-                  !deliverySubCounty.trim() ||
-                  !deliveryEstate.trim() ||
-                  !deliveryAddress.trim())) ||
-              (deliveryMethod === 'home' &&
-                (!deliveryCounty || !deliverySubCounty.trim() || !deliveryEstate.trim() || !deliveryAddress.trim()))
-            }
-            onClick={async () => {
-              setCheckoutError('');
-              try {
-                await saveDeliveryPreference();
-                setOrderConfirmed(false);
-                onNavigate('checkout/payment');
-              } catch (error: any) {
-                setCheckoutError(error.message || 'Could not save your delivery details. Please try again.');
-              }
-            }}
+            disabled={deliveryPreferenceLoading}
+            onClick={continueToPayment}
           >
-            {deliveryPreferenceLoading ? 'Saving delivery details…' : 'Continue to payment'} <ArrowRight size={17} />
+            Continue to payment <ArrowRight size={16} />
           </button>
         </div>
       </section>
@@ -2010,12 +2046,7 @@ export function StorefrontFlow({
               submitting ||
               (deliveryMethod === 'home' &&
                 (!deliveryCounty || !deliverySubCounty.trim() || !deliveryEstate.trim() || !deliveryAddress.trim())) ||
-              (deliveryMethod === 'pickup' &&
-                (!pickupStation.trim() ||
-                  !deliveryCounty ||
-                  !deliverySubCounty.trim() ||
-                  !deliveryEstate.trim() ||
-                  !deliveryAddress.trim()))
+              (deliveryMethod === 'pickup' && (!pickupStation.trim() || !deliveryCounty))
             }
             onClick={orderConfirmed ? placeOrder : () => setOrderConfirmed(true)}
           >

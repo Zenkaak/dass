@@ -806,7 +806,7 @@
 .sf-hero-track {
   display: flex;
   width: 100%;
-  transition: transform 0.56s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
 }
 
@@ -2011,7 +2011,7 @@
 .sf-flow {
   width: min(100%, 1160px);
   margin: 0 auto;
-  padding: clamp(20px, 3vw, 36px) clamp(16px, 3vw, 24px) 56px;
+  padding: clamp(18px, 2.5vw, 32px) clamp(16px, 3vw, 24px) 84px;
 }
 
 .sf-flow-head {
@@ -2463,26 +2463,30 @@
 .sf-choice-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 10px;
+  margin-bottom: 18px;
 }
 
 .sf-choice-card {
-  padding: 16px;
+  padding: 14px 15px;
   background: var(--sf-surface);
   border: 1px solid var(--sf-line-strong);
   border-radius: var(--sf-radius-md);
   text-align: left;
   display: flex;
   align-items: center;
-  gap: 14px;
-  transition: border-color 0.14s ease, background-color 0.14s ease;
+  gap: 12px;
+  transition: border-color 0.12s ease, background-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.sf-choice-card:hover:not(:disabled) {
+  border-color: var(--sf-accent);
 }
 
 .sf-choice-card.active,
 .sf-choice-card.is-selected {
-  border: 2px solid var(--sf-ink);
-  background: var(--sf-surface);
+  border: 2px solid var(--sf-accent);
+  background: var(--sf-accent-soft);
 }
 
 .sf-choice-card:disabled {
@@ -2492,8 +2496,8 @@
 }
 
 .sf-choice-icon {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: var(--sf-radius-sm);
   background: var(--sf-stone);
   color: var(--sf-ink);
@@ -2504,19 +2508,40 @@
   font-weight: 700;
 }
 
+.sf-choice-card.active .sf-choice-icon,
+.sf-choice-card.is-selected .sf-choice-icon {
+  background: #ffffff;
+  color: var(--sf-accent);
+}
+
 .sf-choice-copy {
   flex: 1;
   min-width: 0;
 }
 
 .sf-choice-copy strong {
-  display: block;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
   font-size: 14.5px;
   color: var(--sf-ink);
 }
 
+.sf-choice-fee {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--sf-accent);
+  background: #ffffff;
+  border: 1px solid var(--sf-line);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-variant-numeric: tabular-nums;
+}
+
 .sf-choice-copy small {
   display: block;
+  margin-top: 2px;
   font-size: 12.5px;
   color: var(--sf-muted);
 }
@@ -2524,8 +2549,9 @@
 .sf-choice-check {
   width: 22px;
   height: 22px;
-  border-radius: 4px;
+  border-radius: 999px;
   border: 1px solid var(--sf-line-strong);
+  background: var(--sf-surface);
   display: grid;
   place-items: center;
   font-size: 12px;
@@ -2535,9 +2561,32 @@
 
 .sf-choice-card.active .sf-choice-check,
 .sf-choice-card.is-selected .sf-choice-check {
-  background: var(--sf-ink);
-  border-color: var(--sf-ink);
+  background: var(--sf-accent);
+  border-color: var(--sf-accent);
   color: #ffffff;
+}
+
+.sf-saved-location-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--sf-stone);
+  border: 1px solid var(--sf-line);
+  border-radius: var(--sf-radius-sm);
+}
+
+.sf-saved-location-box strong {
+  display: block;
+  font-size: 14px;
+  color: var(--sf-ink);
+}
+
+.sf-saved-location-box small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: var(--sf-muted);
 }
 
 .sf-form-grid {
@@ -2600,29 +2649,52 @@
 }
 
 .sf-checkout-footer-bar {
-  margin-top: 24px;
-  padding: 16px 20px;
-  background: var(--sf-surface);
-  border: 1px solid var(--sf-line);
+  position: sticky;
+  bottom: 12px;
+  z-index: 35;
+  width: min(100%, 560px);
+  margin: 20px auto 0;
+  padding: 10px 14px;
+  background: var(--sf-ink);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--sf-radius-md);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.24);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
+}
+
+.sf-checkout-footer-bar > div {
+  min-width: 0;
 }
 
 .sf-checkout-footer-bar small {
   display: block;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--sf-muted);
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.72);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sf-checkout-footer-bar strong {
+  display: block;
   font-family: var(--sf-font-display);
-  font-size: 20px;
+  font-size: 16.5px;
+  color: #ffffff;
   font-variant-numeric: tabular-nums;
+}
+
+.sf-checkout-footer-bar .sf-btn {
+  min-height: 38px;
+  padding: 0 15px;
+  font-size: 13px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .sf-voucher-row {
@@ -4299,6 +4371,10 @@
     position: static;
   }
 
+  .sf-summary-card > .sf-btn-accent {
+    display: none;
+  }
+
   .sf-account-mobile-trigger {
     display: inline-flex;
   }
@@ -4416,9 +4492,61 @@
   .sf-form-grid,
   .sf-account-grid,
   .sf-kv-grid,
-  .sf-checkout-progress,
   .sf-shell .dispute-case-summary {
     grid-template-columns: 1fr;
+  }
+
+  .sf-checkout-progress {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .sf-progress-step {
+    padding: 8px 8px;
+    gap: 6px;
+  }
+
+  .sf-progress-step > span {
+    width: 22px;
+    height: 22px;
+    font-size: 10.5px;
+  }
+
+  .sf-progress-step strong {
+    font-size: 11.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sf-progress-step small {
+    display: none;
+  }
+
+  .sf-flow-head {
+    margin-bottom: 14px;
+    gap: 6px;
+  }
+
+  .sf-choice-card {
+    padding: 12px 13px;
+    gap: 10px;
+  }
+
+  .sf-checkout-footer-bar {
+    padding: 9px 12px;
+    gap: 10px;
+  }
+
+  .sf-checkout-footer-bar strong {
+    font-size: 15px;
+  }
+
+  .sf-checkout-footer-bar .sf-btn {
+    min-height: 36px;
+    padding: 0 12px;
+    font-size: 12.5px;
   }
 
   .sf-product-grid,
