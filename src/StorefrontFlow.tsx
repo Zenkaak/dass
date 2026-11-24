@@ -2007,7 +2007,6 @@ export function StorefrontFlow({
       deliveryMethod === 'home'
         ? [deliveryAddress, deliveryEstate, deliverySubCounty, deliveryCounty].filter(Boolean).join(', ')
         : pickupStation;
-    const cashReady = paymentMethod === 'delivery' && cashOptionEnabled;
 
     return (
       <section className="sf-flow sf-flow-compact">
