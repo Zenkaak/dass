@@ -1,4 +1,5 @@
 import './storefront-jumia-system.css';
+import './jumia-mobile-shopping.css';
 import './buyer-orders-redesign.css';
 import './buyer-order-detail-redesign.css';
 import './buyer-reports-redesign.css';
@@ -648,7 +649,7 @@ export function StorefrontFlow({
           <>
             <div className="market-cart-layout">
               <div className="market-cart-items">
-                <div className="market-cart-list-head"><strong>Cart items</strong><span>{lines.length} {lines.length===1?'product':'products'}</span></div>
+                <div className="market-cart-list-head"><strong>Cart ({itemCount})</strong><span>{lines.length} {lines.length===1?'product':'products'}</span></div>
                 {lines.map(({ product, quantity }) => (
                   <article className="market-cart-item" key={product.id}>
                     <button type="button" className="market-cart-product-image" onClick={() => onOpenProduct?.(product)} aria-label={`View ${product.name}`}><ProductThumb product={product}/></button>
@@ -680,7 +681,7 @@ export function StorefrontFlow({
                 <div className="market-cart-continue"><ShoppingBag size={16}/><button type="button" onClick={() => onNavigate('store')}>Continue shopping</button></div>
               </div>
               <aside className="market-cart-summary">
-                <h2>Order summary</h2>
+                <h2>Cart summary</h2>
                 <div className="market-cart-summary-line"><span>Items ({itemCount})</span><strong>{formatKes(subtotal)}</strong></div>
                 <div className="market-cart-summary-line"><span>Delivery</span><span>Calculated next</span></div>
                 <div className="market-cart-summary-total"><span>Subtotal</span><strong>{formatKes(subtotal)}</strong></div>
@@ -793,10 +794,6 @@ export function StorefrontFlow({
               </div>
               {paymentMethod==='mpesa'?<><div className="market-checkout-mpesa-select" role="group" aria-label="M-PESA payment details"><span><strong>Pay securely with M-PESA</strong><small>We will send a payment request to your selected Kenyan mobile number. Enter your PIN only in the official M-PESA prompt.</small></span><button type="button" className="market-checkout-change-phone" onClick={choosePayment}>Choose phone number</button></div><div className="market-checkout-secure-note"><ShieldCheck size={17}/><span>Your order remains pending until Safaricom confirms the payment. Never share your M-PESA PIN or one-time password with anyone.</span></div></>:<div className="market-checkout-secure-note"><ShieldCheck size={17}/><span>{deliveryMethod==='pickup'?'Your order will be sent to the seller for acceptance. Pay cash only when you collect your items.':'Your order will be sent to the seller for acceptance. Pay cash only when your order is delivered.'} Do not pay before the seller confirms the order.</span></div>}
             </div>
-            <div className="market-checkout-card market-checkout-voucher-card">
-              <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><TicketPercent size={18}/></span><div><h2>Have a voucher?</h2><p>Apply a discount code to this order</p></div></div>
-              <label className="customer-voucher"><span>Voucher code</span><span className="customer-voucher-controls"><input value={voucherCode} onChange={event=>setVoucherCode(event.target.value)} placeholder="Enter voucher code"/><button type="button" onClick={applyVoucher}>Apply</button></span>{voucherMessage&&<small role="status">{voucherMessage}</small>}</label>
-            </div>
           </div>
           {renderSummary()}
         </div>
@@ -813,23 +810,27 @@ export function StorefrontFlow({
     return (
       <section className="customer-flow market-checkout-page market-checkout-redesign market-checkout-review">
         <CheckoutProgress step={3}/>
-        <FlowHeading title="Review your order" onBack={() => onNavigate('checkout/payment')} backLabel="Payment" />
+        <FlowHeading title="Place your order" onBack={() => onNavigate('checkout/payment')} backLabel="Payment" />
         <div className="market-checkout-intro"><span>STEP 3 OF 3</span><h2>Check everything before placing your order</h2><p>Review your delivery and payment details, then confirm your order.</p></div>
         <div className="market-checkout-review-layout">
           <div className="market-checkout-main-column">
             <div className="market-checkout-card">
-              <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><MapPin size={18}/></span><div><h2>Delivery information</h2><p>{deliveryMethod==='pickup'?'Pickup station':'Door delivery'}</p></div><button type="button" className="market-checkout-edit" onClick={()=>{setOrderConfirmed(false);onNavigate('checkout/delivery')}}>Edit</button></div>
+              <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><MapPin size={18}/></span><div><h2>Delivery details</h2><p>{deliveryMethod==='pickup'?'Pickup station · From '+formatKes(deliveryFee):'Door delivery · From '+formatKes(deliveryFee)}</p></div><button type="button" className="market-checkout-edit" onClick={()=>{setOrderConfirmed(false);onNavigate('checkout/delivery')}}>Change</button></div>
               <div className="market-checkout-review-details"><strong>{deliveryMethod==='pickup'?pickupStation:addressSummary}</strong>{deliveryMethod==='home'&&deliveryDirections&&<small>Directions: {deliveryDirections}</small>}<div><span>{customerName}</span><span>{customerPhone}</span>{customerEmail&&<span>{customerEmail}</span>}</div></div>
             </div>
             <div className="market-checkout-card">
-              <div className="market-checkout-card-heading"><span className="market-checkout-mpesa-mark">M</span><div><h2>Payment method</h2><p>{paymentMethod==='delivery'?(deliveryMethod==='pickup'?'Cash on pickup':'Cash on delivery'):'M-PESA · STK push'}</p></div><button type="button" className="market-checkout-edit" onClick={()=>{setOrderConfirmed(false);onNavigate('checkout/payment')}}>Edit</button></div>
+              <div className="market-checkout-card-heading"><span className="market-checkout-mpesa-mark">M</span><div><h2>Payment method</h2><p>{paymentMethod==='delivery'?(deliveryMethod==='pickup'?'Cash on pickup':'Cash on delivery'):'M-PESA · STK push'}</p></div><button type="button" className="market-checkout-edit" onClick={()=>{setOrderConfirmed(false);onNavigate('checkout/payment')}}>Change</button></div>
               <div className="market-checkout-review-details"><strong>{paymentLabels[paymentMethod]}</strong><small>{paymentMethod==='delivery'?'The seller must accept your order. Cash is due only when '+(deliveryMethod==='pickup'?'you collect it.':'it is delivered.'):'Payment prompt will be sent to '+(paymentPhone||customerPhone)+'. Payment is only complete after Safaricom confirmation.'}</small></div>
             </div>
             <div className="market-checkout-card">
-              <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><ShoppingBag size={18}/></span><div><h2>Items in your order</h2><p>{lines.length} {lines.length===1?'product':'products'} · Fulfilled by {shopName}</p></div><button type="button" className="market-checkout-edit" onClick={()=>onNavigate('cart')}>Edit cart</button></div>
+              <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><ShoppingBag size={18}/></span><div><h2>Shipment 1/1</h2><p>Fulfilled by {shopName}</p></div><button type="button" className="market-checkout-edit" onClick={()=>onNavigate('cart')}>Modify cart</button></div>
               {lines.map(({product,quantity})=><article className="customer-review-product market-checkout-product-row" key={product.id}><ProductThumb product={product}/><div><strong>{product.name}</strong><small>Quantity: {quantity} · {formatKes(product.price)} each</small></div><b>{formatKes(product.price*quantity)}</b></article>)}
             </div>
-            <p className="customer-terms-copy">By placing your order, you agree to the store’s <button type="button" onClick={()=>onNavigate('shop-terms')}>Terms &amp; Conditions</button>.</p>
+            <p className="customer-terms-copy">By proceeding, you are automatically accepting the <button type="button" onClick={()=>onNavigate('shop-terms')}>Terms &amp; Conditions</button>.</p>
+            <div className="market-checkout-card market-checkout-voucher-card">
+              <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><TicketPercent size={18}/></span><div><h2>Discount code</h2><p>Apply a voucher to this order</p></div></div>
+              <label className="customer-voucher"><span>Voucher code</span><span className="customer-voucher-controls"><input value={voucherCode} onChange={event=>setVoucherCode(event.target.value)} placeholder="Enter code here"/><button type="button" onClick={applyVoucher}>Apply</button></span>{voucherMessage&&<small role="status">{voucherMessage}</small>}</label>
+            </div>
           </div>
           {renderSummary()}
         </div>
