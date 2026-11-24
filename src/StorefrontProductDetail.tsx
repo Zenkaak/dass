@@ -6,6 +6,7 @@ export type LiveProduct = {
   name: string;
   description: string;
   category: string;
+  parentCategory?: string;
   type: string;
   price: number;
   currency: string;
