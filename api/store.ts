@@ -1223,7 +1223,9 @@ export default async function handler(req:any,res:any){
     VALUES(${me.tenant_id},NULL,'paystack',${amountMinor},'KES','initiated',${paymentId},${reference},'central_paystack',${fx?.originalUsdAmount??null},${fx?.fxRateUsed??null},${fx?.chargedKesAmount??(amountMinor/100)},${JSON.stringify(meta)}::jsonb) RETURNING id`;
    try{
     const callbackUrl=(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/paystack/callback';
-    const initialized=await initializeCentralPaystack({email:String(me.email||''),reference,amountSubunits:amountMinor,callbackUrl,metadata:{paymentId:inserted[0].id,tenantId:me.tenant_id,source:meta.source,planId:plan.id}});
+    const ownerRows=await sql`SELECT email FROM public.users WHERE id=${me.user_id} LIMIT 1`;
+    const ownerEmail=String(ownerRows[0]?.email||'').trim();if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(ownerEmail))throw Error('Add a valid billing email to your DASMARKET account before using card payments.');
+    const initialized=await initializeCentralPaystack({email:ownerEmail,reference,amountSubunits:amountMinor,callbackUrl,metadata:{paymentId:inserted[0].id,tenantId:me.tenant_id,source:meta.source,planId:plan.id}});
     await sql`UPDATE public.payments SET provider_checkout_id=${initialized.accessCode},status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({authorizationUrl:initialized.authorizationUrl,accessCode:initialized.accessCode,reference:initialized.reference})}::jsonb,updated_at=now() WHERE id=${inserted[0].id} AND status='initiated'`;
     await audit(sql,me.tenant_id,me.user_id,'subscription.paystack.initialized','subscription',subs[0]?.id||me.tenant_id,{planId:plan.id,amountMinor,currency:'KES',fxRate:fx?.fxRateUsed||null});
     return send(res,200,{ok:true,authorizationUrl:initialized.authorizationUrl,reference:initialized.reference,amountKes:amountMinor/100,currency:'KES'});
