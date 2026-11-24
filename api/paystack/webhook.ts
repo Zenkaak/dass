@@ -3,7 +3,6 @@ import { getDb, hasDatabaseConfig } from '../../server/db.js';
 import { getCentralPaystackCredentials } from '../../server/paystack.js';
 
 export const config = { api: { bodyParser: false } };
-const env=(key:string)=>(process.env[key]||'').trim();
 const send=(res:any,status:number,body:any)=>res.status(status).json(body);
 async function rawBody(req:any):Promise<Buffer>{
  if(Buffer.isBuffer(req.body))return req.body;
@@ -18,9 +17,9 @@ function safeEqualHex(expected:Buffer,value:string){
  return actual.length===expected.length&&crypto.timingSafeEqual(expected,actual);
 }
 async function verifySignature(raw:Buffer,req:any){
+ const credentials=await getCentralPaystackCredentials();
  const modern=String(req.headers['paystack-signature']||'');
- const signingSecret=env('PAYSTACK_WEBHOOK_SIGNING_SECRET');
- if(modern&&signingSecret){
+ if(modern&&credentials.webhookSecret){
   let timestamp=0,entries:string[]=[];
   for(const part of modern.split(',')){
    const [key,...rest]=part.trim().split('='),value=rest.join('=').trim();
@@ -28,13 +27,12 @@ async function verifySignature(raw:Buffer,req:any){
    if(key==='v1'){const colon=value.indexOf(':');if(colon>=0)entries.push(value.slice(colon+1));}
   }
   if(!timestamp||Math.abs(Date.now()/1000-timestamp)>300)return false;
-  const expected=crypto.createHmac('sha512',signingSecret).update(String(timestamp)+'.').update(raw).digest();
+  const expected=crypto.createHmac('sha512',credentials.webhookSecret).update(String(timestamp)+'.').update(raw).digest();
   return entries.some(signature=>safeEqualHex(expected,signature));
  }
  const legacy=String(req.headers['x-paystack-signature']||'');
- let secret='';try{secret=(await getCentralPaystackCredentials()).secretKey;}catch{return false;}
- if(!legacy||!secret)return false;
- return safeEqualHex(crypto.createHmac('sha512',secret).update(raw).digest(),legacy);
+ if(!legacy)return false;
+ return safeEqualHex(crypto.createHmac('sha512',credentials.secretKey).update(raw).digest(),legacy);
 }
 async function verifyTransaction(reference:string,secret:string){
  const response=await fetch('https://api.paystack.co/transaction/verify/'+encodeURIComponent(reference),{headers:{Authorization:'Bearer '+secret,Accept:'application/json'},signal:AbortSignal.timeout(12000)});
@@ -48,22 +46,22 @@ export default async function handler(req:any,res:any){
  let raw:Buffer;
  try{raw=await rawBody(req);}catch{return send(res,400,{error:'Invalid webhook body'});}
  if(raw.length>1024*1024)return send(res,413,{error:'Webhook payload too large'});
- if(!await verifySignature(raw,req))return send(res,401,{error:'Invalid Paystack signature'});
+ let credentials:any;
+ try{credentials=await getCentralPaystackCredentials();}catch{return send(res,503,{error:'Central Paystack credentials are not configured'});}
+ try{if(!await verifySignature(raw,req))return send(res,401,{error:'Invalid Paystack signature'});}catch{return send(res,503,{error:'Webhook verification is not configured'});}
  let event:any;
  try{event=JSON.parse(raw.toString('utf8'));}catch{return send(res,400,{error:'Invalid JSON'});}
  if(event?.event!=='charge.success')return res.status(200).json({received:true,ignored:true});
  const data=event.data||{},reference=String(data.reference||'').trim();
  if(!reference)return send(res,400,{error:'Missing transaction reference'});
- let secret='';
- try{secret=(await getCentralPaystackCredentials()).secretKey;}catch{return send(res,503,{error:'Central Paystack credentials are not configured'});}
  try{
   const sql=getDb();
   const existing=await sql`SELECT p.id,p.tenant_id,p.order_id,p.amount_minor,p.currency,p.status,o.order_number FROM public.payments p JOIN public.orders o ON o.id=p.order_id AND o.tenant_id=p.tenant_id WHERE p.provider='paystack' AND p.provider_reference=${reference} LIMIT 1`;
   if(!existing.length)return res.status(200).json({received:true,unmatched:true});
   const payment=existing[0];
   if(payment.status==='succeeded')return res.status(200).json({received:true,duplicate:true});
-  const verification=await verifyTransaction(reference,secret),tx=verification.data;
-  const matches=verification.ok&&tx?.status==='success'&&String(tx.reference)===reference&&String(tx.currency||'').toUpperCase()==='KES'&&String(payment.currency||'KES').toUpperCase()==='KES'&&Number(tx.amount)===Number(payment.amount_minor);
+  const verification=await verifyTransaction(reference,credentials.secretKey),tx=verification.data;
+  const matches=verification.ok&&tx?.status==='success'&&String(tx.reference)===reference&&String(tx.currency||'').toUpperCase()==='KES'&&String(payment.currency||'').trim().toUpperCase()==='KES'&&Number(tx.amount)===Number(payment.amount_minor);
   if(!matches){
    await sql`UPDATE public.payments SET provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paystackVerification:'mismatch_or_pending',reference})}::jsonb,updated_at=now() WHERE id=${payment.id} AND tenant_id=${payment.tenant_id} AND status IN ('initiated','pending')`;
    return res.status(200).json({received:true,verified:false,reviewRequired:true});
