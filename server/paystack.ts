@@ -64,6 +64,6 @@ export async function initializeCentralPaystack(input:{email:string;reference:st
  if(input.subaccountCode){body.subaccount=input.subaccountCode;body.bearer='subaccount';}
  const response=await fetch('https://api.paystack.co/transaction/initialize',{method:'POST',headers:{Authorization:'Bearer '+credentials.secretKey,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(15000)});
  const payload:PaystackInitializeResult=await response.json().catch(()=>({status:false,message:'Invalid Paystack response'}));
- if(!response.ok||!payload.status||!payload.data?.authorization_url||!payload.data?.reference)throw new Error(String(payload.message||'Paystack could not initialize this KES payment.'));
+ if(!response.ok||!payload.status||!payload.data?.authorization_url||!payload.data?.access_code||!payload.data?.reference)throw new Error(String(payload.message||'Paystack could not initialize this KES payment.'));
  return {authorizationUrl:payload.data.authorization_url,accessCode:payload.data.access_code,reference:payload.data.reference};
 }
