@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import './storefront-product-jumia.css';
 import './storefront-all-reference-screens.css';
+import './storefront-approved-rebuild.css';
 import { unzipSync } from 'fflate';
 import { Activity, CreditCard, Check, MapPin, Flag, ArrowRight, ArrowUpRight, Bell, Heart, Star, ChevronRight, CircleAlert, Download, HelpCircle, LayoutDashboard, LogOut, Menu, X, MessageCircle, Package, Plus, RefreshCw, Search, Send, Settings, Globe, ShieldCheck, ShoppingBag, ShoppingCart, UserRound, Store, Wallet, WalletCards, Home, FileText, TicketPercent } from 'lucide-react';
 import { storefrontCategories } from './storefrontCatalog';
@@ -290,6 +291,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
           </a>
           <div className="ds-store-header-actions">
             <button type="button" className="ds-store-notification ds-store-account-shortcut" aria-label="My account" title="My account" onClick={()=>{if(!buyerCustomer){setBuyerReturnPage('account');navigateBuyerPage('buyer-login')}else navigateBuyerPage('account')}}><UserRound size={23}/></button>
+            <button type="button" className="ds-store-notification" aria-label="Notifications" title="Notifications" onClick={()=>{if(!buyerCustomer){setBuyerReturnPage('notifications');navigateBuyerPage('buyer-login')}else setBuyerNotificationsOpen(value=>!value)}}><Bell size={21}/>{buyerNotifications.length>0&&<b>{buyerNotifications.length>9?'9+':buyerNotifications.length}</b>}</button>
             <button type="button" className="ds-store-cart" onClick={()=>navigateBuyerPage('cart')} aria-label="Cart"><ShoppingCart size={19}/>{cartItems.length>0&&<b>{cartItems.reduce((n,[,q])=>n+q,0)}</b>}</button>
           </div>
         </div>
@@ -301,12 +303,12 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
       </header>
       <section className="ds-store-browse-controls" aria-label="Product filters">
         <div className="jumia-breadcrumb"><button type="button" onClick={()=>navigateBuyerPage('store')}>Home</button><span>›</span><button type="button" onClick={()=>{setFilter('All products');setSearch('');navigateBuyerPage('store')}}>All Products</button>{(filter!=='All products'||search.trim())&&<><span>›</span><strong>{search.trim()||filter}</strong></>}</div>
-        <div className="ds-store-filter-row jumia-filter-row">
-          <button type="button" className="jumia-filter-pill jumia-filter-primary" onClick={()=>{setFilter('All products');setSortOrder('recommended')}}><span className="jumia-express-mark">➤</span><span>Express</span></button>
-          <select aria-label="Filter products by brand" disabled className="jumia-select-brand"><option>Brand</option></select>
-          <select aria-label="Sort products by price" value={sortOrder==='price-low'?'price-low':sortOrder==='price-high'?'price-high':'recommended'} onChange={e=>setSortOrder(e.target.value)}><option value="recommended">Price</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option></select>
-          <select aria-label="Filter products by size" disabled className="jumia-select-size"><option>Size</option></select>
-        </div>
+        {(filter!=='All products'||search.trim()||buyerPage.startsWith('collection/'))&&<div className="ds-store-filter-row jumia-filter-row">
+          <label className="ds-store-sort-control">Sort products
+            <select aria-label="Sort products" value={sortOrder} onChange={e=>setSortOrder(e.target.value)}><option value="recommended">Recommended</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="name">Name</option></select>
+          </label>
+          <button type="button" className="jumia-filter-pill" onClick={()=>{setFilter('All products');setSearch('');setSortOrder('recommended')}}>Clear filters</button>
+        </div>}
         {(filter!=='All products'||search.trim()||buyerPage.startsWith('collection/'))&&<div className="jumia-related-searches"><span>Related results:</span>{[...new Set(mixedProducts.slice(0,6).map(p=>p.name.split(' ').slice(0,2).join(' ')).filter(Boolean))].map(term=><button type="button" key={term} onClick={()=>{setSearch(term);setFilter('All products');navigateBuyerPage('store')}}>{term}</button>)}</div>}
       </section>
       {buyerNotificationsOpen&&buyerCustomer&&<section className="ds-store-notification-popover" aria-label="Recent notifications"><div className="ds-store-notification-popover-head"><div><strong>Notifications</strong><small>{buyerNotifications.length} recent updates</small></div><button type="button" aria-label="Close notifications" onClick={()=>setBuyerNotificationsOpen(false)}>×</button></div>{buyerNotifications.length?buyerNotifications.slice(0,8).map((item:any,index:number)=><button type="button" className="ds-store-notification-item" key={item.id||item.orderId||item.complaintId||index} onClick={()=>{setBuyerNotificationsOpen(false);navigateBuyerPage(item.complaint_id||item.complaintId?'my-reports':'orders')}}><span className="ds-store-notification-item-icon"><Bell size={15}/></span><span><strong>{item.title||'Order update'}</strong><small>{item.detail||'There is an update on your account.'}</small><time>{item.created_at?new Date(item.created_at).toLocaleString('en-KE'):item.updatedAt?new Date(item.updatedAt).toLocaleString('en-KE'):'Recently'}</time></span><ChevronRight size={15}/></button>):<div className="ds-store-notification-empty"><Bell size={22}/><strong>You’re all caught up</strong><p>Payment, order and delivery updates will appear here.</p></div>}<button type="button" className="ds-store-notification-viewall" onClick={()=>{setBuyerNotificationsOpen(false);navigateBuyerPage('notifications')}}>View all updates <ArrowRight size={15}/></button></section>}
