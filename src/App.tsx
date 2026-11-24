@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import './storefront-product-jumia.css';
 import { unzipSync } from 'fflate';
 import { Activity, CreditCard, Check, MapPin, Flag, ArrowRight, ArrowUpRight, Bell, Heart, Star, ChevronRight, CircleAlert, Download, HelpCircle, LayoutDashboard, LogOut, Menu, X, MessageCircle, Package, Plus, RefreshCw, Search, Send, Settings, Globe, ShieldCheck, ShoppingBag, ShoppingCart, UserRound, Store, Wallet, WalletCards, Home, FileText, TicketPercent } from 'lucide-react';
 import { storefrontCategories } from './storefrontCatalog';
