@@ -899,7 +899,7 @@ export default async function handler(req:any,res:any){
    const name=String(buyer.full_name||'').trim().slice(0,120),phone=normalizePhone(buyer.phone),paymentPhone=requestedMethod==='delivery'?'':normalizePhone(b.paymentPhone||buyer.phone),checkoutEmail=String(b.customerEmail||'').trim().toLowerCase().slice(0,254),customerEmail=checkoutEmail||String(buyer.email||'').trim().toLowerCase().slice(0,254);
    if(checkoutEmail&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(checkoutEmail))return send(res,400,{error:'Enter a valid email address or leave the email field blank.'});
    if(checkoutEmail&&checkoutEmail!==String(buyer.email||'').trim().toLowerCase())await sql`UPDATE public.store_customers SET email=${checkoutEmail},updated_at=now() WHERE id=${buyer.id} AND tenant_id=${shops[0].id}`;
-   if(!name||!phone||(requestedMethod!=='delivery'&&!paymentPhone)||!items.length||items.length>30)return send(res,400,{error:'Your buyer account or payment phone is invalid, or the cart is empty.'});
+   if(!name||!phone||(requestedMethod==='mpesa'&&!paymentPhone)||!['delivery','mpesa','paystack','card'].includes(requestedMethod)||!items.length||items.length>30)return send(res,400,{error:'Your buyer account, payment method or cart is invalid.'});
    if(!/^[a-zA-Z0-9:_-]{12,100}$/.test(idempotency))return send(res,400,{error:'Checkout session expired. Refresh checkout and try again.'});
    if(!['home','pickup'].includes(deliveryMethod))return send(res,400,{error:'Choose a valid delivery method.'});
    if(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty||!deliveryEstate||!deliveryAddress))return send(res,400,{error:'Complete county, sub-county, estate/area and physical delivery address.'});
