@@ -27,7 +27,7 @@ function productOut(p:any,includeMetadata=false){
   if(value.startsWith('s3://'))return storageUrl(value.slice(5).replace(/^documents\//,''),'GET');
   return value;
  }).filter(Boolean);
- return {id:p.id,name:p.name,description:p.description,images,imageUrl:images[0]||'',category:String(p.metadata?.category||(p.product_type==='data_bundle'?'Data bundles':p.product_type==='digital'?'Digital products':'Shop products')),spotlight:Boolean(p.metadata?.spotlight),testProduct:Boolean(p.metadata?.test_product),type:p.product_type,price:Number(p.price_minor)/100,currency:p.currency,stockQuantity:p.stock_quantity,active:p.is_active,sku:p.sku||'',ratingAverage:Number(p.rating_average||0),ratingCount:Number(p.rating_count||0),...(includeMetadata?{metadata:p.metadata||{}}:{})};
+ return {id:p.id,name:p.name,description:p.description,images,imageUrl:images[0]||'',category:String(p.metadata?.category||(p.product_type==='data_bundle'?'Data bundles':p.product_type==='digital'?'Digital products':'Shop products')),parentCategory:String(p.metadata?.parent_category||''),spotlight:Boolean(p.metadata?.spotlight),testProduct:Boolean(p.metadata?.test_product),type:p.product_type,price:Number(p.price_minor)/100,currency:p.currency,stockQuantity:p.stock_quantity,active:p.is_active,sku:p.sku||'',ratingAverage:Number(p.rating_average||0),ratingCount:Number(p.rating_count||0),...(includeMetadata?{metadata:p.metadata||{}}:{})};
 }
 
 export default async function handler(req:any,res:any){
@@ -74,8 +74,16 @@ export default async function handler(req:any,res:any){
   ), filtered_products AS (
     SELECT p.* FROM public.products p JOIN target_tenant t ON t.id=p.tenant_id
     WHERE p.is_active=true
-      AND (${requestedSearch}='' OR concat_ws(' ',p.name,p.description,p.sku,COALESCE(p.metadata->>'category',''),p.product_type) ILIKE ${searchPattern})
-      AND (${requestedCategory}='' OR EXISTS (SELECT 1 FROM unnest(string_to_array(${requestedCategory},'|')) AS selected(value) WHERE lower(COALESCE(p.metadata->>'category',CASE WHEN p.product_type='data_bundle' THEN 'Data bundles' WHEN p.product_type='digital' THEN 'Digital products' ELSE 'Shop products' END))=lower(selected.value)))
+      AND (${requestedSearch}='' OR concat_ws(' ',p.name,p.description,p.sku,COALESCE(p.metadata->>'category',''),COALESCE(p.metadata->>'parent_category',''),p.product_type) ILIKE ${searchPattern})
+      AND (${requestedCategory}='' OR EXISTS (
+        SELECT 1 FROM unnest(string_to_array(${requestedCategory},'|')) AS selected(value)
+        WHERE lower(trim(COALESCE(p.metadata->>'parent_category','')))=lower(trim(selected.value))
+          OR lower(trim(COALESCE(p.metadata->>'category',CASE WHEN p.product_type='data_bundle' THEN 'Data bundles' WHEN p.product_type='digital' THEN 'Digital products' ELSE 'Shop products' END)))=lower(trim(selected.value))
+          OR EXISTS (
+            SELECT 1 FROM unnest(string_to_array(COALESCE(p.metadata->>'category',''),'>')) AS category_part(value)
+            WHERE lower(trim(category_part.value))=lower(trim(selected.value))
+          )
+      ))
       AND (cardinality(${requestedIds}::uuid[])=0 OR p.id=ANY(${requestedIds}::uuid[]))
       AND (${requestedProductKey}='' OR p.sku=${requestedProductKey} OR p.id::text=${requestedProductKey})
   ), product_page_base AS (
