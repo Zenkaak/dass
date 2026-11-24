@@ -238,3 +238,8 @@
  .market-detail-reviews,.market-detail-related,.market-detail-safety { padding:12px; }
  .market-related-grid { grid-auto-columns:48%; }
 }
+
+.ds-store-load-more-wrap { display:flex; justify-content:center; padding:18px 0 8px; }
+.ds-store-load-more { min-height:42px; min-width:min(280px,100%); padding:0 22px; border:1px solid #f68b1e; border-radius:4px; background:#fff; color:#d66b0b; font-weight:750; cursor:pointer; }
+.ds-store-load-more:disabled { opacity:.65; cursor:wait; }
+.ds-store-cartbar { border-radius:4px; }
