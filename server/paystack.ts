@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import { getDb } from './db.js';
 
-export interface PaystackCredentials { secretKey:string; publicKey:string; environment:'test'|'live'; }
+export interface PaystackCredentials { secretKey:string; publicKey:string; webhookSecret?:string; environment:'test'|'live'; }
 export interface KESQuote { originalUsdAmount:number; fxRateUsed:number; chargedKesAmount:number; amountSubunits:number; source:string; }
 interface PaystackInitializeResult { status:boolean; message:string; data?:{authorization_url:string;access_code:string;reference:string}; }
 const env=(key:string)=>(process.env[key]||'').trim();
@@ -28,7 +28,7 @@ export async function getCentralPaystackCredentials():Promise<PaystackCredential
  const secretKey=String(credentials?.secretKey||''),publicKey=String(credentials?.publicKey||'');
  const prefix=environment==='live'?'sk_live_':'sk_test_';
  if(!secretKey.startsWith(prefix)||!publicKey.startsWith(environment==='live'?'pk_live_':'pk_test_'))throw new Error('Central Paystack credentials are incomplete or do not match the selected environment.');
- return {secretKey,publicKey,environment};
+ return {secretKey,publicKey,webhookSecret:String(credentials?.webhookSecret||'')||undefined,environment};
 }
 export async function getUsdKesRate():Promise<{rate:number;source:string}> {
  const now=Date.now();
@@ -45,7 +45,7 @@ export async function getUsdKesRate():Promise<{rate:number;source:string}> {
 export async function quoteUsdInKes(usdAmount:number):Promise<KESQuote>{
  if(!Number.isFinite(usdAmount)||usdAmount<=0||usdAmount>10000000)throw new Error('USD amount is invalid.');
  const fx=await getUsdKesRate();
- const chargedKesAmount=Math.round((usdAmount*fx.rate)*100)/100;
+ const chargedKesAmount=Math.round(usdAmount*fx.rate);
  const amountSubunits=Math.round(chargedKesAmount*100);
  if(!Number.isSafeInteger(amountSubunits)||amountSubunits<=0)throw new Error('Converted KES amount is outside supported payment limits.');
  return {originalUsdAmount:Math.round(usdAmount*1000000)/1000000,fxRateUsed:fx.rate,chargedKesAmount,amountSubunits,source:fx.source};
