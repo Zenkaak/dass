@@ -19,7 +19,14 @@ export default async function handler(req:any,res:any){
   if(!users.length||!allow.includes(phone(users[0].phone||'')))return send(res,403,{error:'Platform administrator access required.'});
   if(req.method==='GET'&&String(req.query?.action||'')==='paystack_config'){
    const rows=await sql`SELECT environment,encrypted_credentials,updated_at FROM public.platform_paystack_config WHERE id='central' LIMIT 1`;
-   const saved=rows[0]?.encrypted_credentials||{};
+   let saved:any={};
+   const blob=rows[0]?.encrypted_credentials;
+   if(blob?.data&&blob?.iv&&blob?.tag){
+    const key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');
+    const keyBytes=/^[0-9a-f]{64}$/i.test(key)?Buffer.from(key,'hex'):Buffer.from(key,'base64');
+    if(keyBytes.length!==32)return send(res,503,{error:'Credential encryption is not configured correctly.'});
+    try{const decipher=crypto.createDecipheriv('aes-256-gcm',keyBytes,Buffer.from(blob.iv,'base64'));decipher.setAuthTag(Buffer.from(blob.tag,'base64'));saved=JSON.parse(Buffer.concat([decipher.update(Buffer.from(blob.data,'base64')),decipher.final()]).toString('utf8'));}catch{return send(res,500,{error:'Saved Paystack configuration could not be decrypted.'});}
+   }
    return send(res,200,{paystack:{environment:rows[0]?.environment||'test',testConfigured:!!(saved.test?.secretKey&&saved.test?.publicKey),testWebhookConfigured:!!saved.test?.webhookSecret,liveConfigured:!!(saved.live?.secretKey&&saved.live?.publicKey),liveWebhookConfigured:!!saved.live?.webhookSecret,updatedAt:rows[0]?.updated_at||null}});
   }
   if(req.method==='GET'&&String(req.query?.action||'')==='detail'){
