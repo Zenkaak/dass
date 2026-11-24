@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { getDb, hasDatabaseConfig } from '../server/db.js';
-import { quoteUsdInKes, initializeCentralPaystack, getSellerPaystackCredentials } from '../server/paystack.js';
+import { quoteUsdInKes, initializeCentralPaystack, getSellerPaystackCredentials, getCentralPaystackCredentials } from '../server/paystack.js';
 import { sendTransactionalEmail, sendTenantTransactionalEmail, sendUsingResendConfig, brandedEmail, encryptTenantEmailConfig, decryptTenantEmailConfig, escapeEmailHtml } from '../server/email.js';
 
 // Keep a stack trace for legacy URL parser warnings so the originating dependency
@@ -1139,6 +1139,30 @@ export default async function handler(req:any,res:any){
    else if(kind==='id_back')await sql`UPDATE public.tenant_card_kyc SET id_back_object_key=${objectKey},status=CASE WHEN id_front_object_key IS NOT NULL AND phone_verified_at IS NOT NULL THEN 'pending_review' ELSE 'more_information_required' END,updated_at=now() WHERE tenant_id=${me.tenant_id}`;
    else await sql`UPDATE public.tenant_card_kyc SET business_document_object_key=${objectKey},updated_at=now() WHERE tenant_id=${me.tenant_id}`;
    return send(res,200,{ok:true,kind});
+  }
+  if(req.method==='POST'&&action==='paystack-subaccount'){
+   if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner can configure settlement.'});
+   const [config,kyc,user]=await Promise.all([
+    sql`SELECT account_mode,subaccount_status,paystack_subaccount_code FROM public.tenant_paystack_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`,
+    sql`SELECT status,phone_verified_at,id_front_object_key,id_back_object_key FROM public.tenant_card_kyc WHERE tenant_id=${me.tenant_id} LIMIT 1`,
+    sql`SELECT email,phone,display_name FROM public.users WHERE id=${me.user_id} LIMIT 1`
+   ]);
+   if(config[0]?.account_mode!=='central_subaccount')return send(res,409,{error:'Choose the DASMARKET central Paystack account mode first.'});
+   if(config[0]?.paystack_subaccount_code)return send(res,200,{ok:true,subaccountCode:config[0].paystack_subaccount_code,subaccountStatus:config[0].subaccount_status});
+   if(String(me.slug||'').toLowerCase()!=='kingsley'&&(kyc[0]?.status!=='approved'||!kyc[0]?.phone_verified_at||!kyc[0]?.id_front_object_key||!kyc[0]?.id_back_object_key))return send(res,403,{error:'Complete card KYC approval, phone verification and both ID uploads before creating a settlement subaccount.'});
+   const b=req.body||{},businessName=String(b.businessName||'').trim().slice(0,120),accountNumber=String(b.accountNumber||'').replace(/\s/g,''),bankCode=String(b.bankCode||'').trim(),accountName=String(b.accountName||'').trim().slice(0,120),email=String(user[0]?.email||'').trim(),phone=normalizePhone(String(user[0]?.phone||''));
+   if(businessName.length<3||accountName.length<3||!/^[0-9]{5,20}$/.test(accountNumber)||!/^[A-Za-z0-9_-]{2,20}$/.test(bankCode)||!phone||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return send(res,400,{error:'Enter the registered business name, account holder, valid bank code and account number. Your seller account must have a verified phone and email.'});
+   const central=await getCentralPaystackCredentials();
+   const resolveUrl='https://api.paystack.co/bank/resolve?account_number='+encodeURIComponent(accountNumber)+'&bank_code='+encodeURIComponent(bankCode);
+   const resolvedResponse=await fetch(resolveUrl,{headers:{Authorization:'Bearer '+central.secretKey,Accept:'application/json'},signal:AbortSignal.timeout(12000)}),resolved:any=await resolvedResponse.json().catch(()=>({}));
+   if(!resolvedResponse.ok||resolved?.status!==true||!resolved?.data?.account_number)return send(res,400,{error:String(resolved?.message||'Paystack could not verify this bank account. Check the bank code and account number.')});
+   if(String(resolved.data.account_number)!==accountNumber)return send(res,400,{error:'Paystack returned a different account number. Please verify your details.'});
+   const createdResponse=await fetch('https://api.paystack.co/subaccount',{method:'POST',headers:{Authorization:'Bearer '+central.secretKey,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({business_name:businessName,settlement_bank:bankCode,account_number:accountNumber,percentage_charge:0,primary_contact_email:email,primary_contact_name:accountName,phone}),signal:AbortSignal.timeout(15000)}),created:any=await createdResponse.json().catch(()=>({}));
+   if(!createdResponse.ok||created?.status!==true||!created?.data?.subaccount_code)return send(res,502,{error:String(created?.message||'Paystack could not create the seller settlement subaccount.')});
+   const encrypted=encryptPrivate({businessName,accountName,accountNumber,bankCode,bankName:String(b.bankName||'').slice(0,100)});
+   await sql`UPDATE public.tenant_paystack_configs SET encrypted_bank_details=${JSON.stringify(encrypted)}::jsonb,settlement_status='verified',paystack_subaccount_code=${String(created.data.subaccount_code)},subaccount_status='active',updated_at=now() WHERE tenant_id=${me.tenant_id}`;
+   await audit(sql,me.tenant_id,me.user_id,'seller.paystack.subaccount.created','paystack_subaccount',me.tenant_id,{subaccountCreated:true,bankAccountVerified:true,percentageCharge:0});
+   return send(res,200,{ok:true,subaccountCode:String(created.data.subaccount_code),subaccountStatus:'active'});
   }
   if(req.method==='GET'&&action==='card-kyc'){
    const rows=await sql`SELECT status,encrypted_identity,phone,phone_verified_at,id_front_object_key,id_back_object_key,business_document_object_key,submitted_at,reviewed_at,review_note FROM public.tenant_card_kyc WHERE tenant_id=${me.tenant_id} LIMIT 1`;
