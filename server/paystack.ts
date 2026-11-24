@@ -19,6 +19,13 @@ function decryptCredentials(blob:any):any {
  decipher.setAuthTag(Buffer.from(blob.tag,'base64'));
  return JSON.parse(Buffer.concat([decipher.update(Buffer.from(blob.data,'base64')),decipher.final()]).toString('utf8'));
 }
+export async function getSellerPaystackCredentials(tenantId:string):Promise<PaystackCredentials>{
+ const sql=getDb(),rows=await sql`SELECT encrypted_credentials FROM public.tenant_paystack_configs WHERE tenant_id=${tenantId} AND account_mode='own_paystack' AND connection_status='connected' LIMIT 1`;
+ if(!rows.length)throw new Error('Seller Paystack account is not connected.');
+ const saved=decryptCredentials(rows[0].encrypted_credentials),secretKey=String(saved?.secretKey||''),environment=saved?.environment==='live'?'live':'test';
+ if(!secretKey.startsWith(environment==='live'?'sk_live_':'sk_test_'))throw new Error('Seller Paystack credentials are invalid.');
+ return {secretKey,publicKey:'',environment};
+}
 export async function getCentralPaystackCredentials():Promise<PaystackCredentials>{
  const sql=getDb();
  const rows=await sql`SELECT environment,encrypted_credentials FROM public.platform_paystack_config WHERE id='central' LIMIT 1`;
