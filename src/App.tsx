@@ -1,6 +1,4 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
-import './storefront-product-jumia.css';
-import './storefront-all-reference-screens.css';
 import { unzipSync } from 'fflate';
 import { Activity, CreditCard, Check, MapPin, Flag, ArrowRight, ArrowUpRight, Bell, Heart, Star, ChevronRight, CircleAlert, Download, HelpCircle, LayoutDashboard, LogOut, Menu, X, MessageCircle, Package, Plus, RefreshCw, Search, Send, Settings, Globe, ShieldCheck, ShoppingBag, ShoppingCart, UserRound, Store, Wallet, WalletCards, Home, FileText, TicketPercent } from 'lucide-react';
 import { storefrontCategories } from './storefrontCatalog';
@@ -334,10 +332,6 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
       <section className="ds-store-category-quicklinks" aria-label="Shop by category">
         <div className="ds-store-category-heading"><h2>Shop by category</h2><button type="button" onClick={()=>setMobileSidebarOpen(true)}>View all <ArrowRight size={14}/></button></div>
         <div className="ds-store-category-tiles">{storefrontCategories.slice(0,8).map(category=><button type="button" className="ds-store-category-tile" key={category.name} onClick={()=>selectStoreCategory(category.name)}><span>{category.icon}</span><b>{category.name}</b></button>)}</div>
-      </section>
-      <section className="ds-store-mobile-promo">
-        <div><span>SHOP WITH CONFIDENCE</span><h2>Find your next favourite</h2><p>Discover more from {shop?.name||'this shop'}.</p><button type="button" onClick={()=>{setSearch('');setFilter('All products');navigateBuyerPage('collection/all-products')}}>Explore all products <ArrowRight size={14}/></button></div>
-        <span className="ds-store-mobile-promo-art"><ShoppingBag size={42}/></span>
       </section>
       {filter==='All products'&&!search.trim()&&<>
        <section className="ds-store-section ds-store-latest-arrivals">
