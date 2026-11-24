@@ -17,7 +17,7 @@ function safeEqualHex(expected:Buffer,value:string){
  const actual=Buffer.from(value,'hex');
  return actual.length===expected.length&&crypto.timingSafeEqual(expected,actual);
 }
-function verifySignature(raw:Buffer,req:any){
+async function verifySignature(raw:Buffer,req:any){
  const modern=String(req.headers['paystack-signature']||'');
  const signingSecret=env('PAYSTACK_WEBHOOK_SIGNING_SECRET');
  if(modern&&signingSecret){
@@ -32,7 +32,7 @@ function verifySignature(raw:Buffer,req:any){
   return entries.some(signature=>safeEqualHex(expected,signature));
  }
  const legacy=String(req.headers['x-paystack-signature']||'');
- const secret=env('PAYSTACK_SECRET_KEY');
+ let secret='';try{secret=(await getCentralPaystackCredentials()).secretKey;}catch{return false;}
  if(!legacy||!secret)return false;
  return safeEqualHex(crypto.createHmac('sha512',secret).update(raw).digest(),legacy);
 }
@@ -48,7 +48,7 @@ export default async function handler(req:any,res:any){
  let raw:Buffer;
  try{raw=await rawBody(req);}catch{return send(res,400,{error:'Invalid webhook body'});}
  if(raw.length>1024*1024)return send(res,413,{error:'Webhook payload too large'});
- if(!verifySignature(raw,req))return send(res,401,{error:'Invalid Paystack signature'});
+ if(!await verifySignature(raw,req))return send(res,401,{error:'Invalid Paystack signature'});
  let event:any;
  try{event=JSON.parse(raw.toString('utf8'));}catch{return send(res,400,{error:'Invalid JSON'});}
  if(event?.event!=='charge.success')return res.status(200).json({received:true,ignored:true});
