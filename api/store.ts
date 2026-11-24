@@ -205,7 +205,7 @@ const storageEnv=(k:string)=>(process.env[k]||'').trim();
 const fileTypes:any={pdf:{mime:'application/pdf',ext:'pdf'},doc:{mime:'application/msword',ext:'doc'},docx:{mime:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',ext:'docx'},xls:{mime:'application/vnd.ms-excel',ext:'xls'},xlsx:{mime:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',ext:'xlsx'},txt:{mime:'text/plain',ext:'txt'},jpg:{mime:'image/jpeg',ext:'jpg'},jpeg:{mime:'image/jpeg',ext:'jpeg'},png:{mime:'image/png',ext:'png'},webp:{mime:'image/webp',ext:'webp'}};
 function awsEncode(s:string){return encodeURIComponent(s).replace(/[!'()*]/g,c=>'%'+c.charCodeAt(0).toString(16).toUpperCase())}
 function hmac(key:any,value:string,encoding?:any){return crypto.createHmac('sha256',key).update(value).digest(encoding)}
-function storageUrl(key:string,method:'PUT'|'GET',mime='application/octet-stream'){
+export function storageUrl(key:string,method:'PUT'|'GET',mime='application/octet-stream'){
  const endpoint=storageEnv('AWS_ENDPOINT_URL_S3'),access=storageEnv('AWS_ACCESS_KEY_ID'),secret=storageEnv('AWS_SECRET_ACCESS_KEY'),configuredRegion=storageEnv('AWS_REGION'),bucket=storageEnv('NEON_STORAGE_BUCKET')||'documents';
  if(!endpoint||!access||!secret)throw Error('ATTACHMENT_STORAGE_CONFIG');
  const host=new URL(endpoint).host,endpointRegion=host.match(/\.([a-z]{2}-[a-z]+-\d)\.aws\.neon\.tech$/)?.[1],region=endpointRegion||configuredRegion||'us-east-2',now=new Date(),amz=now.toISOString().slice(0,19).replace(/[-:T]/g,'')+'Z',day=amz.slice(0,8),scope=day+'/'+region+'/s3/aws4_request',path='/'+bucket+'/'+key.split('/').map(awsEncode).join('/');
