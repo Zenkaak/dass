@@ -68,17 +68,31 @@ export default async function handler(req:any,res:any){
   if(['seller_subscription','seller_lifetime_license'].includes(source)){
    const planId=String(payment.provider_result?.planId||''),intervalDays=Number(payment.provider_result?.intervalDays),lifetime=source==='seller_lifetime_license';
    if(!/^[0-9a-f-]{36}$/i.test(planId)||(lifetime?intervalDays!==36500:![30,90,180,365].includes(intervalDays)))return res.status(200).json({received:true,verified:true,reviewRequired:true,reason:'subscription_metadata_invalid'});
-   const marked=await sql`UPDATE public.payments SET status='succeeded',provider_receipt=${String(tx.id||reference)},verified_at=now(),provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paystack:{reference,channel:tx.channel||null,paidAt:tx.paid_at||null}})}::jsonb,updated_at=now() WHERE id=${payment.id} AND tenant_id=${payment.tenant_id} AND status IN ('initiated','pending') RETURNING id`;
-   if(!marked.length)return res.status(200).json({received:true,duplicate:true});
-   const current=await sql`SELECT id FROM public.subscriptions WHERE tenant_id=${payment.tenant_id} ORDER BY created_at DESC LIMIT 1`;
-   if(current.length){
-    if(lifetime)await sql`UPDATE public.subscriptions SET plan_id=${planId},status='active',trial_ends_at=NULL,current_period_start=now(),current_period_end='9999-12-31 23:59:59+00'::timestamptz,provider_payment_id=${payment.id},updated_at=now() WHERE id=${current[0].id}`;
-    else await sql`UPDATE public.subscriptions SET plan_id=${planId},status='active',trial_ends_at=NULL,current_period_start=now(),current_period_end=now()+make_interval(days=>${intervalDays}),provider_payment_id=${payment.id},updated_at=now() WHERE id=${current[0].id}`;
-   }else{
-    if(lifetime)await sql`INSERT INTO public.subscriptions(tenant_id,plan_id,status,trial_ends_at,current_period_start,current_period_end,provider_payment_id) VALUES(${payment.tenant_id},${planId},'active',NULL,now(),'9999-12-31 23:59:59+00'::timestamptz,${payment.id})`;
-    else await sql`INSERT INTO public.subscriptions(tenant_id,plan_id,status,trial_ends_at,current_period_start,current_period_end,provider_payment_id) VALUES(${payment.tenant_id},${planId},'active',NULL,now(),now()+make_interval(days=>${intervalDays}),${payment.id})`;
-   }
-   await sql`UPDATE public.tenants SET status='active',updated_at=now() WHERE id=${payment.tenant_id} AND status IN ('trial','past_due')`;
+   const settlement=await sql`WITH payment_mark AS (
+    UPDATE public.payments SET status='succeeded',provider_receipt=${String(tx.id||reference)},verified_at=now(),provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paystack:{reference,channel:tx.channel||null,paidAt:tx.paid_at||null}})}::jsonb,updated_at=now()
+    WHERE id=${payment.id} AND tenant_id=${payment.tenant_id} AND status IN ('initiated','pending') RETURNING id,tenant_id
+   ), current_subscription AS (
+    SELECT s.id FROM public.subscriptions s WHERE s.tenant_id=${payment.tenant_id}
+      AND EXISTS(SELECT 1 FROM payment_mark) ORDER BY s.created_at DESC LIMIT 1
+   ), updated_subscription AS (
+    UPDATE public.subscriptions s SET plan_id=${planId},status='active',trial_ends_at=NULL,current_period_start=now(),
+      current_period_end=CASE WHEN ${lifetime} THEN '9999-12-31 23:59:59+00'::timestamptz ELSE now()+make_interval(days=>${intervalDays}) END,
+      provider_payment_id=pm.id,updated_at=now()
+    FROM current_subscription cs,payment_mark pm WHERE s.id=cs.id RETURNING s.id
+   ), inserted_subscription AS (
+    INSERT INTO public.subscriptions(tenant_id,plan_id,status,trial_ends_at,current_period_start,current_period_end,provider_payment_id)
+    SELECT pm.tenant_id,${planId},'active',NULL,now(),
+      CASE WHEN ${lifetime} THEN '9999-12-31 23:59:59+00'::timestamptz ELSE now()+make_interval(days=>${intervalDays}) END,pm.id
+    FROM payment_mark pm WHERE NOT EXISTS(SELECT 1 FROM current_subscription) RETURNING id
+   ), tenant_activation AS (
+    UPDATE public.tenants SET status='active',updated_at=now()
+    WHERE id=${payment.tenant_id} AND status IN ('trial','past_due')
+      AND EXISTS(SELECT 1 FROM payment_mark) RETURNING id
+   )
+   SELECT (SELECT COUNT(*) FROM payment_mark)::int AS payment_count,
+     ((SELECT COUNT(*) FROM updated_subscription)+(SELECT COUNT(*) FROM inserted_subscription))::int AS subscription_count`;
+   if(Number(settlement[0]?.payment_count||0)===0)return res.status(200).json({received:true,duplicate:true});
+   if(Number(settlement[0]?.subscription_count||0)!==1)throw new Error('Subscription settlement did not produce exactly one active subscription.');
    return res.status(200).json({received:true,verified:true,subscriptionActivated:true});
   }
   if(!payment.order_id)return res.status(200).json({received:true,verified:true,reviewRequired:true,reason:'payment_order_missing'});
