@@ -964,7 +964,7 @@ export function StorefrontFlow({
   async function placeOrder() {
     if (!lines.length || submitting) return;
     const isCash = paymentMethod === 'delivery';
-    if (!isCash && !/^\+?254[17]\d{8}$|^0[17]\d{8}$/.test(paymentPhone.trim().replace(/[\s().-]/g, ''))) {
+    if (paymentMethod === 'mpesa' && !/^\+?254[17]\d{8}$|^0[17]\d{8}$/.test(paymentPhone.trim().replace(/[\s().-]/g, ''))) {
       setCheckoutError('Enter a valid Kenyan M-PESA phone number to receive the payment prompt.');
       return;
     }
@@ -985,7 +985,7 @@ export function StorefrontFlow({
         .sort((a, b) => String(a[0]).localeCompare(String(b[0]))),
       coupon: appliedCoupon?.code || '',
       paymentMethod,
-      paymentPhone: isCash ? '' : paymentPhone.trim(),
+      paymentPhone: paymentMethod === 'mpesa' ? paymentPhone.trim() : '',
       deliveryFee,
       deliveryMethod,
       deliveryCounty,
@@ -1018,7 +1018,7 @@ export function StorefrontFlow({
           deliveryAddress: deliveryAddress.trim(),
           deliveryDirections: deliveryDirections.trim(),
           pickupStation: pickupStation.trim(),
-          paymentMethod: isCash ? 'delivery' : 'mpesa',
+          paymentMethod: isCash ? 'delivery' : paymentMethod === 'card' ? 'paystack' : 'mpesa',
           items: lines.map(({ product, quantity }) => ({ id: product.id, quantity })),
           idempotencyKey: checkoutIdempotency.current.key,
         }),
@@ -1026,8 +1026,13 @@ export function StorefrontFlow({
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.orderNumber || !data.orderId) {
         throw new Error(
-          data.error || 'We could not create your order or start M-PESA. Please review your details and try again.',
+          data.error || 'We could not create your order or start payment. Please review your details and try again.',
         );
+      }
+      if (paymentMethod === 'card') {
+        if (!data.authorizationUrl) throw new Error('Paystack did not return a secure checkout URL. Contact the shop before retrying.');
+        window.location.assign(data.authorizationUrl);
+        return;
       }
       const createdAt = new Date().toISOString();
       const order: BuyerOrder = {
@@ -1037,7 +1042,7 @@ export function StorefrontFlow({
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim(),
         customerEmail: customerEmail.trim(),
-        paymentMethod: isCash ? 'delivery' : 'mpesa',
+        paymentMethod: isCash ? 'delivery' : paymentMethod,
         deliveryMethod,
         deliveryAddress: deliveryAddress.trim(),
         pickupStation: pickupStation.trim(),
@@ -1789,6 +1794,16 @@ export function StorefrontFlow({
                   </span>
                   <span className="sf-choice-check">{paymentMethod === 'mpesa' ? <Check size={13} /> : ''}</span>
                 </button>
+                <button
+                  type="button"
+                  className={`sf-choice-card ${paymentMethod === 'card' ? 'is-selected' : ''}`}
+                  aria-pressed={paymentMethod === 'card'}
+                  onClick={() => { setCheckoutError(''); setPaymentMethod('card'); setPaymentModal(null); }}
+                >
+                  <span className="sf-choice-icon">V</span>
+                  <span className="sf-choice-copy"><strong>Bank card</strong><small>Visa / Mastercard · Secure Paystack checkout</small></span>
+                  <span className="sf-choice-check">{paymentMethod === 'card' ? <Check size={13} /> : ''}</span>
+                </button>
 
                 {cashOptionEnabled && (
                   <button
@@ -1832,6 +1847,8 @@ export function StorefrontFlow({
                     {activeMpesaPhone ? 'Change' : 'Set number'}
                   </button>
                 </div>
+              ) : paymentMethod === 'card' ? (
+                <div className="sf-alert"><ShieldCheck size={16} style={{ flexShrink: 0, marginTop: 2 }} /><span>You will be redirected to Paystack's secure checkout to pay by card in KES. Your order is confirmed as paid only after Paystack verifies the transaction.</span></div>
               ) : (
                 <div className="sf-alert">
                   <ShieldCheck size={16} style={{ flexShrink: 0, marginTop: 2 }} />
@@ -1844,7 +1861,7 @@ export function StorefrontFlow({
               )}
 
               <p className="sf-disabled-methods-note">
-                Airtel Money and Bank card are not enabled for this shop.
+                Airtel Money is not enabled for this shop. Card payments use Paystack when the seller has completed card onboarding.
               </p>
             </div>
 
