@@ -1,0 +1,4341 @@
+/* ============================================================================
+   DASMARKET — Jumia Kenya (jumia.co.ke) Exact Design System
+   Scoped strictly to `main.store-page.ds-jumia-page` so Landing Page,
+   Seller Dashboard, Admin Dashboard & BuyerAuthPage remain untouched.
+   ============================================================================ */
+
+main.store-page.ds-jumia-page {
+  --j-bg: #f1f1f2;
+  --j-surface: #ffffff;
+  --j-surface-soft: #f5f5f6;
+  --j-orange: #f68b1e;
+  --j-orange-hover: #e07e1b;
+  --j-orange-active: #c96d12;
+  --j-orange-tint: #fef3e8;
+  --j-orange-bar: #fee2cc;
+  --j-red: #e61601;
+  --j-red-bg: #fff1f0;
+  --j-green: #388e3c;
+  --j-green-bg: #eef7ee;
+  --j-blue: #264996;
+  --j-ink: #313133;
+  --j-ink-2: #535357;
+  --j-muted: #75757a;
+  --j-border: #ededef;
+  --j-border-strong: #d4d4d6;
+  --j-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.05);
+  --j-shadow-hover: 0 0 12px 0 rgba(0, 0, 0, 0.12);
+  --j-shadow-btn: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  --j-font: 'Roboto', 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --j-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: var(--j-bg) !important;
+  color: var(--j-ink) !important;
+  font-family: var(--j-font) !important;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+}
+
+main.store-page.ds-jumia-page *,
+main.store-page.ds-jumia-page *::before,
+main.store-page.ds-jumia-page *::after {
+  box-sizing: border-box;
+}
+
+main.store-page.ds-jumia-page h1,
+main.store-page.ds-jumia-page h2,
+main.store-page.ds-jumia-page h3,
+main.store-page.ds-jumia-page h4,
+main.store-page.ds-jumia-page strong,
+main.store-page.ds-jumia-page button,
+main.store-page.ds-jumia-page input,
+main.store-page.ds-jumia-page select,
+main.store-page.ds-jumia-page textarea {
+  font-family: var(--j-font) !important;
+}
+
+main.store-page.ds-jumia-page button:focus-visible,
+main.store-page.ds-jumia-page a:focus-visible,
+main.store-page.ds-jumia-page input:focus-visible,
+main.store-page.ds-jumia-page select:focus-visible,
+main.store-page.ds-jumia-page textarea:focus-visible,
+main.store-page.ds-jumia-page summary:focus-visible {
+  outline: 2px solid var(--j-orange) !important;
+  outline-offset: 2px;
+}
+
+/* Tabular numerals for all prices, totals, counts, SKUs & timers */
+main.store-page.ds-jumia-page .ds-store-card b,
+main.store-page.ds-jumia-page .ds-store-hero-price,
+main.store-page.ds-jumia-page .ds-jumia-countdown b,
+main.store-page.ds-jumia-page .market-detail-price,
+main.store-page.ds-jumia-page .market-detail-sku,
+main.store-page.ds-jumia-page .market-related-price,
+main.store-page.ds-jumia-page .market-cart-unit-price,
+main.store-page.ds-jumia-page .market-cart-item-end > strong,
+main.store-page.ds-jumia-page .market-cart-summary-line strong,
+main.store-page.ds-jumia-page .market-cart-summary-total strong,
+main.store-page.ds-jumia-page .market-checkout-order-total strong,
+main.store-page.ds-jumia-page .market-checkout-order-grand strong,
+main.store-page.ds-jumia-page .market-checkout-bottom-action strong,
+main.store-page.ds-jumia-page .customer-summary-row strong,
+main.store-page.ds-jumia-page .customer-summary-total strong,
+main.store-page.ds-jumia-page .buyer-my-order-top strong,
+main.store-page.ds-jumia-page .buyer-my-order-bottom strong,
+main.store-page.ds-jumia-page .buyer-order-total strong,
+main.store-page.ds-jumia-page .buyer-order-money strong,
+main.store-page.ds-jumia-page .buyer-order-overview-main h2,
+main.store-page.ds-jumia-page .dispute-case-summary strong,
+main.store-page.ds-jumia-page .buyer-support-report-topline > strong,
+main.store-page.ds-jumia-page time {
+  font-variant-numeric: tabular-nums;
+}
+
+main.store-page.ds-jumia-page .ds-store {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+}
+
+/* ============================================================================
+   1. JUMIA TOP UTILITY STRIP & STICKY WHITE SEARCH HEADER + DROPDOWNS
+   ============================================================================ */
+main.store-page.ds-jumia-page .ds-jumia-topbar {
+  background: var(--j-bg);
+  border-bottom: 1px solid #e6e6e8;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-topbar-inner {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  width: min(100% - 24px, 1184px);
+  min-height: 32px;
+  margin: 0 auto;
+  gap: 12px;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-topbar-sell,
+main.store-page.ds-jumia-page .ds-jumia-topbar-help {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--j-orange);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-topbar-sell:hover,
+main.store-page.ds-jumia-page .ds-jumia-topbar-help:hover {
+  text-decoration: underline;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-topbar-help {
+  justify-self: end;
+  color: var(--j-ink-2);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-topbar-center {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-topbar-center b {
+  color: var(--j-ink);
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  main.store-page.ds-jumia-page .ds-jumia-topbar-inner {
+    grid-template-columns: 1fr auto;
+  }
+  main.store-page.ds-jumia-page .ds-jumia-topbar-center {
+    display: none;
+  }
+}
+
+main.store-page.ds-jumia-page .ds-store-navigation {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 70 !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: var(--j-surface) !important;
+  box-shadow: 0 4px 4px -4px rgba(0, 0, 0, 0.14) !important;
+  border-bottom: 1px solid var(--j-border) !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-nav-inner {
+  display: grid !important;
+  grid-template-columns: auto minmax(260px, 1fr) auto !important;
+  align-items: center !important;
+  gap: 20px !important;
+  width: min(100% - 24px, 1184px) !important;
+  min-height: 72px !important;
+  margin: 0 auto !important;
+  padding: 10px 0 !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+main.store-page.ds-jumia-page .ds-store-menu-trigger {
+  width: 36px !important;
+  height: 36px !important;
+  flex: 0 0 36px !important;
+  display: none !important;
+  place-items: center !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  background: transparent !important;
+  color: var(--j-ink) !important;
+  cursor: pointer;
+}
+
+@media (max-width: 1024px) {
+  main.store-page.ds-jumia-page .ds-store-menu-trigger {
+    display: grid !important;
+  }
+}
+
+main.store-page.ds-jumia-page .ds-store-brand {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+  text-decoration: none !important;
+  color: var(--j-ink) !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-brand-word {
+  display: block !important;
+  font-size: 21px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.03em !important;
+  text-transform: uppercase;
+  color: var(--j-ink) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 220px !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-mark {
+  display: grid !important;
+  place-items: center !important;
+  width: 26px !important;
+  height: 26px !important;
+  flex: 0 0 26px !important;
+  border-radius: 50% !important;
+  background: var(--j-orange) !important;
+  color: #ffffff !important;
+  overflow: hidden;
+}
+
+main.store-page.ds-jumia-page .ds-store-mark.has-logo {
+  background: transparent !important;
+  border-radius: 4px !important;
+  width: 32px !important;
+  height: 32px !important;
+  flex: 0 0 32px !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Search + Orange SEARCH CTA */
+main.store-page.ds-jumia-page .ds-store-nav-center {
+  min-width: 0;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-search-wrap {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+}
+
+main.store-page.ds-jumia-page .ds-store-search {
+  flex: 1 1 auto;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-height: 40px !important;
+  margin: 0 !important;
+  padding: 0 12px !important;
+  border: 1px solid #c7c7cd !important;
+  border-radius: 4px !important;
+  background: var(--j-surface) !important;
+  color: var(--j-muted) !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-search:focus-within {
+  border-color: var(--j-orange) !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-search input {
+  flex: 1;
+  min-width: 0;
+  height: 38px !important;
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  color: var(--j-ink) !important;
+  font-size: 14px !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-search input::placeholder {
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-search-btn {
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--j-orange);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: var(--j-shadow-btn);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-search-btn:hover {
+  background: var(--j-orange-hover);
+}
+
+/* Simplified Checkout Header Center */
+main.store-page.ds-jumia-page .ds-jumia-checkout-header-mid {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--j-ink);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-checkout-header-mid svg {
+  color: var(--j-green);
+}
+
+/* Header Action Buttons + Interactive Account / Help Dropdowns */
+main.store-page.ds-jumia-page .ds-store-header-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-dropdown-wrap {
+  position: relative;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-header-action,
+main.store-page.ds-jumia-page .ds-store-header-actions > button {
+  position: relative !important;
+  height: 40px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  padding: 0 10px !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  background: transparent !important;
+  color: var(--j-ink) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-header-action:hover,
+main.store-page.ds-jumia-page .ds-jumia-header-action.is-open,
+main.store-page.ds-jumia-page .ds-store-header-actions > button:hover {
+  color: var(--j-orange) !important;
+  background: var(--j-surface-soft) !important;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-caret {
+  transition: transform 0.15s ease;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-header-action.is-open .ds-jumia-caret {
+  transform: rotate(180deg);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 90;
+  width: 218px;
+  padding: 6px 0;
+  border-radius: 4px;
+  background: var(--j-surface);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  border: 1px solid var(--j-border);
+  display: flex;
+  flex-direction: column;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-dropdown-cta-wrap {
+  padding: 8px 12px 10px;
+  border-bottom: 1px solid var(--j-border);
+  margin-bottom: 4px;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-dropdown-cta {
+  width: 100%;
+  min-height: 38px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--j-orange);
+  color: #ffffff !important;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  box-shadow: var(--j-shadow-btn);
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-dropdown-cta:hover {
+  background: var(--j-orange-hover);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-dropdown-menu > button {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--j-ink);
+  font-size: 13.5px;
+  font-weight: 400;
+  text-align: left;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-dropdown-menu > button:hover {
+  background: var(--j-bg);
+  color: var(--j-ink);
+  font-weight: 500;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-dropdown-logout {
+  margin-top: 4px;
+  padding-top: 10px !important;
+  border-top: 1px solid var(--j-border) !important;
+  justify-content: center;
+  color: var(--j-orange) !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-cart-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+main.store-page.ds-jumia-page .ds-store-cart b {
+  position: absolute !important;
+  top: -7px !important;
+  right: -8px !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px !important;
+  height: 18px !important;
+  padding: 0 4px !important;
+  border-radius: 50% !important;
+  background: var(--j-orange) !important;
+  color: #ffffff !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 1;
+}
+
+main.store-page.ds-jumia-page .ds-store-notification-dot {
+  position: absolute !important;
+  top: 7px !important;
+  right: 7px !important;
+  width: 7px !important;
+  height: 7px !important;
+  border: 1.5px solid #ffffff !important;
+  border-radius: 50% !important;
+  background: var(--j-red) !important;
+}
+
+@media (max-width: 760px) {
+  main.store-page.ds-jumia-page .ds-store-nav-inner {
+    grid-template-columns: 1fr auto !important;
+    grid-template-rows: auto auto !important;
+    gap: 8px !important;
+    padding: 8px 0 !important;
+  }
+  main.store-page.ds-jumia-page .ds-store-nav-left {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  main.store-page.ds-jumia-page .ds-store-header-actions {
+    grid-column: 2;
+    grid-row: 1;
+    gap: 2px !important;
+  }
+  main.store-page.ds-jumia-page .ds-store-nav-center,
+  main.store-page.ds-jumia-page .ds-jumia-checkout-header-mid {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  main.store-page.ds-jumia-page .ds-jumia-search-btn {
+    padding: 0 12px;
+    font-size: 12px;
+  }
+  main.store-page.ds-jumia-page .ds-jumia-header-action > span,
+  main.store-page.ds-jumia-page .ds-jumia-caret,
+  main.store-page.ds-jumia-page .ds-store-cart > span:last-child {
+    display: none;
+  }
+  main.store-page.ds-jumia-page .ds-store-brand-word {
+    max-width: 155px !important;
+    font-size: 17px !important;
+  }
+}
+
+/* Global Category & Shop Drawer */
+main.store-page.ds-jumia-page .market-sidebar,
+main.store-page.ds-jumia-page .market-global-drawer,
+main.store-page.ds-jumia-page .buyer-shop-drawer {
+  position: fixed !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  z-index: 2147483645 !important;
+  width: min(310px, 88vw) !important;
+  height: 100dvh !important;
+  padding: 18px 16px !important;
+  background: var(--j-surface) !important;
+  border-right: 1px solid var(--j-border-strong) !important;
+  box-shadow: 16px 0 40px rgba(0, 0, 0, 0.16) !important;
+  overflow-y: auto !important;
+  transform: translateX(-106%) !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transition: transform 0.2s ease, visibility 0.2s ease !important;
+}
+
+main.store-page.ds-jumia-page .market-sidebar.is-mobile-open,
+main.store-page.ds-jumia-page .market-global-drawer.is-mobile-open,
+main.store-page.ds-jumia-page .buyer-shop-drawer.is-mobile-open {
+  transform: translateX(0) !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+main.store-page.ds-jumia-page .market-sidebar-scrim,
+main.store-page.ds-jumia-page .market-global-drawer-scrim,
+main.store-page.ds-jumia-page .buyer-account-nav-scrim {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483640 !important;
+  background: rgba(0, 0, 0, 0.48) !important;
+  border: 0 !important;
+}
+
+main.store-page.ds-jumia-page .market-sidebar-shop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--j-border);
+}
+
+main.store-page.ds-jumia-page .market-sidebar-shop > a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: var(--j-ink);
+  text-decoration: none;
+}
+
+main.store-page.ds-jumia-page .market-sidebar-shop > a b {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+main.store-page.ds-jumia-page .market-sidebar-shop > a small {
+  display: block;
+  font-size: 12px;
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .market-sidebar-close {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--j-border-strong);
+  border-radius: 4px;
+  background: var(--j-surface);
+  color: var(--j-ink);
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .ds-store-drawer-account {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  margin-bottom: 16px;
+  border: 1px solid #fad3ad;
+  border-radius: 4px;
+  background: var(--j-orange-tint);
+}
+
+main.store-page.ds-jumia-page .ds-store-drawer-avatar {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--j-orange);
+  color: #ffffff;
+}
+
+main.store-page.ds-jumia-page .ds-store-drawer-account b {
+  display: block;
+  font-size: 13px;
+  color: var(--j-ink);
+}
+
+main.store-page.ds-jumia-page .ds-store-drawer-account small {
+  display: block;
+  font-size: 11px;
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .ds-store-drawer-account button {
+  grid-column: 1 / -1;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--j-orange);
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-sidebar-title {
+  margin: 14px 0 6px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .market-sidebar-links,
+main.store-page.ds-jumia-page .market-sidebar-subcategories {
+  display: grid;
+  gap: 2px;
+}
+
+main.store-page.ds-jumia-page .market-sidebar-links button,
+main.store-page.ds-jumia-page .market-sidebar-category-button {
+  width: 100%;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--j-ink);
+  font-size: 13px;
+  font-weight: 400;
+  text-align: left;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-sidebar-links button:hover,
+main.store-page.ds-jumia-page .market-sidebar-category-button:hover,
+main.store-page.ds-jumia-page .market-sidebar-category-button.active {
+  background: var(--j-orange-tint);
+  color: var(--j-orange);
+  font-weight: 500;
+}
+
+main.store-page.ds-jumia-page .market-sidebar-category-chevron {
+  margin-left: auto;
+  transition: transform 0.15s ease;
+}
+
+main.store-page.ds-jumia-page .market-sidebar-category-button[aria-expanded='true'] .market-sidebar-category-chevron {
+  transform: rotate(90deg);
+}
+
+main.store-page.ds-jumia-page .market-sidebar-subcategories {
+  padding: 2px 0 6px 24px;
+}
+
+main.store-page.ds-jumia-page .market-sidebar-subcategories button {
+  width: 100%;
+  min-height: 30px;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--j-muted);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-sidebar-subcategories button:hover,
+main.store-page.ds-jumia-page .market-sidebar-subcategories button.active {
+  color: var(--j-orange);
+  font-weight: 500;
+}
+
+/* ============================================================================
+   2. JUMIA 3-COLUMN HERO BENTO + HOVER FLYOUT MEGA-MENU + QUICK STRIP
+   ============================================================================ */
+main.store-page.ds-jumia-page .ds-jumia-hero-bento,
+main.store-page.ds-jumia-page .ds-jumia-quickstrip,
+main.store-page.ds-jumia-page .ds-store > section,
+main.store-page.ds-jumia-page .ds-store > .ds-store-faq {
+  width: min(100% - 24px, 1184px) !important;
+  max-width: 1184px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-hero-bento {
+  position: relative;
+  display: grid !important;
+  grid-template-columns: 206px minmax(0, 1fr) 218px !important;
+  gap: 16px !important;
+  margin-top: 16px !important;
+  margin-bottom: 16px !important;
+  align-items: stretch;
+}
+
+/* Left Persistent Category Rail */
+main.store-page.ds-jumia-page .ds-jumia-cat-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 384px;
+  padding: 8px 0;
+  background: var(--j-surface);
+  border-radius: 4px;
+  box-shadow: var(--j-shadow);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-cat-link {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 29px;
+  padding: 5px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--j-ink);
+  font-size: 12.5px;
+  font-weight: 400;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: color 0.12s ease, background-color 0.12s ease;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-cat-link svg {
+  flex: 0 0 16px;
+  color: var(--j-ink-2);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-cat-link span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-cat-link:hover,
+main.store-page.ds-jumia-page .ds-jumia-cat-link.active {
+  color: var(--j-orange);
+  background: var(--j-orange-tint);
+  font-weight: 500;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-cat-link:hover svg,
+main.store-page.ds-jumia-page .ds-jumia-cat-link.active svg {
+  color: var(--j-orange);
+}
+
+/* Desktop Hover Category Sub-Menu Flyout */
+main.store-page.ds-jumia-page .ds-jumia-cat-flyout {
+  position: absolute;
+  top: 0;
+  left: 206px;
+  bottom: 0;
+  width: min(640px, calc(100% - 436px));
+  z-index: 30;
+  padding: 18px 22px;
+  background: var(--j-surface);
+  border-radius: 0 4px 4px 0;
+  border-left: 1px solid var(--j-border);
+  box-shadow: 8px 4px 20px rgba(0, 0, 0, 0.16);
+  overflow-y: auto;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-cat-flyout-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--j-border);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-cat-flyout-head strong {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--j-ink);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-cat-flyout-head button {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 0;
+  background: transparent;
+  color: var(--j-orange);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-cat-flyout-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px 14px;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-cat-flyout-grid button {
+  padding: 6px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--j-ink-2);
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-cat-flyout-grid button:hover {
+  color: var(--j-orange);
+  background: var(--j-orange-tint);
+}
+
+/* Center Campaign Hero Carousel */
+main.store-page.ds-jumia-page .ds-jumia-hero-bento .ds-store-hero {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr) !important;
+  align-items: stretch !important;
+  height: 384px !important;
+  min-height: 384px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  background: linear-gradient(125deg, #2b2623 0%, #523015 55%, #f68b1e 150%) !important;
+  color: #ffffff !important;
+  box-shadow: var(--j-shadow) !important;
+  overflow: hidden;
+}
+
+main.store-page.ds-jumia-page .ds-store-hero.is-theme-amber {
+  background: linear-gradient(125deg, #2b2118 0%, #7d3c06 58%, #f68b1e 135%) !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-hero.is-theme-cobalt {
+  background: linear-gradient(125deg, #162447 0%, #1f4068 60%, #2b6cb0 135%) !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-hero.is-theme-crimson {
+  background: linear-gradient(125deg, #420c09 0%, #9b1c12 58%, #e61601 135%) !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-hero.is-theme-espresso {
+  background: linear-gradient(125deg, #231f20 0%, #44352f 58%, #d97706 145%) !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-hero.is-theme-emerald {
+  background: linear-gradient(125deg, #0f2f24 0%, #14532d 58%, #16a34a 140%) !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-hero-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  min-width: 0;
+  padding: 26px 18px 38px 34px !important;
+  z-index: 2;
+}
+
+main.store-page.ds-jumia-page .ds-store-hero-copy .ds-eyebrow {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 4px 9px;
+  border-radius: 3px;
+  background: var(--j-orange);
+  color: #ffffff !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase;
+}
+
+main.store-page.ds-jumia-page .ds-store-hero-copy h1 {
+  margin: 0 0 10px !important;
+  font-size: clamp(21px, 2.2vw, 30px) !important;
+  font-weight: 700 !important;
+  line-height: 1.18 !important;
+  color: #ffffff !important;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+main.store-page.ds-jumia-page .ds-store-hero-copy p {
+  margin: 0 0 14px !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+  font-size: 13.5px !important;
+  line-height: 1.48 !important;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+main.store-page.ds-jumia-page .ds-store-hero-price {
+  display: block;
+  margin-bottom: 16px !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  color: #ffcf96 !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+main.store-page.ds-jumia-page .ds-store-hero-actions > button:first-child {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  min-height: 40px !important;
+  padding: 0 20px !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  background: var(--j-orange) !important;
+  color: #ffffff !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em;
+  box-shadow: var(--j-shadow-btn);
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .ds-store-hero-actions > button:first-child:hover {
+  background: var(--j-orange-hover) !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-hero-actions > button.ds-store-hero-secondary {
+  min-height: 40px !important;
+  padding: 0 14px !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  border-radius: 4px !important;
+  background: rgba(0, 0, 0, 0.24) !important;
+  color: #ffffff !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .ds-store-hero-image {
+  position: relative;
+  width: 100% !important;
+  height: 100% !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 20px 26px 20px 8px !important;
+  border: 0 !important;
+  background: transparent !important;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-hero-stage {
+  width: 100%;
+  height: 100%;
+  max-height: 316px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+  padding: 12px;
+}
+
+main.store-page.ds-jumia-page .ds-store-hero-image img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  border-radius: 4px;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-hero-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(49, 49, 51, 0.55);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-hero-arrow:hover {
+  background: rgba(49, 49, 51, 0.85);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-hero-arrow.prev {
+  left: 10px;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-hero-arrow.next {
+  right: 10px;
+}
+
+main.store-page.ds-jumia-page .ds-store-hero-dots {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 12px;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  z-index: 4;
+}
+
+main.store-page.ds-jumia-page .ds-store-hero-dots button {
+  width: 8px !important;
+  height: 8px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .ds-store-hero-dots button.active {
+  background: var(--j-orange) !important;
+  transform: scale(1.2);
+}
+
+/* Right Utility & Promo Column */
+main.store-page.ds-jumia-page .ds-jumia-right-rail {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 16px;
+  height: 384px;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-info-card {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  background: var(--j-surface);
+  border-radius: 4px;
+  box-shadow: var(--j-shadow);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-info-card button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-info-card button:hover strong {
+  color: var(--j-orange);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-info-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1.5px solid var(--j-orange);
+  color: var(--j-orange);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-info-card strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--j-ink);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-info-card small {
+  display: block;
+  font-size: 11px;
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-promo-tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 16px;
+  border: 0;
+  border-radius: 4px;
+  background: linear-gradient(145deg, #f68b1e 0%, #e06a00 100%);
+  color: #ffffff;
+  text-align: left;
+  text-decoration: none;
+  box-shadow: var(--j-shadow);
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-promo-tile span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  opacity: 0.92;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-promo-tile strong {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-promo-tile small {
+  font-size: 11.5px;
+  opacity: 0.92;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-promo-tile b {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: #ffffff;
+  color: var(--j-orange);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+@media (max-width: 1080px) {
+  main.store-page.ds-jumia-page .ds-jumia-hero-bento {
+    grid-template-columns: 200px minmax(0, 1fr) !important;
+  }
+  main.store-page.ds-jumia-page .ds-jumia-cat-flyout {
+    width: min(540px, calc(100% - 210px));
+  }
+  main.store-page.ds-jumia-page .ds-jumia-right-rail {
+    display: none;
+  }
+}
+
+@media (max-width: 820px) {
+  main.store-page.ds-jumia-page .ds-jumia-hero-bento {
+    grid-template-columns: 1fr !important;
+  }
+  main.store-page.ds-jumia-page .ds-jumia-cat-sidebar,
+  main.store-page.ds-jumia-page .ds-jumia-cat-flyout {
+    display: none;
+  }
+  main.store-page.ds-jumia-page .ds-jumia-hero-bento .ds-store-hero {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  main.store-page.ds-jumia-page .ds-store-hero-image {
+    order: -1;
+    height: 220px !important;
+    padding: 14px !important;
+  }
+  main.store-page.ds-jumia-page .ds-jumia-hero-stage {
+    max-height: 192px;
+  }
+  main.store-page.ds-jumia-page .ds-store-hero-copy {
+    padding: 16px 16px 36px !important;
+  }
+}
+
+/* 8-Tile Quick Strip */
+main.store-page.ds-jumia-page .ds-jumia-quickstrip {
+  display: grid !important;
+  grid-template-columns: repeat(8, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  margin-bottom: 16px !important;
+  padding: 12px !important;
+  background: var(--j-surface) !important;
+  border-radius: 4px !important;
+  box-shadow: var(--j-shadow) !important;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-quicktile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--j-ink);
+  cursor: pointer;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-quicktile:hover {
+  transform: translateY(-2px);
+  color: var(--j-orange);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-quicktile-thumb {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-width: 96px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: var(--j-surface-soft);
+  color: var(--j-ink-2);
+  overflow: hidden;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-quicktile-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-quicktile-thumb.is-badge-red {
+  background: linear-gradient(135deg, #e61601 0%, #b81100 100%);
+  color: #ffffff;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-quicktile-thumb.is-badge-orange {
+  background: linear-gradient(135deg, #f68b1e 0%, #e06a00 100%);
+  color: #ffffff;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-quicktile-thumb.is-badge-dark {
+  background: linear-gradient(135deg, #313133 0%, #1c1c1e 100%);
+  color: #ffffff;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-quicktile b {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: center;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  main.store-page.ds-jumia-page .ds-jumia-quickstrip {
+    display: flex !important;
+    overflow-x: auto !important;
+    scrollbar-width: none;
+  }
+  main.store-page.ds-jumia-page .ds-jumia-quickstrip::-webkit-scrollbar {
+    display: none;
+  }
+  main.store-page.ds-jumia-page .ds-jumia-quicktile {
+    flex: 0 0 84px;
+  }
+}
+
+/* ============================================================================
+   3. FLASH SALES (#E61601) + CATEGORY SHELVES + SHOP BY CATEGORY GRID + CATALOGUE
+   ============================================================================ */
+main.store-page.ds-jumia-page .ds-store-spotlight-section,
+main.store-page.ds-jumia-page .ds-jumia-shelf-card,
+main.store-page.ds-jumia-page .ds-jumia-cat-grid-section,
+main.store-page.ds-jumia-page .ds-store-latest-arrivals,
+main.store-page.ds-jumia-page .ds-store-faq {
+  margin-bottom: 16px !important;
+  background: var(--j-surface) !important;
+  border-radius: 4px !important;
+  box-shadow: var(--j-shadow) !important;
+  overflow: hidden;
+}
+
+/* Red Flash Sales Header + Live Countdown */
+main.store-page.ds-jumia-page .ds-jumia-flash-head {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 10px 16px;
+  background: var(--j-red);
+  color: #ffffff;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-flash-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-flash-title svg {
+  color: #ffd43b;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-flash-title h2 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-countdown {
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.94);
+  white-space: nowrap;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-countdown b {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-flash-head button {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  main.store-page.ds-jumia-page .ds-jumia-flash-head {
+    grid-template-columns: 1fr auto;
+    row-gap: 4px;
+  }
+  main.store-page.ds-jumia-page .ds-jumia-countdown {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    font-size: 12.5px;
+  }
+  main.store-page.ds-jumia-page .ds-jumia-countdown b {
+    font-size: 13.5px;
+  }
+}
+
+/* 5-Column Horizontal Rails (Flash Sales & Category Shelves) */
+main.store-page.ds-jumia-page .ds-jumia-flash-rail,
+main.store-page.ds-jumia-page .ds-jumia-shelf-rail {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  padding: 10px !important;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-flash-rail > *,
+main.store-page.ds-jumia-page .ds-jumia-shelf-rail > * {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+@media (max-width: 960px) {
+  main.store-page.ds-jumia-page .ds-jumia-flash-rail,
+  main.store-page.ds-jumia-page .ds-jumia-shelf-rail {
+    display: flex !important;
+    overflow-x: auto !important;
+    gap: 8px !important;
+    scrollbar-width: thin;
+  }
+  main.store-page.ds-jumia-page .ds-jumia-flash-rail > *,
+  main.store-page.ds-jumia-page .ds-jumia-shelf-rail > * {
+    flex: 0 0 172px !important;
+    width: 172px !important;
+  }
+}
+
+/* Jumia Section Header Themes (Apricot #FEE2CC, Sky #D0EBFF, Soft, White) */
+main.store-page.ds-jumia-page .ds-jumia-section-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 10px 16px;
+  background: var(--j-orange-bar);
+  border-bottom: 1px solid #f7d2b2;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-shelf-card.is-sky .ds-jumia-section-bar {
+  background: #d0ebff;
+  border-bottom-color: #b4dcfa;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-shelf-card.is-soft .ds-jumia-section-bar {
+  background: #fff4e6;
+  border-bottom-color: #fde1c3;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-section-bar.is-white {
+  background: var(--j-surface);
+  border-bottom: 1px solid var(--j-border);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-section-bar h2 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 500;
+  color: var(--j-ink);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-section-bar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: transparent;
+  color: var(--j-ink);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-section-bar button:hover {
+  color: var(--j-orange-active);
+}
+
+/* 6x2 Shop By Category Visual Tile Grid */
+main.store-page.ds-jumia-page .ds-jumia-cat-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-cat-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 8px;
+  border: 1px solid var(--j-border);
+  border-radius: 4px;
+  background: var(--j-surface);
+  color: var(--j-ink);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-cat-tile:hover {
+  transform: translateY(-2px);
+  border-color: var(--j-orange);
+  box-shadow: var(--j-shadow-hover);
+  color: var(--j-orange);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-cat-tile-img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  background: var(--j-surface-soft);
+  color: var(--j-ink-2);
+  overflow: hidden;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-cat-tile-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-cat-tile b {
+  font-size: 12.5px;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (max-width: 960px) {
+  main.store-page.ds-jumia-page .ds-jumia-cat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  main.store-page.ds-jumia-page .ds-jumia-cat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Filter Strip inside Explore Catalogue White Card */
+main.store-page.ds-jumia-page .ds-store-category-bar {
+  padding: 12px 14px 4px;
+}
+
+main.store-page.ds-jumia-page .ds-store-category-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: none;
+}
+
+main.store-page.ds-jumia-page .ds-store-category-pills::-webkit-scrollbar {
+  display: none;
+}
+
+main.store-page.ds-jumia-page .ds-store-category-pill {
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--j-border-strong);
+  border-radius: 4px;
+  background: var(--j-surface);
+  color: var(--j-ink);
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .ds-store-category-pill:hover {
+  border-color: var(--j-orange);
+  color: var(--j-orange);
+}
+
+main.store-page.ds-jumia-page .ds-store-category-pill.active {
+  border-color: var(--j-orange);
+  background: var(--j-orange);
+  color: #ffffff;
+}
+
+main.store-page.ds-jumia-page .ds-store-browse-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 14px 12px;
+  border-bottom: 1px solid var(--j-border);
+}
+
+main.store-page.ds-jumia-page .ds-store-browse-controls-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+}
+
+main.store-page.ds-jumia-page .ds-store-inline-search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1 1 220px;
+  max-width: 300px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--j-border-strong);
+  border-radius: 4px;
+  background: var(--j-surface);
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .ds-store-inline-search input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--j-ink);
+  font-size: 13px;
+}
+
+main.store-page.ds-jumia-page .ds-store-browse-inline select {
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--j-border-strong);
+  border-radius: 4px;
+  background: var(--j-surface);
+  color: var(--j-ink);
+  font-size: 12.5px;
+}
+
+main.store-page.ds-jumia-page .ds-store-filter-result-count {
+  margin: 0 !important;
+  font-size: 12.5px !important;
+  color: var(--j-muted) !important;
+}
+
+/* Dense 5-Column Jumia Product Cards */
+main.store-page.ds-jumia-page .ds-store-home-mix-grid,
+main.store-page.ds-jumia-page .ds-store-catalogue-rows,
+main.store-page.ds-jumia-page .ds-store-featured-grid,
+main.store-page.ds-jumia-page .ds-store-collection-rows {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  grid-auto-flow: row !important;
+  gap: 8px !important;
+  padding: 10px !important;
+  width: 100% !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-catalogue-row,
+main.store-page.ds-jumia-page .ds-store-collection-row {
+  display: contents !important;
+}
+
+@media (max-width: 1024px) {
+  main.store-page.ds-jumia-page .ds-store-home-mix-grid,
+  main.store-page.ds-jumia-page .ds-store-catalogue-rows,
+  main.store-page.ds-jumia-page .ds-store-featured-grid,
+  main.store-page.ds-jumia-page .ds-store-collection-rows {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  main.store-page.ds-jumia-page .ds-store-home-mix-grid,
+  main.store-page.ds-jumia-page .ds-store-catalogue-rows,
+  main.store-page.ds-jumia-page .ds-store-featured-grid,
+  main.store-page.ds-jumia-page .ds-store-collection-rows {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    padding: 8px !important;
+  }
+}
+
+main.store-page.ds-jumia-page .ds-store-card {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  padding: 8px !important;
+  border: 1px solid transparent !important;
+  border-radius: 4px !important;
+  background: var(--j-surface) !important;
+  transition: box-shadow 0.16s ease, transform 0.16s ease !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-card:hover {
+  box-shadow: var(--j-shadow-hover) !important;
+  transform: translateY(-1px);
+  z-index: 2;
+}
+
+main.store-page.ds-jumia-page .ds-store-card .ds-store-fav {
+  position: absolute !important;
+  top: 12px !important;
+  right: 12px !important;
+  z-index: 3 !important;
+  width: 30px !important;
+  height: 30px !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  color: var(--j-muted) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .ds-store-card .ds-store-fav.active,
+main.store-page.ds-jumia-page .ds-store-card .ds-store-fav[aria-pressed='true'] {
+  color: var(--j-orange) !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-card .ds-store-product {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+  padding: 0 0 8px !important;
+  border: 0 !important;
+  background: transparent !important;
+  text-align: left !important;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .ds-store-card .ds-store-product-image {
+  position: relative !important;
+  width: 100% !important;
+  aspect-ratio: 1 / 1 !important;
+  display: block !important;
+  border-radius: 4px !important;
+  background: var(--j-surface-soft) !important;
+  overflow: hidden !important;
+  margin-bottom: 8px;
+}
+
+main.store-page.ds-jumia-page .ds-store-card .ds-store-product-image img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-card .ds-store-product-image > i {
+  position: absolute !important;
+  top: 6px !important;
+  left: 6px !important;
+  padding: 2px 6px !important;
+  border-radius: 2px !important;
+  background: var(--j-orange-tint) !important;
+  color: var(--j-orange) !important;
+  font-size: 10.5px !important;
+  font-style: normal !important;
+  font-weight: 700 !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-card .ds-store-card-category {
+  font-size: 11px !important;
+  color: var(--j-muted) !important;
+  margin-bottom: 2px;
+}
+
+main.store-page.ds-jumia-page .ds-store-card .ds-store-product-name {
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+  overflow: hidden !important;
+  width: 100%;
+  min-height: 2.55em;
+  margin: 0 0 4px !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  line-height: 1.3 !important;
+  color: var(--j-ink) !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-card .ds-store-product > b {
+  display: block;
+  margin: 0 0 3px !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: var(--j-ink) !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-card .ds-store-rating {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  font-size: 11.5px !important;
+  color: var(--j-muted) !important;
+  margin-bottom: 2px;
+}
+
+main.store-page.ds-jumia-page .ds-store-card .ds-store-rating svg {
+  color: var(--j-orange);
+}
+
+main.store-page.ds-jumia-page .ds-store-card .ds-store-product > small:last-child {
+  font-size: 11.5px !important;
+  color: var(--j-muted) !important;
+}
+
+/* Flash Sales Stock Progress Bar */
+main.store-page.ds-jumia-page .ds-jumia-stock-label {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px !important;
+  color: var(--j-ink-2) !important;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-stock-bar {
+  display: block;
+  width: 100%;
+  height: 7px;
+  margin-top: 4px;
+  border-radius: 99px;
+  background: #e5e5e8;
+  overflow: hidden;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-stock-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--j-orange) 0%, var(--j-red) 100%);
+}
+
+/* Jumia Orange ADD TO CART Buttons (Hover Reveal on Flash/Shelf Rails on Desktop) */
+main.store-page.ds-jumia-page .ds-store-card .ds-store-add {
+  width: 100% !important;
+  min-height: 36px !important;
+  margin-top: auto !important;
+  padding: 0 10px !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  background: var(--j-orange) !important;
+  color: #ffffff !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.14);
+  cursor: pointer;
+  transition: background-color 0.15s ease, opacity 0.16s ease;
+}
+
+main.store-page.ds-jumia-page .ds-store-card .ds-store-add:hover:not(:disabled) {
+  background: var(--j-orange-hover) !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-card .ds-store-add:disabled {
+  background: #c7c7cd !important;
+  color: #ffffff !important;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+@media (hover: hover) and (min-width: 961px) {
+  main.store-page.ds-jumia-page .ds-store-card .ds-jumia-hover-add {
+    opacity: 0;
+  }
+  main.store-page.ds-jumia-page .ds-store-card:hover .ds-jumia-hover-add,
+  main.store-page.ds-jumia-page .ds-store-card:focus-within .ds-jumia-hover-add {
+    opacity: 1;
+  }
+}
+
+/* Collection Page */
+main.store-page.ds-jumia-page .ds-store-collection-page {
+  width: min(100% - 24px, 1184px) !important;
+  max-width: 1184px !important;
+  margin: 16px auto 40px !important;
+  padding: 16px !important;
+  background: var(--j-surface) !important;
+  border-radius: 4px !important;
+  box-shadow: var(--j-shadow) !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-collection-heading {
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--j-border);
+}
+
+main.store-page.ds-jumia-page .ds-store-collection-heading > button {
+  min-height: 34px;
+  padding: 0 12px;
+  margin-bottom: 10px;
+  border: 1px solid var(--j-border-strong);
+  border-radius: 4px;
+  background: var(--j-surface);
+  color: var(--j-ink);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .ds-store-collection-heading .ds-eyebrow {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--j-orange);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+main.store-page.ds-jumia-page .ds-store-collection-heading h1 {
+  margin: 4px 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--j-ink);
+}
+
+main.store-page.ds-jumia-page .ds-store-collection-heading p {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .ds-store-collection-tools {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.5fr) minmax(160px, 1fr) minmax(160px, 0.9fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+main.store-page.ds-jumia-page .ds-store-collection-tools .ds-store-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--j-border-strong);
+  border-radius: 4px;
+  background: var(--j-surface);
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .ds-store-collection-tools select {
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--j-border-strong);
+  border-radius: 4px;
+  background: var(--j-surface);
+  font-size: 13px;
+}
+
+main.store-page.ds-jumia-page .ds-store-collection-count {
+  margin-bottom: 8px;
+  font-size: 12.5px;
+  color: var(--j-muted);
+}
+
+@media (max-width: 640px) {
+  main.store-page.ds-jumia-page .ds-store-collection-tools {
+    grid-template-columns: 1fr 1fr;
+  }
+  main.store-page.ds-jumia-page .ds-store-collection-tools .ds-store-search {
+    grid-column: 1 / -1;
+  }
+}
+
+/* FAQ Card + Sticky Cart Bar */
+main.store-page.ds-jumia-page .ds-store-faq {
+  padding: 18px 16px !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-section-title {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--j-border);
+}
+
+main.store-page.ds-jumia-page .ds-store-section-title .ds-eyebrow {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--j-orange);
+}
+
+main.store-page.ds-jumia-page .ds-store-section-title h2 {
+  margin: 2px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--j-ink);
+}
+
+main.store-page.ds-jumia-page .ds-store-section-title p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .ds-store-section-title button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: transparent;
+  color: var(--j-orange);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .ds-store-faq-list {
+  display: grid !important;
+  gap: 0 !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-faq-list details {
+  border-bottom: 1px solid var(--j-border);
+}
+
+main.store-page.ds-jumia-page .ds-store-faq-list details:last-child {
+  border-bottom: 0;
+}
+
+main.store-page.ds-jumia-page .ds-store-faq-list summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 0;
+  list-style: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--j-ink);
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .ds-store-faq-list summary::-webkit-details-marker {
+  display: none;
+}
+
+main.store-page.ds-jumia-page .ds-store-faq-list details p {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .ds-store-cartbar {
+  position: sticky !important;
+  bottom: 16px !important;
+  z-index: 45 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  width: min(calc(100% - 24px), 520px) !important;
+  margin: 18px auto 0 !important;
+  padding: 10px 14px !important;
+  border-radius: 4px !important;
+  background: #313133 !important;
+  color: #ffffff !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28) !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-cartbar span b {
+  display: block;
+  font-size: 13.5px;
+}
+
+main.store-page.ds-jumia-page .ds-store-cartbar span small {
+  display: block;
+  font-size: 12px;
+  color: #ffd43b;
+}
+
+main.store-page.ds-jumia-page .ds-store-cartbar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--j-orange);
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ============================================================================
+   3B. JUMIA 2-BAND DARK CHARCOAL FOOTER (#282828 TOP / #313133 GRID / #282828 BOTTOM)
+   ============================================================================ */
+main.store-page.ds-jumia-page .ds-store-footer-expanded {
+  margin-top: 28px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: #313133 !important;
+  color: #c7c7cd !important;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-footer-top {
+  background: #282828;
+  border-bottom: 1px solid #444447;
+  padding: 22px 0;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-footer-top-inner {
+  width: min(100% - 24px, 1184px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 240px;
+  gap: 24px;
+  align-items: center;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-footer-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #ffffff;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-footer-logo strong {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-footer-logo span {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--j-orange);
+  color: #ffffff;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-footer-promo strong,
+main.store-page.ds-jumia-page .ds-jumia-footer-support strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-footer-promo p {
+  margin: 0 0 10px;
+  font-size: 12.5px;
+  color: #c7c7cd;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-footer-promo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-footer-promo-actions button {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 4px;
+  border: 1px solid var(--j-orange);
+  background: var(--j-orange);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-footer-promo-actions button.is-outline {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: transparent;
+  color: #ffffff;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-footer-promo-actions button.is-outline:hover {
+  border-color: var(--j-orange);
+  color: var(--j-orange);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-footer-support small {
+  display: block;
+  font-size: 12px;
+  color: #c7c7cd;
+  margin-bottom: 8px;
+}
+
+main.store-page.ds-jumia-page .ds-store-footer-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  background: transparent;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+main.store-page.ds-jumia-page .ds-store-footer-whatsapp:hover {
+  border-color: var(--j-orange);
+  color: var(--j-orange);
+}
+
+main.store-page.ds-jumia-page .ds-store-footer-grid {
+  width: min(100% - 24px, 1184px) !important;
+  margin: 0 auto !important;
+  padding: 28px 0 !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 24px !important;
+}
+
+main.store-page.ds-jumia-page .ds-store-footer-grid > div > b {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+main.store-page.ds-jumia-page .ds-store-footer-grid > div button,
+main.store-page.ds-jumia-page .ds-store-footer-grid > div > a {
+  display: block;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: #c7c7cd;
+  font-size: 12.5px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .ds-store-footer-grid > div button:hover,
+main.store-page.ds-jumia-page .ds-store-footer-grid > div > a:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+main.store-page.ds-jumia-page .ds-store-footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px max(12px, calc((100% - 1184px) / 2)) !important;
+  background: #282828;
+  border-top: 1px solid #444447;
+  font-size: 12px;
+  color: #9e9ea3;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-pay-badges {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-pay-badges b {
+  padding: 3px 8px;
+  border-radius: 3px;
+  background: #3a3a3d;
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+main.store-page.ds-jumia-page .ds-store-powered-link {
+  color: var(--j-orange);
+  text-decoration: none;
+  margin-left: 6px;
+}
+
+@media (max-width: 820px) {
+  main.store-page.ds-jumia-page .ds-jumia-footer-top-inner {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  main.store-page.ds-jumia-page .ds-store-footer-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* ============================================================================
+   4. PRODUCT DETAIL PAGE — 3-COLUMN JUMIA LAYOUT (MAIN + DELIVERY/SELLER RAIL)
+   ============================================================================ */
+main.store-page.ds-jumia-page .market-product-detail-main-shell {
+  width: min(100% - 24px, 1184px) !important;
+  margin: 0 auto !important;
+  padding: 16px 0 40px !important;
+}
+
+main.store-page.ds-jumia-page .market-product-detail-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 12.5px;
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .market-product-detail-breadcrumb button {
+  padding: 4px 8px;
+  border: 1px solid var(--j-border-strong);
+  border-radius: 4px;
+  background: var(--j-surface);
+  color: var(--j-ink);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-product-detail-breadcrumb strong {
+  color: var(--j-ink);
+  font-weight: 500;
+}
+
+main.store-page.ds-jumia-page .market-pdp-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 295px;
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 16px;
+}
+
+main.store-page.ds-jumia-page .market-product-detail-main {
+  display: grid !important;
+  grid-template-columns: 350px minmax(0, 1fr) !important;
+  gap: 20px !important;
+  padding: 16px !important;
+  margin: 0 !important;
+  background: var(--j-surface) !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  box-shadow: var(--j-shadow) !important;
+}
+
+main.store-page.ds-jumia-page .market-pdp-right-rail {
+  display: grid;
+  gap: 12px;
+}
+
+main.store-page.ds-jumia-page .market-pdp-side-card {
+  padding: 14px 16px;
+  background: var(--j-surface);
+  border-radius: 4px;
+  box-shadow: var(--j-shadow);
+}
+
+main.store-page.ds-jumia-page .market-pdp-side-card h2 {
+  margin: 0 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--j-border);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--j-ink);
+}
+
+main.store-page.ds-jumia-page .market-pdp-side-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--j-border);
+}
+
+main.store-page.ds-jumia-page .market-pdp-side-row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+main.store-page.ds-jumia-page .market-pdp-side-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  border: 1px solid var(--j-border-strong);
+  color: var(--j-ink);
+}
+
+main.store-page.ds-jumia-page .market-pdp-side-row strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--j-ink);
+}
+
+main.store-page.ds-jumia-page .market-pdp-side-row p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .market-pdp-seller-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  color: var(--j-ink);
+}
+
+main.store-page.ds-jumia-page .market-pdp-seller-head strong {
+  display: block;
+  font-size: 14px;
+}
+
+main.store-page.ds-jumia-page .market-pdp-seller-head small {
+  display: block;
+  font-size: 11.5px;
+  color: var(--j-green);
+}
+
+main.store-page.ds-jumia-page .market-pdp-seller-note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .market-detail-main-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 4px !important;
+  background: var(--j-surface-soft) !important;
+  overflow: hidden;
+}
+
+main.store-page.ds-jumia-page .market-detail-main-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+main.store-page.ds-jumia-page .market-gallery-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(49, 49, 51, 0.65);
+  color: #ffffff;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-gallery-arrow.prev { left: 10px; }
+main.store-page.ds-jumia-page .market-gallery-arrow.next { right: 10px; }
+
+main.store-page.ds-jumia-page .market-gallery-count {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(49, 49, 51, 0.78);
+  color: #ffffff;
+  font-size: 11px;
+}
+
+main.store-page.ds-jumia-page .market-detail-thumbnails {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  overflow-x: auto;
+}
+
+main.store-page.ds-jumia-page .market-detail-thumbnails button {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-detail-thumbnails button.active {
+  border-color: var(--j-orange);
+}
+
+main.store-page.ds-jumia-page .market-detail-thumbnails button img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+main.store-page.ds-jumia-page .market-detail-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+main.store-page.ds-jumia-page .market-detail-store-badge {
+  padding: 3px 8px;
+  border-radius: 2px;
+  background: var(--j-blue);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+main.store-page.ds-jumia-page .market-detail-category {
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .market-pdp-fav-icon {
+  margin-left: auto;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--j-orange);
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-pdp-fav-icon:hover {
+  background: var(--j-orange-tint);
+}
+
+main.store-page.ds-jumia-page .market-detail-summary h1 {
+  margin: 0 0 6px !important;
+  font-size: 20px !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+  color: var(--j-ink) !important;
+}
+
+main.store-page.ds-jumia-page .market-detail-brand-line {
+  font-size: 13px;
+  color: var(--j-muted);
+  margin-bottom: 6px;
+}
+
+main.store-page.ds-jumia-page .market-detail-brand-line strong {
+  color: var(--j-blue);
+  font-weight: 500;
+}
+
+main.store-page.ds-jumia-page .market-detail-sku {
+  font-family: var(--j-mono);
+  font-size: 11.5px;
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .market-detail-review-summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .market-review-stars {
+  color: var(--j-orange);
+}
+
+main.store-page.ds-jumia-page .market-detail-price-panel {
+  padding: 12px 0;
+  margin-bottom: 14px;
+  border-top: 1px solid var(--j-border);
+  border-bottom: 1px solid var(--j-border);
+}
+
+main.store-page.ds-jumia-page .market-detail-price {
+  display: block;
+  font-size: 26px !important;
+  font-weight: 700 !important;
+  color: var(--j-ink) !important;
+  margin-bottom: 6px;
+}
+
+main.store-page.ds-jumia-page .market-detail-stock {
+  display: inline-block;
+  font-size: 12.5px;
+  color: var(--j-green);
+}
+
+main.store-page.ds-jumia-page .market-detail-stock.out {
+  color: var(--j-red);
+}
+
+main.store-page.ds-jumia-page .market-detail-stock-track {
+  margin-top: 6px;
+  width: 100%;
+  max-width: 240px;
+  height: 6px;
+  border-radius: 99px;
+  background: #e5e5e8;
+  overflow: hidden;
+}
+
+main.store-page.ds-jumia-page .market-detail-stock-track i {
+  display: block;
+  height: 100%;
+  background: var(--j-orange);
+}
+
+main.store-page.ds-jumia-page .market-detail-quantity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  font-size: 13px;
+}
+
+main.store-page.ds-jumia-page .market-detail-quantity-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+main.store-page.ds-jumia-page .market-detail-quantity-control button {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--j-orange);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.14);
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-detail-quantity-control button:disabled {
+  background: #c7c7cd;
+  box-shadow: none;
+}
+
+main.store-page.ds-jumia-page .market-detail-quantity-control output {
+  min-width: 24px;
+  text-align: center;
+  font-weight: 600;
+}
+
+main.store-page.ds-jumia-page .market-detail-actions-stack {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+main.store-page.ds-jumia-page .market-detail-add {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  min-height: 48px !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  background: var(--j-orange) !important;
+  color: #ffffff !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  box-shadow: var(--j-shadow-btn) !important;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-detail-add:hover:not(:disabled) {
+  background: var(--j-orange-hover) !important;
+}
+
+main.store-page.ds-jumia-page .market-detail-save {
+  min-height: 48px !important;
+  padding: 0 14px !important;
+  border: 1px solid var(--j-border-strong) !important;
+  border-radius: 4px !important;
+  background: var(--j-surface) !important;
+  color: var(--j-orange) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-detail-assurance {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 4px;
+  background: var(--j-orange-tint);
+  border: 1px solid #fad3ad;
+  font-size: 12.5px;
+  color: var(--j-ink-2);
+}
+
+main.store-page.ds-jumia-page .market-pdp-sections-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+main.store-page.ds-jumia-page .market-pdp-card,
+main.store-page.ds-jumia-page .market-detail-safety,
+main.store-page.ds-jumia-page .market-detail-reviews,
+main.store-page.ds-jumia-page .market-detail-related {
+  padding: 16px !important;
+  background: var(--j-surface) !important;
+  border-radius: 4px !important;
+  box-shadow: var(--j-shadow) !important;
+}
+
+main.store-page.ds-jumia-page .market-detail-safety,
+main.store-page.ds-jumia-page .market-detail-reviews,
+main.store-page.ds-jumia-page .market-detail-related {
+  margin-bottom: 16px !important;
+}
+
+main.store-page.ds-jumia-page .market-pdp-card h2,
+main.store-page.ds-jumia-page .market-detail-safety h2,
+main.store-page.ds-jumia-page .market-detail-reviews h2,
+main.store-page.ds-jumia-page .market-detail-related h2 {
+  margin: 0 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--j-border);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--j-ink);
+}
+
+main.store-page.ds-jumia-page .market-detail-description-panel p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--j-ink-2);
+}
+
+main.store-page.ds-jumia-page .market-detail-specifications > div {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--j-border);
+  font-size: 13.5px;
+}
+
+main.store-page.ds-jumia-page .market-detail-safety ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: var(--j-ink-2);
+  line-height: 1.6;
+}
+
+main.store-page.ds-jumia-page .market-detail-reviews-heading,
+main.store-page.ds-jumia-page .market-related-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--j-border);
+}
+
+main.store-page.ds-jumia-page .market-related-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+main.store-page.ds-jumia-page .market-related-card {
+  border: 1px solid var(--j-border);
+  border-radius: 4px;
+  padding: 8px;
+  background: var(--j-surface);
+}
+
+main.store-page.ds-jumia-page .market-related-card:hover {
+  box-shadow: var(--j-shadow-hover);
+}
+
+main.store-page.ds-jumia-page .market-related-open {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-related-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--j-surface-soft);
+  margin-bottom: 8px;
+}
+
+main.store-page.ds-jumia-page .market-related-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+main.store-page.ds-jumia-page .market-related-name {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--j-ink);
+  margin: 2px 0 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+main.store-page.ds-jumia-page .market-related-price {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--j-ink);
+}
+
+main.store-page.ds-jumia-page .market-related-action {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--j-orange);
+  font-weight: 600;
+}
+
+@media (max-width: 980px) {
+  main.store-page.ds-jumia-page .market-pdp-shell {
+    grid-template-columns: 1fr;
+  }
+  main.store-page.ds-jumia-page .market-pdp-sections-grid {
+    grid-template-columns: 1fr;
+  }
+  main.store-page.ds-jumia-page .market-related-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  main.store-page.ds-jumia-page .market-product-detail-main {
+    grid-template-columns: 1fr !important;
+  }
+  main.store-page.ds-jumia-page .market-related-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ============================================================================
+   5. JUMIA CART & 3-STEP CHECKOUT ARCHITECTURE
+   ============================================================================ */
+main.store-page.ds-jumia-page .buyer-flow-route-wrap {
+  width: min(100% - 24px, 1184px) !important;
+  margin: 16px auto 48px !important;
+}
+
+main.store-page.ds-jumia-page .buyer-global-routebar {
+  width: min(100% - 24px, 1184px);
+  margin: 12px auto 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .buyer-global-routebar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--j-border-strong);
+  border-radius: 4px;
+  background: var(--j-surface);
+  color: var(--j-ink);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-cart-heading,
+main.store-page.ds-jumia-page .customer-flow-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+main.store-page.ds-jumia-page .customer-flow-heading h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--j-ink);
+}
+
+main.store-page.ds-jumia-page .market-cart-back,
+main.store-page.ds-jumia-page .customer-back-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  min-height: 34px !important;
+  padding: 0 12px !important;
+  border: 1px solid var(--j-border-strong) !important;
+  border-radius: 4px !important;
+  background: var(--j-surface) !important;
+  color: var(--j-ink) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-cart-heading h1 {
+  margin: 2px 0;
+  font-size: 21px;
+  font-weight: 600;
+  color: var(--j-ink);
+}
+
+main.store-page.ds-jumia-page .market-cart-layout {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 310px !important;
+  gap: 16px !important;
+  align-items: start;
+}
+
+main.store-page.ds-jumia-page .market-cart-items,
+main.store-page.ds-jumia-page .market-cart-summary {
+  background: var(--j-surface) !important;
+  border-radius: 4px !important;
+  box-shadow: var(--j-shadow) !important;
+  padding: 16px !important;
+}
+
+main.store-page.ds-jumia-page .market-cart-list-head {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--j-border);
+  font-size: 18px;
+}
+
+main.store-page.ds-jumia-page .market-cart-item {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr) auto;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--j-border);
+}
+
+main.store-page.ds-jumia-page .market-cart-product-image {
+  width: 80px;
+  height: 80px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--j-surface-soft);
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-cart-product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+main.store-page.ds-jumia-page .market-cart-product-name {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--j-ink);
+  font-size: 15px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-cart-category {
+  display: block;
+  margin: 3px 0;
+  font-size: 12px;
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .market-cart-unit-price {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+main.store-page.ds-jumia-page .market-cart-stock {
+  font-size: 12px;
+  color: var(--j-green);
+}
+
+main.store-page.ds-jumia-page .market-cart-stock-out {
+  font-size: 12px;
+  color: var(--j-red);
+}
+
+main.store-page.ds-jumia-page .market-cart-mobile-actions {
+  display: none;
+}
+
+main.store-page.ds-jumia-page .market-cart-item-end {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+@media (max-width: 600px) {
+  main.store-page.ds-jumia-page .market-cart-item-end {
+    display: none;
+  }
+  main.store-page.ds-jumia-page .market-cart-mobile-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 10px;
+  }
+}
+
+main.store-page.ds-jumia-page .market-cart-quantity {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+main.store-page.ds-jumia-page .market-cart-quantity button {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--j-orange);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.14);
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-cart-remove {
+  border: 0;
+  background: transparent;
+  color: var(--j-orange);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-cart-continue {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 14px;
+  color: var(--j-orange);
+}
+
+main.store-page.ds-jumia-page .market-cart-continue button {
+  border: 0;
+  background: transparent;
+  color: var(--j-orange);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-cart-summary h2 {
+  margin: 0 0 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--j-border);
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+main.store-page.ds-jumia-page .market-cart-summary-line,
+main.store-page.ds-jumia-page .market-cart-summary-total,
+main.store-page.ds-jumia-page .customer-summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 13.5px;
+}
+
+main.store-page.ds-jumia-page .market-cart-summary-total,
+main.store-page.ds-jumia-page .customer-summary-total {
+  padding: 10px 0;
+  margin-top: 6px;
+  border-top: 1px solid var(--j-border);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+main.store-page.ds-jumia-page .market-cart-empty,
+main.store-page.ds-jumia-page .customer-empty-state {
+  padding: 40px 24px;
+  background: var(--j-surface);
+  border-radius: 4px;
+  box-shadow: var(--j-shadow);
+  text-align: center;
+}
+
+main.store-page.ds-jumia-page .market-cart-empty > span,
+main.store-page.ds-jumia-page .customer-empty-state > span {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 14px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--j-orange-tint);
+  color: var(--j-orange);
+}
+
+main.store-page.ds-jumia-page .market-cart-empty > button {
+  margin-top: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--j-orange);
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  box-shadow: var(--j-shadow-btn);
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-cart-checkout,
+main.store-page.ds-jumia-page .customer-primary-button,
+main.store-page.ds-jumia-page .market-checkout-bottom-action > button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  min-height: 44px !important;
+  padding: 0 18px !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  background: var(--j-orange) !important;
+  color: #ffffff !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  box-shadow: var(--j-shadow-btn) !important;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-cart-checkout {
+  width: 100%;
+  margin: 12px 0;
+}
+
+main.store-page.ds-jumia-page .market-cart-checkout:hover,
+main.store-page.ds-jumia-page .customer-primary-button:hover:not(:disabled),
+main.store-page.ds-jumia-page .market-checkout-bottom-action > button:hover:not(:disabled) {
+  background: var(--j-orange-hover) !important;
+}
+
+main.store-page.ds-jumia-page .customer-primary-button:disabled,
+main.store-page.ds-jumia-page .market-checkout-bottom-action > button:disabled {
+  background: #c7c7cd !important;
+  box-shadow: none !important;
+  cursor: not-allowed;
+}
+
+main.store-page.ds-jumia-page .customer-secondary-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  min-height: 40px !important;
+  padding: 0 14px !important;
+  border: 1px solid var(--j-border-strong) !important;
+  border-radius: 4px !important;
+  background: var(--j-surface) !important;
+  color: var(--j-ink) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  text-decoration: none !important;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .customer-secondary-button:hover {
+  border-color: var(--j-orange) !important;
+  color: var(--j-orange) !important;
+}
+
+main.store-page.ds-jumia-page .market-cart-mobile-checkout {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  main.store-page.ds-jumia-page .market-cart-layout {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* 3-Step Checkout Progress, Delivery, Payment & Review */
+main.store-page.ds-jumia-page .market-checkout-progress {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  padding: 12px 16px !important;
+  margin-bottom: 16px !important;
+  background: var(--j-surface) !important;
+  border-radius: 4px !important;
+  box-shadow: var(--j-shadow) !important;
+}
+
+main.store-page.ds-jumia-page .market-checkout-progress-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+main.store-page.ds-jumia-page .market-checkout-progress-step > span {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #e5e5e8;
+  color: var(--j-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+main.store-page.ds-jumia-page .market-checkout-progress-step.current > span {
+  background: var(--j-orange) !important;
+  color: #ffffff !important;
+}
+
+main.store-page.ds-jumia-page .market-checkout-progress-step.complete > span {
+  background: var(--j-green) !important;
+  color: #ffffff !important;
+}
+
+main.store-page.ds-jumia-page .market-checkout-progress-step strong {
+  display: block;
+  font-size: 13px;
+  color: var(--j-ink);
+}
+
+main.store-page.ds-jumia-page .market-checkout-progress-step small {
+  display: block;
+  font-size: 11px;
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .market-checkout-intro {
+  margin-bottom: 14px;
+}
+
+main.store-page.ds-jumia-page .market-checkout-intro > span {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--j-orange);
+  letter-spacing: 0.06em;
+}
+
+main.store-page.ds-jumia-page .market-checkout-intro h2 {
+  margin: 2px 0 4px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--j-ink);
+}
+
+main.store-page.ds-jumia-page .market-checkout-intro p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .market-checkout-delivery-layout,
+main.store-page.ds-jumia-page .market-checkout-payment-layout,
+main.store-page.ds-jumia-page .market-checkout-review-layout {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 320px !important;
+  gap: 16px !important;
+  align-items: start;
+}
+
+main.store-page.ds-jumia-page .market-checkout-card,
+main.store-page.ds-jumia-page .market-checkout-order-card,
+main.store-page.ds-jumia-page .customer-summary-card,
+main.store-page.ds-jumia-page .customer-panel {
+  background: var(--j-surface) !important;
+  border: 1px solid var(--j-border) !important;
+  border-radius: 4px !important;
+  box-shadow: var(--j-shadow) !important;
+  padding: 16px !important;
+  margin-bottom: 14px;
+}
+
+main.store-page.ds-jumia-page .market-checkout-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--j-border);
+}
+
+main.store-page.ds-jumia-page .market-checkout-card-heading h2 {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--j-ink);
+}
+
+main.store-page.ds-jumia-page .market-checkout-card-heading p {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .market-checkout-step-icon,
+main.store-page.ds-jumia-page .market-checkout-mpesa-mark {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--j-orange-tint);
+  color: var(--j-orange);
+  font-weight: 700;
+}
+
+main.store-page.ds-jumia-page .market-checkout-edit {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: var(--j-orange);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-checkout-delivery-choice {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+main.store-page.ds-jumia-page .market-checkout-delivery-choice > button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1.5px solid var(--j-border-strong);
+  border-radius: 4px;
+  background: var(--j-surface);
+  text-align: left;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-checkout-delivery-choice > button.active {
+  border-color: var(--j-orange);
+  background: var(--j-orange-tint);
+}
+
+main.store-page.ds-jumia-page .market-checkout-choice-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--j-surface-soft);
+  color: var(--j-ink);
+}
+
+main.store-page.ds-jumia-page .market-checkout-delivery-choice > button.active .market-checkout-choice-icon {
+  background: var(--j-orange);
+  color: #ffffff;
+}
+
+main.store-page.ds-jumia-page .market-checkout-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+main.store-page.ds-jumia-page .market-checkout-full {
+  grid-column: 1 / -1;
+}
+
+main.store-page.ds-jumia-page .customer-form-label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--j-ink-2);
+}
+
+main.store-page.ds-jumia-page .customer-form-label input,
+main.store-page.ds-jumia-page .customer-form-label select,
+main.store-page.ds-jumia-page .customer-form-label textarea {
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid #c7c7cd !important;
+  border-radius: 4px !important;
+  background: var(--j-surface) !important;
+  color: var(--j-ink) !important;
+  font-size: 14px;
+}
+
+main.store-page.ds-jumia-page .customer-form-label input:focus,
+main.store-page.ds-jumia-page .customer-form-label textarea:focus {
+  border-color: var(--j-orange) !important;
+}
+
+main.store-page.ds-jumia-page .market-payment-method-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+main.store-page.ds-jumia-page .market-payment-method-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1.5px solid var(--j-border-strong);
+  border-radius: 4px;
+  background: var(--j-surface);
+  text-align: left;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-payment-method-option.is-selected {
+  border-color: var(--j-orange);
+  background: var(--j-orange-tint);
+}
+
+main.store-page.ds-jumia-page .market-payment-method-brand {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  background: var(--j-green);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+main.store-page.ds-jumia-page .market-checkout-order-card-head {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--j-border);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+main.store-page.ds-jumia-page .market-checkout-order-item,
+main.store-page.ds-jumia-page .customer-review-product {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--j-border);
+}
+
+main.store-page.ds-jumia-page .market-checkout-order-item .customer-product-thumb,
+main.store-page.ds-jumia-page .customer-review-product .customer-product-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--j-surface-soft);
+}
+
+main.store-page.ds-jumia-page .market-checkout-order-item img,
+main.store-page.ds-jumia-page .customer-review-product img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+main.store-page.ds-jumia-page .market-checkout-order-total,
+main.store-page.ds-jumia-page .market-checkout-order-grand {
+  display: flex;
+  justify-content: space-between;
+  padding: 7px 0;
+  font-size: 13.5px;
+}
+
+main.store-page.ds-jumia-page .market-checkout-order-grand {
+  padding-top: 10px;
+  margin-top: 4px;
+  border-top: 1px solid var(--j-border);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+main.store-page.ds-jumia-page .market-checkout-bottom-action {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  padding: 14px 16px !important;
+  background: var(--j-surface) !important;
+  border-radius: 4px !important;
+  box-shadow: var(--j-shadow) !important;
+  margin-top: 12px;
+}
+
+main.store-page.ds-jumia-page .market-checkout-bottom-action small {
+  display: block;
+  font-size: 11px;
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .market-checkout-bottom-action strong {
+  font-size: 19px;
+  font-weight: 700;
+}
+
+@media (max-width: 860px) {
+  main.store-page.ds-jumia-page .market-checkout-delivery-layout,
+  main.store-page.ds-jumia-page .market-checkout-payment-layout,
+  main.store-page.ds-jumia-page .market-checkout-review-layout,
+  main.store-page.ds-jumia-page .market-checkout-fields,
+  main.store-page.ds-jumia-page .market-checkout-delivery-choice,
+  main.store-page.ds-jumia-page .market-payment-method-options {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ============================================================================
+   6. JUMIA BUYER ACCOUNT DASHBOARD (#F1F1F2 + 260px RAIL + ACCOUNT OVERVIEW)
+   ============================================================================ */
+main.store-page.ds-jumia-page.is-account-route {
+  background: var(--j-bg) !important;
+}
+
+main.store-page.ds-jumia-page .buyer-account-workspace,
+main.store-page.ds-jumia-page .buyer-account-redesign {
+  width: min(100% - 24px, 1184px) !important;
+  margin: 16px auto 48px !important;
+  padding: 0 !important;
+  display: grid !important;
+  grid-template-columns: 260px minmax(0, 1fr) !important;
+  gap: 16px !important;
+  align-items: start;
+}
+
+main.store-page.ds-jumia-page .buyer-account-main {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+main.store-page.ds-jumia-page .buyer-dashboard-sidebar {
+  position: sticky !important;
+  top: 84px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 6px 0 !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  background: var(--j-surface) !important;
+  box-shadow: var(--j-shadow) !important;
+}
+
+main.store-page.ds-jumia-page .buyer-dashboard-nav-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+  min-height: 42px !important;
+  padding: 8px 16px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--j-ink) !important;
+  font-size: 13.5px !important;
+  font-weight: 400 !important;
+  text-align: left !important;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .buyer-dashboard-nav-item:hover {
+  background: var(--j-bg) !important;
+}
+
+main.store-page.ds-jumia-page .buyer-dashboard-nav-item.active {
+  background: #d4d4d6 !important;
+  color: var(--j-ink) !important;
+  font-weight: 500 !important;
+}
+
+main.store-page.ds-jumia-page .buyer-dashboard-nav-divider {
+  margin: 6px 16px 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--j-border);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .buyer-dashboard-logout {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  margin: 6px 14px 8px !important;
+  min-height: 38px !important;
+  border: 0 !important;
+  border-top: 1px solid var(--j-border) !important;
+  background: transparent !important;
+  color: var(--j-orange) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  main.store-page.ds-jumia-page .buyer-account-workspace,
+  main.store-page.ds-jumia-page .buyer-account-redesign {
+    grid-template-columns: 1fr !important;
+  }
+  main.store-page.ds-jumia-page .buyer-dashboard-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    z-index: 2147483645 !important;
+    width: 270px !important;
+    transform: translateX(-106%) !important;
+    visibility: hidden !important;
+    transition: transform 0.2s ease, visibility 0.2s ease !important;
+    overflow-y: auto;
+  }
+  main.store-page.ds-jumia-page .buyer-dashboard-sidebar.is-mobile-account-open {
+    transform: translateX(0) !important;
+    visibility: visible !important;
+  }
+}
+
+/* Exact Jumia Account Overview Card & 2x2 Panel Grid */
+main.store-page.ds-jumia-page .ds-jumia-account-card {
+  background: var(--j-surface);
+  border-radius: 4px;
+  box-shadow: var(--j-shadow);
+  padding: 18px 20px 22px;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-account-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--j-border);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-account-card-head h1 {
+  margin: 0 0 2px;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--j-ink);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-account-card-head p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-overview-box {
+  border: 1px solid var(--j-border-strong);
+  border-radius: 4px;
+  background: var(--j-surface);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-overview-box-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--j-border);
+  background: var(--j-surface);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-overview-box-head h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: uppercase;
+  color: var(--j-ink);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-overview-box-head button {
+  padding: 2px 6px;
+  border: 0;
+  background: transparent;
+  color: var(--j-orange);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-overview-box-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-overview-box-body strong {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--j-ink);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-overview-box-body p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .ds-jumia-overview-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-overview-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--j-orange);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .ds-jumia-overview-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 680px) {
+  main.store-page.ds-jumia-page .ds-jumia-overview-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Override Legacy Redesign Stylesheets inside Buyer Dashboard */
+main.store-page.ds-jumia-page.is-account-route .customer-workspace-shell {
+  background: transparent !important;
+  min-height: auto !important;
+  padding: 0 !important;
+}
+
+main.store-page.ds-jumia-page .buyer-my-orders-v2,
+main.store-page.ds-jumia-page .buyer-order-v2.buyer-order-design,
+main.store-page.ds-jumia-page .buyer-inbox-page,
+main.store-page.ds-jumia-page .buyer-profile-page,
+main.store-page.ds-jumia-page .buyer-reports-fullscreen {
+  padding: 18px 20px !important;
+  background: var(--j-surface) !important;
+  border-radius: 4px !important;
+  box-shadow: var(--j-shadow) !important;
+  margin: 0 !important;
+}
+
+main.store-page.ds-jumia-page .buyer-my-orders-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--j-border-strong);
+}
+
+main.store-page.ds-jumia-page .buyer-my-orders-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--j-muted);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .buyer-my-orders-tabs button.is-active {
+  color: var(--j-orange) !important;
+  border-bottom-color: var(--j-orange) !important;
+  font-weight: 600 !important;
+}
+
+main.store-page.ds-jumia-page .buyer-my-order-card {
+  padding: 14px !important;
+  margin-bottom: 12px !important;
+  background: var(--j-surface) !important;
+  border: 1px solid var(--j-border-strong) !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+main.store-page.ds-jumia-page .buyer-my-order-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 3px;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+main.store-page.ds-jumia-page .buyer-my-order-status.is-success {
+  background: var(--j-green-bg);
+  color: var(--j-green);
+}
+
+main.store-page.ds-jumia-page .buyer-my-order-status.is-pending {
+  background: var(--j-orange-tint);
+  color: var(--j-orange-active);
+}
+
+main.store-page.ds-jumia-page .buyer-my-order-status.is-danger {
+  background: var(--j-red-bg);
+  color: var(--j-red);
+}
+
+main.store-page.ds-jumia-page .buyer-order-design .buyer-order-overview {
+  background: var(--j-surface-soft) !important;
+  border: 1px solid var(--j-border-strong) !important;
+  border-radius: 4px !important;
+}
+
+main.store-page.ds-jumia-page .buyer-order-design .buyer-order-progress-step.is-done > span {
+  background: var(--j-green) !important;
+  border-color: var(--j-green) !important;
+  color: #ffffff !important;
+}
+
+main.store-page.ds-jumia-page .buyer-order-design .buyer-order-progress-step.is-done::before {
+  background: var(--j-green) !important;
+}
+
+main.store-page.ds-jumia-page .buyer-order-design .buyer-order-progress-step.is-current > span {
+  background: var(--j-orange) !important;
+  border-color: var(--j-orange) !important;
+  color: #ffffff !important;
+}
+
+main.store-page.ds-jumia-page .buyer-order-design .buyer-order-panel {
+  border-radius: 4px !important;
+  border: 1px solid var(--j-border) !important;
+  box-shadow: none !important;
+}
+
+main.store-page.ds-jumia-page .buyer-order-design .buyer-order-bottom-actions .customer-primary-button,
+main.store-page.ds-jumia-page .buyer-reports-fullscreen .buyer-support-hero {
+  background: var(--j-orange) !important;
+  color: #ffffff !important;
+  border-radius: 4px !important;
+}
+
+main.store-page.ds-jumia-page .buyer-account-discovery {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--j-surface);
+  border-radius: 4px;
+  box-shadow: var(--j-shadow);
+}
+
+main.store-page.ds-jumia-page .buyer-account-discovery-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--j-border);
+}
+
+main.store-page.ds-jumia-page .buyer-account-discovery-heading button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: transparent;
+  color: var(--j-orange);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .buyer-account-discovery-track {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (max-width: 720px) {
+  main.store-page.ds-jumia-page .buyer-account-discovery-track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+main.store-page.ds-jumia-page .buyer-account-discovery-card {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  border: 1px solid var(--j-border);
+  border-radius: 4px;
+  background: var(--j-surface);
+}
+
+main.store-page.ds-jumia-page .buyer-account-discovery-card:hover {
+  box-shadow: var(--j-shadow-hover);
+}
+
+main.store-page.ds-jumia-page .buyer-account-discovery-open {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+main.store-page.ds-jumia-page .buyer-account-discovery-open strong {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--j-ink);
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+main.store-page.ds-jumia-page .buyer-account-discovery-open b {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--j-ink);
+}
+
+main.store-page.ds-jumia-page .buyer-account-discovery-open small {
+  font-size: 11.5px;
+  color: var(--j-muted);
+}
+
+main.store-page.ds-jumia-page .buyer-account-discovery-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--j-surface-soft);
+  margin-bottom: 8px;
+}
+
+main.store-page.ds-jumia-page .buyer-account-discovery-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+main.store-page.ds-jumia-page .buyer-account-discovery-add {
+  margin-top: auto;
+  min-height: 34px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--j-orange);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .buyer-account-discovery-add:hover {
+  background: var(--j-orange-hover);
+}
+
+/* Searchable Location Select, Checkout Saved Card, M-Pesa Modal, Processing & Confirmation */
+main.store-page.ds-jumia-page .market-search-select {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+main.store-page.ds-jumia-page .market-search-select input {
+  width: 100%;
+  padding-right: 36px !important;
+}
+
+main.store-page.ds-jumia-page .market-search-select-toggle {
+  position: absolute;
+  right: 4px;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--j-muted);
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-search-select-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--j-border-strong);
+  border-radius: 4px;
+  background: var(--j-surface);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+}
+
+main.store-page.ds-jumia-page .market-search-select-menu button {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--j-ink);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-search-select-menu button:hover,
+main.store-page.ds-jumia-page .market-search-select-menu button[aria-selected='true'] {
+  background: var(--j-orange-tint);
+  color: var(--j-orange);
+}
+
+main.store-page.ds-jumia-page .market-checkout-saved-location,
+main.store-page.ds-jumia-page .market-checkout-mpesa-select,
+main.store-page.ds-jumia-page .market-checkout-confirmed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  border: 1px solid var(--j-border-strong);
+  border-radius: 4px;
+  background: var(--j-surface-soft);
+}
+
+main.store-page.ds-jumia-page .market-checkout-confirmed {
+  border-color: #b7dfb9;
+  background: var(--j-green-bg);
+  color: var(--j-green);
+}
+
+main.store-page.ds-jumia-page .market-checkout-saved-location button,
+main.store-page.ds-jumia-page .market-checkout-change-phone {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--j-orange);
+  border-radius: 4px;
+  background: var(--j-surface);
+  color: var(--j-orange);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .market-checkout-secure-note,
+main.store-page.ds-jumia-page .customer-preview-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  margin: 10px 0 0;
+  border-radius: 4px;
+  background: var(--j-surface-soft);
+  color: var(--j-ink-2);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+main.store-page.ds-jumia-page .customer-checkout-error,
+main.store-page.ds-jumia-page .customer-preview-alert {
+  padding: 10px 12px;
+  margin: 10px 0;
+  border: 1px solid #f7c0ba;
+  border-radius: 4px;
+  background: var(--j-red-bg);
+  color: var(--j-red);
+  font-size: 13px;
+}
+
+main.store-page.ds-jumia-page .customer-voucher {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+main.store-page.ds-jumia-page .customer-voucher-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+main.store-page.ds-jumia-page .customer-voucher-controls input {
+  flex: 1;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid #c7c7cd;
+  border-radius: 4px;
+  font-size: 13.5px;
+}
+
+main.store-page.ds-jumia-page .customer-voucher-controls button {
+  min-height: 38px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--j-orange);
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .customer-payment-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483645;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.56);
+}
+
+main.store-page.ds-jumia-page .customer-payment-modal {
+  position: relative;
+  width: min(100%, 440px);
+  padding: 24px;
+  border-radius: 4px;
+  background: var(--j-surface);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+
+main.store-page.ds-jumia-page .customer-payment-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--j-border-strong);
+  border-radius: 4px;
+  background: var(--j-surface);
+  color: var(--j-ink);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+main.store-page.ds-jumia-page .customer-payment-modal-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  background: var(--j-green);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+main.store-page.ds-jumia-page .customer-payment-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+/* Buyer Inbox & Reports Clean Jumia Overrides */
+main.store-page.ds-jumia-page .buyer-inbox-page .buyer-inbox-new-message {
+  background: var(--j-orange) !important;
+  color: #ffffff !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  box-shadow: var(--j-shadow-btn) !important;
+}
+
+main.store-page.ds-jumia-page .buyer-inbox-page .buyer-inbox-layout {
+  border-radius: 4px !important;
+  border: 1px solid var(--j-border-strong) !important;
+  box-shadow: none !important;
+}
+
+main.store-page.ds-jumia-page .buyer-inbox-page .buyer-inbox-thread:hover,
+main.store-page.ds-jumia-page .buyer-inbox-page .buyer-inbox-thread:focus-visible {
+  background: var(--j-orange-tint) !important;
+}
+
+main.store-page.ds-jumia-page .buyer-inbox-page .buyer-inbox-thread-avatar,
+main.store-page.ds-jumia-page .buyer-inbox-page .buyer-inbox-placeholder > span {
+  background: var(--j-orange-tint) !important;
+  color: var(--j-orange) !important;
+}
+
+main.store-page.ds-jumia-page .buyer-inbox-page .buyer-inbox-open-link {
+  color: var(--j-orange) !important;
+}
+
+main.store-page.ds-jumia-page .buyer-reports-fullscreen .buyer-support-filters button.active::after {
+  background: var(--j-orange) !important;
+}
+
+main.store-page.ds-jumia-page .buyer-reports-fullscreen .dispute-compose-actions > button,
+main.store-page.ds-jumia-page .buyer-reports-fullscreen .dispute-submit-button,
+main.store-page.ds-jumia-page .buyer-reports-fullscreen .buyer-support-new-btn {
+  background: var(--j-orange) !important;
+  color: #ffffff !important;
+  border-radius: 4px !important;
+}
+
+main.store-page.ds-jumia-page .buyer-reports-fullscreen .buyer-support-report-card,
+main.store-page.ds-jumia-page .buyer-reports-fullscreen .dispute-case-summary,
+main.store-page.ds-jumia-page .buyer-reports-fullscreen .buyer-case-order-card,
+main.store-page.ds-jumia-page .buyer-reports-fullscreen .buyer-case-actions-card,
+main.store-page.ds-jumia-page .buyer-reports-fullscreen .buyer-case-timeline,
+main.store-page.ds-jumia-page .buyer-reports-fullscreen .buyer-case-description,
+main.store-page.ds-jumia-page .buyer-reports-fullscreen .dispute-chat {
+  border-radius: 4px !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main.store-page.ds-jumia-page *,
+  main.store-page.ds-jumia-page *::before,
+  main.store-page.ds-jumia-page *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,5 +1,5 @@
-import { neon } from '@neondatabase/serverless';
 import crypto from 'node:crypto';
+import { getDb, hasDatabaseConfig } from '../server/db.js';
 import { sendTransactionalEmail, sendTenantTransactionalEmail, sendUsingResendConfig, brandedEmail, encryptTenantEmailConfig, decryptTenantEmailConfig, escapeEmailHtml } from '../server/email.js';
 
 // Keep a stack trace for legacy URL parser warnings so the originating dependency
@@ -13,7 +13,7 @@ if(!warningProcess.__dasnetDep0169Trace){
 const env=(k:string)=>(process.env[k]||'').trim();
 const send=(res:any,s:number,b:unknown)=>res.status(s).json(b);
 const hash=(s:string)=>crypto.createHash('sha256').update(s).digest('hex');
-const db=()=>{const u=env('POSTGRES_URL')||env('DATABASE_URL')||env('NEON_DATABASE_URL');if(!u)throw Error('DB_CONFIG');return neon(u)};
+const db=()=>getDb();
 function token(req:any){const c=String(req.headers.cookie||'').split(';').map((s:string)=>s.trim()).find((s:string)=>s.startsWith('das_session='));try{return c?decodeURIComponent(c.slice(12)):''}catch{return ''}}
 async function buyerSession(sql:any,req:any,tenantId:string){
  // Expire customer moderation only within the tenant whose buyer session is being checked.
@@ -264,8 +264,9 @@ export default async function handler(req:any,res:any){
  if(!['GET','POST','DELETE'].includes(req.method)){res.setHeader('Allow','GET, POST, DELETE');return send(res,405,{error:'Method not allowed'});}
  let action='';
  try{
-  const sql=db();
   action=String(req.query?.action||req.body?.action||'');
+  if(req.method!=='GET'&&!hasDatabaseConfig())return send(res,503,{error:'Database connection is not configured. Set DATABASE_URL or POSTGRES_URL.'});
+  const sql=db();
   const requestedShopSlug=String(req.method==='GET'?req.query?.slug:(req.body?.slug||req.query?.slug)||'').toLowerCase().trim();
   if(requestedShopSlug)await sql`UPDATE public.tenants t SET status='past_due',updated_at=now() WHERE t.slug=${requestedShopSlug} AND t.status IN ('trial','active') AND EXISTS (SELECT 1 FROM public.subscriptions s WHERE s.tenant_id=t.id AND ((s.status='trialing' AND COALESCE(s.trial_ends_at,s.current_period_end)<=now()) OR (s.status='active' AND s.current_period_end<=now())))`;
   if(['buyer-account-data','buyer-delivery-preference','buyer-follow-shop','buyer-wishlist','buyer-newsletter','buyer-close-account'].includes(action)){

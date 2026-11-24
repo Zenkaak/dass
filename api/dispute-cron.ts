@@ -1,5 +1,5 @@
-import { neon } from '@neondatabase/serverless';
 import crypto from 'node:crypto';
+import { getDb } from '../server/db.js';
 import { sendTenantTransactionalEmail, brandedEmail } from '../server/email.js';
 const env=(k:string)=>(process.env[k]||'').trim();
 async function verifyGitHubOidc(token:string){
@@ -33,8 +33,7 @@ export default async function handler(req:any,res:any){
  const authorized=(configuredSecret&&provided===configuredSecret)||await verifyGitHubOidc(provided);
  if(!authorized)return res.status(401).json({error:'Unauthorized'});
  try{
-  const url=env('POSTGRES_URL')||env('DATABASE_URL')||env('NEON_DATABASE_URL');if(!url)return res.status(503).json({error:'Database not configured'});
-  const sql=neon(url);
+  const sql=getDb();
   const expired=await sql`UPDATE public.shop_complaints SET dispute_status='escalated',status='under_review',dispute_escalated_at=now(),updated_at=now() WHERE dispute_status IN ('open','resolution_pending') AND dispute_deadline_at<=now() RETURNING id,tenant_id,buyer_phone`;
   for(const c of expired){
    const title='Dispute escalated to DASNET support',detail='The one-hour resolution window has ended. DASMARKET support will review the case.';

@@ -1,9 +1,9 @@
-import { neon } from '@neondatabase/serverless';
 import crypto from 'node:crypto';
+import { getDb } from '../server/db.js';
 import { sendTenantTransactionalEmail, brandedEmail } from '../server/email.js';
 
 const env=(k:string)=>(process.env[k]||'').trim();
-const db=()=>{const u=env('POSTGRES_URL')||env('DATABASE_URL')||env('NEON_DATABASE_URL');if(!u)throw Error('DB_CONFIG');return neon(u)};
+const db=()=>getDb();
 const hash=(s:string)=>crypto.createHash('sha256').update(s).digest('hex');
 const send=(res:any,status:number,data:any)=>res.status(status).json(data);
 const cookie=(req:any,name:string)=>{const c=String(req.headers.cookie||'').split(';').map((x:string)=>x.trim()).find((x:string)=>x.startsWith(name+'='));try{return c?decodeURIComponent(c.slice(name.length+1)):''}catch{return ''}};

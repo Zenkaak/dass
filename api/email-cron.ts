@@ -1,8 +1,8 @@
-import { neon } from '@neondatabase/serverless';
+import { getDb } from '../server/db.js';
 import { brandedEmail, sendTransactionalEmail } from '../server/email.js';
 const env=(key:string)=>(process.env[key]||'').trim();
 const send=(res:any,status:number,body:any)=>res.status(status).json(body);
-const db=()=>{const url=env('POSTGRES_URL')||env('DATABASE_URL')||env('NEON_DATABASE_URL');if(!url)throw Error('DB_CONFIG');return neon(url)};
+const db=()=>getDb();
 export default async function handler(req:any,res:any){
  res.setHeader('Cache-Control','no-store');
  if(!['GET','POST'].includes(req.method))return send(res,405,{error:'Method not allowed'});

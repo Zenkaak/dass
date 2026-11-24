@@ -1,12 +1,12 @@
-import { neon } from '@neondatabase/serverless';
 import crypto from 'node:crypto';
+import { getDb, hasDatabaseConfig } from '../server/db.js';
 import { sendTenantTransactionalEmail, brandedEmail } from '../server/email.js';
 
 const env=(k:string)=>(process.env[k]||'').trim();
 const hash=(s:string)=>crypto.createHash('sha256').update(s).digest('hex');
 const identityHash=(s:string)=>{const key=env('DASNET_IDENTITY_HASH_SECRET');return key?crypto.createHmac('sha256',key).update(s).digest('hex'):hash(s)};
 const send=(res:any,status:number,body:any)=>res.status(status).json(body);
-const db=()=>{const url=env('POSTGRES_URL')||env('DATABASE_URL')||env('NEON_DATABASE_URL');if(!url)throw Error('DB_CONFIG');return neon(url)};
+const db=()=>getDb();
 const phoneOf=(value:any)=>{let p=String(value||'').trim().replace(/[\s().+-]/g,'');if(/^0[17]\d{8}$/.test(p))p='+254'+p.slice(1);else if(/^254[17]\d{8}$/.test(p))p='+'+p;return /^\+254[17]\d{8}$/.test(p)?p:''};
 const requestIp=(req:any)=>String(req.headers['x-real-ip']||req.socket?.remoteAddress||'').trim();
 async function restricted(sql:any,scope:'seller'|'buyer',phone:string,email:string,ip:string){for(const [kind,value] of [['phone',phone],['email',email.toLowerCase()],['ip',ip]] as string[][]){if(!value)continue;const normalized=value.trim().toLowerCase(),digests=[identityHash(normalized),hash(normalized)];const found=await sql`SELECT id FROM public.identity_restrictions WHERE identity_type=${kind} AND identity_hash=ANY(${digests}::text[]) AND restriction_scope IN (${scope},'all') AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at>now()) LIMIT 1`;if(found.length)return true;}return false;}
@@ -48,6 +48,7 @@ export default async function handler(req:any,res:any){
  if(!['GET','POST'].includes(req.method))return send(res,405,{error:'Method not allowed'});
  const body=req.body||{},action=String(req.query?.action||body.action||''),slug=String(req.method==='GET'?req.query?.slug:body.slug||'').toLowerCase().trim();
  if(!/^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/.test(slug)){res.setHeader('Cache-Control','no-store');return send(res,400,{error:'Invalid shop.'});}
+ if(req.method==='POST'&&!hasDatabaseConfig()&&action!=='logout')return send(res,503,{error:'DASNET database connection is not configured. Set DATABASE_URL or POSTGRES_URL.'});
  try{
   const sql=db();
   // Expire only this shop's temporary suspension before resolving its buyer tenant.

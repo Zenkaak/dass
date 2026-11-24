@@ -1,9 +1,9 @@
-import { neon } from '@neondatabase/serverless';
 import crypto from 'node:crypto';
+import { getDb } from '../server/db.js';
 
 const env=(k:string)=>(process.env[k]||'').trim();
 const send=(res:any,s:number,b:unknown)=>res.status(s).json(b);
-const db=()=>{const u=env('POSTGRES_URL')||env('DATABASE_URL')||env('NEON_DATABASE_URL');if(!u)throw Error('DB_CONFIG');return neon(u)};
+const db=()=>getDb();
 const storageEnv=(k:string)=>(process.env[k]||'').trim();
 function awsEncode(s:string){return encodeURIComponent(s).replace(/[!'()*]/g,c=>'%'+c.charCodeAt(0).toString(16).toUpperCase())}
 function hmac(key:any,value:string,encoding?:any){return crypto.createHmac('sha256',key).update(value).digest(encoding)}
@@ -37,7 +37,7 @@ export default async function handler(req:any,res:any){
   let sql:any=null;
   let slug=String(req.query?.slug||'').toLowerCase().trim();
   const host=String(req.headers['x-forwarded-host']||req.headers.host||'').split(',')[0].trim().split(':')[0].toLowerCase();
-  const customHost=Boolean(host&&host!=='dasmarket.co.ke'&&host!=='www.dasmarket.co.ke'&&!host.endsWith('.dasmarket.co.ke')&&!host.endsWith('.vercel.app')&&host!=='localhost'&&host!=='127.0.0.1');
+  const customHost=Boolean(host&&host!=='dasmarket.co.ke'&&host!=='www.dasmarket.co.ke'&&!host.endsWith('.dasmarket.co.ke')&&!host.endsWith('.vercel.app')&&!host.endsWith('.run.app')&&!host.endsWith('.googleusercontent.com')&&!host.endsWith('.aistudio.google.com')&&host!=='localhost'&&host!=='127.0.0.1');
   if(customHost){
    sql=db();
    const mapped=await sql`SELECT t.slug FROM public.domains d JOIN public.tenants t ON t.id=d.tenant_id WHERE lower(d.hostname)=${host} AND d.verified_at IS NOT NULL AND COALESCE(d.status,'active')='active' AND t.status IN ('trial','active') LIMIT 1`;

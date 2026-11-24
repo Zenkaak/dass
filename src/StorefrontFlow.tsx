@@ -1,46 +1,56 @@
-import './buyer-orders-redesign.css';
-import './buyer-order-detail-redesign.css';
-import './buyer-reports-redesign.css';
-import './buyer-messaging-redesign.css';
+import './storefront-redesign.css';
 import { defaultTerms, defaultPrivacy, defaultReturns, defaultDelivery } from './shopPolicyDefaults';
 import { marketplaceFaqs } from './marketplaceFaqs';
 import { DisputesPanel } from './DisputesPanel';
+import { fallbackProductImage } from './StorefrontProductDetail';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
+  Bell,
   Check,
-  ChevronRight,
   ChevronDown,
+  ChevronRight,
+  Flag,
+  Heart,
+  Mail,
   MapPin,
+  MessageCircle,
   Package,
+  Phone,
   Search,
   ShieldCheck,
   ShoppingBag,
+  Star,
+  TicketPercent,
   UserRound,
   WalletCards,
-  TicketPercent,
-  Phone,
-  Mail,
-  MessageCircle,
-  Flag,
 } from 'lucide-react';
 
 const accountGroups = [
-  { title: 'SHOPPING', links: [
-    { label: 'Inbox & messages', icon: MessageCircle, view: 'inbox' },
-    { label: 'Saved items', icon: Search, view: 'wishlist' },
-  ]},
-  { title: 'ACCOUNT & SUPPORT', links: [
-    { label: 'My profile & addresses', icon: UserRound, view: 'profile' },
-    { label: 'Reports & Complaints', icon: Flag, view: 'my-reports' },
-    { label: 'Followed shops', icon: ShieldCheck, view: 'followed-shops' },
-    { label: 'Recently viewed', icon: Search, view: 'recently-viewed' },
-    { label: 'Help & support', icon: ShieldCheck, view: 'assistant' },
-  ]},
+  {
+    title: 'SHOPPING & ORDERS',
+    links: [
+      { label: 'My Orders', icon: ShoppingBag, view: 'orders' },
+      { label: 'Inbox & Messages', icon: MessageCircle, view: 'inbox' },
+      { label: 'Saved Items', icon: Heart, view: 'wishlist' },
+      { label: 'Product Reviews', icon: Star, view: 'reviews' },
+      { label: 'Vouchers & Offers', icon: TicketPercent, view: 'vouchers' },
+    ],
+  },
+  {
+    title: 'ACCOUNT & SUPPORT',
+    links: [
+      { label: 'Personal Profile', icon: UserRound, view: 'profile' },
+      { label: 'Delivery Addresses', icon: MapPin, view: 'address-book' },
+      { label: 'Notifications', icon: Bell, view: 'notifications' },
+      { label: 'Account & Security', icon: ShieldCheck, view: 'account-management' },
+      { label: 'Reports & Complaints', icon: Flag, view: 'my-reports' },
+      { label: 'Help & Support', icon: Phone, view: 'assistant' },
+    ],
+  },
 ];
 
-// Buyer account navigation keeps the marketplace account destinations available as real URLs.
 export type StoreProduct = {
   id: string;
   name: string;
@@ -98,7 +108,7 @@ type StorefrontFlowProps = {
   shopDeliveryPickupFee?: number;
   shopCashOnDeliveryEnabled?: boolean;
   shopCashOnPickupEnabled?: boolean;
-  shopFaqs?: Array<{question:string;answer:string}>;
+  shopFaqs?: Array<{ question: string; answer: string }>;
   products: StoreProduct[];
   recentlyViewed?: string[];
   cart: Record<string, number>;
@@ -123,16 +133,71 @@ type StorefrontFlowProps = {
   onProfileUpdated?: (customer: any) => void;
 };
 
-const kenyanCounties=['Baringo','Bomet','Bungoma','Busia','Elgeyo-Marakwet','Embu','Garissa','Homa Bay','Isiolo','Kajiado','Kakamega','Kericho','Kiambu','Kilifi','Kirinyaga','Kisii','Kisumu','Kitui','Kwale','Laikipia','Lamu','Machakos','Makueni','Mandera','Marsabit','Meru','Migori','Mombasa','Murang’a','Nairobi','Nakuru','Nandi','Narok','Nyamira','Nyandarua','Nyeri','Samburu','Siaya','Taita-Taveta','Tana River','Tharaka-Nithi','Trans Nzoia','Turkana','Uasin Gishu','Vihiga','Wajir','West Pokot'];
-const kenyanSubCounties:Record<string,string[]>={"Uasin Gishu":["Ainabkoi","Kapseret","Kesses","Moiben","Soy","Turbo"],"Kericho":["Ainamoi","Belgut","Buret","Kipkelion East","Kipkelion West","Sigowet/Soin"],"Nandi":["Aldai","Chesumei","Emgwen","Mosop","Nandi Hills","Tinderet"],"Siaya":["Alego Usonga","Bondo","Gem","Rarieda","Ugenya","Ugunja"],"Migori":["Awendo","Kuria East","Kuria West","Nyatike","Rongo","Suna East","Suna West","Uriri"],"Nakuru":["Bahati","Gilgil","Kuresoi North","Kuresoi South","Molo","Naivasha","Nakuru Town East","Nakuru Town West","Njoro","Rongai","Subukia"],"Garissa":["Balambala","Dadaab","Dujis","Fafi","Ijara","Lagdera"],"Mandera":["Banissa","Lafey","Mandera East","Mandera North","Mandera South","Mandera West"],"Baringo":["Baringo Central","Baringo North","Baringo South","Eldama Ravine","Mogotio","Tiaty"],"Kisii":["Bobasi","Bomachoge Borabu","Bomachoge Chache","Bonchari","Kitutu Chache North","Kitutu Chache South","Nyaribari Chache","Nyaribari Masaba","South Mugirango"],"Bomet":["Bomet Central","Bomet East","Chepalungu","Konoin","Sotik"],"Nyamira":["Borabu","Kitutu Masaba","North Mugirango","West Mugirango"],"Busia":["Budalangi","Butula","Funyula","Matayos","Nambale","Teso North","Teso South"],"Bungoma":["Bumula","Kabuchai","Kanduyi","Kimilili","Mt. Elgon","Sirisia","Tongaren","Webuye East","Webuye West"],"Tana River":["Bura","Galole","Garsen"],"Kakamega":["Butere","Ikolomani","Khwisero","Likuyani","Lugari","Lurambi","Malava","Matungu","Mumias East","Mumias West","Navakholo","Shinyalu"],"Meru":["Buuri","Cental Imenti","Igembe Central","Igembe North","Igembe South","North Imenti","South Imenti","Tigania East","Tigania West"],"Mombasa":["Changamwe","Jomvu","Kisauni","Likoni","Mvita","Nyali"],"Trans Nzoia":["Cherangany","Endebess","Kiminini","Kwanza","Saboti"],"Nairobi":["Dagoretti","Embakasi Central","Embakasi East","Embakasi North","Embakasi South","Embakasi West","Kamukunji","Kasarani","Kibra","Kilimani","Langata","Makadara","Mathare","Roysambu","Ruaraka","Starehe","Westlands"],"Wajir":["Eldas","Tarbaj","Wajir East","Wajir North","Wajir South","Wajir West"],"Vihiga":["Emuhaya","Hamisi","Luanda","Sabatia","Vihiga"],"Narok":["Emurua Dikirr","Kilgoris","Narok East","Narok North","Narok South","Narok West"],"Embu":["Gachoka","Manyatta","Runyenjes","Siakago"],"Kilifi":["Ganze","Kaloleni","Kilifi North","Kilifi South","Magarini","Malindi","Rabai"],"Murang'a":["Gatanga","Kandara","Kangema","Kigumo","Kiharu","Maragwa","Mathioya"],"Kiambu":["Gatundu North","Gatundu South","Githunguri","Juja","Kabete","Kiambaa","Kiambu","Kikuyu","Lari","Limuru","Ruiru","Thika Town"],"Kirinyaga":["Gichugu","Kirinyaga Central","Mwea","Ndia"],"Homa Bay":["Homa Bay","Kabondo Kasipul","Karachuonyo","Kasipul","Ndhiwa","Rangwe","Suba North","Suba South"],"Isiolo":["Isiolo North","Isiolo South"],"West Pokot":["Kacheliba","Kapenguria","Pokot South","Sigor"],"Makueni":["Kaiti","Kibwezi East","Kibwezi West","Kilome","Makueni","Mbooni"],"Kajiado":["Kajiado Central","Kajiado East","Kajiado North","Kajiado South","Kajiado West"],"Machakos":["Kangundo","Kathiani","Machakos Town","Masinga","Matungulu","Mavoko","Mwala","Yatta"],"Elgeyo-Marakwet":["Keiyo North","Keiyo South","Marakwet East","Marakwet West"],"Nyeri":["Kieni","Mathira","Mukurweni","Nyeri Town","Othaya","Tetu"],"Kwale":["Kinango","Lunga Lunga","Matuga","Msambweni"],"Nyandarua":["Kinangop","Kipipiri","Ndaragwa","Ol Jorok","Ol Kalou"],"Kisumu":["Kisumu Central","Kisumu East","Kisumu West","Muhoroni","Nyakach","Nyando","Seme"],"Kitui":["Kitui Central","Kitui East","Kitui Rural","Kitui South","Kitui West","Mwingi East","Mwingi North","Mwingi West"],"Laikipia":["Laikipia East","Laikipia North","Laikipia West"],"Marsabit":["Laisamis","Moyale","North Horr","Saku"],"Lamu":["Lamu East","Lamu West"],"Turkana":["Loima","Turkana Central","Turkana East","Turkana North","Turkana South","Turkana West"],"Tharaka-Nithi":["Maara","Nithi","Tharaka"],"Taita Taveta":["Mwatate","Taveta","Voi","Wundanyi"],"Samburu":["Samburu East","Samburu North","Samburu West"]};
-kenyanSubCounties['Murang’a']=kenyanSubCounties["Murang'a"]||[];
-kenyanSubCounties['Taita-Taveta']=kenyanSubCounties['Taita Taveta']||[];
+const kenyanCounties = [
+  'Baringo', 'Bomet', 'Bungoma', 'Busia', 'Elgeyo-Marakwet', 'Embu', 'Garissa', 'Homa Bay', 'Isiolo',
+  'Kajiado', 'Kakamega', 'Kericho', 'Kiambu', 'Kilifi', 'Kirinyaga', 'Kisii', 'Kisumu', 'Kitui', 'Kwale',
+  'Laikipia', 'Lamu', 'Machakos', 'Makueni', 'Mandera', 'Marsabit', 'Meru', 'Migori', 'Mombasa',
+  'Murang’a', 'Nairobi', 'Nakuru', 'Nandi', 'Narok', 'Nyamira', 'Nyandarua', 'Nyeri', 'Samburu', 'Siaya',
+  'Taita-Taveta', 'Tana River', 'Tharaka-Nithi', 'Trans Nzoia', 'Turkana', 'Uasin Gishu', 'Vihiga',
+  'Wajir', 'West Pokot',
+];
 
+const kenyanSubCounties: Record<string, string[]> = {
+  'Uasin Gishu': ['Ainabkoi', 'Kapseret', 'Kesses', 'Moiben', 'Soy', 'Turbo'],
+  Kericho: ['Ainamoi', 'Belgut', 'Buret', 'Kipkelion East', 'Kipkelion West', 'Sigowet/Soin'],
+  Nandi: ['Aldai', 'Chesumei', 'Emgwen', 'Mosop', 'Nandi Hills', 'Tinderet'],
+  Siaya: ['Alego Usonga', 'Bondo', 'Gem', 'Rarieda', 'Ugenya', 'Ugunja'],
+  Migori: ['Awendo', 'Kuria East', 'Kuria West', 'Nyatike', 'Rongo', 'Suna East', 'Suna West', 'Uriri'],
+  Nakuru: ['Bahati', 'Gilgil', 'Kuresoi North', 'Kuresoi South', 'Molo', 'Naivasha', 'Nakuru Town East', 'Nakuru Town West', 'Njoro', 'Rongai', 'Subukia'],
+  Garissa: ['Balambala', 'Dadaab', 'Dujis', 'Fafi', 'Ijara', 'Lagdera'],
+  Mandera: ['Banissa', 'Lafey', 'Mandera East', 'Mandera North', 'Mandera South', 'Mandera West'],
+  Baringo: ['Baringo Central', 'Baringo North', 'Baringo South', 'Eldama Ravine', 'Mogotio', 'Tiaty'],
+  Kisii: ['Bobasi', 'Bomachoge Borabu', 'Bomachoge Chache', 'Bonchari', 'Kitutu Chache North', 'Kitutu Chache South', 'Nyaribari Chache', 'Nyaribari Masaba', 'South Mugirango'],
+  Bomet: ['Bomet Central', 'Bomet East', 'Chepalungu', 'Konoin', 'Sotik'],
+  Nyamira: ['Borabu', 'Kitutu Masaba', 'North Mugirango', 'West Mugirango'],
+  Busia: ['Budalangi', 'Butula', 'Funyula', 'Matayos', 'Nambale', 'Teso North', 'Teso South'],
+  Bungoma: ['Bumula', 'Kabuchai', 'Kanduyi', 'Kimilili', 'Mt. Elgon', 'Sirisia', 'Tongaren', 'Webuye East', 'Webuye West'],
+  'Tana River': ['Bura', 'Galole', 'Garsen'],
+  Kakamega: ['Butere', 'Ikolomani', 'Khwisero', 'Likuyani', 'Lugari', 'Lurambi', 'Malava', 'Matungu', 'Mumias East', 'Mumias West', 'Navakholo', 'Shinyalu'],
+  Meru: ['Buuri', 'Cental Imenti', 'Igembe Central', 'Igembe North', 'Igembe South', 'North Imenti', 'South Imenti', 'Tigania East', 'Tigania West'],
+  Mombasa: ['Changamwe', 'Jomvu', 'Kisauni', 'Likoni', 'Mvita', 'Nyali'],
+  'Trans Nzoia': ['Cherangany', 'Endebess', 'Kiminini', 'Kwanza', 'Saboti'],
+  Nairobi: ['Dagoretti', 'Embakasi Central', 'Embakasi East', 'Embakasi North', 'Embakasi South', 'Embakasi West', 'Kamukunji', 'Kasarani', 'Kibra', 'Kilimani', 'Langata', 'Makadara', 'Mathare', 'Roysambu', 'Ruaraka', 'Starehe', 'Westlands'],
+  Wajir: ['Eldas', 'Tarbaj', 'Wajir East', 'Wajir North', 'Wajir South', 'Wajir West'],
+  Vihiga: ['Emuhaya', 'Hamisi', 'Luanda', 'Sabatia', 'Vihiga'],
+  Narok: ['Emurua Dikirr', 'Kilgoris', 'Narok East', 'Narok North', 'Narok South', 'Narok West'],
+  Embu: ['Gachoka', 'Manyatta', 'Runyenjes', 'Siakago'],
+  Kilifi: ['Ganze', 'Kaloleni', 'Kilifi North', 'Kilifi South', 'Magarini', 'Malindi', 'Rabai'],
+  "Murang'a": ['Gatanga', 'Kandara', 'Kangema', 'Kigumo', 'Kiharu', 'Maragwa', 'Mathioya'],
+  Kiambu: ['Gatundu North', 'Gatundu South', 'Githunguri', 'Juja', 'Kabete', 'Kiambaa', 'Kiambu', 'Kikuyu', 'Lari', 'Limuru', 'Ruiru', 'Thika Town'],
+  Kirinyaga: ['Gichugu', 'Kirinyaga Central', 'Mwea', 'Ndia'],
+  'Homa Bay': ['Homa Bay', 'Kabondo Kasipul', 'Karachuonyo', 'Kasipul', 'Ndhiwa', 'Rangwe', 'Suba North', 'Suba South'],
+  Isiolo: ['Isiolo North', 'Isiolo South'],
+  'West Pokot': ['Kacheliba', 'Kapenguria', 'Pokot South', 'Sigor'],
+  Makueni: ['Kaiti', 'Kibwezi East', 'Kibwezi West', 'Kilome', 'Makueni', 'Mbooni'],
+  Kajiado: ['Kajiado Central', 'Kajiado East', 'Kajiado North', 'Kajiado South', 'Kajiado West'],
+  Machakos: ['Kangundo', 'Kathiani', 'Machakos Town', 'Masinga', 'Matungulu', 'Mavoko', 'Mwala', 'Yatta'],
+  'Elgeyo-Marakwet': ['Keiyo North', 'Keiyo South', 'Marakwet East', 'Marakwet West'],
+  Nyeri: ['Kieni', 'Mathira', 'Mukurweni', 'Nyeri Town', 'Othaya', 'Tetu'],
+  Kwale: ['Kinango', 'Lunga Lunga', 'Matuga', 'Msambweni'],
+  Nyandarua: ['Kinangop', 'Kipipiri', 'Ndaragwa', 'Ol Jorok', 'Ol Kalou'],
+  Kisumu: ['Kisumu Central', 'Kisumu East', 'Kisumu West', 'Muhoroni', 'Nyakach', 'Nyando', 'Seme'],
+  Kitui: ['Kitui Central', 'Kitui East', 'Kitui Rural', 'Kitui South', 'Kitui West', 'Mwingi East', 'Mwingi North', 'Mwingi West'],
+  Laikipia: ['Laikipia East', 'Laikipia North', 'Laikipia West'],
+  Marsabit: ['Laisamis', 'Moyale', 'North Horr', 'Saku'],
+  Lamu: ['Lamu East', 'Lamu West'],
+  Turkana: ['Loima', 'Turkana Central', 'Turkana East', 'Turkana North', 'Turkana South', 'Turkana West'],
+  'Tharaka-Nithi': ['Maara', 'Nithi', 'Tharaka'],
+  'Taita Taveta': ['Mwatate', 'Taveta', 'Voi', 'Wundanyi'],
+  Samburu: ['Samburu East', 'Samburu North', 'Samburu West'],
+};
+kenyanSubCounties['Murang’a'] = kenyanSubCounties["Murang'a"] || [];
+kenyanSubCounties['Taita-Taveta'] = kenyanSubCounties['Taita Taveta'] || [];
 
 const paymentLabels: Record<PaymentMethod, string> = {
   card: 'Bank card',
   airtel: 'Airtel Money',
-  mpesa: 'M-Pesa',
+  mpesa: 'M-PESA',
   delivery: 'Cash on delivery / pickup',
 };
 
@@ -140,80 +205,180 @@ const accountSectionCopy: Record<string, { title: string; description: string }>
   inbox: { title: 'Inbox', description: 'Your store messages will appear here when messaging is connected.' },
   reviews: { title: 'Pending reviews', description: 'Items that are ready for a review will appear here after your first order.' },
   vouchers: { title: 'Vouchers', description: 'Available discount vouchers will appear here when promotions are connected.' },
-  wishlist: { title: 'Wishlist', description: 'Save products you want to come back to. Wishlist syncing is not connected yet.' },
+  wishlist: { title: 'Wishlist', description: 'Save products you want to come back to.' },
   'followed-shops': { title: 'Followed shops', description: 'The shops you follow will be listed here.' },
   'recently-viewed': { title: 'Recently viewed', description: 'Products you opened in this store will be listed here.' },
-  'account-management': { title: 'Account management', description: 'Your profile details and sign-in options will appear here when accounts are connected.' },
-  'address-book': { title: 'Address book', description: 'Save delivery addresses here when customer accounts are connected.' },
+  'account-management': { title: 'Account management', description: 'Manage your buyer sign-in security.' },
+  'address-book': { title: 'Address book', description: 'Save delivery addresses here.' },
   newsletter: { title: 'Newsletter', description: 'Choose whether to receive store updates and offers.' },
-  'close-account': { title: 'Close account', description: 'Account closure is not connected in this front-end preview.' },
-  assistant: { title: 'Shopping assistant', description: 'The assistant screen is ready for your future search and recommendation wiring.' },
-  profile: { title: 'My profile', description: 'Your profile details will appear here when accounts are connected.' },
-  notifications: { title: 'Notifications', description: 'Order and account notifications will appear here when connected.' },
-  'notification-settings': { title: 'Notification settings', description: 'Notification preferences will appear here when accounts are connected.' },
-  'public-profile': { title: 'My public profile', description: 'Your public profile will appear here when profile features are connected.' },
+  'close-account': { title: 'Close account', description: 'Request buyer account closure.' },
+  assistant: { title: 'Shopping assistant', description: 'Contact the shop or DASNET support.' },
+  profile: { title: 'My profile', description: 'Your profile details.' },
+  notifications: { title: 'Notifications', description: 'Order and account notifications.' },
+  'notification-settings': { title: 'Notification settings', description: 'Notification preferences.' },
+  'public-profile': { title: 'My profile', description: 'Your buyer profile details.' },
 };
 
 function formatKes(amount: number) {
   return `KES ${Math.max(0, Math.round(amount)).toLocaleString('en-KE')}`;
 }
 
-
-
-
 function ProductThumb({ product }: { product: StoreProduct }) {
   const image = product.images?.[0] || product.imageUrl;
-  return image
-    ? <img className="customer-product-thumb" src={image} alt={product.name} loading="lazy" decoding="async" onError={event=>{event.currentTarget.onerror=null;event.currentTarget.src='data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22640%22 height=%22480%22 viewBox=%220 0 640 480%22%3E%3Crect width=%22640%22 height=%22480%22 fill=%22%23eaf0f6%22/%3E%3Cpath d=%22M240 280l80-100 70 80 45-55 70 75%22 fill=%22none%22 stroke=%22%2394a3b8%22 stroke-width=%2216%22/%3E%3C/svg%3E'}} />
-    : <div className="customer-product-thumb customer-product-placeholder" aria-hidden="true"><ShoppingBag size={22} /></div>;
-}
-
-function ProductRecommendationShelf({products,cart,onAdd,onOpenProduct,title='You may also like',subtitle='Discover more from this shop'}:{products:StoreProduct[];cart:Record<string,number>;onAdd:(id:string)=>void;onOpenProduct?:(product:StoreProduct)=>void;title?:string;subtitle?:string}) {
-  const recommendations=products.filter(product=>!cart[product.id]&&(product.stockQuantity==null||product.stockQuantity>0)).slice(0,12);
-  if(!recommendations.length)return null;
-  return <section className="market-recommendation-shelf" aria-label={title}>
-    <div className="market-recommendation-heading"><div><span>MORE TO DISCOVER</span><h2>{title}</h2><p>{subtitle}</p></div><small>{recommendations.length} products</small></div>
-    <div className="market-recommendation-grid">{recommendations.map(product=><article className="market-recommendation-card" key={product.id}>
-      <button type="button" className="market-recommendation-product" onClick={()=>onOpenProduct?.(product)} aria-label={'View '+product.name}><ProductThumb product={product}/><strong className="market-card-product-title" title={product.name}>{product.name}</strong><b>{formatKes(product.price)}</b><small>{product.category||'Shop product'}</small></button>
-      <button type="button" className="market-recommendation-add" onClick={()=>onAdd(product.id)}>Add to cart</button>
-    </article>)}</div>
-  </section>;
-}
-
-function CheckoutProgress({step}:{step:1|2|3}){const items=[{n:1,label:'Delivery'},{n:2,label:'Payment'},{n:3,label:'Review & place order'}];return <nav className="market-checkout-progress" aria-label="Checkout progress">{items.map(item=><div key={item.n} className={'market-checkout-progress-step '+(item.n===step?'current':item.n<step?'complete':'')}><span>{item.n<step?'✓':String(item.n).padStart(2,'0')}</span><div><strong>{item.label}</strong><small>{item.n<step?'Completed':item.n===step?'Current step':'Next step'}</small></div></div>)}</nav>}
-function FlowHeading({
-  title,
-  onBack,
-  backLabel = 'Back to store',
-}: {
-  title: string;
-  onBack: () => void;
-  backLabel?: string;
-}) {
-  return (
-    <div className="customer-flow-heading">
-      <button type="button" className="customer-back-button" onClick={onBack}>
-        <ArrowLeft size={17} /> {backLabel}
-      </button>
-      <h1>{title}</h1>
+  return image ? (
+    <img
+      className="sf-thumb"
+      src={image}
+      alt={product.name}
+      loading="lazy"
+      decoding="async"
+      onError={(event) => {
+        event.currentTarget.onerror = null;
+        event.currentTarget.src = fallbackProductImage(product.name);
+      }}
+    />
+  ) : (
+    <div className="sf-thumb-placeholder" aria-hidden="true">
+      <ShoppingBag size={20} />
     </div>
   );
 }
 
-function SearchableLocationSelect({label,value,options,placeholder,onChange,disabled=false}:{label:string;value:string;options:string[];placeholder:string;onChange:(value:string)=>void;disabled?:boolean}) {
-  const [query,setQuery]=useState(value);
-  const [open,setOpen]=useState(false);
-  useEffect(()=>{setQuery(value)},[value]);
-  const matches=options.filter(option=>option.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())).slice(0,80);
-  return <label className="customer-form-label market-search-select-label">{label}
-    <span className="market-search-select">
-      <input type="text" value={query} disabled={disabled} placeholder={placeholder} autoComplete="off" role="combobox" aria-expanded={open} aria-autocomplete="list" onFocus={()=>setOpen(true)} onChange={event=>{setQuery(event.target.value);setOpen(true)}} onKeyDown={event=>{if(event.key==='Escape')setOpen(false);if(event.key==='Enter'&&open&&matches.length){event.preventDefault();onChange(matches[0]);setQuery(matches[0]);setOpen(false)}}}/>
-      <button type="button" className="market-search-select-toggle" aria-label={open?'Close options':`Show ${label.toLowerCase()} options`} disabled={disabled} onClick={()=>setOpen(current=>!current)}><ChevronDown size={16}/></button>
-      {open&&!disabled&&<div className="market-search-select-menu" role="listbox">
-        {matches.length?matches.map(option=><button type="button" role="option" aria-selected={option===value} key={option} onMouseDown={event=>event.preventDefault()} onClick={()=>{onChange(option);setQuery(option);setOpen(false)}}>{option}</button>):<div className="market-search-select-empty">No matches found</div>}
-      </div>}
-    </span>
-  </label>;
+function CheckoutProgress({ step }: { step: 1 | 2 | 3 }) {
+  const items = [
+    { n: 1, label: 'Delivery' },
+    { n: 2, label: 'Payment' },
+    { n: 3, label: 'Review & place order' },
+  ];
+  return (
+    <nav className="sf-checkout-progress" aria-label="Checkout progress">
+      {items.map((item) => (
+        <div
+          key={item.n}
+          className={`sf-progress-step ${item.n === step ? 'current' : item.n < step ? 'complete' : ''}`}
+        >
+          <span>{item.n < step ? '✓' : String(item.n).padStart(2, '0')}</span>
+          <div>
+            <strong>{item.label}</strong>
+            <small>{item.n < step ? 'Completed' : item.n === step ? 'Current step' : 'Next step'}</small>
+          </div>
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+function FlowHeading({
+  title,
+  subtitle,
+  onBack,
+  backLabel = 'Back to store',
+}: {
+  title: string;
+  subtitle?: string;
+  onBack: () => void;
+  backLabel?: string;
+}) {
+  return (
+    <div className="sf-flow-head">
+      <button type="button" className="sf-back-btn" onClick={onBack}>
+        <ArrowLeft size={16} /> {backLabel}
+      </button>
+      <h1>{title}</h1>
+      {subtitle && <p className="sf-flow-sub">{subtitle}</p>}
+    </div>
+  );
+}
+
+function SearchableLocationSelect({
+  label,
+  value,
+  options,
+  placeholder,
+  onChange,
+  disabled = false,
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  placeholder: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+}) {
+  const [query, setQuery] = useState(value);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    setQuery(value);
+  }, [value]);
+  const matches = options
+    .filter((option) => option.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
+    .slice(0, 80);
+
+  return (
+    <label className="sf-field">
+      {label}
+      <span className="sf-combobox">
+        <input
+          type="text"
+          value={query}
+          disabled={disabled}
+          placeholder={placeholder}
+          autoComplete="off"
+          role="combobox"
+          aria-expanded={open}
+          aria-autocomplete="list"
+          onFocus={() => setOpen(true)}
+          onBlur={() => window.setTimeout(() => setOpen(false), 150)}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setOpen(true);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') setOpen(false);
+            if (event.key === 'Enter' && open && matches.length) {
+              event.preventDefault();
+              onChange(matches[0]);
+              setQuery(matches[0]);
+              setOpen(false);
+            }
+          }}
+        />
+        <button
+          type="button"
+          className="sf-combobox-toggle"
+          aria-label={open ? 'Close options' : `Show ${label.toLowerCase()} options`}
+          disabled={disabled}
+          onClick={() => setOpen((current) => !current)}
+        >
+          <ChevronDown size={16} />
+        </button>
+        {open && !disabled && (
+          <div className="sf-combobox-menu" role="listbox">
+            {matches.length ? (
+              matches.map((option) => (
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={option === value}
+                  key={option}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => {
+                    onChange(option);
+                    setQuery(option);
+                    setOpen(false);
+                  }}
+                >
+                  {option}
+                </button>
+              ))
+            ) : (
+              <div className="sf-combobox-empty">No matches found</div>
+            )}
+          </div>
+        )}
+      </span>
+    </label>
+  );
 }
 
 export function StorefrontFlow({
@@ -252,100 +417,228 @@ export function StorefrontFlow({
   onOpenChat,
   onProfileUpdated,
 }: StorefrontFlowProps) {
-    const lines = useMemo(() => Object.entries(cart)
-    .map(([id, quantity]) => {
-      const product = products.find((entry) => entry.id === id);
-      return product && quantity > 0 ? { product, quantity } : null;
-    })
-    .filter((line): line is CartLine => Boolean(line)), [cart, products]);
+  const lines = useMemo(
+    () =>
+      Object.entries(cart)
+        .map(([id, quantity]) => {
+          const product = products.find((entry) => entry.id === id);
+          return product && quantity > 0 ? { product, quantity } : null;
+        })
+        .filter((line): line is CartLine => Boolean(line)),
+    [cart, products],
+  );
+
   const subtotal = useMemo(
     () => lines.reduce((sum, line) => sum + line.product.price * line.quantity, 0),
     [lines],
   );
+
   const [orders, setOrders] = useState<BuyerOrder[]>([]);
-  const [chatThreads,setChatThreads]=useState<any[]>([]);
-  const checkoutIdempotency=useRef<{fingerprint:string;key:string}|null>(null);
-  const [retryingOrder,setRetryingOrder]=useState(false);const [retryPaymentPhone,setRetryPaymentPhone]=useState('');const [retryMessage,setRetryMessage]=useState('');const [paymentCelebration,setPaymentCelebration]=useState(false);const lastPaymentStatus=useRef<string|null>(null);
-  const [ordersLoading,setOrdersLoading]=useState(false),[ordersError,setOrdersError]=useState('');
-  const [currentPassword,setCurrentPassword]=useState(''),[newPassword,setNewPassword]=useState(''),[confirmPassword,setConfirmPassword]=useState(''),[passwordSaving,setPasswordSaving]=useState(false),[passwordMessage,setPasswordMessage]=useState('');
-  const [inAppNotificationsEnabled,setInAppNotificationsEnabled]=useState(true);
-  const [profileName,setProfileName]=useState(initialCustomerName),[profileEmail,setProfileEmail]=useState(initialCustomerEmail),[profilePhoneAlt,setProfilePhoneAlt]=useState(''),[profileAddress,setProfileAddress]=useState(initialCustomerAddress),[profileSaving,setProfileSaving]=useState(false),[profileMessage,setProfileMessage]=useState('');
+  const [chatThreads, setChatThreads] = useState<any[]>([]);
+  const checkoutIdempotency = useRef<{ fingerprint: string; key: string } | null>(null);
+  const [retryingOrder, setRetryingOrder] = useState(false);
+  const [retryPaymentPhone, setRetryPaymentPhone] = useState('');
+  const [retryMessage, setRetryMessage] = useState('');
+  const [paymentCelebration, setPaymentCelebration] = useState(false);
+  const lastPaymentStatus = useRef<string | null>(null);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState('');
+
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState('');
+  const [inAppNotificationsEnabled, setInAppNotificationsEnabled] = useState(true);
+
+  const [profileName, setProfileName] = useState(initialCustomerName);
+  const [profileEmail, setProfileEmail] = useState(initialCustomerEmail);
+  const [profilePhoneAlt, setProfilePhoneAlt] = useState('');
+  const [profileAddress, setProfileAddress] = useState(initialCustomerAddress);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileMessage, setProfileMessage] = useState('');
+
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mpesa');
-  const [paymentModal,setPaymentModal]=useState<PaymentMethod|null>(null);
+  const [paymentModal, setPaymentModal] = useState<PaymentMethod | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [paymentPollMessage,setPaymentPollMessage]=useState('Waiting for payment confirmation…');const [paymentProviderResponded,setPaymentProviderResponded]=useState(false);
+  const [paymentPollMessage, setPaymentPollMessage] = useState('Waiting for payment confirmation…');
+  const [paymentProviderResponded, setPaymentProviderResponded] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
+
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('pickup');
-  const cashOptionEnabled=deliveryMethod==='pickup'?shopCashOnPickupEnabled:shopCashOnDeliveryEnabled;
-  useEffect(()=>{if(paymentMethod==='delivery'&&!cashOptionEnabled)setPaymentMethod('mpesa');},[paymentMethod,cashOptionEnabled]);
+  const cashOptionEnabled = deliveryMethod === 'pickup' ? shopCashOnPickupEnabled : shopCashOnDeliveryEnabled;
+  useEffect(() => {
+    if (paymentMethod === 'delivery' && !cashOptionEnabled) setPaymentMethod('mpesa');
+  }, [paymentMethod, cashOptionEnabled]);
+
   const [deliveryCounty, setDeliveryCounty] = useState('');
   const [deliverySubCounty, setDeliverySubCounty] = useState('');
   const [deliveryEstate, setDeliveryEstate] = useState('');
   const [deliveryDirections, setDeliveryDirections] = useState('');
-  const [orderConfirmed,setOrderConfirmed]=useState(false);
+  const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [customerName, setCustomerName] = useState(initialCustomerName);
   const [customerPhone, setCustomerPhone] = useState(initialCustomerPhone);
   const [paymentPhone, setPaymentPhone] = useState(initialCustomerPhone);
   const [customerEmail, setCustomerEmail] = useState(initialCustomerEmail);
   const [deliveryAddress, setDeliveryAddress] = useState(initialCustomerAddress);
   const [pickupStation, setPickupStation] = useState('');
-  const [deliveryPreferenceLoading,setDeliveryPreferenceLoading]=useState(false);
-  const [pickupStationEditor,setPickupStationEditor]=useState(false);
-  const [pickupStationDraft,setPickupStationDraft]=useState('');
+  const [deliveryPreferenceLoading, setDeliveryPreferenceLoading] = useState(false);
+  const [pickupStationEditor, setPickupStationEditor] = useState(false);
+  const [pickupStationDraft, setPickupStationDraft] = useState('');
+
   const [voucherCode, setVoucherCode] = useState('');
   const [voucherMessage, setVoucherMessage] = useState('');
-  const [appliedCoupon,setAppliedCoupon]=useState<any>(null),[shopCoupons,setShopCoupons]=useState<any[]>([]);
-  const [reportShop,setReportShop]=useState(shopName),[reportOrderId,setReportOrderId]=useState(''),[reportProductId,setReportProductId]=useState(''),[reportIssue,setReportIssue]=useState('payment'),[reportPaymentMade,setReportPaymentMade]=useState(false),[reportPaymentAmount,setReportPaymentAmount]=useState(''),[reportPaymentReference,setReportPaymentReference]=useState(''),[reportDetails,setReportDetails]=useState(''),[reportFiles,setReportFiles]=useState<File[]>([]),[reportBusy,setReportBusy]=useState(false),[reportMessage,setReportMessage]=useState('');
-  const [activeOrderNumber, setActiveOrderNumber] = useState(()=>{try{return localStorage.getItem('dasmarket-active-order-'+slug+'-'+initialCustomerPhone)||''}catch{return ''}});
-  const checkoutDraftKey='dasmarket-checkout-draft-'+slug+'-'+(initialCustomerPhone||'guest');
-  const [checkoutDraftReady,setCheckoutDraftReady]=useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [shopCoupons, setShopCoupons] = useState<any[]>([]);
+
+  const [reportShop, setReportShop] = useState(shopName);
+  const [reportOrderId, setReportOrderId] = useState('');
+  const [reportProductId, setReportProductId] = useState('');
+  const [reportIssue, setReportIssue] = useState('payment');
+  const [reportPaymentMade, setReportPaymentMade] = useState(false);
+  const [reportPaymentAmount, setReportPaymentAmount] = useState('');
+  const [reportPaymentReference, setReportPaymentReference] = useState('');
+  const [reportDetails, setReportDetails] = useState('');
+  const [reportFiles, setReportFiles] = useState<File[]>([]);
+  const [reportBusy, setReportBusy] = useState(false);
+  const [reportMessage, setReportMessage] = useState('');
+
+  const [activeOrderNumber, setActiveOrderNumber] = useState('');
   const [newsletterEnabled, setNewsletterEnabled] = useState(false);
   const [isShopFollowed, setIsShopFollowed] = useState(false);
-  const [buyerFeatureMessage,setBuyerFeatureMessage]=useState('');
-  const [buyerFeatureBusy,setBuyerFeatureBusy]=useState(false);
-  const [closureRequest,setClosureRequest]=useState<any>(null);
-  const [buyerFollowedShops,setBuyerFollowedShops]=useState<any[]>([]);
-  const [serverWishlist,setServerWishlist]=useState<string[]>([]),[serverWishlistLoaded,setServerWishlistLoaded]=useState(false);
-  const togglePersistentWishlist=async(productId:string)=>{
-    const enabled=!(serverWishlistLoaded?serverWishlist.includes(productId):wishlistIds.includes(productId));
-    try{await buyerFeatureRequest('buyer-wishlist',{productId,enabled});setServerWishlist(current=>enabled?[...new Set([...current,productId])]:current.filter(id=>id!==productId));}
-    catch(error:any){setBuyerFeatureMessage(error.message||'Could not update your wishlist.');}
-  };
-  const buyerFeatureRequest=async(action:string,payload:any={})=>{
-    const response=await fetch('/api/buyer?action='+encodeURIComponent(action),{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug,...payload})});
-    const data=await response.json().catch(()=>({}));
-    if(!response.ok)throw Error(data.error||'Could not save your account preference.');
+  const [buyerFeatureMessage, setBuyerFeatureMessage] = useState('');
+  const [buyerFeatureBusy, setBuyerFeatureBusy] = useState(false);
+  const [closureRequest, setClosureRequest] = useState<any>(null);
+  const [buyerFollowedShops, setBuyerFollowedShops] = useState<any[]>([]);
+  const [serverWishlist, setServerWishlist] = useState<string[]>([]);
+  const [serverWishlistLoaded, setServerWishlistLoaded] = useState(false);
+
+  const buyerFeatureRequest = async (action: string, payload: any = {}) => {
+    const response = await fetch('/api/buyer?action=' + encodeURIComponent(action), {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug, ...payload }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw Error(data.error || 'Could not save your account preference.');
     return data;
   };
-  useEffect(()=>{
-    let live=true;
-    if(!initialCustomerPhone){setDeliveryPreferenceLoading(false);return()=>{live=false};}
+
+  const togglePersistentWishlist = async (productId: string) => {
+    const enabled = !(serverWishlistLoaded ? serverWishlist.includes(productId) : wishlistIds.includes(productId));
+    try {
+      await buyerFeatureRequest('buyer-wishlist', { productId, enabled });
+      setServerWishlist((current) =>
+        enabled ? [...new Set([...current, productId])] : current.filter((id) => id !== productId),
+      );
+    } catch (error: any) {
+      setBuyerFeatureMessage(error.message || 'Could not update your wishlist.');
+    }
+  };
+
+  useEffect(() => {
+    let live = true;
+    if (!initialCustomerPhone) {
+      setDeliveryPreferenceLoading(false);
+      return () => {
+        live = false;
+      };
+    }
     setDeliveryPreferenceLoading(true);
-    fetch('/api/buyer?action=buyer-delivery-preference&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'})
-      .then(async response=>{const data=await response.json().catch(()=>({}));if(!response.ok)throw Error(data.error||'Could not load your saved delivery details.');return data;})
-      .then(data=>{if(!live||!data.preference)return;const p=data.preference;setDeliveryMethod(p.deliveryMethod==='home'?'home':'pickup');setDeliveryCounty(p.deliveryCounty||'');setDeliverySubCounty(p.deliverySubCounty||'');setDeliveryEstate(p.deliveryEstate||'');setDeliveryAddress(p.deliveryAddress||initialCustomerAddress);setDeliveryDirections(p.deliveryDirections||'');setPickupStation(p.pickupStation||'');})
-      .catch(error=>{if(live)setCheckoutError(error.message||'Could not load your saved delivery details.');})
-      .finally(()=>{if(live)setDeliveryPreferenceLoading(false);});
-    return()=>{live=false;};
-  },[slug,initialCustomerPhone,initialCustomerAddress]);
-  useEffect(()=>{
-    let live=true;
-    if(!initialCustomerPhone)return;
-    fetch('/api/buyer?action=buyer-account-data&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'})
-      .then(async response=>{const data=await response.json().catch(()=>({}));if(!response.ok)throw Error(data.error||'Could not load saved account preferences.');return data;})
-      .then(data=>{if(!live)return;const followed=Array.isArray(data.followedShops)?data.followedShops:[];setBuyerFollowedShops(followed);setIsShopFollowed(followed.some((shop:any)=>shop.slug===slug));setNewsletterEnabled(Boolean(data.newsletter));setClosureRequest(data.closureRequest||null);setServerWishlist(Array.isArray(data.wishlist)?data.wishlist.map((item:any)=>String(item.id)):[]);setServerWishlistLoaded(true);})
-      .catch(error=>{if(live)setBuyerFeatureMessage(error.message||'Could not load saved account preferences.');});
-    return()=>{live=false;};
-  },[slug,initialCustomerPhone]);
+    fetch('/api/buyer?action=buyer-delivery-preference&slug=' + encodeURIComponent(slug), {
+      credentials: 'same-origin',
+      cache: 'no-store',
+    })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw Error(data.error || 'Could not load your saved delivery details.');
+        return data;
+      })
+      .then((data) => {
+        if (!live || !data.preference) return;
+        const p = data.preference;
+        setDeliveryMethod(p.deliveryMethod === 'home' ? 'home' : 'pickup');
+        setDeliveryCounty(p.deliveryCounty || '');
+        setDeliverySubCounty(p.deliverySubCounty || '');
+        setDeliveryEstate(p.deliveryEstate || '');
+        setDeliveryAddress(p.deliveryAddress || initialCustomerAddress);
+        setDeliveryDirections(p.deliveryDirections || '');
+        setPickupStation(p.pickupStation || '');
+      })
+      .catch((error) => {
+        if (live) setCheckoutError(error.message || 'Could not load your saved delivery details.');
+      })
+      .finally(() => {
+        if (live) setDeliveryPreferenceLoading(false);
+      });
+    return () => {
+      live = false;
+    };
+  }, [slug, initialCustomerPhone, initialCustomerAddress]);
 
+  useEffect(() => {
+    let live = true;
+    if (!initialCustomerPhone) return;
+    fetch('/api/buyer?action=buyer-account-data&slug=' + encodeURIComponent(slug), {
+      credentials: 'same-origin',
+      cache: 'no-store',
+    })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw Error(data.error || 'Could not load saved account preferences.');
+        return data;
+      })
+      .then((data) => {
+        if (!live) return;
+        const followed = Array.isArray(data.followedShops) ? data.followedShops : [];
+        setBuyerFollowedShops(followed);
+        setIsShopFollowed(followed.some((shop: any) => shop.slug === slug));
+        setNewsletterEnabled(Boolean(data.newsletter));
+        setClosureRequest(data.closureRequest || null);
+        setServerWishlist(Array.isArray(data.wishlist) ? data.wishlist.map((item: any) => String(item.id)) : []);
+        setServerWishlistLoaded(true);
+      })
+      .catch((error) => {
+        if (live) setBuyerFeatureMessage(error.message || 'Could not load saved account preferences.');
+      });
+    return () => {
+      live = false;
+    };
+  }, [slug, initialCustomerPhone]);
 
-  useEffect(()=>{setAppliedCoupon(null);if(voucherCode)setVoucherMessage('Your cart changed. Reapply the coupon.');},[subtotal]);
+  useEffect(() => {
+    setAppliedCoupon(null);
+    if (voucherCode) setVoucherMessage('Your cart changed. Reapply the coupon.');
+  }, [subtotal]);
 
-  useEffect(()=>{let live=true;fetch('/api/buyer?action=coupons-public&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'}).then(r=>r.json()).then(d=>{if(live)setShopCoupons(Array.isArray(d.coupons)?d.coupons:[])}).catch(()=>{});return()=>{live=false}},[slug]);
-  useEffect(() => { setCustomerName(initialCustomerName); setCustomerPhone(initialCustomerPhone); setPaymentPhone(initialCustomerPhone); setCustomerEmail(initialCustomerEmail); setProfileName(initialCustomerName); setProfileEmail(initialCustomerEmail); setProfileAddress(initialCustomerAddress); setProfilePhoneAlt(initialCustomerAlternativePhone); if(initialCustomerAddress&&!deliveryAddress)setDeliveryAddress(initialCustomerAddress); }, [initialCustomerName,initialCustomerPhone,initialCustomerEmail,initialCustomerAddress,initialCustomerAlternativePhone]);
-  useEffect(()=>{if(!slug)return;setCheckoutDraftReady(false);try{const raw=localStorage.getItem(checkoutDraftKey);if(raw){const draft=JSON.parse(raw);if(draft&&draft.version===1){setDeliveryMethod(draft.deliveryMethod==='home'?'home':'pickup');setPaymentMethod(['mpesa','airtel','card','delivery'].includes(draft.paymentMethod)?draft.paymentMethod:'mpesa');setDeliveryCounty(draft.deliveryCounty||'');setDeliverySubCounty(draft.deliverySubCounty||'');setDeliveryEstate(draft.deliveryEstate||'');setDeliveryDirections(draft.deliveryDirections||'');setCustomerName(draft.customerName||initialCustomerName);setCustomerPhone(draft.customerPhone||initialCustomerPhone);setPaymentPhone(draft.paymentPhone||initialCustomerPhone);setCustomerEmail(draft.customerEmail||initialCustomerEmail);setDeliveryAddress(draft.deliveryAddress||initialCustomerAddress);setPickupStation(draft.pickupStation||'');setVoucherCode(draft.voucherCode||'');}}}catch(error){console.warn('Checkout draft restoration failed:',error)}setCheckoutDraftReady(true);},[slug,initialCustomerPhone]);
-  useEffect(()=>{if(!slug||!checkoutDraftReady)return;try{localStorage.setItem(checkoutDraftKey,JSON.stringify({version:1,deliveryMethod,paymentMethod,deliveryCounty,deliverySubCounty,deliveryEstate,deliveryDirections,customerName,customerPhone,paymentPhone,customerEmail,deliveryAddress,pickupStation,voucherCode,savedAt:Date.now()}));}catch(error){console.warn('Checkout draft save failed:',error)}},[slug,checkoutDraftReady,deliveryMethod,paymentMethod,deliveryCounty,deliverySubCounty,deliveryEstate,deliveryDirections,customerName,customerPhone,paymentPhone,customerEmail,deliveryAddress,pickupStation,voucherCode]);
-  useEffect(()=>{if(!slug||!activeOrderNumber)return;try{localStorage.setItem('dasmarket-active-order-'+slug+'-'+initialCustomerPhone,activeOrderNumber)}catch{}},[slug,initialCustomerPhone,activeOrderNumber]);
+  useEffect(() => {
+    let live = true;
+    fetch('/api/buyer?action=coupons-public&slug=' + encodeURIComponent(slug), {
+      credentials: 'same-origin',
+      cache: 'no-store',
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (live) setShopCoupons(Array.isArray(d.coupons) ? d.coupons : []);
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [slug]);
+
+  useEffect(() => {
+    setCustomerName(initialCustomerName);
+    setCustomerPhone(initialCustomerPhone);
+    setPaymentPhone(initialCustomerPhone);
+    setCustomerEmail(initialCustomerEmail);
+    setProfileName(initialCustomerName);
+    setProfileEmail(initialCustomerEmail);
+    setProfileAddress(initialCustomerAddress);
+    setProfilePhoneAlt(initialCustomerAlternativePhone);
+    if (initialCustomerAddress && !deliveryAddress) setDeliveryAddress(initialCustomerAddress);
+  }, [initialCustomerName, initialCustomerPhone, initialCustomerEmail, initialCustomerAddress, initialCustomerAlternativePhone]);
 
   useEffect(() => {
     let live = true;
@@ -355,7 +648,9 @@ export function StorefrontFlow({
 
     if (!initialCustomerPhone) {
       setOrdersLoading(false);
-      return () => { live = false; };
+      return () => {
+        live = false;
+      };
     }
 
     const loadOrders = async () => {
@@ -369,7 +664,8 @@ export function StorefrontFlow({
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
-          if (response.status === 401) throw Error('Your buyer session needs refreshing. Sign in again to securely load your orders.');
+          if (response.status === 401)
+            throw Error('Your buyer session needs refreshing. Sign in again to securely load your orders.');
           throw Error(data.error || 'Could not load your orders.');
         }
         const serverOrders: BuyerOrder[] = (Array.isArray(data.orders) ? data.orders : []).map((order: any) => ({
@@ -392,7 +688,7 @@ export function StorefrontFlow({
           total: Number(order.total) || 0,
           lines: (order.items || []).map((item: any) => ({
             product: {
-              id: String(item.id || ('item-' + item.name)),
+              id: String(item.id || 'item-' + item.name),
               name: item.name,
               price: Number(item.price) || 0,
               category: item.category || 'Product',
@@ -411,18 +707,20 @@ export function StorefrontFlow({
         }));
 
         if (live) {
-          // Merge into the latest state, never replace it with a stale request snapshot.
-          // Orders are append-only in the buyer history, so a transient empty response
-          // must not make an already-known order disappear.
           setOrders((current) => {
             const merged = [...current];
             for (const incoming of serverOrders) {
-              const index = merged.findIndex((existing) =>
-                (incoming.orderId && existing.orderId === incoming.orderId) ||
-                existing.orderNumber === incoming.orderNumber
+              const index = merged.findIndex(
+                (existing) =>
+                  (incoming.orderId && existing.orderId === incoming.orderId) ||
+                  existing.orderNumber === incoming.orderNumber,
               );
               if (index >= 0) {
-                merged[index] = { ...merged[index], ...incoming, chatToken: merged[index].chatToken || incoming.chatToken };
+                merged[index] = {
+                  ...merged[index],
+                  ...incoming,
+                  chatToken: merged[index].chatToken || incoming.chatToken,
+                };
               } else {
                 merged.push(incoming);
               }
@@ -449,56 +747,163 @@ export function StorefrontFlow({
     };
   }, [slug, initialCustomerPhone]);
 
-  const deliveryFee = Math.max(0,Number(deliveryMethod==='pickup'?shopDeliveryPickupFee:shopDeliveryHomeFee)||0);
-  const total = Math.max(0, subtotal - Number(appliedCoupon?.discount||0) + deliveryFee);
-  const activeOrder = orders.find((order) => order.orderNumber === activeOrderNumber) || (!activeOrderNumber ? orders[0] : undefined);
-  useEffect(()=>{if(view==='order-detail'&&initialOrderNumber)setActiveOrderNumber(initialOrderNumber);},[view,orders,initialOrderNumber]);
-  useEffect(()=>{let live=true;if(!initialCustomerPhone||view!=='inbox'){setChatThreads([]);return()=>{live=false};}const refresh=async()=>{try{const response=await fetch('/api/store?action=customer-chat-threads&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'});const data=await response.json().catch(()=>({}));if(!response.ok)throw Error(data.error||'Could not load messages.');if(live)setChatThreads(Array.isArray(data.threads)?data.threads:[]);}catch(error:any){if(live)setBuyerFeatureMessage(error.message||'Could not load messages.');}};void refresh();const timer=window.setInterval(()=>{if(document.visibilityState==='visible')void refresh();},10000);return()=>{live=false;window.clearInterval(timer)}},[slug,initialCustomerPhone,view]);
-  useEffect(()=>{if(activeOrder?.orderId)setRetryPaymentPhone(activeOrder.customerPhone||initialCustomerPhone)},[activeOrder?.orderId,initialCustomerPhone]);
+  const deliveryFee = Math.max(0, Number(deliveryMethod === 'pickup' ? shopDeliveryPickupFee : shopDeliveryHomeFee) || 0);
+  const total = Math.max(0, subtotal - Number(appliedCoupon?.discount || 0) + deliveryFee);
+  const activeOrder =
+    orders.find((order) => order.orderNumber === activeOrderNumber) || (!activeOrderNumber ? orders[0] : undefined);
 
-  useEffect(()=>{
-    if(view!=='checkout/processing'||!activeOrder?.orderId)return;
-    let live=true,requestInFlight=false,attempts=0,finished=false;
-    const checkPayment=async()=>{
-      if(!live||requestInFlight||finished)return;
-      requestInFlight=true;attempts++;
-      try{
-        const response=await fetch('/api/buyer?action=customer-payment-status&slug='+encodeURIComponent(slug)+'&orderId='+encodeURIComponent(String(activeOrder.orderId||'')),{credentials:'same-origin',cache:'no-store'});
-        const data=await response.json().catch(()=>({}));
-        if(!response.ok)throw Error(data.error||'Could not check payment status.');
-        if(!live)return;
-        const status=String(data.paymentStatus||'pending').toLowerCase();
-        if(status==='succeeded'||status==='failed'||status==='cancelled'||status==='reversed'){
-          finished=true;
-          setOrders(current=>current.map(order=>order.orderId===activeOrder.orderId?{...order,paymentStatus:status,receipt:data.receipt||null}:order));
-          if(status==='succeeded'){
+  useEffect(() => {
+    if (view === 'order-detail' && initialOrderNumber) setActiveOrderNumber(initialOrderNumber);
+  }, [view, orders, initialOrderNumber]);
+
+  useEffect(() => {
+    let live = true;
+    if (!initialCustomerPhone || view !== 'inbox') {
+      setChatThreads([]);
+      return () => {
+        live = false;
+      };
+    }
+    const refresh = async () => {
+      try {
+        const response = await fetch('/api/store?action=customer-chat-threads&slug=' + encodeURIComponent(slug), {
+          credentials: 'same-origin',
+          cache: 'no-store',
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw Error(data.error || 'Could not load messages.');
+        if (live) setChatThreads(Array.isArray(data.threads) ? data.threads : []);
+      } catch (error: any) {
+        if (live) setBuyerFeatureMessage(error.message || 'Could not load messages.');
+      }
+    };
+    void refresh();
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void refresh();
+    }, 10000);
+    return () => {
+      live = false;
+      window.clearInterval(timer);
+    };
+  }, [slug, initialCustomerPhone, view]);
+
+  useEffect(() => {
+    if (activeOrder?.orderId) setRetryPaymentPhone(activeOrder.customerPhone || initialCustomerPhone);
+  }, [activeOrder?.orderId, initialCustomerPhone]);
+
+  useEffect(() => {
+    if (view !== 'checkout/processing' || !activeOrder?.orderId) return;
+    let live = true;
+    let requestInFlight = false;
+    let attempts = 0;
+    let finished = false;
+    const checkPayment = async () => {
+      if (!live || requestInFlight || finished) return;
+      requestInFlight = true;
+      attempts++;
+      try {
+        const response = await fetch(
+          '/api/buyer?action=customer-payment-status&slug=' +
+            encodeURIComponent(slug) +
+            '&orderId=' +
+            encodeURIComponent(String(activeOrder.orderId || '')),
+          { credentials: 'same-origin', cache: 'no-store' },
+        );
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw Error(data.error || 'Could not check payment status.');
+        if (!live) return;
+        const status = String(data.paymentStatus || 'pending').toLowerCase();
+        if (status === 'succeeded' || status === 'failed' || status === 'cancelled' || status === 'reversed') {
+          finished = true;
+          setOrders((current) =>
+            current.map((order) =>
+              order.orderId === activeOrder.orderId ? { ...order, paymentStatus: status, receipt: data.receipt || null } : order,
+            ),
+          );
+          if (status === 'succeeded') {
             setPaymentPollMessage('Payment confirmed by Safaricom.');
-            onOrderCreated?.(activeOrder.chatToken||'',activeOrder.orderNumber);
+            onOrderCreated?.(activeOrder.chatToken || '', activeOrder.orderNumber);
             onNavigate('checkout/complete');
-          }else{
-            setPaymentPollMessage(data.message|| (status==='cancelled'?'Safaricom confirmed that the payment was cancelled.':'Safaricom confirmed that the payment was not successful. You can retry when ready.'));
+          } else {
+            setPaymentPollMessage(
+              data.message ||
+                (status === 'cancelled'
+                  ? 'Safaricom confirmed that the payment was cancelled.'
+                  : 'Safaricom confirmed that the payment was not successful. You can retry when ready.'),
+            );
           }
           return;
         }
-        if(data.providerResponded){setPaymentProviderResponded(true);setPaymentPollMessage('Safaricom has processed the request. Verifying the M-PESA receipt…');}
-        else if(attempts>=20){
-          finished=true;
+        if (data.providerResponded) {
+          setPaymentProviderResponded(true);
+          setPaymentPollMessage('Safaricom has processed the request. Verifying the M-PESA receipt…');
+        } else if (attempts >= 20) {
+          finished = true;
           setPaymentProviderResponded(false);
-          setPaymentPollMessage('We have not received a final result from Safaricom yet. Your order remains unpaid. Leave this page and check the order again shortly; do not submit another payment until its status is updated.');
-        }else setPaymentPollMessage(data.message||'Waiting for Safaricom payment confirmation…');
-      }catch(error:any){
-        if(live)setPaymentPollMessage('Connection interrupted. Retrying the payment check automatically…');
-      }finally{requestInFlight=false;}
+          setPaymentPollMessage(
+            'We have not received a final result from Safaricom yet. Your order remains unpaid. Leave this page and check the order again shortly; do not submit another payment until its status is updated.',
+          );
+        } else {
+          setPaymentPollMessage(data.message || 'Waiting for Safaricom payment confirmation…');
+        }
+      } catch {
+        if (live) setPaymentPollMessage('Connection interrupted. Retrying the payment check automatically…');
+      } finally {
+        requestInFlight = false;
+      }
     };
     setPaymentProviderResponded(false);
     setPaymentPollMessage('Waiting for payment confirmation…');
     void checkPayment();
-    const timer=window.setInterval(()=>{if(document.visibilityState==='visible')void checkPayment();},6000);
-    return()=>{live=false;window.clearInterval(timer);};
-  },[view,slug,activeOrder?.orderId,activeOrder?.orderNumber]);
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void checkPayment();
+    }, 6000);
+    return () => {
+      live = false;
+      window.clearInterval(timer);
+    };
+  }, [view, slug, activeOrder?.orderId, activeOrder?.orderNumber]);
 
-  useEffect(()=>{const status=String(activeOrder?.paymentStatus||'');if(lastPaymentStatus.current&&lastPaymentStatus.current!=='succeeded'&&status==='succeeded'){setPaymentCelebration(true);const timer=window.setTimeout(()=>setPaymentCelebration(false),5200);lastPaymentStatus.current=status;return()=>window.clearTimeout(timer)}if(status)lastPaymentStatus.current=status},[activeOrder?.paymentStatus]);
-  async function retryActiveOrderPayment(){if(!activeOrder?.orderId||retryingOrder)return;const cleaned=retryPaymentPhone.trim().replace(/[\s().-]/g,'');if(!/^\+?254[17]\d{8}$|^0[17]\d{8}$/.test(cleaned)){setRetryMessage('Enter a valid Kenyan M-PESA number (07…, 01… or 254…).');return;}setRetryingOrder(true);setRetryMessage('');try{const r=await fetch('/api/payments?action=customer-payment-retry',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug,orderId:activeOrder.orderId,paymentPhone:cleaned})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Could not retry payment');setOrders(current=>current.map(order=>order.orderId===activeOrder.orderId?{...order,paymentStatus:'pending'}:order));setRetryMessage('M-PESA prompt sent. Enter your PIN to complete payment.')}catch(e:any){setRetryMessage(e.message||'Could not retry payment')}finally{setRetryingOrder(false)}}
+  useEffect(() => {
+    const status = String(activeOrder?.paymentStatus || '');
+    if (lastPaymentStatus.current && lastPaymentStatus.current !== 'succeeded' && status === 'succeeded') {
+      setPaymentCelebration(true);
+      const timer = window.setTimeout(() => setPaymentCelebration(false), 5200);
+      lastPaymentStatus.current = status;
+      return () => window.clearTimeout(timer);
+    }
+    if (status) lastPaymentStatus.current = status;
+  }, [activeOrder?.paymentStatus]);
+
+  async function retryActiveOrderPayment() {
+    if (!activeOrder?.orderId || retryingOrder) return;
+    const cleaned = retryPaymentPhone.trim().replace(/[\s().-]/g, '');
+    if (!/^\+?254[17]\d{8}$|^0[17]\d{8}$/.test(cleaned)) {
+      setRetryMessage('Enter a valid Kenyan M-PESA number (07…, 01… or 254…).');
+      return;
+    }
+    setRetryingOrder(true);
+    setRetryMessage('');
+    try {
+      const r = await fetch('/api/payments?action=customer-payment-retry', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, orderId: activeOrder.orderId, paymentPhone: cleaned }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw Error(d.error || 'Could not retry payment');
+      setOrders((current) =>
+        current.map((order) => (order.orderId === activeOrder.orderId ? { ...order, paymentStatus: 'pending' } : order)),
+      );
+      setRetryMessage('M-PESA prompt sent. Enter your PIN to complete payment.');
+    } catch (e: any) {
+      setRetryMessage(e.message || 'Could not retry payment');
+    } finally {
+      setRetryingOrder(false);
+    }
+  }
+
   const recentlyViewedProducts = recentlyViewedIds
     .map((id) => products.find((product) => product.id === id))
     .filter((product): product is StoreProduct => Boolean(product));
@@ -516,14 +921,32 @@ export function StorefrontFlow({
   }
 
   async function applyVoucher() {
-    if(!voucherCode.trim()){setAppliedCoupon(null);setVoucherMessage('Enter a coupon code first.');return;}
-    try{const r=await fetch('/api/buyer?action=coupon-validate',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({slug,code:voucherCode.trim(),subtotal})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Coupon could not be applied.');setAppliedCoupon({code:d.code,discount:Number(d.discount)||0,description:d.description});setVoucherMessage(d.description+' applied. You save '+formatKes(d.discount)+'.');}catch(e:any){setAppliedCoupon(null);setVoucherMessage(e.message||'Coupon could not be applied.');}
+    if (!voucherCode.trim()) {
+      setAppliedCoupon(null);
+      setVoucherMessage('Enter a coupon code first.');
+      return;
+    }
+    try {
+      const r = await fetch('/api/buyer?action=coupon-validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ slug, code: voucherCode.trim(), subtotal }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw Error(d.error || 'Coupon could not be applied.');
+      setAppliedCoupon({ code: d.code, discount: Number(d.discount) || 0, description: d.description });
+      setVoucherMessage(`${d.description} applied. You save ${formatKes(d.discount)}.`);
+    } catch (e: any) {
+      setAppliedCoupon(null);
+      setVoucherMessage(e.message || 'Coupon could not be applied.');
+    }
   }
 
   async function placeOrder() {
     if (!lines.length || submitting) return;
     const isCash = paymentMethod === 'delivery';
-    if (!isCash && !/^\+?254[17]\d{8}$|^0[17]\d{8}$/.test(paymentPhone.trim().replace(/[\s().-]/g,''))) {
+    if (!isCash && !/^\+?254[17]\d{8}$|^0[17]\d{8}$/.test(paymentPhone.trim().replace(/[\s().-]/g, ''))) {
       setCheckoutError('Enter a valid Kenyan M-PESA phone number to receive the payment prompt.');
       return;
     }
@@ -537,8 +960,28 @@ export function StorefrontFlow({
     }
     setSubmitting(true);
     setCheckoutError('');
-    const fingerprint=JSON.stringify({slug,items:lines.map(({product,quantity})=>[product.id,quantity]).sort((a,b)=>String(a[0]).localeCompare(String(b[0]))),coupon:appliedCoupon?.code||'',paymentMethod,paymentPhone:isCash?'':paymentPhone.trim(),deliveryFee,deliveryMethod,deliveryCounty,deliverySubCounty,deliveryEstate:deliveryEstate.trim(),deliveryAddress:deliveryAddress.trim(),deliveryDirections:deliveryDirections.trim(),pickupStation:pickupStation.trim()});
-    if(!checkoutIdempotency.current||checkoutIdempotency.current.fingerprint!==fingerprint){const key=window.crypto?.randomUUID?.()||('buyer-'+Date.now()+'-'+Math.random().toString(36).slice(2,14));checkoutIdempotency.current={fingerprint,key};}
+    const fingerprint = JSON.stringify({
+      slug,
+      items: lines
+        .map(({ product, quantity }) => [product.id, quantity])
+        .sort((a, b) => String(a[0]).localeCompare(String(b[0]))),
+      coupon: appliedCoupon?.code || '',
+      paymentMethod,
+      paymentPhone: isCash ? '' : paymentPhone.trim(),
+      deliveryFee,
+      deliveryMethod,
+      deliveryCounty,
+      deliverySubCounty,
+      deliveryEstate: deliveryEstate.trim(),
+      deliveryAddress: deliveryAddress.trim(),
+      deliveryDirections: deliveryDirections.trim(),
+      pickupStation: pickupStation.trim(),
+    });
+    if (!checkoutIdempotency.current || checkoutIdempotency.current.fingerprint !== fingerprint) {
+      const key =
+        window.crypto?.randomUUID?.() || 'buyer-' + Date.now() + '-' + Math.random().toString(36).slice(2, 14);
+      checkoutIdempotency.current = { fingerprint, key };
+    }
     try {
       const response = await fetch('/api/buyer?action=order', {
         method: 'POST',
@@ -564,7 +1007,9 @@ export function StorefrontFlow({
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.orderNumber || !data.orderId) {
-        throw new Error(data.error || 'We could not create your order or start M-PESA. Please review your details and try again.');
+        throw new Error(
+          data.error || 'We could not create your order or start M-PESA. Please review your details and try again.',
+        );
       }
       const createdAt = new Date().toISOString();
       const order: BuyerOrder = {
@@ -582,23 +1027,26 @@ export function StorefrontFlow({
         deliverySubCounty,
         deliveryEstate: deliveryEstate.trim(),
         deliveryDirections: deliveryDirections.trim(),
-        subtotal: Number(data.subtotal??subtotal),
-        deliveryFee: Number(data.deliveryFee??deliveryFee),
-        total: Number(data.total??total),
+        subtotal: Number(data.subtotal ?? subtotal),
+        deliveryFee: Number(data.deliveryFee ?? deliveryFee),
+        total: Number(data.total ?? total),
         lines: lines.map((line) => ({ ...line })),
-        chatToken: data.chatToken||'',
+        chatToken: data.chatToken || '',
         paymentStatus: data.paymentStatus || 'pending',
-        discount: Number(data.discount||0),
-        couponCode: data.couponCode||null,
+        discount: Number(data.discount || 0),
+        couponCode: data.couponCode || null,
       };
       const updatedOrders = [order, ...orders.filter((entry) => entry.orderNumber !== order.orderNumber)];
       setOrders(updatedOrders);
       setActiveOrderNumber(order.orderNumber);
-      checkoutIdempotency.current=null;
+      checkoutIdempotency.current = null;
       onCartChange({});
-      try{localStorage.removeItem(checkoutDraftKey)}catch{}
       if (isCash) {
-        setPaymentPollMessage(deliveryMethod === 'pickup' ? 'Order placed. Pay in cash when you collect it; the seller must accept the order first.' : 'Order placed. Pay the seller in cash when it arrives; the seller must accept the order first.');
+        setPaymentPollMessage(
+          deliveryMethod === 'pickup'
+            ? 'Order placed. Pay in cash when you collect it; the seller must accept the order first.'
+            : 'Order placed. Pay the seller in cash when it arrives; the seller must accept the order first.',
+        );
         onNavigate('orders');
       } else {
         setPaymentPollMessage('Waiting for payment confirmation…');
@@ -613,23 +1061,72 @@ export function StorefrontFlow({
 
   function openOrder(order: BuyerOrder, next: string) {
     setActiveOrderNumber(order.orderNumber);
-    if (next === 'inbox') onOpenChat?.(order.chatToken || '', order.orderNumber, order.orderId);
+    if (next === 'inbox' || next === 'order-tracking') {
+      onOpenChat?.(order.chatToken || '', order.orderNumber, order.orderId);
+    }
     onNavigate(next);
   }
 
   function renderSummary() {
     return (
-      <aside className="customer-summary-card">
+      <aside className="sf-summary-card">
         <h2>{view === 'cart' ? 'Cart summary' : 'Order summary'}</h2>
-        {view === 'cart' ? <div className="customer-summary-row customer-summary-total"><span>Subtotal</span><strong>{formatKes(subtotal)}</strong></div> : <>
-          <div className="customer-summary-row"><span>Items total</span><strong>{formatKes(subtotal)}</strong></div>
-          <div className="customer-summary-row"><span>Delivery fees</span><strong>{formatKes(deliveryFee)}</strong></div>
-          {appliedCoupon&&<div className="customer-summary-row"><span>Coupon ({appliedCoupon.code})</span><strong>−{formatKes(appliedCoupon.discount)}</strong></div>}
-          <div className="customer-summary-row customer-summary-total"><span>Total</span><strong>{formatKes(total)}</strong></div>
-        </>}
-        <p className="customer-preview-note"><ShieldCheck size={15} /> Prices and stock are rechecked by the shop server before an M-PESA request is created.</p>
+        {view !== 'cart' && (
+          <div className="sf-checkout-items-mini">
+            {lines.map(({ product, quantity }) => (
+              <div className="sf-checkout-item-mini" key={product.id}>
+                <div className="sf-checkout-item-mini-img">
+                  <ProductThumb product={product} />
+                </div>
+                <div>
+                  <strong>{product.name}</strong>
+                  <small>
+                    Qty {quantity} · {formatKes(product.price)}
+                  </small>
+                </div>
+                <b>{formatKes(product.price * quantity)}</b>
+              </div>
+            ))}
+          </div>
+        )}
+        {view === 'cart' ? (
+          <div className="sf-summary-row sf-summary-total">
+            <span>Subtotal</span>
+            <strong>{formatKes(subtotal)}</strong>
+          </div>
+        ) : (
+          <>
+            <div className="sf-summary-row">
+              <span>Items total</span>
+              <strong>{formatKes(subtotal)}</strong>
+            </div>
+            <div className="sf-summary-row">
+              <span>{deliveryMethod === 'pickup' ? 'Pickup fee' : 'Delivery fee'}</span>
+              <strong>{deliveryFee ? formatKes(deliveryFee) : 'Free'}</strong>
+            </div>
+            {appliedCoupon && (
+              <div className="sf-summary-row">
+                <span>Coupon ({appliedCoupon.code})</span>
+                <strong>−{formatKes(appliedCoupon.discount)}</strong>
+              </div>
+            )}
+            <div className="sf-summary-row sf-summary-total">
+              <span>Total</span>
+              <strong>{formatKes(total)}</strong>
+            </div>
+          </>
+        )}
+        <p className="sf-summary-note">
+          <ShieldCheck size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+          <span>Prices and stock are rechecked by the shop server before an M-PESA request is created.</span>
+        </p>
         {view === 'cart' && (
-          <button type="button" className="customer-primary-button" disabled={!lines.length} onClick={() => onNavigate('checkout/delivery')}>
+          <button
+            type="button"
+            className="sf-btn sf-btn-accent"
+            disabled={!lines.length}
+            onClick={() => onNavigate('checkout/delivery')}
+          >
             Checkout ({formatKes(subtotal)}) <ArrowRight size={17} />
           </button>
         )}
@@ -640,63 +1137,132 @@ export function StorefrontFlow({
   function renderCart() {
     const itemCount = lines.reduce((count, line) => count + line.quantity, 0);
     return (
-      <section className="customer-flow market-cart-page">
-        <div className="market-cart-heading">
-          <button type="button" className="market-cart-back" onClick={() => onNavigate('store')}><ArrowLeft size={17}/> Continue shopping</button>
-          <div><span>SHOPPING BAG</span><h1>Your cart <small>({itemCount} {itemCount===1?'item':'items'})</small></h1><p>Review your items before moving to delivery.</p></div>
-        </div>
+      <section className="sf-flow">
+        <FlowHeading
+          title={`Your cart (${itemCount} ${itemCount === 1 ? 'item' : 'items'})`}
+          subtitle="Review your items before moving to delivery."
+          onBack={() => onNavigate('store')}
+          backLabel="Continue shopping"
+        />
         {lines.length ? (
-          <>
-            <div className="market-cart-layout">
-              <div className="market-cart-items">
-                <div className="market-cart-list-head"><strong>Cart ({itemCount})</strong><span>{lines.length} {lines.length===1?'product':'products'}</span></div>
+          <div className="sf-two-col">
+            <div className="sf-panel">
+              <div className="sf-panel-head">
+                <h2>Cart items</h2>
+                <span className="sf-num" style={{ color: 'var(--sf-muted)', fontSize: 13 }}>
+                  {lines.length} {lines.length === 1 ? 'product' : 'products'}
+                </span>
+              </div>
+              <div className="sf-cart-list">
                 {lines.map(({ product, quantity }) => (
-                  <article className="market-cart-item" key={product.id}>
-                    <button type="button" className="market-cart-product-image" onClick={() => onOpenProduct?.(product)} aria-label={`View ${product.name}`}><ProductThumb product={product}/></button>
-                    <div className="market-cart-product-info">
-                      <button type="button" className="market-cart-product-name" onClick={() => onOpenProduct?.(product)}>{product.name}</button>
-                      <span className="market-cart-category">{product.category || 'Product'} <i>·</i> Sold by {shopName}</span>
-                      <strong className="market-cart-unit-price">{formatKes(product.price)}</strong>
-                      <small className={product.stockQuantity===0?'market-cart-stock-out':'market-cart-stock'}>{product.stockQuantity===0?'Currently out of stock':product.stockQuantity==null?'Availability confirmed at checkout':`${Math.max(0,product.stockQuantity)} available`}</small>
-                      <div className="market-cart-mobile-actions">
-                        <div className="market-cart-quantity" aria-label={`Quantity for ${product.name}`}>
-                          <button type="button" aria-label={`Decrease ${product.name} quantity`} onClick={() => updateQuantity(product.id, quantity - 1)}>−</button>
-                          <span>{quantity}</span>
-                          <button type="button" aria-label={`Increase ${product.name} quantity`} disabled={product.stockQuantity!==null&&product.stockQuantity!==undefined&&quantity>=product.stockQuantity} onClick={() => updateQuantity(product.id, quantity + 1)}>＋</button>
-                        </div>
-                        <button type="button" className="market-cart-remove" onClick={() => updateQuantity(product.id, 0)}>Remove</button>
-                      </div>
+                  <article className="sf-cart-item" key={product.id}>
+                    <button
+                      type="button"
+                      className="sf-cart-thumb"
+                      onClick={() => onOpenProduct?.(product)}
+                      aria-label={`View ${product.name}`}
+                    >
+                      <ProductThumb product={product} />
+                    </button>
+                    <div className="sf-cart-info">
+                      <button type="button" className="sf-cart-name" onClick={() => onOpenProduct?.(product)}>
+                        {product.name}
+                      </button>
+                      <span className="sf-cart-meta">
+                        {product.category || 'Product'} · Sold by {shopName}
+                      </span>
+                      <strong className="sf-cart-unit">{formatKes(product.price)}</strong>
+                      <small
+                        style={{
+                          fontSize: 12,
+                          color: product.stockQuantity === 0 ? 'var(--sf-danger)' : 'var(--sf-muted)',
+                        }}
+                      >
+                        {product.stockQuantity === 0
+                          ? 'Currently out of stock'
+                          : product.stockQuantity == null
+                          ? 'Availability confirmed at checkout'
+                          : `${Math.max(0, product.stockQuantity)} available`}
+                      </small>
                     </div>
-                    <div className="market-cart-item-end">
-                      <strong>{formatKes(product.price * quantity)}</strong>
-                      <div className="market-cart-quantity" aria-label={`Quantity for ${product.name}`}>
-                        <button type="button" aria-label={`Decrease ${product.name} quantity`} onClick={() => updateQuantity(product.id, quantity - 1)}>−</button>
+                    <div className="sf-cart-end">
+                      <strong className="sf-cart-line-total">{formatKes(product.price * quantity)}</strong>
+                      <div className="sf-stepper" aria-label={`Quantity for ${product.name}`}>
+                        <button
+                          type="button"
+                          aria-label={`Decrease ${product.name} quantity`}
+                          onClick={() => updateQuantity(product.id, quantity - 1)}
+                        >
+                          −
+                        </button>
                         <span>{quantity}</span>
-                        <button type="button" aria-label={`Increase ${product.name} quantity`} disabled={product.stockQuantity!==null&&product.stockQuantity!==undefined&&quantity>=product.stockQuantity} onClick={() => updateQuantity(product.id, quantity + 1)}>＋</button>
+                        <button
+                          type="button"
+                          aria-label={`Increase ${product.name} quantity`}
+                          disabled={
+                            product.stockQuantity !== null &&
+                            product.stockQuantity !== undefined &&
+                            quantity >= product.stockQuantity
+                          }
+                          onClick={() => updateQuantity(product.id, quantity + 1)}
+                        >
+                          +
+                        </button>
                       </div>
-                      <button type="button" className="market-cart-remove" onClick={() => updateQuantity(product.id, 0)}>Remove</button>
+                      <button type="button" className="sf-remove-btn" onClick={() => updateQuantity(product.id, 0)}>
+                        Remove
+                      </button>
                     </div>
                   </article>
                 ))}
-                <div className="market-cart-continue"><ShoppingBag size={16}/><button type="button" onClick={() => onNavigate('store')}>Continue shopping</button></div>
               </div>
-              <aside className="market-cart-summary">
-                <h2>Cart summary</h2>
-                <div className="market-cart-summary-line"><span>Items ({itemCount})</span><strong>{formatKes(subtotal)}</strong></div>
-                <div className="market-cart-summary-line"><span>Delivery</span><span>Calculated next</span></div>
-                <div className="market-cart-summary-total"><span>Subtotal</span><strong>{formatKes(subtotal)}</strong></div>
-                <p className="market-cart-delivery-note">Delivery options and any applicable charges are shown on the next step.</p>
-                <button type="button" className="market-cart-checkout" onClick={() => onNavigate('checkout/delivery')}>Proceed to checkout <ArrowRight size={18}/></button>
-                <div className="market-cart-secure"><ShieldCheck size={17}/><span>Secure checkout<br/><small>Your order and payment details are protected.</small></span></div>
-              </aside>
+              <div style={{ paddingTop: 16, borderTop: '1px solid var(--sf-line)' }}>
+                <button type="button" className="sf-btn sf-btn-ghost" onClick={() => onNavigate('store')}>
+                  <ShoppingBag size={16} /> Continue shopping
+                </button>
+              </div>
             </div>
-            <ProductRecommendationShelf products={products} cart={cart} onAdd={id=>updateQuantity(id,(cart[id]||0)+1)} onOpenProduct={onOpenProduct} title="Complete your shopping" subtitle="Popular picks from this shop that are not already in your cart."/>
-            <div className="market-cart-mobile-checkout"><div><small>Subtotal</small><strong>{formatKes(subtotal)}</strong></div><button type="button" onClick={() => onNavigate('checkout/delivery')}>Checkout <ArrowRight size={17}/></button></div>
-          </>
+
+            <aside className="sf-summary-card">
+              <h2>Order summary</h2>
+              <div className="sf-summary-row">
+                <span>Items ({itemCount})</span>
+                <strong>{formatKes(subtotal)}</strong>
+              </div>
+              <div className="sf-summary-row">
+                <span>Delivery</span>
+                <span>Calculated next</span>
+              </div>
+              <div className="sf-summary-row sf-summary-total">
+                <span>Subtotal</span>
+                <strong>{formatKes(subtotal)}</strong>
+              </div>
+              <p className="sf-summary-note">
+                Delivery options and any applicable charges are shown on the next step.
+              </p>
+              <button
+                type="button"
+                className="sf-btn sf-btn-accent"
+                onClick={() => onNavigate('checkout/delivery')}
+              >
+                Proceed to checkout <ArrowRight size={17} />
+              </button>
+              <div className="sf-summary-note">
+                <ShieldCheck size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+                <span>Secure checkout · Your order and payment details are protected.</span>
+              </div>
+            </aside>
+          </div>
         ) : (
-          <div className="market-cart-empty">
-            <span><ShoppingBag size={34}/></span><h2>Your cart is waiting</h2><p>You haven’t added anything from {shopName} yet.</p>
-            <button type="button" onClick={() => onNavigate('store')}>Explore products <ArrowRight size={17}/></button>
+          <div className="sf-state-box">
+            <span className="sf-state-icon">
+              <ShoppingBag size={26} />
+            </span>
+            <h2>Your cart is waiting</h2>
+            <p>You haven’t added anything from {shopName} yet.</p>
+            <button type="button" className="sf-btn sf-btn-primary" onClick={() => onNavigate('store')}>
+              Explore products <ArrowRight size={16} />
+            </button>
           </div>
         )}
       </section>
@@ -704,411 +1270,2617 @@ export function StorefrontFlow({
   }
 
   function renderCheckoutDelivery() {
-    const savePickupStation=(event:any)=>{event.preventDefault();const value=pickupStationDraft.trim();if(!value)return;setPickupStation(value);setPickupStationEditor(false);};
-    const saveDeliveryPreference=async()=>{setDeliveryPreferenceLoading(true);try{return await buyerFeatureRequest('buyer-delivery-preference',{deliveryMethod,deliveryCounty,deliverySubCounty,deliveryEstate,deliveryAddress,deliveryDirections,pickupStation});}finally{setDeliveryPreferenceLoading(false);}};
+    const savePickupStation = (event: any) => {
+      event.preventDefault();
+      const value = pickupStationDraft.trim();
+      if (!value) return;
+      setPickupStation(value);
+      setPickupStationEditor(false);
+    };
+    const saveDeliveryPreference = async () => {
+      setDeliveryPreferenceLoading(true);
+      try {
+        return await buyerFeatureRequest('buyer-delivery-preference', {
+          deliveryMethod,
+          deliveryCounty,
+          deliverySubCounty,
+          deliveryEstate,
+          deliveryAddress,
+          deliveryDirections,
+          pickupStation,
+        });
+      } finally {
+        setDeliveryPreferenceLoading(false);
+      }
+    };
+
     return (
-      <section className="customer-flow market-checkout-page market-checkout-redesign">
-        <CheckoutProgress step={1}/>
-        <FlowHeading title="Delivery details" onBack={() => onNavigate('cart')} backLabel="Back to cart" />
-        <div className="market-checkout-intro"><span>STEP 1 OF 3</span><h2>Where should we deliver your order?</h2><p>Choose how you would like to receive your items from {shopName}.</p></div>
-        <div className="market-checkout-delivery-choice" role="tablist" aria-label="Delivery method">
-          <button type="button" role="tab" aria-selected={deliveryMethod==='pickup'} className={deliveryMethod==='pickup'?'active':''} onClick={()=>setDeliveryMethod('pickup')}><span className="market-checkout-choice-icon"><MapPin size={21}/></span><span><strong>Pickup station</strong><small>Collect your order from your preferred point</small></span><i>{deliveryMethod==='pickup'?'✓':''}</i></button>
-          <button type="button" role="tab" aria-selected={deliveryMethod==='home'} className={deliveryMethod==='home'?'active':''} onClick={()=>setDeliveryMethod('home')}><span className="market-checkout-choice-icon"><Package size={21}/></span><span><strong>Door delivery</strong><small>Have your order brought to your address</small></span><i>{deliveryMethod==='home'?'✓':''}</i></button>
+      <section className="sf-flow">
+        <CheckoutProgress step={1} />
+        <FlowHeading
+          title="Delivery details"
+          subtitle={`Choose how you would like to receive your items from ${shopName}.`}
+          onBack={() => onNavigate('cart')}
+          backLabel="Back to cart"
+        />
+
+        <div className="sf-choice-grid" role="tablist" aria-label="Delivery method">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={deliveryMethod === 'pickup'}
+            className={`sf-choice-card ${deliveryMethod === 'pickup' ? 'active' : ''}`}
+            onClick={() => setDeliveryMethod('pickup')}
+          >
+            <span className="sf-choice-icon">
+              <MapPin size={20} />
+            </span>
+            <span className="sf-choice-copy">
+              <strong>Pickup station</strong>
+              <small>Collect your order from your preferred point</small>
+            </span>
+            <span className="sf-choice-check">{deliveryMethod === 'pickup' ? '✓' : ''}</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={deliveryMethod === 'home'}
+            className={`sf-choice-card ${deliveryMethod === 'home' ? 'active' : ''}`}
+            onClick={() => setDeliveryMethod('home')}
+          >
+            <span className="sf-choice-icon">
+              <Package size={20} />
+            </span>
+            <span className="sf-choice-copy">
+              <strong>Door delivery</strong>
+              <small>Have your order brought to your address</small>
+            </span>
+            <span className="sf-choice-check">{deliveryMethod === 'home' ? '✓' : ''}</span>
+          </button>
         </div>
-        <div className="market-checkout-delivery-layout"><div className="market-checkout-delivery-main">
-        {deliveryMethod==='pickup' ? <div className="market-checkout-card">
-          <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><MapPin size={18}/></span><div><h2>Pickup location</h2><p>Enter the collection station or preferred meeting point</p></div></div>
-          {pickupStation&&!pickupStationEditor ? <div className="market-checkout-saved-location"><div><strong>{pickupStation}</strong><small>{[deliveryAddress,deliveryEstate,deliverySubCounty,deliveryCounty].filter(Boolean).join(', ')||'Saved pickup location'} · Saved for future orders</small></div><button type="button" onClick={()=>{setPickupStationDraft(pickupStation);setPickupStationEditor(true)}}>Change location</button></div> : null}
-          {(!pickupStation||pickupStationEditor) && <form className="market-checkout-location-form" onSubmit={savePickupStation}>
-            <div className="market-checkout-fields">
-              <SearchableLocationSelect label="County" value={deliveryCounty} options={kenyanCounties} placeholder="Type to search counties…" onChange={county=>{setDeliveryCounty(county);setDeliverySubCounty('')}}/>
-              <SearchableLocationSelect label="Sub-county" value={deliverySubCounty} options={kenyanSubCounties[deliveryCounty]||[]} placeholder={deliveryCounty?'Type to search sub-counties…':'Select a county first'} disabled={!deliveryCounty} onChange={setDeliverySubCounty}/>
-              <label className="customer-form-label market-checkout-full">Pickup address / collection point<input required value={pickupStationDraft} onChange={e=>setPickupStationDraft(e.target.value)} placeholder="Pickup station, building, shop or collection point"/></label>
-              <label className="customer-form-label">Estate / area<input required value={deliveryEstate} onChange={e=>setDeliveryEstate(e.target.value)} placeholder="Estate, town or neighbourhood"/></label>
-              <label className="customer-form-label">Street / physical address<input required value={deliveryAddress} onChange={e=>setDeliveryAddress(e.target.value)} placeholder="Street, building or nearby address"/></label>
-              <label className="customer-form-label market-checkout-full">Directions / landmark <small>(optional)</small><textarea value={deliveryDirections} onChange={e=>setDeliveryDirections(e.target.value)} placeholder="Add directions or a nearby landmark"/></label>
+
+        <div className="sf-two-col">
+          <div className="sf-checkout-stack">
+            {deliveryMethod === 'pickup' ? (
+              <div className="sf-panel">
+                <div className="sf-panel-head">
+                  <div>
+                    <h2>Pickup location</h2>
+                    <p>Enter the collection station or preferred meeting point</p>
+                  </div>
+                </div>
+                {pickupStation && !pickupStationEditor ? (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <div>
+                      <strong>{pickupStation}</strong>
+                      <div style={{ fontSize: 13, color: 'var(--sf-muted)' }}>
+                        {[deliveryAddress, deliveryEstate, deliverySubCounty, deliveryCounty].filter(Boolean).join(', ') ||
+                          'Saved pickup location'}{' '}
+                        · Saved for future orders
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="sf-btn sf-btn-secondary"
+                      onClick={() => {
+                        setPickupStationDraft(pickupStation);
+                        setPickupStationEditor(true);
+                      }}
+                    >
+                      Change location
+                    </button>
+                  </div>
+                ) : null}
+                {(!pickupStation || pickupStationEditor) && (
+                  <form className="sf-checkout-stack" onSubmit={savePickupStation}>
+                    <div className="sf-form-grid">
+                      <SearchableLocationSelect
+                        label="County"
+                        value={deliveryCounty}
+                        options={kenyanCounties}
+                        placeholder="Type to search counties…"
+                        onChange={(county) => {
+                          setDeliveryCounty(county);
+                          setDeliverySubCounty('');
+                        }}
+                      />
+                      <SearchableLocationSelect
+                        label="Sub-county"
+                        value={deliverySubCounty}
+                        options={kenyanSubCounties[deliveryCounty] || []}
+                        placeholder={deliveryCounty ? 'Type to search sub-counties…' : 'Select a county first'}
+                        disabled={!deliveryCounty}
+                        onChange={setDeliverySubCounty}
+                      />
+                      <label className="sf-field sf-form-full">
+                        Pickup address / collection point
+                        <input
+                          required
+                          value={pickupStationDraft}
+                          onChange={(e) => setPickupStationDraft(e.target.value)}
+                          placeholder="Pickup station, building, shop or collection point"
+                        />
+                      </label>
+                      <label className="sf-field">
+                        Estate / area
+                        <input
+                          required
+                          value={deliveryEstate}
+                          onChange={(e) => setDeliveryEstate(e.target.value)}
+                          placeholder="Estate, town or neighbourhood"
+                        />
+                      </label>
+                      <label className="sf-field">
+                        Street / physical address
+                        <input
+                          required
+                          value={deliveryAddress}
+                          onChange={(e) => setDeliveryAddress(e.target.value)}
+                          placeholder="Street, building or nearby address"
+                        />
+                      </label>
+                      <label className="sf-field sf-form-full">
+                        Directions / landmark <small>(optional)</small>
+                        <textarea
+                          value={deliveryDirections}
+                          onChange={(e) => setDeliveryDirections(e.target.value)}
+                          placeholder="Add directions or a nearby landmark"
+                        />
+                      </label>
+                    </div>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button type="submit" className="sf-btn sf-btn-primary">
+                        Save pickup location
+                      </button>
+                      {pickupStationEditor && (
+                        <button
+                          type="button"
+                          className="sf-btn sf-btn-secondary"
+                          onClick={() => setPickupStationEditor(false)}
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </form>
+                )}
+              </div>
+            ) : (
+              <div className="sf-panel">
+                <div className="sf-panel-head">
+                  <div>
+                    <h2>Delivery address</h2>
+                    <p>Provide the location where the seller should deliver</p>
+                  </div>
+                </div>
+                <div className="sf-form-grid">
+                  <SearchableLocationSelect
+                    label="County"
+                    value={deliveryCounty}
+                    options={kenyanCounties}
+                    placeholder="Type to search counties…"
+                    onChange={(county) => {
+                      setDeliveryCounty(county);
+                      setDeliverySubCounty('');
+                    }}
+                  />
+                  <SearchableLocationSelect
+                    label="Sub-county"
+                    value={deliverySubCounty}
+                    options={kenyanSubCounties[deliveryCounty] || []}
+                    placeholder={deliveryCounty ? 'Type to search sub-counties…' : 'Select a county first'}
+                    disabled={!deliveryCounty}
+                    onChange={setDeliverySubCounty}
+                  />
+                  <label className="sf-field">
+                    Estate / area
+                    <input
+                      required
+                      value={deliveryEstate}
+                      onChange={(e) => setDeliveryEstate(e.target.value)}
+                      placeholder="e.g. Kilimani"
+                    />
+                  </label>
+                  <label className="sf-field">
+                    Physical address
+                    <input
+                      required
+                      value={deliveryAddress}
+                      onChange={(e) => setDeliveryAddress(e.target.value)}
+                      placeholder="Building, street, plot or house number"
+                    />
+                  </label>
+                  <label className="sf-field sf-form-full">
+                    Directions / landmark <small>(optional)</small>
+                    <textarea
+                      value={deliveryDirections}
+                      onChange={(e) => setDeliveryDirections(e.target.value)}
+                      placeholder="Nearby landmark, gate details or directions"
+                    />
+                  </label>
+                </div>
+              </div>
+            )}
+
+            <div className="sf-panel">
+              <div className="sf-panel-head">
+                <div>
+                  <h2>Contact information</h2>
+                  <p>We will use these details for order updates</p>
+                </div>
+              </div>
+              <div className="sf-form-grid">
+                <label className="sf-field">
+                  Full name
+                  <input
+                    required
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    autoComplete="name"
+                    placeholder="Your full name"
+                  />
+                </label>
+                <label className="sf-field">
+                  Phone number
+                  <input
+                    required
+                    type="tel"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    autoComplete="tel"
+                    placeholder="07… or +254…"
+                  />
+                </label>
+                <label className="sf-field sf-form-full">
+                  Email address <small>(optional)</small>
+                  <input
+                    type="email"
+                    value={customerEmail}
+                    onChange={(e) => setCustomerEmail(e.target.value)}
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                  />
+                </label>
+              </div>
             </div>
-            <div className="market-checkout-inline-actions"><button type="submit" className="customer-primary-button">Save pickup location</button>{pickupStationEditor&&<button type="button" className="customer-secondary-button" onClick={()=>setPickupStationEditor(false)}>Cancel</button>}</div>
-          </form>}
-        </div> : <div className="market-checkout-card">
-          <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><MapPin size={18}/></span><div><h2>Delivery address</h2><p>Provide the location where the seller should deliver</p></div></div>
-          <div className="market-checkout-fields">
-            <SearchableLocationSelect label="County" value={deliveryCounty} options={kenyanCounties} placeholder="Type to search counties…" onChange={county=>{setDeliveryCounty(county);setDeliverySubCounty('')}}/>
-            <SearchableLocationSelect label="Sub-county" value={deliverySubCounty} options={kenyanSubCounties[deliveryCounty]||[]} placeholder={deliveryCounty?'Type to search sub-counties…':'Select a county first'} disabled={!deliveryCounty} onChange={setDeliverySubCounty}/>
-            <label className="customer-form-label">Estate / area<input required value={deliveryEstate} onChange={e=>setDeliveryEstate(e.target.value)} placeholder="e.g. Kilimani"/></label>
-            <label className="customer-form-label">Physical address<input required value={deliveryAddress} onChange={e=>setDeliveryAddress(e.target.value)} placeholder="Building, street, plot or house number"/></label>
-            <label className="customer-form-label market-checkout-full">Directions / landmark <small>(optional)</small><textarea value={deliveryDirections} onChange={e=>setDeliveryDirections(e.target.value)} placeholder="Nearby landmark, gate details or directions"/></label>
           </div>
-        </div>}
-        <div className="market-checkout-card">
-          <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><UserRound size={18}/></span><div><h2>Contact information</h2><p>We will use these details for order updates</p></div></div>
-          <div className="market-checkout-fields">
-            <label className="customer-form-label">Full name<input required value={customerName} onChange={e=>setCustomerName(e.target.value)} autoComplete="name" placeholder="Your full name"/></label>
-            <label className="customer-form-label">Phone number<input required type="tel" value={customerPhone} onChange={e=>setCustomerPhone(e.target.value)} autoComplete="tel" placeholder="07… or +254…"/></label>
-            <label className="customer-form-label market-checkout-full">Email address <small>(optional)</small><input type="email" value={customerEmail} onChange={e=>setCustomerEmail(e.target.value)} autoComplete="email" placeholder="you@example.com"/></label>
+
+          {renderSummary()}
+        </div>
+
+        {checkoutError && (
+          <p className="sf-alert error" style={{ marginTop: 16 }} role="alert">
+            {checkoutError}
+          </p>
+        )}
+
+        <div className="sf-checkout-footer-bar">
+          <div>
+            <small>ORDER TOTAL</small>
+            <strong>{formatKes(total)}</strong>
           </div>
+          <button
+            type="button"
+            className="sf-btn sf-btn-accent"
+            disabled={
+              deliveryPreferenceLoading ||
+              !customerName.trim() ||
+              !customerPhone.trim() ||
+              (deliveryMethod === 'pickup' &&
+                (!pickupStation.trim() ||
+                  !deliveryCounty ||
+                  !deliverySubCounty.trim() ||
+                  !deliveryEstate.trim() ||
+                  !deliveryAddress.trim())) ||
+              (deliveryMethod === 'home' &&
+                (!deliveryCounty || !deliverySubCounty.trim() || !deliveryEstate.trim() || !deliveryAddress.trim()))
+            }
+            onClick={async () => {
+              setCheckoutError('');
+              try {
+                await saveDeliveryPreference();
+                setOrderConfirmed(false);
+                onNavigate('checkout/payment');
+              } catch (error: any) {
+                setCheckoutError(error.message || 'Could not save your delivery details. Please try again.');
+              }
+            }}
+          >
+            {deliveryPreferenceLoading ? 'Saving delivery details…' : 'Continue to payment'} <ArrowRight size={17} />
+          </button>
         </div>
-        </div>
-        <aside className="market-checkout-order-card">
-          <div className="market-checkout-order-card-head"><span>YOUR ORDER</span><strong>{lines.reduce((count,line)=>count+line.quantity,0)} {lines.reduce((count,line)=>count+line.quantity,0)===1?'item':'items'}</strong></div>
-          <div className="market-checkout-order-items">{lines.map(({product,quantity})=><div className="market-checkout-order-item" key={product.id}><ProductThumb product={product}/><div><strong>{product.name}</strong><small>Qty {quantity} · {formatKes(product.price)} each</small></div><b>{formatKes(product.price*quantity)}</b></div>)}</div>
-          <div className="market-checkout-order-total"><span>Items subtotal</span><strong>{formatKes(subtotal)}</strong></div>
-          <div className="market-checkout-order-total"><span>{deliveryMethod==='pickup'?'Pickup fee':'Delivery fee'}</span><strong>{deliveryFee?formatKes(deliveryFee):'Free'}</strong></div>
-          {appliedCoupon&&<div className="market-checkout-order-total"><span>Discount</span><strong>−{formatKes(appliedCoupon.discount)}</strong></div>}
-          <div className="market-checkout-order-grand"><span>Order total</span><strong>{formatKes(total)}</strong></div>
-          <p className="market-checkout-order-secure"><ShieldCheck size={16}/> Your order details are protected. You will review the final amount before payment.</p>
-          {checkoutError&&<p className="customer-checkout-error" role="alert">{checkoutError}</p>}
-          <div className="market-checkout-bottom-action"><div><small>ORDER TOTAL</small><strong>{formatKes(total)}</strong></div><button type="button" className="customer-primary-button" disabled={deliveryPreferenceLoading||!customerName.trim()||!customerPhone.trim()||(deliveryMethod==='pickup'&&(!pickupStation.trim()||!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))} onClick={async()=>{setCheckoutError('');try{await saveDeliveryPreference();setOrderConfirmed(false);onNavigate('checkout/payment')}catch(error:any){setCheckoutError(error.message||'Could not save your delivery details. Please try again.')}}}>{deliveryPreferenceLoading?'Saving delivery details…':'Continue to payment'} <ArrowRight size={18}/></button></div>
-        </aside></div>
-        
-<ProductRecommendationShelf products={products} cart={cart} onAdd={id=>updateQuantity(id,(cart[id]||0)+1)} onOpenProduct={onOpenProduct} title="Add something extra" subtitle="A few more picks from this shop, available to add before you place your order."/>
       </section>
     );
   }
 
   function renderCheckoutPayment() {
-    const confirmMpesa=()=>{if(!/^\+?254[17]\d{8}$|^0[17]\d{8}$/.test(paymentPhone.trim().replace(/[\s().-]/g,''))){setCheckoutError('Enter a valid Kenyan M-PESA phone number to receive the payment prompt.');return;}setCheckoutError('');setPaymentModal(null);};
-    const choosePayment=()=>{setCheckoutError('');setPaymentMethod('mpesa');setPaymentModal('mpesa');};
+    const confirmMpesa = () => {
+      if (!/^\+?254[17]\d{8}$|^0[17]\d{8}$/.test(paymentPhone.trim().replace(/[\s().-]/g, ''))) {
+        setCheckoutError('Enter a valid Kenyan M-PESA phone number to receive the payment prompt.');
+        return;
+      }
+      setCheckoutError('');
+      setPaymentModal(null);
+    };
+    const choosePayment = () => {
+      setCheckoutError('');
+      setPaymentMethod('mpesa');
+      setPaymentModal('mpesa');
+    };
+
     return (
-      <section className="customer-flow market-checkout-page market-checkout-redesign market-checkout-payment">
-        <CheckoutProgress step={2}/>
-        <FlowHeading title="Payment" onBack={() => onNavigate('checkout/delivery')} backLabel="Delivery details" />
-        <div className="market-checkout-intro"><span>STEP 2 OF 3</span><h2>Choose how to pay</h2><p>Your payment is securely processed through M-PESA.</p></div>
-        <div className="market-checkout-payment-layout">
-          <div className="market-checkout-main-column">
-            <div className="market-checkout-card market-checkout-payment-methods-card">
-              <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><WalletCards size={18}/></span><div><h2>Choose a payment method</h2><p>Select how you would like to complete your payment.</p></div></div>
-              <div className="market-payment-method-options" role="group" aria-label="Available payment methods">
-                <button type="button" className={'market-payment-method-option '+(paymentMethod==='mpesa'?'is-selected':'')} aria-pressed={paymentMethod==='mpesa'} onClick={choosePayment}>
-                  <span className="market-payment-method-brand market-payment-mpesa">M</span><strong>M-PESA</strong><small>STK Push</small><i><Check size={13}/></i>
+      <section className="sf-flow">
+        <CheckoutProgress step={2} />
+        <FlowHeading
+          title="Payment"
+          subtitle="Select how you would like to complete your payment."
+          onBack={() => onNavigate('checkout/delivery')}
+          backLabel="Delivery details"
+        />
+
+        <div className="sf-two-col">
+          <div className="sf-checkout-stack">
+            <div className="sf-panel">
+              <div className="sf-panel-head">
+                <div>
+                  <h2>Choose a payment method</h2>
+                  <p>Your payment is securely processed through M-PESA.</p>
+                </div>
+              </div>
+              <div className="sf-choice-grid" role="group" aria-label="Available payment methods">
+                <button
+                  type="button"
+                  className={`sf-choice-card ${paymentMethod === 'mpesa' ? 'is-selected' : ''}`}
+                  aria-pressed={paymentMethod === 'mpesa'}
+                  onClick={choosePayment}
+                >
+                  <span className="sf-choice-icon" style={{ color: '#166534' }}>
+                    M
+                  </span>
+                  <span className="sf-choice-copy">
+                    <strong>M-PESA</strong>
+                    <small>STK Push · {paymentPhone || customerPhone || 'Select phone'}</small>
+                  </span>
+                  <span className="sf-choice-check">{paymentMethod === 'mpesa' ? <Check size={13} /> : ''}</span>
                 </button>
-                {cashOptionEnabled&&<button type="button" className={'market-payment-method-option '+(paymentMethod==='delivery'?'is-selected':'')} aria-pressed={paymentMethod==='delivery'} onClick={()=>{setCheckoutError('');setPaymentMethod('delivery');setPaymentModal(null);}}>
-                  <span className="market-payment-method-brand">K</span><strong>{deliveryMethod==='pickup'?'Pay on pickup':'Cash on delivery'}</strong><small>{deliveryMethod==='pickup'?'Pay when you collect':'Pay when delivered'}</small><i>{paymentMethod==='delivery'?<Check size={13}/>:'○'}</i>
-                </button>}
-                <button type="button" className="market-payment-method-option is-unavailable" disabled aria-disabled="true" title="Airtel Money is not enabled for this shop">
-                  <span className="market-payment-method-brand market-payment-airtel">A</span><strong>Airtel Money</strong><small>Not enabled</small><i>—</i>
+
+                {cashOptionEnabled && (
+                  <button
+                    type="button"
+                    className={`sf-choice-card ${paymentMethod === 'delivery' ? 'is-selected' : ''}`}
+                    aria-pressed={paymentMethod === 'delivery'}
+                    onClick={() => {
+                      setCheckoutError('');
+                      setPaymentMethod('delivery');
+                      setPaymentModal(null);
+                    }}
+                  >
+                    <span className="sf-choice-icon">K</span>
+                    <span className="sf-choice-copy">
+                      <strong>{deliveryMethod === 'pickup' ? 'Pay on pickup' : 'Cash on delivery'}</strong>
+                      <small>{deliveryMethod === 'pickup' ? 'Pay when you collect' : 'Pay when delivered'}</small>
+                    </span>
+                    <span className="sf-choice-check">{paymentMethod === 'delivery' ? <Check size={13} /> : ''}</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  className="sf-choice-card"
+                  disabled
+                  aria-disabled="true"
+                  title="Airtel Money is not enabled for this shop"
+                >
+                  <span className="sf-choice-icon">A</span>
+                  <span className="sf-choice-copy">
+                    <strong>Airtel Money</strong>
+                    <small>Not enabled</small>
+                  </span>
                 </button>
-                <button type="button" className="market-payment-method-option is-unavailable" disabled aria-disabled="true" title="Card payments are not enabled for this shop">
-                  <span className="market-payment-method-brand market-payment-card">▤</span><strong>Bank card</strong><small>Not enabled</small><i>—</i>
+
+                <button
+                  type="button"
+                  className="sf-choice-card"
+                  disabled
+                  aria-disabled="true"
+                  title="Card payments are not enabled for this shop"
+                >
+                  <span className="sf-choice-icon">C</span>
+                  <span className="sf-choice-copy">
+                    <strong>Bank card</strong>
+                    <small>Not enabled</small>
+                  </span>
                 </button>
               </div>
-              {paymentMethod==='mpesa'?<><div className="market-checkout-mpesa-select" role="group" aria-label="M-PESA payment details"><span><strong>Pay securely with M-PESA</strong><small>We will send a payment request to your selected Kenyan mobile number. Enter your PIN only in the official M-PESA prompt.</small></span><button type="button" className="market-checkout-change-phone" onClick={choosePayment}>Choose phone number</button></div><div className="market-checkout-secure-note"><ShieldCheck size={17}/><span>Your order remains pending until Safaricom confirms the payment. Never share your M-PESA PIN or one-time password with anyone.</span></div></>:<div className="market-checkout-secure-note"><ShieldCheck size={17}/><span>{deliveryMethod==='pickup'?'Your order will be sent to the seller for acceptance. Pay cash only when you collect your items.':'Your order will be sent to the seller for acceptance. Pay cash only when your order is delivered.'} Do not pay before the seller confirms the order.</span></div>}
+
+              {paymentMethod === 'mpesa' ? (
+                <div className="sf-checkout-stack">
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <div>
+                      <strong>Pay securely with M-PESA</strong>
+                      <div style={{ fontSize: 13, color: 'var(--sf-muted)' }}>
+                        STK prompt target: <span className="sf-mono">{paymentPhone || customerPhone}</span>
+                      </div>
+                    </div>
+                    <button type="button" className="sf-btn sf-btn-secondary" onClick={choosePayment}>
+                      Choose phone number
+                    </button>
+                  </div>
+                  <div className="sf-alert">
+                    <ShieldCheck size={17} style={{ flexShrink: 0, marginTop: 2 }} />
+                    <span>
+                      Your order remains pending until Safaricom confirms the payment. Never share your M-PESA PIN or
+                      one-time password with anyone.
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="sf-alert">
+                  <ShieldCheck size={17} style={{ flexShrink: 0, marginTop: 2 }} />
+                  <span>
+                    {deliveryMethod === 'pickup'
+                      ? 'Your order will be sent to the seller for acceptance. Pay cash only when you collect your items.'
+                      : 'Your order will be sent to the seller for acceptance. Pay cash only when your order is delivered.'}{' '}
+                    Do not pay before the seller confirms the order.
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="sf-panel">
+              <div className="sf-panel-head">
+                <div>
+                  <h2>Have a voucher?</h2>
+                  <p>Apply a discount code to this order</p>
+                </div>
+              </div>
+              <label className="sf-field">
+                Voucher code
+                <span className="sf-voucher-row">
+                  <input
+                    value={voucherCode}
+                    onChange={(event) => setVoucherCode(event.target.value)}
+                    placeholder="Enter voucher code"
+                  />
+                  <button type="button" className="sf-btn sf-btn-secondary" onClick={applyVoucher}>
+                    Apply
+                  </button>
+                </span>
+                {voucherMessage && <small role="status">{voucherMessage}</small>}
+              </label>
             </div>
           </div>
+
           {renderSummary()}
         </div>
-        {checkoutError&&<p className="customer-checkout-error" role="alert">{checkoutError}</p>}
-        <div className="market-checkout-bottom-action"><div><small>AMOUNT TO PAY</small><strong>{formatKes(total)}</strong></div><button type="button" className="customer-primary-button" disabled={!lines.length} onClick={()=>onNavigate('checkout/review')}>Review your order <ArrowRight size={18}/></button></div>
-<ProductRecommendationShelf products={products} cart={cart} onAdd={id=>updateQuantity(id,(cart[id]||0)+1)} onOpenProduct={onOpenProduct} title="Add something extra" subtitle="A few more picks from this shop, available to add before you place your order."/>
-        {paymentModal==='mpesa'&&<div className="customer-payment-modal-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setPaymentModal(null)}}><section className="customer-payment-modal market-checkout-payment-dialog" role="dialog" aria-modal="true" aria-labelledby="customer-payment-modal-title"><button type="button" className="customer-payment-modal-close" aria-label="Close payment window" onClick={()=>setPaymentModal(null)}>×</button><span className="customer-payment-modal-mark">M</span><h2 id="customer-payment-modal-title">M-PESA payment number</h2><p>Enter the Kenyan mobile number that should receive the STK payment prompt. It can be different from your buyer account number.</p><label className="customer-form-label">Phone number to pay with<input type="tel" inputMode="tel" autoComplete="tel" placeholder="07XX XXX XXX or 2547XXXXXXXX" value={paymentPhone} onChange={e=>setPaymentPhone(e.target.value)} required maxLength={16}/></label><small className="customer-payment-modal-note">Your order remains pending until Safaricom confirms payment.</small><div className="customer-payment-modal-actions"><button type="button" className="customer-secondary-button" onClick={()=>setPaymentModal(null)}>Cancel</button><button type="button" className="customer-primary-button" onClick={confirmMpesa}>Use this number <ArrowRight size={16}/></button></div></section></div>}
+
+        {checkoutError && (
+          <p className="sf-alert error" style={{ marginTop: 16 }} role="alert">
+            {checkoutError}
+          </p>
+        )}
+
+        <div className="sf-checkout-footer-bar">
+          <div>
+            <small>AMOUNT TO PAY</small>
+            <strong>{formatKes(total)}</strong>
+          </div>
+          <button
+            type="button"
+            className="sf-btn sf-btn-accent"
+            disabled={!lines.length}
+            onClick={() => onNavigate('checkout/review')}
+          >
+            Review your order <ArrowRight size={17} />
+          </button>
+        </div>
+
+        {paymentModal === 'mpesa' && (
+          <div
+            className="sf-modal-backdrop"
+            role="presentation"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) setPaymentModal(null);
+            }}
+          >
+            <section
+              className="sf-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="customer-payment-modal-title"
+            >
+              <button
+                type="button"
+                className="sf-modal-close"
+                aria-label="Close payment window"
+                onClick={() => setPaymentModal(null)}
+              >
+                ×
+              </button>
+              <span className="sf-kicker">M-PESA STK PUSH</span>
+              <h2 id="customer-payment-modal-title">M-PESA payment number</h2>
+              <p style={{ margin: 0, fontSize: 13.5, color: 'var(--sf-muted)' }}>
+                Enter the Kenyan mobile number that should receive the STK payment prompt. It can be different from your
+                buyer account number.
+              </p>
+              <label className="sf-field">
+                Phone number to pay with
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="07XX XXX XXX or 2547XXXXXXXX"
+                  value={paymentPhone}
+                  onChange={(e) => setPaymentPhone(e.target.value)}
+                  required
+                  maxLength={16}
+                />
+                <small>Your order remains pending until Safaricom confirms payment.</small>
+              </label>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                <button type="button" className="sf-btn sf-btn-secondary" onClick={() => setPaymentModal(null)}>
+                  Cancel
+                </button>
+                <button type="button" className="sf-btn sf-btn-primary" onClick={confirmMpesa}>
+                  Use this number <ArrowRight size={15} />
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
       </section>
     );
   }
 
   function renderReview() {
-    const addressSummary=deliveryMethod==='home'?[deliveryAddress,deliveryEstate,deliverySubCounty,deliveryCounty].filter(Boolean).join(', '):pickupStation;
+    const addressSummary =
+      deliveryMethod === 'home'
+        ? [deliveryAddress, deliveryEstate, deliverySubCounty, deliveryCounty].filter(Boolean).join(', ')
+        : pickupStation;
+    const cashReady = paymentMethod === 'delivery' && cashOptionEnabled;
+
     return (
-      <section className="customer-flow market-checkout-page market-checkout-redesign market-checkout-review">
-        <CheckoutProgress step={3}/>
-        <FlowHeading title="Place your order" onBack={() => onNavigate('checkout/payment')} backLabel="Payment" />
-        <div className="market-checkout-intro"><span>STEP 3 OF 3</span><h2>Check everything before placing your order</h2><p>Review your delivery and payment details, then confirm your order.</p></div>
-        <div className="market-checkout-review-layout">
-          <div className="market-checkout-main-column">
-            <div className="market-checkout-card">
-              <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><MapPin size={18}/></span><div><h2>Delivery details</h2><p>{deliveryMethod==='pickup'?'Pickup station · From '+formatKes(deliveryFee):'Door delivery · From '+formatKes(deliveryFee)}</p></div><button type="button" className="market-checkout-edit" onClick={()=>{setOrderConfirmed(false);onNavigate('checkout/delivery')}}>Change</button></div>
-              <div className="market-checkout-review-details"><strong>{deliveryMethod==='pickup'?pickupStation:addressSummary}</strong>{deliveryMethod==='home'&&deliveryDirections&&<small>Directions: {deliveryDirections}</small>}<div><span>{customerName}</span><span>{customerPhone}</span>{customerEmail&&<span>{customerEmail}</span>}</div></div>
+      <section className="sf-flow">
+        <CheckoutProgress step={3} />
+        <FlowHeading
+          title="Review your order"
+          subtitle="Check your delivery and payment details, then confirm your order."
+          onBack={() => onNavigate('checkout/payment')}
+          backLabel="Payment"
+        />
+
+        <div className="sf-two-col">
+          <div className="sf-checkout-stack">
+            <div className="sf-panel">
+              <div className="sf-panel-head">
+                <div>
+                  <h2>Delivery information</h2>
+                  <p>{deliveryMethod === 'pickup' ? 'Pickup station' : 'Door delivery'}</p>
+                </div>
+                <button
+                  type="button"
+                  className="sf-btn sf-btn-ghost"
+                  onClick={() => {
+                    setOrderConfirmed(false);
+                    onNavigate('checkout/delivery');
+                  }}
+                >
+                  Edit
+                </button>
+              </div>
+              <strong>{deliveryMethod === 'pickup' ? pickupStation : addressSummary}</strong>
+              {deliveryMethod === 'home' && deliveryDirections && (
+                <div style={{ fontSize: 13, color: 'var(--sf-muted)', marginTop: 4 }}>
+                  Directions: {deliveryDirections}
+                </div>
+              )}
+              <div style={{ fontSize: 13.5, color: 'var(--sf-ink-2)', marginTop: 8 }}>
+                {customerName} · {customerPhone}
+                {customerEmail ? ` · ${customerEmail}` : ''}
+              </div>
             </div>
-            <div className="market-checkout-card">
-              <div className="market-checkout-card-heading"><span className="market-checkout-mpesa-mark">M</span><div><h2>Payment method</h2><p>{paymentMethod==='delivery'?(deliveryMethod==='pickup'?'Cash on pickup':'Cash on delivery'):'M-PESA · STK push'}</p></div><button type="button" className="market-checkout-edit" onClick={()=>{setOrderConfirmed(false);onNavigate('checkout/payment')}}>Change</button></div>
-              <div className="market-checkout-review-details"><strong>{paymentLabels[paymentMethod]}</strong><small>{paymentMethod==='delivery'?'The seller must accept your order. Cash is due only when '+(deliveryMethod==='pickup'?'you collect it.':'it is delivered.'):'Payment prompt will be sent to '+(paymentPhone||customerPhone)+'. Payment is only complete after Safaricom confirmation.'}</small></div>
+
+            <div className="sf-panel">
+              <div className="sf-panel-head">
+                <div>
+                  <h2>Payment method</h2>
+                  <p>
+                    {paymentMethod === 'delivery'
+                      ? deliveryMethod === 'pickup'
+                        ? 'Cash on pickup'
+                        : 'Cash on delivery'
+                      : 'M-PESA · STK push'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="sf-btn sf-btn-ghost"
+                  onClick={() => {
+                    setOrderConfirmed(false);
+                    onNavigate('checkout/payment');
+                  }}
+                >
+                  Edit
+                </button>
+              </div>
+              <strong>{paymentLabels[paymentMethod]}</strong>
+              <p style={{ margin: '6px 0 0', fontSize: 13.5, color: 'var(--sf-muted)' }}>
+                {paymentMethod === 'delivery'
+                  ? 'The seller must accept your order. Cash is due only when ' +
+                    (deliveryMethod === 'pickup' ? 'you collect it.' : 'it is delivered.')
+                  : 'Payment prompt will be sent to ' +
+                    (paymentPhone || customerPhone) +
+                    '. Payment is only complete after Safaricom confirmation.'}
+              </p>
             </div>
-            <div className="market-checkout-card">
-              <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><ShoppingBag size={18}/></span><div><h2>Shipment 1/1</h2><p>Fulfilled by {shopName}</p></div><button type="button" className="market-checkout-edit" onClick={()=>onNavigate('cart')}>Modify cart</button></div>
-              {lines.map(({product,quantity})=><article className="customer-review-product market-checkout-product-row" key={product.id}><ProductThumb product={product}/><div><strong>{product.name}</strong><small>Quantity: {quantity} · {formatKes(product.price)} each</small></div><b>{formatKes(product.price*quantity)}</b></article>)}
+
+            <div className="sf-panel">
+              <div className="sf-panel-head">
+                <div>
+                  <h2>Items in your order</h2>
+                  <p>
+                    {lines.length} {lines.length === 1 ? 'product' : 'products'} · Fulfilled by {shopName}
+                  </p>
+                </div>
+                <button type="button" className="sf-btn sf-btn-ghost" onClick={() => onNavigate('cart')}>
+                  Edit cart
+                </button>
+              </div>
+              <div className="sf-order-items" style={{ padding: 0 }}>
+                {lines.map(({ product, quantity }) => (
+                  <article className="sf-order-item" key={product.id}>
+                    <div className="sf-order-item-img">
+                      <ProductThumb product={product} />
+                    </div>
+                    <div>
+                      <strong>{product.name}</strong>
+                      <span>
+                        Qty: {quantity} · {formatKes(product.price)} each
+                      </span>
+                    </div>
+                    <b>{formatKes(product.price * quantity)}</b>
+                  </article>
+                ))}
+              </div>
             </div>
-            <p className="customer-terms-copy">By proceeding, you are automatically accepting the <button type="button" onClick={()=>onNavigate('shop-terms')}>Terms &amp; Conditions</button>.</p>
-            <div className="market-checkout-card market-checkout-voucher-card">
-              <div className="market-checkout-card-heading"><span className="market-checkout-step-icon"><TicketPercent size={18}/></span><div><h2>Discount code</h2><p>Apply a voucher to this order</p></div></div>
-              <label className="customer-voucher"><span>Voucher code</span><span className="customer-voucher-controls"><input value={voucherCode} onChange={event=>setVoucherCode(event.target.value)} placeholder="Enter code here"/><button type="button" onClick={applyVoucher}>Apply</button></span>{voucherMessage&&<small role="status">{voucherMessage}</small>}</label>
-            </div>
+
+            <p style={{ fontSize: 13, color: 'var(--sf-muted)', margin: 0 }}>
+              By placing your order, you agree to the store’s{' '}
+              <button
+                type="button"
+                className="sf-auth-link"
+                onClick={() => onNavigate('shop-terms')}
+              >
+                Terms &amp; Conditions
+              </button>
+              .
+            </p>
           </div>
+
           {renderSummary()}
         </div>
-        {checkoutError&&<p className="customer-preview-alert" role="alert">{checkoutError}</p>}
-        {orderConfirmed&&<div className="market-checkout-confirmed" role="status"><Check size={18}/><div><strong>Order details confirmed</strong><small>{paymentMethod==='delivery'?'Your delivery details and items are ready. Place the order now and pay only when the seller accepts it and you receive your items.':'Your delivery details, items and payment number are ready. Continue when you are ready to request the M-PESA prompt.'}</small></div></div>}
-        <div className="market-checkout-bottom-action"><div><small>{orderConfirmed?'READY TO PAY':'ORDER TOTAL'}</small><strong>{formatKes(total)}</strong></div><button type="button" className="customer-primary-button" disabled={!lines.length||!customerName.trim()||!customerPhone.trim()||(paymentMethod!=='mpesa'&&paymentMethod!=='delivery')||submitting||(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))||(deliveryMethod==='pickup'&&(!pickupStation.trim()||!deliveryCounty||!deliverySubCounty.trim()||!deliveryEstate.trim()||!deliveryAddress.trim()))} onClick={orderConfirmed?placeOrder:()=>setOrderConfirmed(true)}>{submitting?(paymentMethod==='delivery'?'Placing order…':'Requesting M-PESA…'):orderConfirmed?(paymentMethod==='delivery'?'Place cash order':'Pay with M-PESA'):'Confirm order'} <ArrowRight size={18}/></button></div>
-<ProductRecommendationShelf products={products} cart={cart} onAdd={id=>updateQuantity(id,(cart[id]||0)+1)} onOpenProduct={onOpenProduct} title="Add something extra" subtitle="A few more picks from this shop, available to add before you place your order."/>
+
+        {checkoutError && (
+          <p className="sf-alert error" style={{ marginTop: 16 }} role="alert">
+            {checkoutError}
+          </p>
+        )}
+
+        {orderConfirmed && (
+          <div className="sf-alert success" style={{ marginTop: 16 }} role="status">
+            <Check size={18} style={{ flexShrink: 0, marginTop: 2 }} />
+            <div>
+              <strong>Order details confirmed</strong>
+              <div>
+                Your delivery, items and payment method are ready. Continue when you are ready to place your order.
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="sf-checkout-footer-bar">
+          <div>
+            <small>{orderConfirmed ? 'READY TO PAY' : 'ORDER TOTAL'}</small>
+            <strong>{formatKes(total)}</strong>
+          </div>
+          <button
+            type="button"
+            className="sf-btn sf-btn-accent"
+            disabled={
+              !lines.length ||
+              !customerName.trim() ||
+              !customerPhone.trim() ||
+              (paymentMethod !== 'mpesa' && !cashReady) ||
+              submitting ||
+              (deliveryMethod === 'home' &&
+                (!deliveryCounty || !deliverySubCounty.trim() || !deliveryEstate.trim() || !deliveryAddress.trim())) ||
+              (deliveryMethod === 'pickup' &&
+                (!pickupStation.trim() ||
+                  !deliveryCounty ||
+                  !deliverySubCounty.trim() ||
+                  !deliveryEstate.trim() ||
+                  !deliveryAddress.trim()))
+            }
+            onClick={orderConfirmed ? placeOrder : () => setOrderConfirmed(true)}
+          >
+            {submitting
+              ? paymentMethod === 'delivery'
+                ? 'Placing order…'
+                : 'Requesting M-PESA…'
+              : orderConfirmed
+              ? paymentMethod === 'delivery'
+                ? 'Place cash order'
+                : 'Pay with M-PESA'
+              : 'Confirm order'}{' '}
+            <ArrowRight size={17} />
+          </button>
+        </div>
       </section>
     );
   }
 
   function renderPaymentProcessing() {
-    if(!activeOrder)return <section className="customer-flow market-payment-processing market-payment-processing-loading"><div className="market-payment-processing-icon"><span/></div><span className="buyer-section-kicker">SECURE PAYMENT CHECK</span><h1>Retrieving your order</h1><p className="market-payment-processing-copy">We’re reconnecting to your order and checking the latest payment status.</p><div className="market-payment-poll-status" role="status">Please wait while we restore your payment details…</div><button type="button" className="customer-secondary-button" onClick={()=>onNavigate('orders')}>View my orders</button></section>;
-    const paymentState=String(activeOrder.paymentStatus||'pending').toLowerCase();
-    const paymentTerminal=['cancelled','failed','reversed'].includes(paymentState);
-    const paymentSucceeded=paymentState==='succeeded';
-    const paymentWaiting=!paymentTerminal&&!paymentSucceeded;
-    const statusTitle=paymentSucceeded?'Payment confirmed':paymentState==='cancelled'?'Payment was cancelled':paymentState==='failed'?'Payment was not completed':paymentState==='reversed'?'Payment reversed':'We’re confirming your payment';
-    const statusCopy=paymentSucceeded?(activeOrder.receipt?'Safaricom confirmed your payment. Receipt: '+activeOrder.receipt:'Safaricom confirmed your payment.') : paymentTerminal?(paymentState==='cancelled'?'The payment prompt was cancelled. No payment was collected. You can safely retry when ready.':'This payment did not complete. No payment was collected. You can retry when ready.') : paymentProviderResponded?"Safaricom has responded. We’re verifying the M-PESA receipt before confirming your order.":"We’re checking with Safaricom. Keep this page open, or return later — your order and payment check will remain available.";
-    return <section className={"customer-flow market-payment-processing market-payment-processing-redesign"+(paymentProviderResponded?" has-provider-response":"")+(paymentTerminal?" is-terminal":"")+(paymentSucceeded?" is-paid":"")}>
-      <div className="market-payment-processing-heading">
-        <div className="market-payment-processing-icon" aria-hidden="true"><span/></div>
-        <span className="buyer-section-kicker">{paymentSucceeded?'PAYMENT CONFIRMED':paymentTerminal?'PAYMENT NOT COMPLETED':'SECURE PAYMENT CHECK'}</span>
-        <h1>{statusTitle}</h1>
-        <p className="market-payment-processing-copy">{statusCopy}</p>
-      </div>
-      <div className="market-payment-processing-order">
-        <div className="market-payment-processing-order-top"><span>ORDER SUMMARY</span><strong>{activeOrder.orderNumber}</strong></div>
-        <div className="market-payment-processing-card">
-          <div><small>AMOUNT DUE</small><strong>{formatKes(activeOrder.total)}</strong></div>
-          <div><small>PAYMENT METHOD</small><strong>{paymentLabels[activeOrder.paymentMethod]}</strong></div>
-          <div><small>PAYMENT PHONE</small><strong>{paymentPhone||activeOrder.customerPhone}</strong></div>
+    if (!activeOrder)
+      return (
+        <section className="sf-flow">
+          <FlowHeading title="Payment processing" onBack={() => onNavigate('cart')} />
+          <div className="sf-state-box">
+            <p>Loading…</p>
+          </div>
+        </section>
+      );
+
+    const paymentState = String(activeOrder.paymentStatus || 'pending').toLowerCase();
+    const paymentTerminal = ['cancelled', 'failed', 'reversed'].includes(paymentState);
+    const paymentSucceeded = paymentState === 'succeeded';
+    const paymentWaiting = !paymentTerminal && !paymentSucceeded;
+
+    return (
+      <section className="sf-status-shell">
+        {paymentWaiting && <div className="sf-processing-ring" aria-hidden="true" />}
+        <span className="sf-kicker">
+          {paymentSucceeded ? 'PAYMENT CONFIRMED' : paymentTerminal ? 'PAYMENT NOT COMPLETED' : 'SECURE PAYMENT CHECK'}
+        </span>
+        <h1>
+          {paymentSucceeded
+            ? 'Your payment is confirmed'
+            : paymentState === 'cancelled'
+            ? 'You cancelled the M-PESA prompt'
+            : paymentState === 'failed'
+            ? 'M-PESA payment failed'
+            : paymentState === 'reversed'
+            ? 'Payment reversed'
+            : 'Confirming your M-PESA payment'}
+        </h1>
+        <p style={{ margin: 0, color: 'var(--sf-muted)' }}>
+          {paymentSucceeded
+            ? activeOrder.receipt
+              ? 'Safaricom confirmed your payment. Receipt: ' + activeOrder.receipt
+              : 'Safaricom confirmed your payment.'
+            : paymentTerminal
+            ? paymentState === 'cancelled'
+              ? 'Safaricom confirmed that you cancelled the prompt. No payment was collected. You can safely request a new prompt when ready.'
+              : 'Safaricom confirmed that this payment did not complete. No payment was collected. You can retry when ready.'
+            : paymentProviderResponded
+            ? 'Safaricom has responded. We are verifying the M-PESA receipt before confirming your order.'
+            : 'Keep this page open while we wait for the payment confirmation.'}
+        </p>
+
+        <div className="sf-panel sf-kv-grid">
+          <div>
+            <small>ORDER NUMBER</small>
+            <strong className="sf-mono">{activeOrder.orderNumber}</strong>
+          </div>
+          <div>
+            <small>AMOUNT</small>
+            <strong>{formatKes(activeOrder.total)}</strong>
+          </div>
+          <div>
+            <small>PAYMENT PHONE</small>
+            <strong className="sf-mono">{paymentPhone || activeOrder.customerPhone}</strong>
+          </div>
         </div>
-        <div className={"market-payment-poll-status "+(paymentSucceeded?'is-confirmed':paymentTerminal?'is-failed':'is-waiting')} role="status"><span className="market-payment-poll-dot"/>{paymentSucceeded?'Payment confirmed by Safaricom.':paymentTerminal?(paymentPollMessage||'Payment request ended.'):paymentPollMessage}</div>
-      </div>
-      {paymentWaiting&&<p className="market-payment-processing-safety"><ShieldCheck size={16}/> Your order is only marked as paid after Safaricom’s receipt is verified. Please don’t request another prompt while this check is running.</p>}
-      <div className="market-payment-processing-actions">
-        <button type="button" className="customer-primary-button" onClick={()=>openOrder(activeOrder,'order-detail')}>{paymentTerminal?'View order & retry payment':paymentSucceeded?'View order details':'View order status'} <ArrowRight size={16}/></button>
-        <button type="button" className="customer-secondary-button" onClick={()=>openOrder(activeOrder,'orders')}>My orders</button>
-      </div>
-      <p className="market-payment-processing-help">You can safely leave this page and return to your orders later. We’ll keep the order status available.</p>
-    </section>;
+
+        <p
+          className={`sf-alert ${paymentSucceeded ? 'success' : paymentTerminal ? 'error' : ''}`}
+          role="status"
+        >
+          {paymentSucceeded
+            ? 'Payment confirmed by Safaricom.'
+            : paymentTerminal
+            ? paymentPollMessage || 'Payment request ended.'
+            : paymentPollMessage}
+        </p>
+
+        {paymentWaiting && (
+          <p className="sf-summary-note">
+            <ShieldCheck size={16} />
+            <span>
+              Your order will only be marked paid after Safaricom’s payment receipt is verified. Do not send another
+              payment prompt while this check is running.
+            </span>
+          </p>
+        )}
+
+        <div>
+          <button
+            type="button"
+            className="sf-btn sf-btn-primary"
+            onClick={() => openOrder(activeOrder, 'order-detail')}
+          >
+            {paymentTerminal ? 'View order and retry' : 'View order status'}
+          </button>
+        </div>
+      </section>
+    );
   }
 
   function renderSuccess() {
     if (!activeOrder) {
-      return <div className="customer-flow"><FlowHeading title="Order confirmation" onBack={() => onNavigate('store')} /><div className="customer-empty-state"><h2>No preview order yet</h2><button type="button" className="customer-primary-button" onClick={() => onNavigate('store')}>Continue shopping</button></div></div>;
-    }
-    return (
-      <section className="customer-flow customer-success-page">
-        <div className="customer-success-banner"><span className="customer-success-check"><Check size={39} /></span><div><h1>Thank you for your order</h1><p>Order number <strong>{activeOrder.orderNumber}</strong></p></div></div>
-        <div className="customer-preview-alert"><ShieldCheck size={17} /><span>{activeOrder.paymentStatus === 'succeeded' ? `Payment confirmed${activeOrder.receipt ? ` · M-PESA receipt ${activeOrder.receipt}` : ''}.` : activeOrder.paymentStatus === 'failed' || activeOrder.paymentStatus === 'cancelled' ? 'M-PESA payment was not completed. This order is not paid.' : 'Your order has been created. Payment is pending Safaricom confirmation; do not retry unless the payment prompt has failed or expired.'}</span></div>
-        <div className="customer-panel customer-success-delivery">
-          <MapPin size={22} />
-          <div><strong>Delivery coordination</strong><p>You can message the seller about this order from Inbox & messages in your account.</p><small>{activeOrder.deliveryMethod === 'pickup' ? 'Your preferred pickup station is saved with this order.' : 'Your delivery address is saved with this order.'} The seller can coordinate collection or delivery in your private order conversation.</small></div>
-        </div>
-        <div className="customer-panel customer-success-payment">
-          <WalletCards size={22} />
-          <div><strong>{paymentLabels[activeOrder.paymentMethod]}</strong><p>{activeOrder.paymentStatus === 'succeeded' ? 'Payment successful.' : activeOrder.paymentStatus === 'failed' ? 'Payment failed.' : activeOrder.paymentStatus === 'cancelled' ? 'Payment cancelled.' : 'Awaiting M-PESA confirmation.'}</p></div>
-        </div>
-        <div className="customer-flow-actions customer-success-actions">
-          <button type="button" className="customer-secondary-button" onClick={() => openOrder(activeOrder, 'orders')}>My orders</button>
-          <button type="button" className="customer-primary-button" onClick={() => openOrder(activeOrder, 'order-detail')}>See order details <ArrowRight size={17} /></button>
-        </div>
-        <section className="customer-recommendations">
-          <div className="customer-section-title"><h2>Top picks from {shopName}</h2><button type="button" onClick={() => onNavigate('store')}>See all <ArrowRight size={14} /></button></div>
-          <div className="customer-recommendation-row">
-            {products.slice(0, 5).map((product) => <article className="customer-recommendation-card" key={product.id}><ProductThumb product={product} /><strong>{product.name}</strong><b>{formatKes(product.price)}</b></article>)}
+      return (
+        <div className="sf-flow">
+          <FlowHeading title="Order confirmation" onBack={() => onNavigate('store')} />
+          <div className="sf-state-box">
+            <h2>No preview order yet</h2>
+            <button type="button" className="sf-btn sf-btn-primary" onClick={() => onNavigate('store')}>
+              Continue shopping
+            </button>
           </div>
-        </section>
+        </div>
+      );
+    }
+
+    return (
+      <section className="sf-flow">
+        <div className="sf-panel" style={{ marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            <span className="sf-state-icon" style={{ background: 'var(--sf-success-bg)', color: 'var(--sf-success)' }}>
+              <Check size={26} />
+            </span>
+            <div>
+              <span className="sf-kicker">ORDER CONFIRMATION</span>
+              <h1 style={{ fontSize: 28 }}>Thank you for your order</h1>
+              <p style={{ margin: '4px 0 0', color: 'var(--sf-muted)' }}>
+                Order number <strong className="sf-mono">{activeOrder.orderNumber}</strong>
+              </p>
+            </div>
+          </div>
+
+          <div
+            className={`sf-alert ${activeOrder.paymentStatus === 'succeeded' ? 'success' : 'warn'}`}
+            style={{ marginTop: 18 }}
+          >
+            <ShieldCheck size={17} style={{ flexShrink: 0, marginTop: 2 }} />
+            <span>
+              {activeOrder.paymentStatus === 'succeeded'
+                ? `Payment confirmed${activeOrder.receipt ? ` · M-PESA receipt ${activeOrder.receipt}` : ''}.`
+                : activeOrder.paymentStatus === 'failed' || activeOrder.paymentStatus === 'cancelled'
+                ? 'M-PESA payment was not completed. This order is not paid.'
+                : 'Your order has been created. Payment is pending Safaricom confirmation; do not retry unless the payment prompt has failed or expired.'}
+            </span>
+          </div>
+        </div>
+
+        <div className="sf-account-grid" style={{ marginBottom: 24 }}>
+          <div className="sf-panel" style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+            <span className="sf-assurance-icon">
+              <MapPin size={19} />
+            </span>
+            <div>
+              <strong>Delivery coordination</strong>
+              <p style={{ margin: '4px 0', fontSize: 13.5, color: 'var(--sf-ink-2)' }}>
+                You can message the seller about this order from Inbox &amp; messages in your account.
+              </p>
+              <small style={{ color: 'var(--sf-muted)' }}>
+                {activeOrder.deliveryMethod === 'pickup'
+                  ? 'Your preferred pickup station is saved with this order.'
+                  : 'Your delivery address is saved with this order.'}
+              </small>
+            </div>
+          </div>
+
+          <div className="sf-panel" style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+            <span className="sf-assurance-icon">
+              <WalletCards size={19} />
+            </span>
+            <div>
+              <strong>{paymentLabels[activeOrder.paymentMethod]}</strong>
+              <p style={{ margin: '4px 0 0', fontSize: 13.5, color: 'var(--sf-ink-2)' }}>
+                {activeOrder.paymentStatus === 'succeeded'
+                  ? 'Payment successful.'
+                  : activeOrder.paymentStatus === 'failed'
+                  ? 'Payment failed.'
+                  : activeOrder.paymentStatus === 'cancelled'
+                  ? 'Payment cancelled.'
+                  : 'Awaiting M-PESA confirmation.'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 36 }}>
+          <button
+            type="button"
+            className="sf-btn sf-btn-secondary"
+            onClick={() => openOrder(activeOrder, 'orders')}
+          >
+            My orders
+          </button>
+          <button
+            type="button"
+            className="sf-btn sf-btn-primary"
+            onClick={() => openOrder(activeOrder, 'order-detail')}
+          >
+            See order details <ArrowRight size={16} />
+          </button>
+        </div>
+
+        {products.length > 0 && (
+          <section className="sf-section">
+            <div className="sf-section-head">
+              <h2>Top picks from {shopName}</h2>
+              <button type="button" className="sf-link-action" onClick={() => onNavigate('store')}>
+                See all <ArrowRight size={14} />
+              </button>
+            </div>
+            <div className="sf-product-grid">
+              {products.slice(0, 4).map((product) => (
+                <article className="sf-card" key={product.id}>
+                  <button
+                    type="button"
+                    className="sf-card-open"
+                    onClick={() => onOpenProduct?.(product)}
+                  >
+                    <span className="sf-card-media">
+                      <ProductThumb product={product} />
+                    </span>
+                    <div className="sf-card-body">
+                      <span className="sf-card-cat">{product.category || 'Product'}</span>
+                      <span className="sf-card-title">{product.name}</span>
+                      <div className="sf-card-meta-row">
+                        <strong className="sf-card-price">{formatKes(product.price)}</strong>
+                      </div>
+                    </div>
+                  </button>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
       </section>
     );
   }
 
   function renderOrders() {
-    const stateOf = (order: BuyerOrder) => ({ order: String(order.orderStatus || '').toLowerCase(), delivery: String(order.deliveryStatus || '').toLowerCase(), payment: String(order.paymentStatus || '').toLowerCase() });
-    const isCancelled = (order: BuyerOrder) => { const s=stateOf(order); return ['cancelled','returned','refunded'].includes(s.order)||['cancelled','returned'].includes(s.delivery)||s.payment==='cancelled'; };
-    const isDelivered = (order: BuyerOrder) => { const s=stateOf(order); return s.delivery==='delivered'||['fulfilled','delivered'].includes(s.order); };
-    const activeOrderTab = view.startsWith('orders/') ? (view.split('/')[1] as 'ongoing'|'delivered'|'cancelled') : 'ongoing';
-    const tabOrders = orders.filter(order => order.orderNumber && (activeOrderTab==='ongoing' ? !isCancelled(order)&&!isDelivered(order) : activeOrderTab==='delivered' ? isDelivered(order) : isCancelled(order)));
-    return (
-      <section className="customer-flow buyer-my-orders-v2">
-        <FlowHeading title="My orders" onBack={() => onNavigate('account')} backLabel="My account" />
-        <div className="buyer-my-orders-heading">
-          <div><span className="buyer-section-kicker">YOUR PURCHASES</span><h2>All orders</h2><p>View your purchases and follow their latest updates.</p></div>
-          <span className="buyer-orders-total">{orders.length} {orders.length===1?'order':'orders'}</span>
-        </div>
-        <div className="buyer-orders-overview" aria-label="Order summary">
-          <div><span className="buyer-orders-overview-icon">↗</span><span><small>ALL ORDERS</small><strong>{orders.length}</strong></span></div>
-          <div><span className="buyer-orders-overview-icon">◷</span><span><small>IN PROGRESS</small><strong>{orders.filter(o=>!isCancelled(o)&&!isDelivered(o)).length}</strong></span></div>
-          <div><span className="buyer-orders-overview-icon">✓</span><span><small>DELIVERED</small><strong>{orders.filter(isDelivered).length}</strong></span></div>
-        </div>
-        {ordersLoading&&<p className="customer-preview-note">Refreshing your order history…</p>}
-        {ordersError&&<p className="customer-preview-alert" role="alert">{ordersError}</p>}
-        <nav className="buyer-my-orders-tabs" aria-label="Filter orders">
-          <button type="button" className={activeOrderTab==='ongoing'?'is-active':''} onClick={()=>onNavigate('orders/ongoing')}><span>Ongoing</span><b>{orders.filter(o=>!isCancelled(o)&&!isDelivered(o)).length}</b></button>
-          <button type="button" className={activeOrderTab==='delivered'?'is-active':''} onClick={()=>onNavigate('orders/delivered')}><span>Delivered</span><b>{orders.filter(isDelivered).length}</b></button>
-          <button type="button" className={activeOrderTab==='cancelled'?'is-active':''} onClick={()=>onNavigate('orders/cancelled')}><span>Cancelled</span><b>{orders.filter(isCancelled).length}</b></button>
-        </nav>
-        {tabOrders.length ? <div className="buyer-my-orders-list">{tabOrders.map(order=>{
-          const status=stateOf(order);
-          const statusText=status.delivery==='delivered'?'Delivered':status.delivery==='in_transit'?'On the way':status.order==='processing'?'Processing':status.payment==='failed'?'Payment failed':status.payment==='cancelled'?'Payment cancelled':status.payment==='succeeded'?'Paid':'Order placed';
-          const statusClass=status.delivery==='delivered'||status.payment==='succeeded'?'is-success':status.payment==='failed'||status.payment==='cancelled'||isCancelled(order)?'is-danger':'is-pending';
-          return <article className="buyer-my-order-card" key={order.orderNumber}>
-            <div className="buyer-my-order-top"><div><small>ORDER NUMBER</small><strong>{order.orderNumber}</strong><span>{new Date(order.createdAt).toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric'})}</span></div><span className={'buyer-my-order-status '+statusClass}><i/>{statusText}</span></div>
-            <div className="buyer-my-order-items">{order.lines.slice(0,2).map(({product,quantity,lineTotal})=><div className="buyer-my-order-item" key={product.id}><ProductThumb product={product}/><div><strong>{product.name}</strong><span>Qty: {quantity}</span></div><b>{formatKes(lineTotal??product.price*quantity)}</b></div>)}
-              {order.lines.length>2&&<p className="buyer-my-order-more">+{order.lines.length-2} more item{order.lines.length-2===1?'':'s'}</p>}
-              {!order.lines.length&&<p className="buyer-my-order-more">Order items are being retrieved.</p>}
-            </div>
-            <div className="buyer-my-order-bottom"><div><small>ORDER TOTAL</small><strong>{formatKes(order.total)}</strong></div><div className="buyer-my-order-actions"><button type="button" className="customer-secondary-button" onClick={()=>openOrder(order,'order-detail')}>View details</button>{isDelivered(order)?<button type="button" className="customer-primary-button" onClick={()=>onNavigate('store')}>Shop again <ArrowRight size={15}/></button>:<button type="button" className="customer-primary-button" onClick={()=>{if(isCancelled(order)){const restartCart=Object.fromEntries(order.lines.filter(line=>products.some(product=>product.id===line.product.id)).map(line=>[line.product.id,line.quantity]));if(Object.keys(restartCart).length){onCartChange(restartCart);setDeliveryMethod(order.deliveryMethod);setDeliveryCounty(order.deliveryCounty||'');setDeliverySubCounty(order.deliverySubCounty||'');setDeliveryEstate(order.deliveryEstate||'');setDeliveryAddress(order.deliveryAddress||'');setDeliveryDirections(order.deliveryDirections||'');setPickupStation(order.pickupStation||'');onNavigate('checkout/delivery');}else{onNavigate('store');}}else{openOrder(order,'order-detail');}}}>Complete order <ArrowRight size={15}/></button>}</div></div>
-          </article>;
-        })}</div> : <div className="buyer-my-orders-empty"><span><Package size={28}/></span><h2>{activeOrderTab==='ongoing'?'No ongoing orders yet':activeOrderTab==='delivered'?'No delivered orders yet':'No cancelled or returned orders'}</h2><p>{activeOrderTab==='ongoing'?'When you place an order, you can follow its payment and delivery progress here.':'Orders matching this status will appear here.'}</p><button type="button" className="customer-primary-button" onClick={()=>onNavigate('store')}>Shop again <ArrowRight size={16}/></button></div>}
+    const stateOf = (order: BuyerOrder) => ({
+      order: String(order.orderStatus || '').toLowerCase(),
+      delivery: String(order.deliveryStatus || '').toLowerCase(),
+      payment: String(order.paymentStatus || '').toLowerCase(),
+    });
+    const isCancelled = (order: BuyerOrder) => {
+      const s = stateOf(order);
+      return (
+        ['cancelled', 'returned', 'refunded'].includes(s.order) ||
+        ['cancelled', 'returned'].includes(s.delivery) ||
+        s.payment === 'cancelled'
+      );
+    };
+    const isDelivered = (order: BuyerOrder) => {
+      const s = stateOf(order);
+      return s.delivery === 'delivered' || ['fulfilled', 'delivered'].includes(s.order);
+    };
+    const activeOrderTab = view.startsWith('orders/')
+      ? (view.split('/')[1] as 'ongoing' | 'delivered' | 'cancelled')
+      : 'ongoing';
+    const tabOrders = orders.filter(
+      (order) =>
+        order.orderNumber &&
+        (activeOrderTab === 'ongoing'
+          ? !isCancelled(order) && !isDelivered(order)
+          : activeOrderTab === 'delivered'
+          ? isDelivered(order)
+          : isCancelled(order)),
+    );
+    const suggestions = products.filter((product) => product.stockQuantity !== 0).slice(0, 8);
 
+    return (
+      <section className="sf-flow">
+        <FlowHeading
+          title="My orders"
+          subtitle="View your purchases and follow their latest updates."
+          onBack={() => onNavigate('account')}
+          backLabel="My account"
+        />
+
+        {ordersLoading && (
+          <p style={{ fontSize: 13, color: 'var(--sf-muted)', marginBottom: 12 }}>Refreshing your order history…</p>
+        )}
+        {ordersError && (
+          <p className="sf-alert error" style={{ marginBottom: 16 }} role="alert">
+            {ordersError}
+          </p>
+        )}
+
+        <nav className="sf-tabs" aria-label="Filter orders">
+          <button
+            type="button"
+            className={`sf-tab ${activeOrderTab === 'ongoing' ? 'is-active' : ''}`}
+            onClick={() => onNavigate('orders/ongoing')}
+          >
+            <span>Ongoing</span>
+            <b>{orders.filter((o) => !isCancelled(o) && !isDelivered(o)).length}</b>
+          </button>
+          <button
+            type="button"
+            className={`sf-tab ${activeOrderTab === 'delivered' ? 'is-active' : ''}`}
+            onClick={() => onNavigate('orders/delivered')}
+          >
+            <span>Delivered</span>
+            <b>{orders.filter(isDelivered).length}</b>
+          </button>
+          <button
+            type="button"
+            className={`sf-tab ${activeOrderTab === 'cancelled' ? 'is-active' : ''}`}
+            onClick={() => onNavigate('orders/cancelled')}
+          >
+            <span>Cancelled</span>
+            <b>{orders.filter(isCancelled).length}</b>
+          </button>
+        </nav>
+
+        {tabOrders.length ? (
+          <div className="sf-orders-list">
+            {tabOrders.map((order) => {
+              const status = stateOf(order);
+              const statusText =
+                status.delivery === 'delivered'
+                  ? 'Delivered'
+                  : status.delivery === 'in_transit'
+                  ? 'On the way'
+                  : status.order === 'processing'
+                  ? 'Processing'
+                  : status.payment === 'failed'
+                  ? 'Payment failed'
+                  : status.payment === 'cancelled'
+                  ? 'Payment cancelled'
+                  : status.payment === 'succeeded'
+                  ? 'Paid'
+                  : 'Order placed';
+              const statusClass =
+                status.delivery === 'delivered' || status.payment === 'succeeded'
+                  ? 'is-success'
+                  : status.payment === 'failed' || status.payment === 'cancelled' || isCancelled(order)
+                  ? 'is-danger'
+                  : 'is-pending';
+
+              return (
+                <article className="sf-order-card" key={order.orderNumber}>
+                  <div className="sf-order-top">
+                    <div>
+                      <small>ORDER NUMBER</small>
+                      <strong>#{order.orderNumber}</strong>
+                      <span className="sf-order-date">
+                        ·{' '}
+                        {new Date(order.createdAt).toLocaleDateString('en-KE', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })}
+                      </span>
+                    </div>
+                    <span className={`sf-status-text ${statusClass}`}>{statusText}</span>
+                  </div>
+
+                  <div className="sf-order-items">
+                    {order.lines.slice(0, 2).map(({ product, quantity, lineTotal }) => (
+                      <div className="sf-order-item" key={product.id}>
+                        <div className="sf-order-item-img">
+                          <ProductThumb product={product} />
+                        </div>
+                        <div>
+                          <strong>{product.name}</strong>
+                          <span>Qty: {quantity}</span>
+                        </div>
+                        <b>{formatKes(lineTotal ?? product.price * quantity)}</b>
+                      </div>
+                    ))}
+                    {order.lines.length > 2 && (
+                      <div style={{ fontSize: 13, color: 'var(--sf-muted)' }}>
+                        +{order.lines.length - 2} more item{order.lines.length - 2 === 1 ? '' : 's'}
+                      </div>
+                    )}
+                    {!order.lines.length && (
+                      <div style={{ fontSize: 13, color: 'var(--sf-muted)' }}>Order items are being retrieved.</div>
+                    )}
+                  </div>
+
+                  <div className="sf-order-bottom">
+                    <div>
+                      <small>ORDER TOTAL</small>
+                      <strong>{formatKes(order.total)}</strong>
+                    </div>
+                    <div className="sf-order-actions">
+                      <button
+                        type="button"
+                        className="sf-btn sf-btn-secondary"
+                        onClick={() => openOrder(order, 'order-detail')}
+                      >
+                        View details
+                      </button>
+                      {isDelivered(order) ? (
+                        <button
+                          type="button"
+                          className="sf-btn sf-btn-primary"
+                          onClick={() => onNavigate('store')}
+                        >
+                          Shop again <ArrowRight size={15} />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="sf-btn sf-btn-primary"
+                          onClick={() => {
+                            if (isCancelled(order)) {
+                              const restartCart = Object.fromEntries(
+                                order.lines
+                                  .filter((line) => products.some((product) => product.id === line.product.id))
+                                  .map((line) => [line.product.id, line.quantity]),
+                              );
+                              if (Object.keys(restartCart).length) {
+                                onCartChange(restartCart);
+                                setDeliveryMethod(order.deliveryMethod);
+                                setDeliveryCounty(order.deliveryCounty || '');
+                                setDeliverySubCounty(order.deliverySubCounty || '');
+                                setDeliveryEstate(order.deliveryEstate || '');
+                                setDeliveryAddress(order.deliveryAddress || '');
+                                setDeliveryDirections(order.deliveryDirections || '');
+                                setPickupStation(order.pickupStation || '');
+                                onNavigate('checkout/delivery');
+                              } else {
+                                onNavigate('store');
+                              }
+                            } else {
+                              openOrder(order, 'order-tracking');
+                            }
+                          }}
+                        >
+                          {isCancelled(order) ? 'Reorder' : 'Track order'} <ArrowRight size={15} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="sf-state-box">
+            <span className="sf-state-icon">
+              <Package size={26} />
+            </span>
+            <h2>
+              {activeOrderTab === 'ongoing'
+                ? 'No ongoing orders yet'
+                : activeOrderTab === 'delivered'
+                ? 'No delivered orders yet'
+                : 'No cancelled or returned orders'}
+            </h2>
+            <p>
+              {activeOrderTab === 'ongoing'
+                ? 'When you place an order, you can follow its payment and delivery progress here.'
+                : 'Orders matching this status will appear here.'}
+            </p>
+            <button type="button" className="sf-btn sf-btn-primary" onClick={() => onNavigate('store')}>
+              Explore products <ArrowRight size={16} />
+            </button>
+          </div>
+        )}
+
+        {suggestions.length > 0 && (
+          <section className="sf-section">
+            <div className="sf-section-head">
+              <h2>You may also like</h2>
+              <button type="button" className="sf-link-action" onClick={() => onNavigate('store')}>
+                View shop <ArrowRight size={14} />
+              </button>
+            </div>
+            <div className="sf-product-grid">
+              {suggestions.slice(0, 4).map((product) => (
+                <article className="sf-card" key={product.id}>
+                  <button
+                    type="button"
+                    className="sf-card-open"
+                    onClick={() => onOpenProduct?.(product)}
+                  >
+                    <span className="sf-card-media">
+                      <ProductThumb product={product} />
+                    </span>
+                    <div className="sf-card-body">
+                      <span className="sf-card-cat">{product.category || 'Product'}</span>
+                      <span className="sf-card-title">{product.name}</span>
+                      <div className="sf-card-meta-row">
+                        <strong className="sf-card-price">{formatKes(product.price)}</strong>
+                      </div>
+                    </div>
+                  </button>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
       </section>
     );
   }
 
   function renderOrderDetail() {
-    const paymentState=String(activeOrder?.paymentStatus||'unpaid').toLowerCase();
-    const orderState=String(activeOrder?.orderStatus||'').toLowerCase();
-    const deliveryState=String(activeOrder?.deliveryStatus||'pending_delivery').toLowerCase();
-    const paid=['succeeded','success','paid'].includes(paymentState);
-    const cashDue=activeOrder?.paymentMethod==='delivery'&&!paid&&!['cancelled','refunded'].includes(orderState);
-    const cancelled=paymentState==='cancelled'||orderState==='cancelled';
-    const failed=paymentState==='failed';
-    const orderClosed=['cancelled','returned','refunded'].includes(orderState);
-    const canRetryPayment=Boolean(activeOrder?.orderId&&!paid&&!cashDue&&!orderClosed&&(activeOrder?.lines?.length||0)>0);
-    const paymentLabel=orderState==='refunded'||paymentState==='refunded'?'Refunded':paid?'Paid':cashDue?(activeOrder?.deliveryMethod==='pickup'?'Cash due on pickup':'Cash due on delivery'):cancelled?'Payment cancelled':failed?'Payment failed':paymentState==='pending'?'Awaiting confirmation':'Not yet paid';
-    const deliveryLabel=deliveryState==='delivered'?'Delivered':deliveryState==='in_transit'?'On the way':orderState==='processing'?'Being prepared':orderState==='fulfilled'?'Ready for delivery':cancelled?'Cancelled':'Order received';
-    const isDelivered=deliveryState==='delivered';
-    const processing=['processing','fulfilled'].includes(orderState)||['in_transit','delivered'].includes(deliveryState);
-    const inTransit=['in_transit','delivered'].includes(deliveryState);
-    const steps=[{label:'Order placed',done:true},{label:'Payment confirmed',done:paid},{label:'Processing',done:processing},{label:'Out for delivery',done:inTransit},{label:'Delivered',done:isDelivered}];
-    const celebration=paymentCelebration?<div className="buyer-payment-celebration" role="status" aria-live="polite"><div className="buyer-confetti-burst">{Array.from({length:36},(_,i)=><i key={i} style={{'--confetti-angle':(i*10)+'deg','--confetti-delay':((i%7)*0.035)+'s'} as any}>{['✦','✧','●','◆','🎉'][i%5]}</i>)}</div><div className="buyer-celebration-message"><strong>Payment successful!</strong><span>Your order is confirmed. Thank you for shopping.</span></div></div>:null;
-    if (!activeOrder) return <div className="customer-flow"><FlowHeading title="Order details" onBack={() => onNavigate('orders')} backLabel="My orders" /><div className="customer-empty-state"><h2>No order selected</h2><button type="button" className="customer-primary-button" onClick={() => onNavigate('orders')}>View my orders</button></div></div>;
+    if (!activeOrder)
+      return (
+        <div className="sf-flow">
+          <FlowHeading title="Order details" onBack={() => onNavigate('orders')} backLabel="My orders" />
+          <div className="sf-state-box">
+            <h2>No order selected</h2>
+            <button type="button" className="sf-btn sf-btn-primary" onClick={() => onNavigate('orders')}>
+              View my orders
+            </button>
+          </div>
+        </div>
+      );
+
+    const paymentState = String(activeOrder.paymentStatus || 'unpaid').toLowerCase();
+    const orderState = String(activeOrder.orderStatus || '').toLowerCase();
+    const deliveryState = String(activeOrder.deliveryStatus || 'pending_delivery').toLowerCase();
+    const paid = ['succeeded', 'success', 'paid'].includes(paymentState);
+    const cashDue =
+      activeOrder.paymentMethod === 'delivery' && !paid && !['cancelled', 'refunded'].includes(orderState);
+    const cancelled = paymentState === 'cancelled' || orderState === 'cancelled';
+    const failed = paymentState === 'failed';
+    const orderClosed = ['cancelled', 'returned', 'refunded'].includes(orderState);
+    const canRetryPayment = Boolean(
+      activeOrder.orderId && !paid && !cashDue && !orderClosed && (activeOrder.lines?.length || 0) > 0,
+    );
+
+    const paymentLabel =
+      orderState === 'refunded' || paymentState === 'refunded'
+        ? 'Refunded'
+        : paid
+        ? 'Paid'
+        : cashDue
+        ? activeOrder.deliveryMethod === 'pickup'
+          ? 'Cash due on pickup'
+          : 'Cash due on delivery'
+        : cancelled
+        ? 'Payment cancelled'
+        : failed
+        ? 'Payment failed'
+        : paymentState === 'pending'
+        ? 'Awaiting confirmation'
+        : 'Not yet paid';
+
+    const deliveryLabel =
+      deliveryState === 'delivered'
+        ? 'Delivered'
+        : deliveryState === 'in_transit'
+        ? 'On the way'
+        : orderState === 'processing'
+        ? 'Being prepared'
+        : orderState === 'fulfilled'
+        ? 'Ready for delivery'
+        : cancelled
+        ? 'Cancelled'
+        : 'Order received';
+
+    const isDelivered = deliveryState === 'delivered';
+    const processing =
+      ['processing', 'fulfilled'].includes(orderState) || ['in_transit', 'delivered'].includes(deliveryState);
+    const inTransit = ['in_transit', 'delivered'].includes(deliveryState);
+    const steps = [
+      { label: 'Order placed', done: true },
+      { label: 'Payment confirmed', done: paid },
+      { label: 'Processing', done: processing },
+      { label: 'Out for delivery', done: inTransit },
+      { label: 'Delivered', done: isDelivered },
+    ];
+    const currentStepIdx = steps.findIndex((item) => !item.done);
+
     return (
-      <section className="customer-flow buyer-order-v2 buyer-order-design">
-        {celebration}
+      <section className="sf-flow">
+        {paymentCelebration && (
+          <div className="sf-alert success" style={{ marginBottom: 18 }} role="status" aria-live="polite">
+            <Check size={18} />
+            <div>
+              <strong>Payment successful!</strong> Your order is confirmed. Thank you for shopping.
+            </div>
+          </div>
+        )}
+
         <FlowHeading title="Order details" onBack={() => onNavigate('orders')} backLabel="My orders" />
-        <header className="buyer-order-overview">
-          <div className="buyer-order-overview-main"><span className="buyer-order-kicker">ORDER DETAILS</span><h2>Order #{activeOrder.orderNumber}</h2><p>Placed on {new Date(activeOrder.createdAt).toLocaleString('en-KE',{weekday:'short',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</p></div>
-          <div className="buyer-order-total"><small>ORDER TOTAL</small><strong>{formatKes(activeOrder.total)}</strong></div>
-          <div className="buyer-order-status-row"><span className={paid?'is-success':cancelled||failed?'is-muted':'is-pending'}><i/> Payment: {paymentLabel}</span><span className={isDelivered?'is-success':'is-muted'}><i/> Delivery: {deliveryLabel}</span></div>
-          <div className="buyer-order-progress" aria-label="Order progress">{steps.map((step,index)=><div className={'buyer-order-progress-step '+(step.done?'is-done':index===steps.findIndex(item=>!item.done)?'is-current':'')} key={step.label}><span>{step.done?<Check size={17}/>:index+1}</span><small>{step.label}</small></div>)}</div>
-          {(cancelled||failed)&&<p className="buyer-order-payment-explainer" role="status">{cancelled?'M-PESA prompt cancelled. No payment was collected.':'The payment was not completed. No payment was collected.'} You can retry when ready.</p>}
-        </header>
-        <section className="buyer-order-panel buyer-order-summary-panel">
-          <div className="buyer-order-panel-heading"><span className="buyer-order-icon"><Package size={21}/></span><div><h3>Order summary</h3><p>{activeOrder.lines.reduce((n,line)=>n+line.quantity,0)} item(s)</p></div></div>
-          <div className="buyer-order-money"><div><span>Items subtotal</span><strong>{formatKes(activeOrder.subtotal)}</strong></div><div><span>Delivery fee</span><strong>{formatKes(activeOrder.deliveryFee)}</strong></div>{activeOrder.discount?<div><span>Discount</span><strong>−{formatKes(activeOrder.discount)}</strong></div>:null}<div className="buyer-order-grand-total"><span>{paid?'Total paid':'Order total'}</span><strong>{formatKes(activeOrder.total)}</strong></div></div>
-        </section>
-        <section className="buyer-order-panel">
-          <div className="buyer-order-panel-heading"><span className="buyer-order-icon"><Package size={21}/></span><div><h3>Items in your order</h3><p>{activeOrder.lines.length?activeOrder.lines.reduce((n,line)=>n+line.quantity,0)+' item(s) purchased':'Order contents unavailable'}</p></div></div>
-          <div className="buyer-order-products">{activeOrder.lines.length?activeOrder.lines.map(({product,quantity,lineTotal})=><article className="buyer-order-product" key={product.id}><ProductThumb product={product}/><div className="buyer-order-product-copy"><strong>{product.name}</strong><span>Qty: {quantity}</span><small>{formatKes(product.price)} each</small>{isDelivered&&paid&&<button type="button" className="customer-order-review-link" onClick={()=>onOpenProduct?.(product)}>★ Review product</button>}</div><b>{formatKes(lineTotal ?? product.price*quantity)}</b></article>):<div className="buyer-order-missing-items" role="alert"><strong>Order items are unavailable</strong><p>Do not make another payment for this order. Contact the shop or open a report so the order can be checked.</p><button type="button" className="customer-secondary-button" onClick={()=>onNavigate('reports')}>Get help with this order</button></div>}</div>
-        </section>
-        <section className="buyer-order-panel">
-          <div className="buyer-order-panel-heading"><span className="buyer-order-icon"><MapPin size={21}/></span><div><h3>Delivery information</h3><p>{activeOrder.deliveryMethod==='pickup'?'Collection details':'Delivery destination'}</p></div></div>
-          <div className="buyer-order-detail-list"><div className="buyer-order-detail-row"><MapPin size={18}/><div><strong>{activeOrder.deliveryMethod==='pickup'?'Collection point':'Delivery address'}</strong><p>{activeOrder.deliveryMethod==='pickup'?activeOrder.pickupStation||'Collection point to be confirmed':[activeOrder.deliveryCounty,activeOrder.deliverySubCounty,activeOrder.deliveryEstate,activeOrder.deliveryAddress].filter(Boolean).join(', ')||'Delivery destination not recorded'}{activeOrder.deliveryDirections?' · '+activeOrder.deliveryDirections:''}</p></div></div><div className="buyer-order-detail-row"><UserRound size={18}/><div><strong>{activeOrder.customerName}</strong><p>{activeOrder.customerPhone}{activeOrder.customerEmail?' · '+activeOrder.customerEmail:''}</p></div></div></div>
-        </section>
-        <section className="buyer-order-panel">
-          <div className="buyer-order-panel-heading"><span className="buyer-order-icon"><WalletCards size={21}/></span><div><h3>Payment information</h3><p>{paymentLabels[activeOrder.paymentMethod]}</p></div><span className={'buyer-order-payment-tag '+(paid?'is-success':canRetryPayment?'is-pending':'is-muted')}>{paymentLabel}</span></div>
-          <div className="buyer-order-payment-method"><WalletCards size={22}/><span><strong>{paid?'Paid via '+paymentLabels[activeOrder.paymentMethod]:paymentLabels[activeOrder.paymentMethod]}</strong><small>{activeOrder.receipt?'Receipt: '+activeOrder.receipt:cancelled?'No payment collected':failed?'Payment was not completed':'Payment reference will appear when confirmed'}</small></span></div>
-          {activeOrder.paymentIssue&&<div className="buyer-order-inventory-alert" role="status"><strong>Payment received — shop confirmation needed</strong><p>{activeOrder.paymentIssue} The shop needs to contact you before this order can be prepared or dispatched.</p></div>}
-          {canRetryPayment&&<div className="buyer-order-retry"><div><strong>{paymentState==='pending'?'Payment is awaiting confirmation':cancelled?'Payment was cancelled':'Finish paying for this order'}</strong><p>{paymentState==='pending'?'Check the previous M-PESA request first. Do not send another prompt while Safaricom is still processing it.':'No payment was collected. You can request a fresh M-PESA prompt when ready.'}</p></div><label className="customer-form-label">M-PESA number<input type="tel" inputMode="tel" autoComplete="tel" value={retryPaymentPhone} onChange={e=>setRetryPaymentPhone(e.target.value)} placeholder="07XX XXX XXX or 2547XXXXXXXX" maxLength={16}/></label><button type="button" className="buyer-retry-payment" onClick={retryActiveOrderPayment} disabled={retryingOrder}>{retryingOrder?'Checking M-PESA…':paymentState==='pending'?'Check payment / retry if failed':'Retry M-PESA payment'}</button>{retryMessage&&<small className="market-order-retry-message" role="status">{retryMessage}</small>}</div>}
-        </section>
-        <div className="buyer-order-bottom-actions"><button type="button" className="customer-secondary-button" onClick={()=>openOrder(activeOrder,'order-tracking')}>Track order <ArrowRight size={16}/></button><button type="button" className="customer-secondary-button" onClick={()=>openOrder(activeOrder,'inbox')}><MessageCircle size={16}/> Message seller</button><button type="button" className="customer-primary-button" onClick={()=>onNavigate('store')}>Shop again <ShoppingBag size={16}/></button></div>
-        <div className="buyer-order-safety-note"><ShieldCheck size={16}/><span>Keep your order number and payment receipt. Never share your M-PESA PIN or verification codes.</span></div>
+
+        <div className="sf-checkout-stack">
+          {/* Overview & Progress Header */}
+          <header className="sf-panel">
+            <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+              <div>
+                <span className="sf-kicker">ORDER DETAILS</span>
+                <h2 style={{ fontSize: 24, marginTop: 4 }} className="sf-mono">
+                  Order #{activeOrder.orderNumber}
+                </h2>
+                <p style={{ margin: '4px 0 0', fontSize: 13.5, color: 'var(--sf-muted)' }}>
+                  Placed on{' '}
+                  {new Date(activeOrder.createdAt).toLocaleString('en-KE', {
+                    weekday: 'short',
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <span className="sf-kicker">ORDER TOTAL</span>
+                <div style={{ fontSize: 24, fontWeight: 700, fontFamily: 'var(--sf-font-display)' }} className="sf-num">
+                  {formatKes(activeOrder.total)}
+                </div>
+                <div style={{ marginTop: 6, fontSize: 12.5 }}>
+                  <span className={`sf-status-text ${paid ? 'is-success' : cancelled || failed ? 'is-danger' : 'is-pending'}`}>
+                    Payment: {paymentLabel}
+                  </span>
+                  <span style={{ margin: '0 8px', color: 'var(--sf-muted)' }}>·</span>
+                  <span className={`sf-status-text ${isDelivered ? 'is-success' : 'is-muted'}`}>
+                    Delivery: {deliveryLabel}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="sf-order-steps" aria-label="Order progress">
+              {steps.map((step, index) => (
+                <div
+                  key={step.label}
+                  className={`sf-order-step ${step.done ? 'is-done' : index === currentStepIdx ? 'is-current' : ''}`}
+                >
+                  <div className="sf-order-step-bar" />
+                  <span className="sf-order-step-label">
+                    {step.done ? <Check size={13} /> : <span className="sf-mono">{index + 1}.</span>}
+                    {step.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {(cancelled || failed) && (
+              <p className="sf-alert error" style={{ marginTop: 16 }} role="status">
+                {cancelled
+                  ? 'M-PESA prompt cancelled. No payment was collected.'
+                  : 'The payment was not completed. No payment was collected.'}{' '}
+                You can retry when ready.
+              </p>
+            )}
+          </header>
+
+          <div className="sf-two-col">
+            <div className="sf-checkout-stack">
+              {/* Items */}
+              <section className="sf-panel">
+                <div className="sf-panel-head">
+                  <div>
+                    <h3>Items in your order</h3>
+                    <p>
+                      {activeOrder.lines.length
+                        ? `${activeOrder.lines.reduce((n, line) => n + line.quantity, 0)} item(s) purchased`
+                        : 'Order contents unavailable'}
+                    </p>
+                  </div>
+                </div>
+                {activeOrder.lines.length ? (
+                  <div className="sf-order-items" style={{ padding: 0 }}>
+                    {activeOrder.lines.map(({ product, quantity, lineTotal }) => (
+                      <article className="sf-order-item" key={product.id}>
+                        <div className="sf-order-item-img">
+                          <ProductThumb product={product} />
+                        </div>
+                        <div>
+                          <strong>{product.name}</strong>
+                          <span>
+                            Qty: {quantity} · {formatKes(product.price)} each
+                          </span>
+                          {isDelivered && paid && (
+                            <div>
+                              <button
+                                type="button"
+                                className="sf-auth-link"
+                                onClick={() => onOpenProduct?.(product)}
+                              >
+                                ★ Review product
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        <b>{formatKes(lineTotal ?? product.price * quantity)}</b>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="sf-alert warn" role="alert">
+                    <div>
+                      <strong>Order items are unavailable</strong>
+                      <p style={{ margin: '4px 0 8px' }}>
+                        Do not make another payment for this order. Contact the shop or open a report so the order can
+                        be checked.
+                      </p>
+                      <button
+                        type="button"
+                        className="sf-btn sf-btn-secondary"
+                        onClick={() => onNavigate('my-reports')}
+                      >
+                        Get help with this order
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </section>
+
+              {/* Delivery Info */}
+              <section className="sf-panel">
+                <div className="sf-panel-head">
+                  <div>
+                    <h3>Delivery information</h3>
+                    <p>{activeOrder.deliveryMethod === 'pickup' ? 'Collection details' : 'Delivery destination'}</p>
+                  </div>
+                </div>
+                <div className="sf-checkout-stack" style={{ gap: 12 }}>
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                    <MapPin size={18} style={{ flexShrink: 0, marginTop: 2, color: 'var(--sf-muted)' }} />
+                    <div>
+                      <strong>{activeOrder.deliveryMethod === 'pickup' ? 'Collection point' : 'Delivery address'}</strong>
+                      <p style={{ margin: '2px 0 0', fontSize: 14, color: 'var(--sf-ink-2)' }}>
+                        {activeOrder.deliveryMethod === 'pickup'
+                          ? activeOrder.pickupStation || 'Collection point to be confirmed'
+                          : [
+                              activeOrder.deliveryCounty,
+                              activeOrder.deliverySubCounty,
+                              activeOrder.deliveryEstate,
+                              activeOrder.deliveryAddress,
+                            ]
+                              .filter(Boolean)
+                              .join(', ') || 'Delivery destination not recorded'}
+                        {activeOrder.deliveryDirections ? ` · ${activeOrder.deliveryDirections}` : ''}
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                    <UserRound size={18} style={{ flexShrink: 0, marginTop: 2, color: 'var(--sf-muted)' }} />
+                    <div>
+                      <strong>{activeOrder.customerName}</strong>
+                      <p style={{ margin: '2px 0 0', fontSize: 14, color: 'var(--sf-ink-2)' }}>
+                        {activeOrder.customerPhone}
+                        {activeOrder.customerEmail ? ` · ${activeOrder.customerEmail}` : ''}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            {/* Right column: Summary + Payment + Actions */}
+            <div className="sf-checkout-stack">
+              <section className="sf-panel">
+                <div className="sf-panel-head">
+                  <h3>Order summary</h3>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div className="sf-summary-row">
+                    <span>Items subtotal</span>
+                    <strong>{formatKes(activeOrder.subtotal)}</strong>
+                  </div>
+                  <div className="sf-summary-row">
+                    <span>Delivery fee</span>
+                    <strong>{formatKes(activeOrder.deliveryFee)}</strong>
+                  </div>
+                  {activeOrder.discount ? (
+                    <div className="sf-summary-row">
+                      <span>Discount</span>
+                      <strong>−{formatKes(activeOrder.discount)}</strong>
+                    </div>
+                  ) : null}
+                  <div className="sf-summary-row sf-summary-total">
+                    <span>{paid ? 'Total paid' : 'Order total'}</span>
+                    <strong>{formatKes(activeOrder.total)}</strong>
+                  </div>
+                </div>
+              </section>
+
+              <section className="sf-panel">
+                <div className="sf-panel-head">
+                  <div>
+                    <h3>Payment information</h3>
+                    <p>{paymentLabels[activeOrder.paymentMethod]}</p>
+                  </div>
+                  <span className={`sf-status-text ${paid ? 'is-success' : canRetryPayment ? 'is-pending' : 'is-muted'}`}>
+                    {paymentLabel}
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: 13.5, color: 'var(--sf-ink-2)' }}>
+                  {activeOrder.receipt ? (
+                    <>
+                      Receipt: <strong className="sf-mono">{activeOrder.receipt}</strong>
+                    </>
+                  ) : cancelled ? (
+                    'No payment collected'
+                  ) : failed ? (
+                    'Payment was not completed'
+                  ) : (
+                    'Payment reference will appear when confirmed'
+                  )}
+                </p>
+
+                {activeOrder.paymentIssue && (
+                  <div className="sf-alert warn" style={{ marginTop: 12 }} role="status">
+                    <div>
+                      <strong>Payment received — shop confirmation needed</strong>
+                      <div>{activeOrder.paymentIssue}</div>
+                    </div>
+                  </div>
+                )}
+
+                {canRetryPayment && (
+                  <div
+                    style={{
+                      marginTop: 16,
+                      paddingTop: 16,
+                      borderTop: '1px solid var(--sf-line)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <strong>
+                        {paymentState === 'pending'
+                          ? 'Payment is awaiting confirmation'
+                          : cancelled
+                          ? 'Payment was cancelled'
+                          : 'Finish paying for this order'}
+                      </strong>
+                      <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--sf-muted)' }}>
+                        {paymentState === 'pending'
+                          ? 'Check the previous M-PESA request first. Do not send another prompt while Safaricom is still processing it.'
+                          : 'No payment was collected. You can request a fresh M-PESA prompt when ready.'}
+                      </p>
+                    </div>
+                    <label className="sf-field">
+                      M-PESA number
+                      <input
+                        type="tel"
+                        inputMode="tel"
+                        autoComplete="tel"
+                        value={retryPaymentPhone}
+                        onChange={(e) => setRetryPaymentPhone(e.target.value)}
+                        placeholder="07XX XXX XXX or 2547XXXXXXXX"
+                        maxLength={16}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      className="sf-btn sf-btn-accent"
+                      onClick={retryActiveOrderPayment}
+                      disabled={retryingOrder}
+                    >
+                      {retryingOrder
+                        ? 'Checking M-PESA…'
+                        : paymentState === 'pending'
+                        ? 'Check payment / retry if failed'
+                        : 'Retry M-PESA payment'}
+                    </button>
+                    {retryMessage && (
+                      <small className="sf-alert" role="status">
+                        {retryMessage}
+                      </small>
+                    )}
+                  </div>
+                )}
+              </section>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <button
+                  type="button"
+                  className="sf-btn sf-btn-primary"
+                  onClick={() => openOrder(activeOrder, 'order-tracking')}
+                >
+                  Track order <ArrowRight size={16} />
+                </button>
+                <button
+                  type="button"
+                  className="sf-btn sf-btn-secondary"
+                  onClick={() => openOrder(activeOrder, 'inbox')}
+                >
+                  <MessageCircle size={16} /> Message seller
+                </button>
+                <button
+                  type="button"
+                  className="sf-btn sf-btn-ghost"
+                  onClick={() => onNavigate('store')}
+                >
+                  <ShoppingBag size={16} /> Shop again
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <p className="sf-summary-note">
+            <ShieldCheck size={16} />
+            <span>Keep your order number and payment receipt. Never share your M-PESA PIN or verification codes.</span>
+          </p>
+        </div>
       </section>
     );
   }
 
   function renderTracking() {
-    if (!activeOrder) return <div className="customer-flow"><FlowHeading title="Package history" onBack={() => onNavigate('orders')} backLabel="My orders" /><div className="customer-empty-state"><h2>No order selected</h2><button type="button" className="customer-primary-button" onClick={() => onNavigate('orders')}>View my orders</button></div></div>;
-    return (
-      <section className="customer-flow">
-        <FlowHeading title="Package history" onBack={() => onNavigate('order-detail')} backLabel="Order details" />
-        <div className="customer-tracking-summary"><div><small>ORDER NUMBER</small><strong>{activeOrder.orderNumber}</strong></div><span className="customer-order-status">Order placed</span></div>
-        <div className="customer-panel customer-timeline-panel">
-          <div className="customer-tracking-timeline">
-            <article className="is-complete"><span><Check size={15} /></span><div><strong>Order placed</strong><small>{new Date(activeOrder.createdAt).toLocaleString('en-KE')}</small><p>Your order was received by the shop and saved to its order records.</p></div></article>
-            <article className={activeOrder.paymentStatus==='succeeded'?'is-complete':activeOrder.paymentStatus==='failed'||activeOrder.paymentStatus==='cancelled'?'is-current':'is-current'}><span>{activeOrder.paymentStatus==='succeeded'?<Check size={15}/>: '2'}</span><div><strong>{activeOrder.paymentStatus==='succeeded'?'Payment confirmed':activeOrder.paymentStatus==='failed'?'Payment failed':activeOrder.paymentStatus==='cancelled'?'Payment cancelled':'Payment awaiting confirmation'}</strong><small>{activeOrder.receipt||activeOrder.paymentStatus||'Pending'}</small><p>{activeOrder.paymentStatus==='succeeded'?'Safaricom confirmed this payment.':activeOrder.paymentStatus==='cancelled'?'Safaricom confirmed that you cancelled the M-PESA prompt. No payment was collected; return to Order details to retry when ready.':activeOrder.paymentStatus==='failed'?'Safaricom confirmed that this payment failed. No payment was collected; return to Order details to retry.':'The M-PESA request is still awaiting a final result from Safaricom. You can retry only after it is confirmed failed or cancelled.'}</p></div></article>
-            <article className={['processing','fulfilled'].includes(String(activeOrder.orderStatus||''))||['in_transit','delivered'].includes(String(activeOrder.deliveryStatus||''))?'is-complete':''}><span>{['processing','fulfilled'].includes(String(activeOrder.orderStatus||''))||['in_transit','delivered'].includes(String(activeOrder.deliveryStatus||''))?<Check size={15}/>: '3'}</span><div><strong>{activeOrder.deliveryStatus==='in_transit'?'In transit':activeOrder.deliveryStatus==='delivered'?'Fulfilment complete':activeOrder.orderStatus==='processing'?'Processing':activeOrder.orderStatus==='fulfilled'?'Fulfilled':'Preparing your order'}</strong><small>{activeOrder.deliveryUpdatedAt?new Date(activeOrder.deliveryUpdatedAt).toLocaleString('en-KE'):'Waiting for seller update'}</small><p>{activeOrder.deliveryStatus==='in_transit'?'The seller has marked your order as on its way.':activeOrder.deliveryStatus==='delivered'?'The seller has marked this order as delivered.':'The seller will update this step as your order is prepared.'}</p></div></article>
-            <article className={activeOrder.deliveryStatus==='delivered'?'is-complete':''}><span>{activeOrder.deliveryStatus==='delivered'?<Check size={15}/>: '4'}</span><div><strong>Delivered</strong><small>{activeOrder.deliveryStatus==='delivered'&&activeOrder.deliveryUpdatedAt?new Date(activeOrder.deliveryUpdatedAt).toLocaleString('en-KE'):'Not yet delivered'}</small></div></article>
+    if (!activeOrder)
+      return (
+        <div className="sf-flow">
+          <FlowHeading title="Package history" onBack={() => onNavigate('orders')} backLabel="My orders" />
+          <div className="sf-state-box">
+            <h2>No order selected</h2>
+            <button type="button" className="sf-btn sf-btn-primary" onClick={() => onNavigate('orders')}>
+              View my orders
+            </button>
           </div>
-          <p className="customer-preview-note"><ShieldCheck size={15} /> Payment and delivery status are retrieved from the order conversation service. Delivery updates appear when the seller records them.</p>
         </div>
+      );
+
+    const step3Complete =
+      ['processing', 'fulfilled'].includes(String(activeOrder.orderStatus || '')) ||
+      ['in_transit', 'delivered'].includes(String(activeOrder.deliveryStatus || ''));
+
+    return (
+      <section className="sf-flow">
+        <FlowHeading title="Package history" onBack={() => onNavigate('order-detail')} backLabel="Order details" />
+
+        <div className="sf-panel" style={{ marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <span className="sf-kicker">ORDER NUMBER</span>
+              <div style={{ fontSize: 20, fontWeight: 700 }} className="sf-mono">
+                #{activeOrder.orderNumber}
+              </div>
+            </div>
+            <span className="sf-status-text is-pending">
+              {activeOrder.deliveryStatus === 'delivered'
+                ? 'Delivered'
+                : activeOrder.deliveryStatus === 'in_transit'
+                ? 'In transit'
+                : 'Tracking active'}
+            </span>
+          </div>
+        </div>
+
+        <div className="sf-panel" style={{ marginBottom: 24 }}>
+          <div className="sf-timeline">
+            <article className="sf-timeline-item is-complete">
+              <span className="sf-timeline-node">
+                <Check size={14} />
+              </span>
+              <div>
+                <strong>Order placed</strong>
+                <small>{new Date(activeOrder.createdAt).toLocaleString('en-KE')}</small>
+                <p>Your order was received by the shop and saved to its order records.</p>
+              </div>
+            </article>
+
+            <article
+              className={`sf-timeline-item ${
+                activeOrder.paymentStatus === 'succeeded' ? 'is-complete' : 'is-current'
+              }`}
+            >
+              <span className="sf-timeline-node">
+                {activeOrder.paymentStatus === 'succeeded' ? <Check size={14} /> : '2'}
+              </span>
+              <div>
+                <strong>
+                  {activeOrder.paymentStatus === 'succeeded'
+                    ? 'Payment confirmed'
+                    : activeOrder.paymentStatus === 'failed'
+                    ? 'Payment failed'
+                    : activeOrder.paymentStatus === 'cancelled'
+                    ? 'Payment cancelled'
+                    : 'Payment awaiting confirmation'}
+                </strong>
+                <small>{activeOrder.receipt || activeOrder.paymentStatus || 'Pending'}</small>
+                <p>
+                  {activeOrder.paymentStatus === 'succeeded'
+                    ? 'Safaricom confirmed this payment.'
+                    : activeOrder.paymentStatus === 'cancelled'
+                    ? 'Safaricom confirmed that you cancelled the M-PESA prompt. No payment was collected; return to Order details to retry when ready.'
+                    : activeOrder.paymentStatus === 'failed'
+                    ? 'Safaricom confirmed that this payment failed. No payment was collected; return to Order details to retry.'
+                    : 'The M-PESA request is still awaiting a final result from Safaricom. You can retry only after it is confirmed failed or cancelled.'}
+                </p>
+              </div>
+            </article>
+
+            <article className={`sf-timeline-item ${step3Complete ? 'is-complete' : ''}`}>
+              <span className="sf-timeline-node">{step3Complete ? <Check size={14} /> : '3'}</span>
+              <div>
+                <strong>
+                  {activeOrder.deliveryStatus === 'in_transit'
+                    ? 'In transit'
+                    : activeOrder.deliveryStatus === 'delivered'
+                    ? 'Fulfilment complete'
+                    : activeOrder.orderStatus === 'processing'
+                    ? 'Processing'
+                    : activeOrder.orderStatus === 'fulfilled'
+                    ? 'Fulfilled'
+                    : 'Preparing your order'}
+                </strong>
+                <small>
+                  {activeOrder.deliveryUpdatedAt
+                    ? new Date(activeOrder.deliveryUpdatedAt).toLocaleString('en-KE')
+                    : 'Waiting for seller update'}
+                </small>
+                <p>
+                  {activeOrder.deliveryStatus === 'in_transit'
+                    ? 'The seller has marked your order as on its way.'
+                    : activeOrder.deliveryStatus === 'delivered'
+                    ? 'The seller has marked this order as delivered.'
+                    : 'The seller will update this step as your order is prepared.'}
+                </p>
+              </div>
+            </article>
+
+            <article
+              className={`sf-timeline-item ${activeOrder.deliveryStatus === 'delivered' ? 'is-complete' : ''}`}
+            >
+              <span className="sf-timeline-node">
+                {activeOrder.deliveryStatus === 'delivered' ? <Check size={14} /> : '4'}
+              </span>
+              <div>
+                <strong>Delivered</strong>
+                <small>
+                  {activeOrder.deliveryStatus === 'delivered' && activeOrder.deliveryUpdatedAt
+                    ? new Date(activeOrder.deliveryUpdatedAt).toLocaleString('en-KE')
+                    : 'Not yet delivered'}
+                </small>
+              </div>
+            </article>
+          </div>
+          <p className="sf-summary-note" style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--sf-line)' }}>
+            <ShieldCheck size={15} />
+            <span>
+              Payment and delivery status are retrieved from the order conversation service. Delivery updates appear when
+              the seller records them.
+            </span>
+          </p>
+        </div>
+
         {chatPanel}
       </section>
     );
   }
 
-  async function changePassword(e:any){e.preventDefault();if(passwordSaving)return;setPasswordMessage('');if(newPassword!==confirmPassword){setPasswordMessage('The new passwords do not match.');return;}setPasswordSaving(true);try{const r=await fetch('/api/buyer-auth?action=change-password&slug='+encodeURIComponent(slug),{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug,currentPassword,newPassword})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Password could not be changed.');setCurrentPassword('');setNewPassword('');setConfirmPassword('');setPasswordMessage('Your password has been changed successfully.');}catch(e:any){setPasswordMessage(e.message||'Password could not be changed.')}finally{setPasswordSaving(false)}}
-  async function saveProfile(e:any){e.preventDefault();if(profileSaving)return;setProfileSaving(true);setProfileMessage('');try{const r=await fetch('/api/buyer-auth?action=update-profile&slug='+encodeURIComponent(slug),{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug,name:profileName,email:profileEmail,alternativePhone:profilePhoneAlt,address:profileAddress})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Profile could not be saved.');onProfileUpdated?.(d.customer);setProfileMessage('Your profile has been updated.');}catch(e:any){setProfileMessage(e.message||'Profile could not be saved.')}finally{setProfileSaving(false)}}
-  function renderProfile(){return <section className="customer-flow buyer-profile-page"><FlowHeading title="My profile" onBack={()=>onNavigate('account')} backLabel="My account"/><div className="buyer-profile-intro"><div className="buyer-profile-avatar">{(profileName||customerName||'B').trim().charAt(0).toUpperCase()}</div><div><span>YOUR ACCOUNT</span><h2>Personal information</h2><p>Keep your contact details up to date for orders, delivery and support.</p></div></div><form className="customer-panel customer-account-detail buyer-profile-form" onSubmit={saveProfile}><div className="buyer-profile-section-heading"><strong>Basic details</strong><span>Fields marked required must be completed</span></div><div className="customer-contact-fields"><label className="customer-form-label">Full name <em>Required</em><input name="buyer-profile-display-name" type="text" required minLength={2} maxLength={120} value={profileName} onChange={e=>setProfileName(e.target.value)} autoComplete="name"/></label><label className="customer-form-label">Email address <em>Required</em><input type="email" required maxLength={254} value={profileEmail} onChange={e=>setProfileEmail(e.target.value)} autoComplete="email"/></label><label className="customer-form-label">Primary phone <small>Used for account verification</small><input value={initialCustomerPhone} disabled readOnly/></label><label className="customer-form-label">Alternative phone <small>Optional</small><input type="tel" value={profilePhoneAlt} onChange={e=>setProfilePhoneAlt(e.target.value)} placeholder="e.g. 07XX XXX XXX" autoComplete="tel"/></label></div>{profileMessage&&<p role="status" className="customer-preview-note">{profileMessage}</p>}<div className="buyer-profile-form-footer"><span>Your details are kept within this shop's buyer account.</span><button className="customer-primary-button" type="submit" disabled={profileSaving}>{profileSaving?'Saving changes…':'Save changes'}</button></div></form></section>}
-  async function saveAddress(e:any){e.preventDefault();if(profileSaving)return;setProfileSaving(true);setProfileMessage('');try{const r=await fetch('/api/buyer-auth?action=update-profile&slug='+encodeURIComponent(slug),{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug,name:profileName,email:profileEmail,alternativePhone:profilePhoneAlt,address:profileAddress})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Address could not be saved.');onProfileUpdated?.(d.customer);setProfileMessage('Your delivery address has been saved to your buyer account.');}catch(e:any){setProfileMessage(e.message||'Address could not be saved.')}finally{setProfileSaving(false)}}
-  function renderAddressEditor(){return <section className="customer-flow customer-address-editor"><FlowHeading title="Edit delivery address" onBack={()=>onNavigate('address-book')} backLabel="Address book"/><form className="customer-panel customer-account-detail" onSubmit={saveAddress}><p className="customer-preview-note">This address is saved to your buyer account and can be used as your default for future orders in this shop.</p><label className="customer-form-label">Default delivery address<textarea rows={5} required maxLength={300} value={profileAddress} onChange={e=>setProfileAddress(e.target.value)} placeholder="County, sub-county, estate, street, building or house number"/></label>{profileMessage&&<p role="status" className="customer-preview-note">{profileMessage}</p>}<div className="customer-flow-actions"><button type="button" className="customer-secondary-button" onClick={()=>onNavigate('address-book')}>Cancel</button><button className="customer-primary-button" type="submit" disabled={profileSaving}>{profileSaving?'Saving…':'Save address'}</button></div></form></section>}
-  function renderAccount() {
-    const savedCount = serverWishlistLoaded ? serverWishlist.length : wishlistIds.length;
-    const shortcuts = [
-      { label: 'My orders', description: 'Track purchases and delivery', view: 'orders', icon: Package, count: orders.length },
-      { label: 'Saved items', description: 'Products you have saved', view: 'wishlist', icon: ShoppingBag, count: savedCount },
-      { label: 'Messages', description: 'Conversations with this shop', view: 'inbox', icon: MessageCircle },
-      { label: 'Reports & support', description: 'Get help with an order or shop', view: 'my-reports', icon: Flag },
-    ];
+  async function changePassword(e: any) {
+    e.preventDefault();
+    if (passwordSaving) return;
+    setPasswordMessage('');
+    if (newPassword !== confirmPassword) {
+      setPasswordMessage('The new passwords do not match.');
+      return;
+    }
+    setPasswordSaving(true);
+    try {
+      const r = await fetch('/api/buyer-auth?action=change-password&slug=' + encodeURIComponent(slug), {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, currentPassword, newPassword }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw Error(d.error || 'Password could not be changed.');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordMessage('Your password has been changed successfully.');
+    } catch (e: any) {
+      setPasswordMessage(e.message || 'Password could not be changed.');
+    } finally {
+      setPasswordSaving(false);
+    }
+  }
+
+  async function saveProfile(e: any) {
+    e.preventDefault();
+    if (profileSaving) return;
+    setProfileSaving(true);
+    setProfileMessage('');
+    try {
+      const r = await fetch('/api/buyer-auth?action=update-profile&slug=' + encodeURIComponent(slug), {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug,
+          name: profileName,
+          email: profileEmail,
+          alternativePhone: profilePhoneAlt,
+          address: profileAddress,
+        }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw Error(d.error || 'Profile could not be saved.');
+      onProfileUpdated?.(d.customer);
+      setProfileMessage('Your profile has been updated.');
+    } catch (e: any) {
+      setProfileMessage(e.message || 'Profile could not be saved.');
+    } finally {
+      setProfileSaving(false);
+    }
+  }
+
+  function renderProfile() {
     return (
-      <section className="customer-flow buyer-hub-page">
-        <div className="buyer-hub-heading">
-          <div><span className="buyer-hub-eyebrow">YOUR SHOP ACCOUNT</span><h1>Welcome{customerName.trim() ? ', '+customerName.trim().split(/\\s+/)[0] : ' back'}</h1><p>Everything you need to manage your shopping in one place.</p></div>
-          <button type="button" className="buyer-hub-signout" onClick={onSignOut}>Sign out</button>
+      <section className="sf-flow">
+        <FlowHeading
+          title="My profile"
+          subtitle="Keep your contact details up to date for orders, delivery and support."
+          onBack={() => onNavigate('account')}
+          backLabel="My account"
+        />
+        <form className="sf-panel sf-checkout-stack" onSubmit={saveProfile}>
+          <div className="sf-panel-head">
+            <div>
+              <h2>Personal information</h2>
+              <p>Fields marked required must be completed</p>
+            </div>
+          </div>
+          <div className="sf-form-grid">
+            <label className="sf-field">
+              <span>
+                Full name <em>Required</em>
+              </span>
+              <input
+                name="buyer-profile-display-name"
+                type="text"
+                required
+                minLength={2}
+                maxLength={120}
+                value={profileName}
+                onChange={(e) => setProfileName(e.target.value)}
+                autoComplete="name"
+              />
+            </label>
+            <label className="sf-field">
+              <span>
+                Email address <em>Required</em>
+              </span>
+              <input
+                type="email"
+                required
+                maxLength={254}
+                value={profileEmail}
+                onChange={(e) => setProfileEmail(e.target.value)}
+                autoComplete="email"
+              />
+            </label>
+            <label className="sf-field">
+              <span>
+                Primary phone <small>Used for verification</small>
+              </span>
+              <input value={initialCustomerPhone} disabled readOnly />
+            </label>
+            <label className="sf-field">
+              <span>
+                Alternative phone <small>(optional)</small>
+              </span>
+              <input
+                type="tel"
+                value={profilePhoneAlt}
+                onChange={(e) => setProfilePhoneAlt(e.target.value)}
+                placeholder="e.g. 07XX XXX XXX"
+                autoComplete="tel"
+              />
+            </label>
+          </div>
+          {profileMessage && (
+            <p role="status" className="sf-alert success">
+              {profileMessage}
+            </p>
+          )}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+            <span style={{ fontSize: 13, color: 'var(--sf-muted)' }}>
+              Your details are kept within this shop's buyer account.
+            </span>
+            <button className="sf-btn sf-btn-primary" type="submit" disabled={profileSaving}>
+              {profileSaving ? 'Saving changes…' : 'Save changes'}
+            </button>
+          </div>
+        </form>
+      </section>
+    );
+  }
+
+  async function saveAddress(e: any) {
+    e.preventDefault();
+    if (profileSaving) return;
+    setProfileSaving(true);
+    setProfileMessage('');
+    try {
+      const r = await fetch('/api/buyer-auth?action=update-profile&slug=' + encodeURIComponent(slug), {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug,
+          name: profileName,
+          email: profileEmail,
+          alternativePhone: profilePhoneAlt,
+          address: profileAddress,
+        }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw Error(d.error || 'Address could not be saved.');
+      onProfileUpdated?.(d.customer);
+      setProfileMessage('Your delivery address has been saved to your buyer account.');
+    } catch (e: any) {
+      setProfileMessage(e.message || 'Address could not be saved.');
+    } finally {
+      setProfileSaving(false);
+    }
+  }
+
+  function renderAddressEditor() {
+    return (
+      <section className="sf-flow">
+        <FlowHeading
+          title="Edit delivery address"
+          onBack={() => onNavigate('address-book')}
+          backLabel="Address book"
+        />
+        <form className="sf-panel sf-checkout-stack" onSubmit={saveAddress}>
+          <p className="sf-summary-note">
+            This address is saved to your buyer account and can be used as your default for future orders in this shop.
+          </p>
+          <label className="sf-field">
+            Default delivery address
+            <textarea
+              rows={4}
+              required
+              maxLength={300}
+              value={profileAddress}
+              onChange={(e) => setProfileAddress(e.target.value)}
+              placeholder="County, sub-county, estate, street, building or house number"
+            />
+          </label>
+          {profileMessage && (
+            <p role="status" className="sf-alert success">
+              {profileMessage}
+            </p>
+          )}
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button type="button" className="sf-btn sf-btn-secondary" onClick={() => onNavigate('address-book')}>
+              Cancel
+            </button>
+            <button className="sf-btn sf-btn-primary" type="submit" disabled={profileSaving}>
+              {profileSaving ? 'Saving…' : 'Save address'}
+            </button>
+          </div>
+        </form>
+      </section>
+    );
+  }
+
+  function renderAccount() {
+    return (
+      <section className="sf-flow">
+        <div className="sf-account-welcome">
+          <div className="sf-account-welcome-user">
+            <span className="sf-account-welcome-avatar">
+              <UserRound size={24} />
+            </span>
+            <div>
+              <span className="sf-kicker">MY ACCOUNT</span>
+              <h1 style={{ fontSize: 24, marginTop: 2 }}>
+                {customerName.trim() ? `Welcome back, ${customerName.trim()}` : 'Welcome back'}
+              </h1>
+              <div style={{ fontSize: 13.5, color: 'var(--sf-muted)', marginTop: 2 }}>
+                {initialCustomerPhone}
+                {initialCustomerEmail ? ` · ${initialCustomerEmail}` : ''}
+              </div>
+            </div>
+          </div>
+          <button type="button" className="sf-btn sf-btn-secondary" onClick={onSignOut}>
+            Sign out
+          </button>
         </div>
-        <section className="buyer-hub-profile">
-          <span className="buyer-hub-avatar">{(customerName||'B').trim().charAt(0).toUpperCase()}</span>
-          <div className="buyer-hub-profile-copy"><strong>{customerName||'Buyer account'}</strong><span>{initialCustomerPhone||'Phone not available'}</span>{initialCustomerEmail&&<span>{initialCustomerEmail}</span>}</div>
-          <button type="button" onClick={()=>onNavigate('profile')}>Edit profile <ChevronRight size={15}/></button>
-        </section>
-        <div className="buyer-hub-shortcuts" aria-label="Account shortcuts">
-          {shortcuts.map(item=><button type="button" className="buyer-hub-shortcut" key={item.view} onClick={()=>onNavigate(item.view)}>
-            <span className="buyer-hub-shortcut-icon"><item.icon size={19}/></span><span className="buyer-hub-shortcut-copy"><strong>{item.label}</strong><small>{item.description}</small></span>{item.count!==undefined&&<b>{item.count}</b>}<ChevronRight size={16}/>
-          </button>)}
-        </div>
-        <div className="buyer-hub-sections">
-          {accountGroups.filter(group=>group.title!=='SHOPPING').map(group=><section className="buyer-hub-section" key={group.title}><h2>{group.title}</h2><div>{group.links.map(link=><button type="button" key={link.view} onClick={()=>onNavigate(link.view)}><link.icon size={18}/><span>{link.label}</span><ChevronRight size={16}/></button>)}</div></section>)}
-          <section className="buyer-hub-section"><h2>MORE ACCOUNT SETTINGS</h2><div>
-            <button type="button" onClick={()=>onNavigate('address-book')}><MapPin size={18}/><span>Delivery addresses</span><ChevronRight size={16}/></button>
-            <button type="button" onClick={()=>onNavigate('vouchers')}><TicketPercent size={18}/><span>Vouchers & offers</span><ChevronRight size={16}/></button>
-            <button type="button" onClick={()=>onNavigate('reviews')}><Check size={18}/><span>My reviews</span><ChevronRight size={16}/></button>
-            <button type="button" onClick={()=>onNavigate('notifications')}><ShieldCheck size={18}/><span>Notifications</span><ChevronRight size={16}/></button>
-            <button type="button" onClick={()=>onNavigate('account-management')}><UserRound size={18}/><span>Account & security</span><ChevronRight size={16}/></button>
-            <button type="button" onClick={()=>onNavigate('notification-settings')}><ShieldCheck size={18}/><span>Notification preferences</span><ChevronRight size={16}/></button>
-            <button type="button" onClick={()=>onNavigate('newsletter')}><Mail size={18}/><span>Shop updates &amp; offers</span><ChevronRight size={16}/></button>
-            <button type="button" onClick={()=>onNavigate('public-profile')}><UserRound size={18}/><span>Public profile</span><ChevronRight size={16}/></button>
-          </div></section>
+
+        <button type="button" className="sf-orders-shortcut" onClick={() => onNavigate('orders')}>
+          <span className="sf-assurance-icon">
+            <Package size={20} />
+          </span>
+          <span>
+            <strong>My Orders</strong>
+            <small>View purchases, payment and delivery updates</small>
+          </span>
+          <b>{orders.length}</b>
+          <ChevronRight size={18} />
+        </button>
+
+        <div className="sf-account-grid">
+          {accountGroups.map((group) => (
+            <section className="sf-panel" key={group.title}>
+              <div className="sf-panel-head">
+                <h2 style={{ fontSize: 14, letterSpacing: '0.06em' }}>{group.title}</h2>
+              </div>
+              <div>
+                {group.links.map((link) => (
+                  <button
+                    type="button"
+                    className="sf-account-link"
+                    key={link.view}
+                    onClick={() => onNavigate(link.view)}
+                  >
+                    <link.icon size={17} />
+                    <span>{link.label}</span>
+                    <ChevronRight size={15} />
+                  </button>
+                ))}
+              </div>
+            </section>
+          ))}
         </div>
       </section>
     );
   }
 
-  async function submitShopReport(e:any){e.preventDefault();if(reportBusy)return;setReportBusy(true);setReportMessage('');try{const attachmentIds:string[]=[];for(const file of reportFiles){const sign=await fetch('/api/buyer?action=complaint-attachment',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({slug,mode:'upload',fileName:file.name,contentType:file.type,size:file.size})});const sd=await sign.json().catch(()=>({}));if(!sign.ok)throw Error(sd.error||'Could not prepare '+file.name);const put=await fetch(sd.uploadUrl,{method:'PUT',headers:{'Content-Type':file.type},body:file});if(!put.ok)throw Error('Upload failed for '+file.name);const done=await fetch('/api/buyer?action=complaint-attachment',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({slug,mode:'complete',attachmentId:sd.attachmentId})});const dd=await done.json().catch(()=>({}));if(!done.ok)throw Error(dd.error||'Security scan failed for '+file.name);attachmentIds.push(sd.attachmentId);}const r=await fetch('/api/buyer?action=complaint',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({slug,shopName:reportShop,orderId:reportOrderId||null,issueType:reportIssue,productId:reportProductId||null,paymentMade:reportPaymentMade,paymentAmount:reportPaymentAmount,paymentReference:reportPaymentReference,details:reportDetails,attachmentIds})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Report could not be submitted.');setReportMessage('Report submitted to DASNET. Reference: '+d.report.id);setReportDetails('');setReportFiles([]);setReportPaymentAmount('');setReportPaymentReference('');}catch(e:any){setReportMessage(e.message||'Report could not be submitted.');}finally{setReportBusy(false);}}
-  function renderAccountSection() {
-    if(view==='vouchers')return <section className="customer-flow"><FlowHeading title="Shop vouchers & offers" onBack={()=>onNavigate('account')} backLabel="My account"/><div className="customer-panel customer-account-detail"><p>Current discounts published by {shopName}. Enter a code at checkout to apply an eligible offer.</p>{shopCoupons.length?shopCoupons.map(c=><article className="customer-order-card" key={c.code}><div className="customer-order-card-heading"><div><small>COUPON CODE</small><strong>{c.code}</strong></div><span className="customer-order-status">{c.discount_type==='percentage'?c.discount_value+'% OFF':'KES '+Number(c.discount_value).toLocaleString('en-KE')+' OFF'}</span></div><p>Minimum spend: {formatKes(Number(c.minimum_order_minor||0)/100)}{c.expires_at?' · Expires '+new Date(c.expires_at).toLocaleDateString('en-KE'):''}</p><button type="button" className="customer-primary-button" onClick={()=>{setVoucherCode(c.code);setVoucherMessage('Code selected. Apply it at checkout.');onNavigate('cart')}}>Use this coupon</button></article>):<div className="customer-empty-state"><span><TicketPercent size={26}/></span><h2>No active offers</h2><p>{shopName} has not published any active coupons yet.</p></div>}</div></section>;
-    if(view==='assistant')return <section className="customer-flow"><FlowHeading title="Shopping assistance" onBack={()=>onNavigate('account')} backLabel="My account"/><div className="customer-panel customer-account-detail"><h2>Contact {shopName}</h2><p>Questions about products, orders, delivery or payment? Contact the seller directly using the details below.</p>{(shopWhatsappNumber||shopContactEmail)?<div className="customer-contact-fields">{shopWhatsappNumber&&<a className="customer-account-link" href={'https://wa.me/'+shopWhatsappNumber.replace(/\D/g,'')} target="_blank" rel="noopener noreferrer"><Phone size={18}/><span>WhatsApp / Call seller · {shopWhatsappNumber}</span><ChevronRight size={16}/></a>}{shopContactEmail&&<a className="customer-account-link" href={'mailto:'+shopContactEmail}><Mail size={18}/><span>Email seller · {shopContactEmail}</span><ChevronRight size={16}/></a>}</div>:<p className="customer-preview-note">The seller has not added public contact details yet. You can still use the order conversation or report an issue to DASNET.</p>}<button type="button" className="customer-primary-button" onClick={()=>onNavigate('my-reports')}>Open Reports & Complaints</button></div></section>;
-    if(view==='my-reports'||view.startsWith('my-reports/'))return <section className="customer-flow buyer-reports-fullscreen"><div className="buyer-support-topbar"><button type="button" onClick={()=>onNavigate('account')}>← <span>My account</span></button><span>HELP CENTRE</span></div><DisputesPanel slug={slug} viewerRole="buyer" initialReportId={initialReportId||(view.startsWith('my-reports/')&&view!=='my-reports/new'?decodeURIComponent(view.slice('my-reports/'.length)):undefined)} orders={orders.filter(o=>Boolean(o.orderId)).map(o=>({id:o.orderId as string,label:o.orderNumber}))}/></section>;
-    if(view==='report-shop'||view==='reports')return <section className="customer-flow buyer-reports-fullscreen"><DisputesPanel slug={slug} viewerRole="buyer" initialReportId={initialReportId} orders={orders.filter(o=>Boolean(o.orderId)).map(o=>({id:o.orderId as string,label:o.orderNumber}))}/></section>;
-    if(view==='report-shop-legacy-disabled')return <section className="customer-flow"><FlowHeading title="Report a shop or order" onBack={()=>onNavigate('account')} backLabel="My account"/><form className="customer-panel customer-account-detail" onSubmit={submitShopReport}><p>Your report goes directly to DASNET for review. Provide accurate details and attach relevant evidence. Do not upload passwords, PINs or one-time codes.</p><label className="customer-form-label">Shop name<select required value={reportShop} onChange={e=>setReportShop(e.target.value)}><option value={shopName}>{shopName}</option></select></label><label className="customer-form-label">Order affected<select value={reportOrderId} onChange={e=>{setReportOrderId(e.target.value);setReportProductId('')}}><option value="">No specific order / shop-wide report</option>{orders.map(o=><option key={o.orderId||o.orderNumber} value={o.orderId||''}>{o.orderNumber} · {formatKes(o.total)}</option>)}</select></label><label className="customer-form-label">Product affected (optional)<select value={reportProductId} onChange={e=>setReportProductId(e.target.value)}><option value="">No specific product</option>{orders.filter(o=>!reportOrderId||o.orderId===reportOrderId).flatMap(o=>o.lines.map(line=>({product:line.product,order:o}))).filter((x,i,a)=>a.findIndex(y=>y.product.id===x.product.id)===i).map(x=><option key={x.product.id} value={x.product.id}>{x.product.name}</option>)}</select></label><label className="customer-form-label">Type of issue<select required value={reportIssue} onChange={e=>setReportIssue(e.target.value)}><option value="payment">Payment / M-PESA</option><option value="delivery">Delivery not received / delayed</option><option value="product_quality">Product quality / not as described</option><option value="wrong_item">Wrong or missing item</option><option value="seller_communication">Seller communication</option><option value="refund_return">Refund / return dispute</option><option value="shop_listing">Misleading shop or listing</option><option value="other">Other</option></select></label><label className="customer-newsletter-toggle"><input type="checkbox" checked={reportPaymentMade} onChange={e=>setReportPaymentMade(e.target.checked)}/><span>I made a payment related to this issue</span></label>{reportPaymentMade&&<div className="customer-contact-fields"><label className="customer-form-label">Amount paid (KES)<input type="number" min="1" step="0.01" required value={reportPaymentAmount} onChange={e=>setReportPaymentAmount(e.target.value)}/></label><label className="customer-form-label">M-PESA receipt / payment reference<input maxLength={100} value={reportPaymentReference} onChange={e=>setReportPaymentReference(e.target.value)} placeholder="e.g. QAB12XYZ"/></label></div>}<label className="customer-form-label">Describe what happened<textarea required minLength={10} maxLength={5000} rows={6} value={reportDetails} onChange={e=>setReportDetails(e.target.value)} placeholder="Include dates, what was agreed, what happened and what resolution you are seeking."/></label><label className="customer-form-label">Attachments (optional)<input type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.webp" onChange={e=>{const fs=Array.from(e.target.files||[]);if(fs.length>8||fs.some(f=>f.size>10485760)){setReportMessage('Attach up to 8 files, each 10 MB or smaller.');return;}setReportFiles(fs);setReportMessage('');}}/><small>PDF, Office documents, TXT, JPG, PNG or WEBP. Files are not malware-scanned at this time. Only upload trusted documents or images; do not upload executable files, passwords, PINs or one-time codes.</small></label>{reportFiles.length>0&&<p className="customer-preview-note">{reportFiles.map(f=>f.name).join(' · ')}</p>}{reportMessage&&<p className="customer-preview-note" role="status">{reportMessage}</p>}<div className="customer-flow-actions"><button className="customer-primary-button" disabled={reportBusy}>{reportBusy?'Submitting securely…':'Submit report to DASNET'}</button></div></form></section>;
-    if(view==='public-profile')return <section className="customer-flow"><FlowHeading title="Buyer profile" onBack={()=>onNavigate('account')} backLabel="My account"/><div className="customer-panel customer-account-detail"><h2>{profileName||initialCustomerName||'Buyer profile'}</h2><p className="customer-preview-note">Private account profile</p><dl className="customer-profile-summary"><dt>Phone</dt><dd>{initialCustomerPhone||'Not available'}</dd><dt>Email</dt><dd>{profileEmail||initialCustomerEmail||'Not provided'}</dd><dt>Default address</dt><dd>{profileAddress||initialCustomerAddress||'Not saved'}</dd></dl><p>Your buyer profile is private to this shop account. It is not published as a public profile or exposed to other shoppers.</p><button type="button" className="customer-primary-button" onClick={()=>onNavigate('profile')}>Edit profile</button></div></section>;
-    const policyViews:any={
-      'shop-terms':{title:'Shop Terms & DASMARKET Platform Rules',publisher:shopName+' · DASMARKET platform rules',body:[shopTermsAndConditions.trim()||defaultTerms(shopName), 'DASMARKET MINIMUM TERMS — APPLY TO EVERY SHOP\\n\\n1. INDEPENDENT SELLER: This shop is operated by '+shopName+'. The seller, not DASMARKET, is responsible for the products, descriptions, prices, stock, warranties, delivery, returns and customer service.\\n\\n2. DIRECT PAYMENTS: Payments go directly to the seller or the seller’s nominated payment provider/account. DASMARKET does not receive, hold, escrow or guarantee the buyer’s payment or seller’s sale proceeds. Verify the recipient name, number and amount before paying. Keep your official payment confirmation.\\n\\n3. SELLER ACCOUNT AND FRAUD: The seller is responsible for securing its shop account, staff access, payment credentials and payment instructions, and for activity and fraud carried out through its account by the seller or persons it authorises or fails to secure against. DASMARKET is not liable for seller fraud, misrepresentation, misuse of seller funds or failure to fulfil an order, except where liability cannot lawfully be excluded or arises from DASMARKET’s own acts or omissions.\\n\\n4. BUYER SAFETY: Check the seller, listing, total price, delivery and refund terms before paying. Never share your M-PESA PIN, password or one-time code. Contact the seller using independently verified shop contact details if payment instructions change.\\n\\n5. ORDER AND REFUND RESPONSIBILITY: The purchase contract is between the buyer and seller. The seller handles fulfilment, cancellations, returns and refunds in accordance with applicable law and its published policy. A DASMARKET report does not guarantee recovery of money paid directly to a seller.\\n\\n6. REPORTING AND PLATFORM ACTION: Buyers may report suspicious listings, payment requests or seller conduct through the available report tools. DASMARKET may investigate and restrict accounts or listings under its platform rules, but is not a guarantor of seller performance.\\n\\n7. LAWFUL CONDUCT: Sellers must provide accurate information, honour applicable consumer and data-protection laws, and must not use the shop to deceive, defraud or unlawfully collect customer information.'].join('\\n\\n')},
-      'shop-privacy':{title:'Shop Privacy & DASMARKET Platform Privacy',publisher:shopName+' · DASMARKET platform privacy notices',body:[shopPrivacyPolicy.trim()||defaultPrivacy(shopName), 'DASMARKET MINIMUM PRIVACY NOTICES — APPLY TO EVERY SHOP\\n\\n1. ORDER INFORMATION: When you place an order, your name, contact details, delivery information, order contents and relevant order status are shared with '+shopName+' so the seller can confirm, fulfil and support your order.\\n\\n2. DIRECT PAYMENT PROCESSING: Payment is made to the seller or processed by the seller’s selected payment provider. DASMARKET does not hold the seller’s sale proceeds. The seller and payment provider may process transaction references and payment status. Never disclose your PIN, password or one-time security code.\\n\\n3. PLATFORM OPERATIONS: DASMARKET may process account, device, order and support information to operate the storefront platform, maintain security, prevent fraud, investigate reports and comply with legal obligations.\\n\\n4. SELLER DATA RESPONSIBILITY: The seller is responsible for protecting buyer information it receives, using it only for lawful order and business purposes, providing its own privacy information, and responding to requests about data it controls.\\n\\n5. NO UNRELATED MARKETING WITHOUT A LEGAL BASIS: The seller must not use checkout contact details for unrelated marketing unless it has a lawful basis and obtains any consent required by law. You may withdraw marketing consent.\\n\\n6. RETENTION AND DELETION: The seller must not keep customer information longer than reasonably necessary for its lawful purposes and legal obligations. Requests about information held by the seller should be sent to the seller; requests about DASMARKET platform account information can be sent to support@dasmarket.co.ke.\\n\\n7. PLATFORM SHARING AND SUPPORT: DASMARKET may share necessary information with hosting, security, communication and other service providers that support the platform, or with authorities where required by law. Support reports and evidence may be reviewed to investigate abuse and protect users.'].join('\\n\\n')},
-      'shop-returns':{title:'Returns, refunds & exchanges',body:shopReturnPolicy.trim()||defaultReturns(shopName),publisher:shopName},
-      'shop-delivery':{title:'Delivery & collection policy',body:shopDeliveryPolicy.trim()||defaultDelivery(shopName),publisher:shopName},
-      'platform-terms':{title:'DASMARKET Terms & Conditions',publisher:'DASMARKET · Powered by DASMARKET',body:'ABOUT THE MARKETPLACE\\nDASMARKET provides online storefront and marketplace tools that help buyers discover products and communicate with independent sellers. The seller is responsible for product descriptions, pricing, stock accuracy, fulfilment, delivery arrangements and any seller-specific promises.\\n\\nBUYER RESPONSIBILITIES\\nReview the listing and seller information carefully. Confirm the final price, delivery or collection method, delivery charges, payment recipient and applicable return terms before paying. Keep order references, messages and proof of payment. Never share your M-PESA PIN, password or one-time verification codes.\\n\\nORDERS AND PAYMENTS\\nAn order is subject to the seller’s confirmation and the payment status shown in the checkout or order record. Do not treat a payment prompt, screenshot or pending status as proof of a completed payment. Payment handling and any refund depend on the checkout method, payment provider and applicable seller terms.\\n\\nSELLER CONTENT AND AVAILABILITY\\nProduct images, descriptions, stock and prices are supplied or managed by sellers and may change. Contact the seller to clarify any detail that is important to your purchase. DASMARKET may restrict listings or accounts that appear misleading, unsafe or in breach of platform rules.\\n\\nREPORTS AND SUPPORT\\nUse the available report or complaint tools to flag suspicious listings, orders or conduct. Include relevant order references and evidence, but never include passwords, PINs or one-time codes. Platform support can assist with marketplace issues but cannot guarantee recovery of money sent directly to a seller or independently guarantee every product or seller.\\n\\nCHANGES\\nThese marketplace terms may be updated as platform features and operating requirements change. The terms displayed on this page apply when you use the marketplace.'},
-      'platform-privacy':{title:'DASMARKET Privacy Policy',publisher:'DASMARKET · Powered by DASMARKET',body:'INFORMATION USED\\nDepending on the features you use, DASMARKET may process account and contact details, delivery information, order and payment references, messages, support reports, saved items and basic technical information needed to operate and secure the marketplace.\\n\\nHOW INFORMATION IS USED\\nInformation is used to create and secure accounts, operate storefronts, process orders, support buyer-seller communication, maintain order records, respond to reports, prevent misuse and improve marketplace reliability.\\n\\nWHEN INFORMATION IS SHARED\\nRelevant order and delivery details are made available to the shop handling your order so it can fulfil it and contact you. Information may also be shared with payment, hosting, messaging and other service providers where needed to provide the service, or where disclosure is required to address security, fraud or legal obligations.\\n\\nMESSAGES AND REPORTS\\nMessages and evidence submitted through order conversations or support reports may be reviewed to provide support, investigate reported conduct and protect marketplace users. Do not submit passwords, M-PESA PINs or one-time verification codes.\\n\\nSECURITY AND RETENTION\\nReasonable technical and organisational safeguards are used to protect marketplace information. No online service can promise absolute security. Information is retained for as long as reasonably needed for account operation, order records, support, security and applicable obligations.\\n\\nYOUR CHOICES\\nKeep your account contact details accurate and use account settings or support to request help with your information or account. For privacy questions, contact DASNET support at support@dasnet.co.ke or +254 758 884 861.'}
-    };
-    if(policyViews[view])return <section className="customer-flow customer-policy-fullscreen"><FlowHeading title={policyViews[view].title} onBack={()=>onNavigate('store')} backLabel="Back to shop"/><article className="customer-panel customer-account-detail customer-policy-document"><header className="customer-policy-document-head"><div className="customer-policy-document-brand"><span className="customer-policy-document-mark">{shopName.trim().charAt(0).toUpperCase()}</span><div><strong>{shopName}</strong><small>Official shop policy</small></div></div><span className="customer-policy-document-badge">SHOP INFORMATION</span></header><div className="customer-policy-document-contact"><strong>Contact this shop</strong>{shopWhatsappNumber&&<a href={"https://wa.me/"+shopWhatsappNumber.replace(/\D/g,"")} target="_blank" rel="noopener noreferrer"><Phone size={15}/>{shopWhatsappNumber}</a>}{shopContactEmail&&<a href={"mailto:"+shopContactEmail}><Mail size={15}/>{shopContactEmail}</a>}{!shopWhatsappNumber&&!shopContactEmail&&<span>Contact details have not been published yet.</span>}</div><div className="customer-policy-document-body">{policyViews[view].body?policyViews[view].body.split(/\n\n|\\n\\n/).map((paragraph:string,index:number)=><p key={index}>{paragraph}</p>):<p className="customer-preview-note">This shop has not published this policy yet. Contact the seller if you need clarification before placing an order.</p>}</div><footer className="customer-policy-document-foot">Shop name and contact details are supplied by the shop profile. DASMARKET minimum platform terms and privacy notices also apply where relevant.</footer></article></section>;
-    if(view==='wishlist'){
-      const savedProducts=products.filter(product=>(serverWishlistLoaded?serverWishlist:wishlistIds).includes(product.id));
-      return <section className="customer-flow"><FlowHeading title="Saved items" onBack={()=>onNavigate('account')} backLabel="My account"/><div className="customer-panel customer-account-detail"><div className="customer-panel-heading"><h2>Your wishlist</h2><span>{savedProducts.length} saved</span></div><p className="customer-preview-note">Saved items are synced to your buyer account.</p>{savedProducts.length?<div className="customer-recommendation-row">{savedProducts.map(product=><article className="customer-recommendation-card" key={product.id}><ProductThumb product={product}/><strong>{product.name}</strong><b>{formatKes(product.price)}</b><div className="customer-wishlist-actions"><button type="button" className="customer-secondary-button" onClick={()=>onOpenProduct?.(product)}>View item</button><button type="button" className="customer-text-button" onClick={()=>togglePersistentWishlist(product.id)}>Remove</button></div></article>)}</div>:<div className="customer-empty-state"><span><ShoppingBag size={28}/></span><h2>No saved items yet</h2><p>Open a product and save it to your wishlist to keep it here.</p><button type="button" className="customer-primary-button" onClick={()=>onNavigate('store')}>Browse products</button></div>}</div></section>;
+  async function submitShopReport(e: any) {
+    e.preventDefault();
+    if (reportBusy) return;
+    setReportBusy(true);
+    setReportMessage('');
+    try {
+      const attachmentIds: string[] = [];
+      for (const file of reportFiles) {
+        const sign = await fetch('/api/buyer?action=complaint-attachment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ slug, mode: 'upload', fileName: file.name, contentType: file.type, size: file.size }),
+        });
+        const sd = await sign.json().catch(() => ({}));
+        if (!sign.ok) throw Error(sd.error || 'Could not prepare ' + file.name);
+        const put = await fetch(sd.uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+        if (!put.ok) throw Error('Upload failed for ' + file.name);
+        const done = await fetch('/api/buyer?action=complaint-attachment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ slug, mode: 'complete', attachmentId: sd.attachmentId }),
+        });
+        const dd = await done.json().catch(() => ({}));
+        if (!done.ok) throw Error(dd.error || 'Security scan failed for ' + file.name);
+        attachmentIds.push(sd.attachmentId);
+      }
+      const r = await fetch('/api/buyer?action=complaint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          slug,
+          shopName: reportShop,
+          orderId: reportOrderId || null,
+          issueType: reportIssue,
+          productId: reportProductId || null,
+          paymentMade: reportPaymentMade,
+          paymentAmount: reportPaymentAmount,
+          paymentReference: reportPaymentReference,
+          details: reportDetails,
+          attachmentIds,
+        }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw Error(d.error || 'Report could not be submitted.');
+      setReportMessage('Report submitted to DASNET. Reference: ' + d.report.id);
+      setReportDetails('');
+      setReportFiles([]);
+      setReportPaymentAmount('');
+      setReportPaymentReference('');
+    } catch (e: any) {
+      setReportMessage(e.message || 'Report could not be submitted.');
+    } finally {
+      setReportBusy(false);
     }
+  }
+
+  function renderAccountSection() {
+    if (view === 'vouchers')
+      return (
+        <section className="sf-flow">
+          <FlowHeading
+            title="Shop vouchers & offers"
+            subtitle={`Current discounts published by ${shopName}. Enter a code at checkout to apply an eligible offer.`}
+            onBack={() => onNavigate('account')}
+            backLabel="My account"
+          />
+          {shopCoupons.length ? (
+            <div className="sf-orders-list">
+              {shopCoupons.map((c) => (
+                <article className="sf-panel" key={c.code}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                    <div>
+                      <span className="sf-kicker">COUPON CODE</span>
+                      <div style={{ fontSize: 18, fontWeight: 700 }} className="sf-mono">
+                        {c.code}
+                      </div>
+                    </div>
+                    <strong className="sf-status-text is-success">
+                      {c.discount_type === 'percentage'
+                        ? `${c.discount_value}% OFF`
+                        : `KES ${Number(c.discount_value).toLocaleString('en-KE')} OFF`}
+                    </strong>
+                  </div>
+                  <p style={{ margin: '8px 0 14px', fontSize: 13.5, color: 'var(--sf-muted)' }}>
+                    Minimum spend: {formatKes(Number(c.minimum_order_minor || 0) / 100)}
+                    {c.expires_at ? ` · Expires ${new Date(c.expires_at).toLocaleDateString('en-KE')}` : ''}
+                  </p>
+                  <button
+                    type="button"
+                    className="sf-btn sf-btn-primary"
+                    onClick={() => {
+                      setVoucherCode(c.code);
+                      setVoucherMessage('Code selected. Apply it at checkout.');
+                      onNavigate('cart');
+                    }}
+                  >
+                    Use this coupon
+                  </button>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="sf-state-box">
+              <span className="sf-state-icon">
+                <TicketPercent size={26} />
+              </span>
+              <h2>No active offers</h2>
+              <p>{shopName} has not published any active coupons yet.</p>
+              <button type="button" className="sf-btn sf-btn-secondary" onClick={() => onNavigate('store')}>
+                Continue shopping
+              </button>
+            </div>
+          )}
+        </section>
+      );
+
+    if (view === 'assistant')
+      return (
+        <section className="sf-flow">
+          <FlowHeading title="Shopping assistance" onBack={() => onNavigate('account')} backLabel="My account" />
+          <div className="sf-panel sf-checkout-stack">
+            <div>
+              <h2>Contact {shopName}</h2>
+              <p style={{ margin: '4px 0 0', color: 'var(--sf-muted)' }}>
+                Questions about products, orders, delivery or payment? Contact the seller directly or open a report.
+              </p>
+            </div>
+            {shopWhatsappNumber || shopContactEmail ? (
+              <div>
+                {shopWhatsappNumber && (
+                  <a
+                    className="sf-account-link"
+                    href={'https://wa.me/' + shopWhatsappNumber.replace(/\D/g, '')}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Phone size={17} />
+                    <span>WhatsApp / Call seller · {shopWhatsappNumber}</span>
+                    <ChevronRight size={15} />
+                  </a>
+                )}
+                {shopContactEmail && (
+                  <a className="sf-account-link" href={'mailto:' + shopContactEmail}>
+                    <Mail size={17} />
+                    <span>Email seller · {shopContactEmail}</span>
+                    <ChevronRight size={15} />
+                  </a>
+                )}
+              </div>
+            ) : (
+              <p className="sf-summary-note">
+                The seller has not added public contact details yet. You can still use the order conversation or report an
+                issue to DASNET.
+              </p>
+            )}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+              <button type="button" className="sf-btn sf-btn-primary" onClick={() => onNavigate('my-reports')}>
+                Open Reports &amp; Complaints
+              </button>
+              <button type="button" className="sf-btn sf-btn-secondary" onClick={() => onNavigate('inbox')}>
+                Open order messages
+              </button>
+            </div>
+          </div>
+        </section>
+      );
+
+    if (view === 'my-reports' || view.startsWith('my-reports/'))
+      return (
+        <section className="sf-flow">
+          <FlowHeading title="Reports & complaints" onBack={() => onNavigate('account')} backLabel="My account" />
+          <DisputesPanel
+            slug={slug}
+            viewerRole="buyer"
+            initialReportId={
+              initialReportId ||
+              (view.startsWith('my-reports/') && view !== 'my-reports/new'
+                ? decodeURIComponent(view.slice('my-reports/'.length))
+                : undefined)
+            }
+            orders={orders.filter((o) => Boolean(o.orderId)).map((o) => ({ id: o.orderId as string, label: o.orderNumber }))}
+          />
+        </section>
+      );
+
+    if (view === 'report-shop' || view === 'reports')
+      return (
+        <section className="sf-flow">
+          <FlowHeading title="Reports & complaints" onBack={() => onNavigate('account')} backLabel="My account" />
+          <DisputesPanel
+            slug={slug}
+            viewerRole="buyer"
+            initialReportId={initialReportId}
+            orders={orders.filter((o) => Boolean(o.orderId)).map((o) => ({ id: o.orderId as string, label: o.orderNumber }))}
+          />
+        </section>
+      );
+
+    if (view === 'report-shop-legacy-disabled')
+      return (
+        <section className="sf-flow">
+          <FlowHeading title="Report a shop or order" onBack={() => onNavigate('account')} backLabel="My account" />
+          <form className="sf-panel sf-checkout-stack" onSubmit={submitShopReport}>
+            <label className="sf-field">
+              Shop name
+              <select required value={reportShop} onChange={(e) => setReportShop(e.target.value)}>
+                <option value={shopName}>{shopName}</option>
+              </select>
+            </label>
+            <label className="sf-field">
+              Order affected
+              <select
+                value={reportOrderId}
+                onChange={(e) => {
+                  setReportOrderId(e.target.value);
+                  setReportProductId('');
+                }}
+              >
+                <option value="">No specific order</option>
+                {orders.map((o) => (
+                  <option key={o.orderId || o.orderNumber} value={o.orderId || ''}>
+                    {o.orderNumber} · {formatKes(o.total)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="sf-field">
+              Product affected (optional)
+              <select value={reportProductId} onChange={(e) => setReportProductId(e.target.value)}>
+                <option value="">No specific product</option>
+                {orders
+                  .filter((o) => !reportOrderId || o.orderId === reportOrderId)
+                  .flatMap((o) => o.lines.map((line) => ({ product: line.product, order: o })))
+                  .filter((x, i, a) => a.findIndex((y) => y.product.id === x.product.id) === i)
+                  .map((x) => (
+                    <option key={x.product.id} value={x.product.id}>
+                      {x.product.name}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <label className="sf-field">
+              Type of issue
+              <select required value={reportIssue} onChange={(e) => setReportIssue(e.target.value)}>
+                <option value="payment">Payment / M-PESA</option>
+                <option value="delivery">Delivery not received / delayed</option>
+                <option value="product_quality">Product quality / not as described</option>
+                <option value="wrong_item">Wrong or missing item</option>
+                <option value="seller_communication">Seller communication</option>
+                <option value="refund_return">Refund / return dispute</option>
+                <option value="shop_listing">Misleading shop or listing</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
+              <input
+                type="checkbox"
+                checked={reportPaymentMade}
+                onChange={(e) => setReportPaymentMade(e.target.checked)}
+              />
+              <span>I made a payment related to this issue</span>
+            </label>
+            {reportPaymentMade && (
+              <div className="sf-form-grid">
+                <label className="sf-field">
+                  Amount paid (KES)
+                  <input
+                    type="number"
+                    min="1"
+                    step="0.01"
+                    required
+                    value={reportPaymentAmount}
+                    onChange={(e) => setReportPaymentAmount(e.target.value)}
+                  />
+                </label>
+                <label className="sf-field">
+                  M-PESA receipt
+                  <input
+                    maxLength={100}
+                    value={reportPaymentReference}
+                    onChange={(e) => setReportPaymentReference(e.target.value)}
+                    placeholder="e.g. QAB12XYZ"
+                  />
+                </label>
+              </div>
+            )}
+            <label className="sf-field">
+              Describe what happened
+              <textarea
+                required
+                minLength={10}
+                maxLength={5000}
+                rows={5}
+                value={reportDetails}
+                onChange={(e) => setReportDetails(e.target.value)}
+              />
+            </label>
+            <label className="sf-field">
+              Attachments (optional)
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.webp"
+                onChange={(e) => {
+                  const fs = Array.from(e.target.files || []);
+                  if (fs.length > 8 || fs.some((f) => f.size > 10485760)) {
+                    setReportMessage('Attach up to 8 files, each 10 MB or smaller.');
+                    return;
+                  }
+                  setReportFiles(fs);
+                  setReportMessage('');
+                }}
+              />
+            </label>
+            {reportMessage && <p className="sf-alert">{reportMessage}</p>}
+            <button className="sf-btn sf-btn-primary" disabled={reportBusy}>
+              {reportBusy ? 'Submitting…' : 'Submit report to DASNET'}
+            </button>
+          </form>
+        </section>
+      );
+
+    if (view === 'public-profile')
+      return (
+        <section className="sf-flow">
+          <FlowHeading title="Buyer profile" onBack={() => onNavigate('account')} backLabel="My account" />
+          <div className="sf-panel sf-checkout-stack">
+            <h2>{profileName || initialCustomerName || 'Buyer profile'}</h2>
+            <div className="sf-specs-grid">
+              <div>
+                <span>Phone</span>
+                <strong>{initialCustomerPhone || 'Not available'}</strong>
+              </div>
+              <div>
+                <span>Email</span>
+                <strong>{profileEmail || initialCustomerEmail || 'Not provided'}</strong>
+              </div>
+              <div>
+                <span>Default address</span>
+                <strong>{profileAddress || initialCustomerAddress || 'Not saved'}</strong>
+              </div>
+            </div>
+            <div>
+              <button type="button" className="sf-btn sf-btn-primary" onClick={() => onNavigate('profile')}>
+                Edit profile
+              </button>
+            </div>
+          </div>
+        </section>
+      );
+
+    const policyViews: any = {
+      'shop-terms': {
+        title: 'Shop Terms & DASMARKET Platform Rules',
+        body: [
+          shopTermsAndConditions.trim() || defaultTerms(shopName),
+          'DASMARKET MINIMUM TERMS — APPLY TO EVERY SHOP\n\n1. INDEPENDENT SELLER: This shop is operated by ' +
+            shopName +
+            '. The seller, not DASMARKET, is responsible for the products, descriptions, prices, stock, warranties, delivery, returns and customer service.\n\n2. DIRECT PAYMENTS: Payments go directly to the seller or the seller’s nominated payment provider/account. Verify the recipient name, number and amount before paying.\n\n3. BUYER SAFETY: Check the seller, listing, total price, delivery and refund terms before paying. Never share your M-PESA PIN, password or one-time code.\n\n4. ORDER AND REFUND RESPONSIBILITY: The purchase contract is between the buyer and seller.\n\n5. REPORTING AND PLATFORM ACTION: Buyers may report suspicious listings, payment requests or seller conduct through the available report tools.',
+        ].join('\n\n'),
+      },
+      'shop-privacy': {
+        title: 'Shop Privacy & DASMARKET Platform Privacy',
+        body: [
+          shopPrivacyPolicy.trim() || defaultPrivacy(shopName),
+          'DASMARKET MINIMUM PRIVACY NOTICES — APPLY TO EVERY SHOP\n\n1. ORDER INFORMATION: When you place an order, your name, contact details, delivery information, order contents and relevant order status are shared with ' +
+            shopName +
+            ' so the seller can confirm, fulfil and support your order.\n\n2. DIRECT PAYMENT PROCESSING: Never disclose your PIN, password or one-time security code.\n\n3. PLATFORM OPERATIONS: DASMARKET may process account, order and support information to operate the storefront platform, maintain security, and prevent fraud.',
+        ].join('\n\n'),
+      },
+      'shop-returns': { title: 'Returns, refunds & exchanges', body: shopReturnPolicy.trim() || defaultReturns(shopName) },
+      'shop-delivery': { title: 'Delivery & collection policy', body: shopDeliveryPolicy.trim() || defaultDelivery(shopName) },
+    };
+
+    if (policyViews[view])
+      return (
+        <section className="sf-flow">
+          <FlowHeading title={policyViews[view].title} onBack={() => onNavigate('store')} backLabel="Back to shop" />
+          <article className="sf-panel sf-checkout-stack">
+            <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, paddingBottom: 14, borderBottom: '1px solid var(--sf-line)' }}>
+              <div>
+                <strong>{shopName}</strong>
+                <div style={{ fontSize: 13, color: 'var(--sf-muted)' }}>Official shop policy</div>
+              </div>
+              <div style={{ display: 'flex', gap: 14, fontSize: 13.5 }}>
+                {shopWhatsappNumber && (
+                  <a href={'https://wa.me/' + shopWhatsappNumber.replace(/\D/g, '')} target="_blank" rel="noopener noreferrer">
+                    {shopWhatsappNumber}
+                  </a>
+                )}
+                {shopContactEmail && <a href={'mailto:' + shopContactEmail}>{shopContactEmail}</a>}
+              </div>
+            </div>
+            <div style={{ display: 'grid', gap: 12, fontSize: 14.5, color: 'var(--sf-ink-2)', lineHeight: 1.68 }}>
+              {policyViews[view].body.split(/\n\n|\\n\\n/).map((paragraph: string, index: number) => (
+                <p key={index} style={{ margin: 0 }}>
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+          </article>
+        </section>
+      );
+
+    if (view === 'wishlist') {
+      const savedProducts = products.filter((product) =>
+        (serverWishlistLoaded ? serverWishlist : wishlistIds).includes(product.id),
+      );
+      return (
+        <section className="sf-flow">
+          <FlowHeading
+            title={`Saved items (${savedProducts.length})`}
+            subtitle="Saved items are synced to your buyer account."
+            onBack={() => onNavigate('account')}
+            backLabel="My account"
+          />
+          {savedProducts.length ? (
+            <div className="sf-product-grid">
+              {savedProducts.map((product) => (
+                <article className="sf-card" key={product.id}>
+                  <button type="button" className="sf-card-open" onClick={() => onOpenProduct?.(product)}>
+                    <span className="sf-card-media">
+                      <ProductThumb product={product} />
+                    </span>
+                    <div className="sf-card-body">
+                      <span className="sf-card-cat">{product.category || 'Product'}</span>
+                      <span className="sf-card-title">{product.name}</span>
+                      <div className="sf-card-meta-row">
+                        <strong className="sf-card-price">{formatKes(product.price)}</strong>
+                      </div>
+                    </div>
+                  </button>
+                  <div className="sf-card-foot" style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8 }}>
+                    <button type="button" className="sf-card-add" onClick={() => onOpenProduct?.(product)}>
+                      View item
+                    </button>
+                    <button
+                      type="button"
+                      className="sf-btn sf-btn-ghost"
+                      style={{ minHeight: 38 }}
+                      onClick={() => togglePersistentWishlist(product.id)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="sf-state-box">
+              <span className="sf-state-icon">
+                <Heart size={26} />
+              </span>
+              <h2>No saved items yet</h2>
+              <p>Open a product and save it to your wishlist to keep it here.</p>
+              <button type="button" className="sf-btn sf-btn-primary" onClick={() => onNavigate('store')}>
+                Browse products
+              </button>
+            </div>
+          )}
+        </section>
+      );
+    }
+
     if (view === 'inbox') {
       return (
-        <section className="customer-flow buyer-inbox-page">
-          <div className="buyer-inbox-heading"><div><h1>Messages</h1><p>Your conversations and messages</p></div><button type="button" className="buyer-inbox-new-message" onClick={()=>onNavigate('orders')}>＋ New Message</button></div>
-          <div className="buyer-inbox-layout">
-            <div className="customer-panel buyer-inbox-list">
-              <div className="buyer-inbox-list-heading"><strong>Conversations</strong><span>{chatThreads.length}</span></div>
-              {chatThreads.length ? chatThreads.map((thread:any) => (
-                <article className="buyer-inbox-thread" key={thread.order_id} role="button" tabIndex={0} onClick={()=>onOpenChat?.('',thread.order_number,thread.order_id)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onOpenChat?.('',thread.order_number,thread.order_id)}}}>
-                  <div className="buyer-inbox-thread-avatar"><MessageCircle size={19}/></div>
-                  <div className="buyer-inbox-thread-content"><div className="buyer-inbox-thread-top"><strong>{shopName}</strong><time>{thread.last_message_at?new Date(thread.last_message_at).toLocaleDateString('en-KE',{day:'numeric',month:'short'}):''}</time></div><span className="buyer-inbox-thread-order">Order #{thread.order_number}</span><p>{thread.last_message||'Conversation started'}</p><div className="buyer-inbox-thread-bottom"><span>Private conversation</span><span className="buyer-inbox-open-link">Open conversation <ArrowRight size={14}/></span></div></div>
-                </article>
-              )) : <div className="buyer-inbox-empty"><span><MessageCircle size={25}/></span><strong>No conversations yet</strong><p>Your inbox stays empty until you or the seller starts a conversation. Open an order and choose “Message seller” to begin.</p></div>}
+        <section className="sf-flow">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
+            <FlowHeading
+              title="Messages"
+              subtitle="Your private conversations with the seller."
+              onBack={() => onNavigate('account')}
+              backLabel="My account"
+            />
+            <button type="button" className="sf-btn sf-btn-primary" onClick={() => onNavigate('orders')}>
+              + Message about an order
+            </button>
+          </div>
+          <div className="sf-inbox-layout">
+            <div className="sf-panel" style={{ padding: 0, overflow: 'hidden' }}>
+              <div className="sf-panel-head" style={{ padding: '14px 16px', margin: 0 }}>
+                <strong>Conversations</strong>
+                <span className="sf-mono">{chatThreads.length}</span>
+              </div>
+              {chatThreads.length ? (
+                chatThreads.map((thread: any) => (
+                  <button
+                    type="button"
+                    className="sf-inbox-thread"
+                    key={thread.order_id}
+                    onClick={() => onOpenChat?.('', thread.order_number, thread.order_id)}
+                  >
+                    <span className="sf-assurance-icon" style={{ width: 34, height: 34 }}>
+                      <MessageCircle size={16} />
+                    </span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="sf-inbox-thread-top">
+                        <strong>{shopName}</strong>
+                        <time>
+                          {thread.last_message_at
+                            ? new Date(thread.last_message_at).toLocaleDateString('en-KE', {
+                                day: 'numeric',
+                                month: 'short',
+                              })
+                            : ''}
+                        </time>
+                      </div>
+                      <span className="sf-inbox-thread-order">Order #{thread.order_number}</span>
+                      <p>{thread.last_message || 'Conversation started'}</p>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div style={{ padding: 24, textAlign: 'center', color: 'var(--sf-muted)', fontSize: 13.5 }}>
+                  <strong>No conversations yet</strong>
+                  <p style={{ margin: '6px 0 0' }}>
+                    Open an order and choose “Message seller” to begin a conversation.
+                  </p>
+                </div>
+              )}
             </div>
-            <div className="buyer-inbox-active-conversation">
+
+            <div>
               {chatPanel || (
-                <div className="buyer-inbox-placeholder">
-                  <span><MessageCircle size={27}/></span>
+                <div className="sf-state-box">
+                  <span className="sf-state-icon">
+                    <MessageCircle size={26} />
+                  </span>
                   <h3>Select a conversation</h3>
-                  <p>Choose a message thread to read and reply. Your private conversations with this shop will appear in the list.</p>
-                  <div className="buyer-inbox-security"><ShieldCheck size={15}/> Private buyer–seller messaging</div>
+                  <p>Choose a message thread to read and reply. Your private conversations appear in the list.</p>
                 </div>
               )}
             </div>
@@ -1116,108 +3888,568 @@ export function StorefrontFlow({
         </section>
       );
     }
-    if(view==='account-management')return <section className="customer-flow"><FlowHeading title="Account & security" onBack={()=>onNavigate('account')} backLabel="My account"/><form className="customer-panel customer-account-detail" onSubmit={changePassword}><h2>Change password</h2><p>Use your current password to set a new password for this shop account.</p><div className="customer-contact-fields"><label className="customer-form-label">Current password<input type="password" autoComplete="current-password" required value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)}/></label><label className="customer-form-label">New password<input type="password" autoComplete="new-password" minLength={10} required value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="At least 10 characters"/></label><label className="customer-form-label">Confirm new password<input type="password" autoComplete="new-password" minLength={10} required value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)}/></label></div>{passwordMessage&&<p role="status" className="customer-preview-note">{passwordMessage}</p>}<div className="customer-flow-actions"><button className="customer-primary-button" type="submit" disabled={passwordSaving}>{passwordSaving?'Updating…':'Update password'}</button></div></form></section>;
-    if(view==='address-book')return <section className="customer-flow"><FlowHeading title="Address book" onBack={()=>onNavigate('account')} backLabel="My account"/><div className="customer-panel customer-account-detail"><h2>Default delivery address</h2><p>{profileAddress||initialCustomerAddress||'No default address saved yet.'}</p><p className="customer-preview-note">Your default address is saved with your buyer profile and can be updated at any time.</p><button type="button" className="customer-primary-button" onClick={()=>onNavigate('address-book/edit')}>Edit delivery address</button></div></section>;
-    if(view==='address-book/edit')return renderAddressEditor();
-    if(view==='notifications')return <section className="customer-flow"><FlowHeading title="Order notifications" onBack={()=>onNavigate('account')} backLabel="My account"/><div className="customer-panel customer-account-detail"><div className="customer-panel-heading"><h2>Recent order updates</h2><span>{notifications.length} updates</span></div>{notifications.length?notifications.map((item:any)=><article className="customer-order-card" key={item.id||item.orderId||item.complaintId||item.orderNumber}><div className="customer-order-card-heading"><strong>{item.title}</strong><small>{item.created_at?new Date(item.created_at).toLocaleString('en-KE'):item.updatedAt?new Date(item.updatedAt).toLocaleString('en-KE'):'Update'}</small></div><p>{item.detail}</p><button type="button" className="customer-secondary-button" onClick={()=>onNavigate(item.complaint_id?'my-reports':'orders')}>{item.complaint_id?'Track my report':'View my orders'}</button></article>):<div className="customer-empty-state"><span><Package size={28}/></span><h2>No recent updates</h2><p>Payment, fulfilment and delivery changes will appear here when the seller updates your order.</p><button type="button" className="customer-primary-button" onClick={()=>onNavigate('orders')}>View my orders</button></div>}</div></section>;
-    if(view==='notification-settings')return <section className="customer-flow"><FlowHeading title="Notification settings" onBack={()=>onNavigate('account')} backLabel="My account"/><div className="customer-panel customer-account-detail"><h2>In-app order updates</h2><p>Choose whether this device displays order payment and delivery updates in the storefront notification menu.</p><label className="customer-newsletter-toggle"><input type="checkbox" checked={inAppNotificationsEnabled} onChange={e=>setInAppNotificationsEnabled(e.target.checked)}/><span>{inAppNotificationsEnabled?'Order notifications enabled':'Order notifications paused'}</span></label><p className="customer-preview-note">This preference is saved on this device. Your order and payment records are not affected.</p></div></section>;
-    if(view==='reviews'){const reviewProducts=products.filter(product=>orders.some(order=>order.paymentStatus==='succeeded'&&order.lines.some(line=>line.product.id===product.id)));return <section className="customer-flow"><FlowHeading title="Product reviews" onBack={()=>onNavigate('account')} backLabel="My account"/><div className="customer-panel customer-account-detail"><h2>Products you have purchased</h2>{reviewProducts.length?<div className="customer-recommendation-row">{reviewProducts.map(product=><article className="customer-recommendation-card" key={product.id}><ProductThumb product={product}/><strong>{product.name}</strong><b>{formatKes(product.price)}</b><button type="button" className="customer-secondary-button" onClick={()=>onOpenProduct?.(product)}>Write a review</button></article>)}</div>:<div className="customer-empty-state"><span><ShieldCheck size={28}/></span><h2>No reviewable purchases yet</h2><p>After a successful payment, you can review the products you bought.</p><button type="button" className="customer-primary-button" onClick={()=>onNavigate('orders')}>View my orders</button></div>}</div></section>}
-    if(view==='followed-shops')return <section className="customer-flow"><FlowHeading title="Followed shops" onBack={()=>onNavigate('account')} backLabel="My account"/><div className="customer-panel customer-account-detail"><div className="customer-panel-heading"><h2>{shopName}</h2><span>{isShopFollowed?'Following':'Not followed'}</span></div><p>Follow this shop to keep it in your account across devices. Your followed shops are saved to your buyer account.</p><p className="customer-preview-note">{buyerFollowedShops.length} shop{buyerFollowedShops.length===1?'':'s'} followed</p><div className="customer-flow-actions"><button type="button" disabled={buyerFeatureBusy} className={isShopFollowed?'customer-secondary-button':'customer-primary-button'} onClick={async()=>{setBuyerFeatureBusy(true);setBuyerFeatureMessage('');try{const next=!isShopFollowed;await buyerFeatureRequest('buyer-follow-shop',{targetSlug:slug,follow:next});setIsShopFollowed(next);setBuyerFollowedShops(current=>next?[{slug,name:shopName},...current.filter((x:any)=>x.slug!==slug)]:current.filter((x:any)=>x.slug!==slug));}catch(error:any){setBuyerFeatureMessage(error.message||'Could not update followed shops.');}finally{setBuyerFeatureBusy(false);}}}>{buyerFeatureBusy?'Saving…':isShopFollowed?'Unfollow shop':'Follow shop'}</button><button type="button" className="customer-secondary-button" onClick={()=>onNavigate('store')}>Browse this shop</button></div>{buyerFeatureMessage&&<p className="customer-preview-note" role="status">{buyerFeatureMessage}</p>}</div></section>;
-    if(view==='newsletter')return <section className="customer-flow"><FlowHeading title="Shop updates & offers" onBack={()=>onNavigate('account')} backLabel="My account"/><div className="customer-panel customer-account-detail"><h2>Shop update preference</h2><p>Choose whether this shop may send you marketing updates using the email address on your buyer account. You can withdraw consent at any time.</p><label className="customer-newsletter-toggle"><input type="checkbox" checked={newsletterEnabled} disabled={buyerFeatureBusy} onChange={async event=>{const enabled=event.target.checked;setBuyerFeatureBusy(true);setBuyerFeatureMessage('');try{await buyerFeatureRequest('buyer-newsletter',{enabled,email:initialCustomerEmail});setNewsletterEnabled(enabled);}catch(error:any){setBuyerFeatureMessage(error.message||'Could not update your subscription.');}finally{setBuyerFeatureBusy(false);}}}/><span>{newsletterEnabled?'Subscribed to shop updates':'Subscribe to shop updates'}</span></label><p className="customer-preview-note" role="status">{newsletterEnabled?'Your marketing consent is saved to your buyer account.':'You are not subscribed to this shop’s marketing updates.'}</p>{buyerFeatureMessage&&<p className="customer-preview-note" role="status">{buyerFeatureMessage}</p>}</div></section>;
-    if(view==='close-account'){return <section className="customer-flow"><FlowHeading title="Close account" onBack={()=>onNavigate('account')} backLabel="My account"/><div className="customer-panel customer-account-detail"><h2>Request buyer account closure</h2><p>Account closure is handled by DASNET Support after identity verification. Your account will not be deleted by opening this link. Order, payment, tax and dispute records may need to be retained where required by law or to resolve an active case.</p><p><strong>Account:</strong> {initialCustomerName||'Buyer'} · {initialCustomerPhone}</p>{closureRequest&&<p className="customer-preview-note">Existing request: {closureRequest.status.replace('_',' ')} · submitted {new Date(closureRequest.created_at||closureRequest.createdAt).toLocaleDateString()}</p>}<button type="button" className="customer-primary-button" disabled={buyerFeatureBusy||closureRequest?.status==='pending'||closureRequest?.status==='under_review'} onClick={async()=>{setBuyerFeatureBusy(true);setBuyerFeatureMessage('');try{const data=await buyerFeatureRequest('buyer-close-account',{reason:'Buyer requested account closure from the account settings page.'});setClosureRequest(data.request||null);setBuyerFeatureMessage(data.message||'Your request has been recorded.');}catch(error:any){setBuyerFeatureMessage(error.message||'Could not submit your closure request.');}finally{setBuyerFeatureBusy(false);}}}>{buyerFeatureBusy?'Submitting…':closureRequest?.status==='pending'||closureRequest?.status==='under_review'?'Closure request submitted':'Submit account closure request'}</button>{buyerFeatureMessage&&<p className="customer-preview-note" role="status">{buyerFeatureMessage}</p>}</div></section>;}
-    if(view==='assistant')return <section className="customer-flow"><FlowHeading title="Shopping help" onBack={()=>onNavigate('account')} backLabel="My account"/><div className="customer-panel customer-account-detail"><h2>Need help with an order?</h2><p>Open your order conversation to contact the seller, or contact DASNET support for account and platform assistance.</p><button type="button" className="customer-primary-button" onClick={()=>onNavigate('inbox')}>Open order messages</button><a className="customer-secondary-button" href="https://wa.me/254758884861?text=Hello%20DASNET%20Support%2C%20I%20need%20help%20with%20a%20storefront%20order." target="_blank" rel="noopener noreferrer">Contact DASNET support</a></div></section>;
-    if(view==='vouchers')return <section className="customer-flow"><FlowHeading title="Vouchers" onBack={()=>onNavigate('account')} backLabel="My account"/><div className="customer-empty-state"><span><WalletCards size={28}/></span><h2>No active vouchers</h2><p>There are no voucher codes available from this shop at the moment. A discount is never applied unless the shop confirms a valid offer.</p><button type="button" className="customer-secondary-button" onClick={()=>onNavigate('store')}>Continue shopping</button></div></section>;
+
+    if (view === 'account-management')
+      return (
+        <section className="sf-flow">
+          <FlowHeading title="Account & security" onBack={() => onNavigate('account')} backLabel="My account" />
+          <form className="sf-panel sf-checkout-stack" onSubmit={changePassword}>
+            <div>
+              <h2>Change password</h2>
+              <p style={{ margin: '4px 0 0', color: 'var(--sf-muted)' }}>
+                Use your current password to set a new password for this shop account.
+              </p>
+            </div>
+            <div className="sf-form-grid">
+              <label className="sf-field sf-form-full">
+                Current password
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                />
+              </label>
+              <label className="sf-field">
+                New password
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  minLength={10}
+                  required
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="At least 10 characters"
+                />
+              </label>
+              <label className="sf-field">
+                Confirm new password
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  minLength={10}
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </label>
+            </div>
+            {passwordMessage && (
+              <p role="status" className="sf-alert">
+                {passwordMessage}
+              </p>
+            )}
+            <div>
+              <button className="sf-btn sf-btn-primary" type="submit" disabled={passwordSaving}>
+                {passwordSaving ? 'Updating…' : 'Update password'}
+              </button>
+            </div>
+          </form>
+        </section>
+      );
+
+    if (view === 'address-book')
+      return (
+        <section className="sf-flow">
+          <FlowHeading title="Address book" onBack={() => onNavigate('account')} backLabel="My account" />
+          <div className="sf-panel sf-checkout-stack">
+            <div>
+              <h2>Default delivery address</h2>
+              <p style={{ margin: '6px 0 0', fontSize: 15 }}>
+                {profileAddress || initialCustomerAddress || 'No default address saved yet.'}
+              </p>
+            </div>
+            <p className="sf-summary-note">
+              Your default address is saved with your buyer profile and can be updated at any time.
+            </p>
+            <div>
+              <button
+                type="button"
+                className="sf-btn sf-btn-primary"
+                onClick={() => onNavigate('address-book/edit')}
+              >
+                Edit delivery address
+              </button>
+            </div>
+          </div>
+        </section>
+      );
+
+    if (view === 'address-book/edit') return renderAddressEditor();
+
+    if (view === 'notifications')
+      return (
+        <section className="sf-flow">
+          <FlowHeading
+            title={`Order notifications (${notifications.length})`}
+            onBack={() => onNavigate('account')}
+            backLabel="My account"
+          />
+          {notifications.length ? (
+            <div className="sf-orders-list">
+              {notifications.map((item: any) => (
+                <article
+                  className="sf-panel"
+                  key={item.id || item.orderId || item.complaintId || item.orderNumber}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                    <strong>{item.title}</strong>
+                    <small style={{ color: 'var(--sf-muted)' }}>
+                      {item.created_at
+                        ? new Date(item.created_at).toLocaleString('en-KE')
+                        : item.updatedAt
+                        ? new Date(item.updatedAt).toLocaleString('en-KE')
+                        : 'Update'}
+                    </small>
+                  </div>
+                  <p style={{ margin: '8px 0 14px', fontSize: 14, color: 'var(--sf-ink-2)' }}>{item.detail}</p>
+                  <button
+                    type="button"
+                    className="sf-btn sf-btn-secondary"
+                    onClick={() => onNavigate(item.complaint_id ? 'my-reports' : 'orders')}
+                  >
+                    {item.complaint_id ? 'Track my report' : 'View my orders'}
+                  </button>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="sf-state-box">
+              <span className="sf-state-icon">
+                <Bell size={26} />
+              </span>
+              <h2>No recent updates</h2>
+              <p>Payment, fulfilment and delivery changes will appear here when the seller updates your order.</p>
+              <button type="button" className="sf-btn sf-btn-primary" onClick={() => onNavigate('orders')}>
+                View my orders
+              </button>
+            </div>
+          )}
+        </section>
+      );
+
+    if (view === 'notification-settings')
+      return (
+        <section className="sf-flow">
+          <FlowHeading title="Notification settings" onBack={() => onNavigate('account')} backLabel="My account" />
+          <div className="sf-panel sf-checkout-stack">
+            <h2>In-app order updates</h2>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14.5 }}>
+              <input
+                type="checkbox"
+                checked={inAppNotificationsEnabled}
+                onChange={(e) => setInAppNotificationsEnabled(e.target.checked)}
+              />
+              <span>{inAppNotificationsEnabled ? 'Order notifications enabled' : 'Order notifications paused'}</span>
+            </label>
+          </div>
+        </section>
+      );
+
+    if (view === 'reviews') {
+      const reviewProducts = products.filter((product) =>
+        orders.some(
+          (order) => order.paymentStatus === 'succeeded' && order.lines.some((line) => line.product.id === product.id),
+        ),
+      );
+      return (
+        <section className="sf-flow">
+          <FlowHeading
+            title="Product reviews"
+            subtitle="Products you have purchased."
+            onBack={() => onNavigate('account')}
+            backLabel="My account"
+          />
+          {reviewProducts.length ? (
+            <div className="sf-product-grid">
+              {reviewProducts.map((product) => (
+                <article className="sf-card" key={product.id}>
+                  <div className="sf-card-media">
+                    <ProductThumb product={product} />
+                  </div>
+                  <div className="sf-card-body">
+                    <span className="sf-card-title">{product.name}</span>
+                    <strong className="sf-card-price">{formatKes(product.price)}</strong>
+                  </div>
+                  <div className="sf-card-foot">
+                    <button type="button" className="sf-card-add" onClick={() => onOpenProduct?.(product)}>
+                      Write a review
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="sf-state-box">
+              <span className="sf-state-icon">
+                <Star size={26} />
+              </span>
+              <h2>No reviewable purchases yet</h2>
+              <p>After a successful payment, you can review the products you bought.</p>
+              <button type="button" className="sf-btn sf-btn-primary" onClick={() => onNavigate('orders')}>
+                View my orders
+              </button>
+            </div>
+          )}
+        </section>
+      );
+    }
+
+    if (view === 'followed-shops')
+      return (
+        <section className="sf-flow">
+          <FlowHeading title="Followed shops" onBack={() => onNavigate('account')} backLabel="My account" />
+          <div className="sf-panel sf-checkout-stack">
+            <div className="sf-panel-head">
+              <h2>{shopName}</h2>
+              <span>{isShopFollowed ? 'Following' : 'Not followed'}</span>
+            </div>
+            <p style={{ margin: 0, color: 'var(--sf-muted)' }}>
+              {buyerFollowedShops.length} shop{buyerFollowedShops.length === 1 ? '' : 's'} followed
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                type="button"
+                disabled={buyerFeatureBusy}
+                className={`sf-btn ${isShopFollowed ? 'sf-btn-secondary' : 'sf-btn-primary'}`}
+                onClick={async () => {
+                  setBuyerFeatureBusy(true);
+                  setBuyerFeatureMessage('');
+                  try {
+                    const next = !isShopFollowed;
+                    await buyerFeatureRequest('buyer-follow-shop', { targetSlug: slug, follow: next });
+                    setIsShopFollowed(next);
+                    setBuyerFollowedShops((current) =>
+                      next ? [{ slug, name: shopName }, ...current.filter((x: any) => x.slug !== slug)] : current.filter((x: any) => x.slug !== slug),
+                    );
+                  } catch (error: any) {
+                    setBuyerFeatureMessage(error.message || 'Could not update followed shops.');
+                  } finally {
+                    setBuyerFeatureBusy(false);
+                  }
+                }}
+              >
+                {buyerFeatureBusy ? 'Saving…' : isShopFollowed ? 'Unfollow shop' : 'Follow shop'}
+              </button>
+              <button type="button" className="sf-btn sf-btn-secondary" onClick={() => onNavigate('store')}>
+                Browse this shop
+              </button>
+            </div>
+            {buyerFeatureMessage && <p className="sf-alert">{buyerFeatureMessage}</p>}
+          </div>
+        </section>
+      );
+
+    if (view === 'newsletter')
+      return (
+        <section className="sf-flow">
+          <FlowHeading title="Shop updates & offers" onBack={() => onNavigate('account')} backLabel="My account" />
+          <div className="sf-panel sf-checkout-stack">
+            <h2>Shop update preference</h2>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14.5 }}>
+              <input
+                type="checkbox"
+                checked={newsletterEnabled}
+                disabled={buyerFeatureBusy}
+                onChange={async (event) => {
+                  const enabled = event.target.checked;
+                  setBuyerFeatureBusy(true);
+                  setBuyerFeatureMessage('');
+                  try {
+                    await buyerFeatureRequest('buyer-newsletter', { enabled, email: initialCustomerEmail });
+                    setNewsletterEnabled(enabled);
+                  } catch (error: any) {
+                    setBuyerFeatureMessage(error.message || 'Could not update your subscription.');
+                  } finally {
+                    setBuyerFeatureBusy(false);
+                  }
+                }}
+              />
+              <span>{newsletterEnabled ? 'Subscribed to shop updates' : 'Subscribe to shop updates'}</span>
+            </label>
+            {buyerFeatureMessage && <p className="sf-alert">{buyerFeatureMessage}</p>}
+          </div>
+        </section>
+      );
+
+    if (view === 'close-account')
+      return (
+        <section className="sf-flow">
+          <FlowHeading title="Close account" onBack={() => onNavigate('account')} backLabel="My account" />
+          <div className="sf-panel sf-checkout-stack">
+            <h2>Request buyer account closure</h2>
+            <p style={{ margin: 0, color: 'var(--sf-ink-2)' }}>
+              Account closure is handled by DASNET Support after identity verification. Order, payment, tax and dispute
+              records may need to be retained where required by law.
+            </p>
+            <p style={{ margin: 0 }}>
+              <strong>Account:</strong> {initialCustomerName || 'Buyer'} · {initialCustomerPhone}
+            </p>
+            {closureRequest && (
+              <p className="sf-alert">
+                Existing request: {closureRequest.status.replace('_', ' ')} · submitted{' '}
+                {new Date(closureRequest.created_at || closureRequest.createdAt).toLocaleDateString()}
+              </p>
+            )}
+            <div>
+              <button
+                type="button"
+                className="sf-btn sf-btn-primary"
+                disabled={
+                  buyerFeatureBusy || closureRequest?.status === 'pending' || closureRequest?.status === 'under_review'
+                }
+                onClick={async () => {
+                  setBuyerFeatureBusy(true);
+                  setBuyerFeatureMessage('');
+                  try {
+                    const data = await buyerFeatureRequest('buyer-close-account', {
+                      reason: 'Buyer requested account closure from the account settings page.',
+                    });
+                    setClosureRequest(data.request || null);
+                    setBuyerFeatureMessage(data.message || 'Your request has been recorded.');
+                  } catch (error: any) {
+                    setBuyerFeatureMessage(error.message || 'Could not submit your closure request.');
+                  } finally {
+                    setBuyerFeatureBusy(false);
+                  }
+                }}
+              >
+                {buyerFeatureBusy
+                  ? 'Submitting…'
+                  : closureRequest?.status === 'pending' || closureRequest?.status === 'under_review'
+                  ? 'Closure request submitted'
+                  : 'Submit account closure request'}
+              </button>
+            </div>
+            {buyerFeatureMessage && <p className="sf-alert">{buyerFeatureMessage}</p>}
+          </div>
+        </section>
+      );
+
     const content = accountSectionCopy[view];
     if (!content) return null;
     return (
-      <section className="customer-flow">
+      <section className="sf-flow">
         <FlowHeading title={content.title} onBack={() => onNavigate('account')} backLabel="My account" />
-        <div className="customer-panel customer-account-detail"><p>{content.description}</p>
-          {view === 'recently-viewed' && recentlyViewedProducts.length > 0 && <div className="customer-recommendation-row">{recentlyViewedProducts.map((product) => <article className="customer-recommendation-card" key={product.id}><ProductThumb product={product} /><strong>{product.name}</strong><b>{formatKes(product.price)}</b></article>)}</div>}
-          {view === 'newsletter' && <label className="customer-newsletter-toggle"><input type="checkbox" checked={newsletterEnabled} onChange={(event) => setNewsletterEnabled(event.target.checked)} /><span>{newsletterEnabled ? 'Subscribed for this preview' : 'Subscribe to store updates'}</span></label>}
-          {view === 'close-account' && <p className="customer-preview-note"><ShieldCheck size={15} /> No account action will be taken from this preview.</p>}
-          <button type="button" className="customer-secondary-button" onClick={() => onNavigate(view === 'recently-viewed' ? 'store' : 'account')}>{view === 'recently-viewed' ? 'Continue shopping' : 'Back to my account'}</button>
+        <div className="sf-panel sf-checkout-stack">
+          <p style={{ margin: 0 }}>{content.description}</p>
+          <button
+            type="button"
+            className="sf-btn sf-btn-secondary"
+            onClick={() => onNavigate(view === 'recently-viewed' ? 'store' : 'account')}
+          >
+            {view === 'recently-viewed' ? 'Continue shopping' : 'Back to my account'}
+          </button>
         </div>
       </section>
     );
   }
 
-  if (view.startsWith('collection/')) {
-    const collectionKey = view.split('/')[1] || 'all-products';
-    const collectionTitles: Record<string,string> = {
-      'all-products': 'All products',
-      'top-picks': 'Shop picks',
-      'featured-products': 'Featured products',
-      'new-finds': 'New finds',
-      'categories': 'Browse categories',
-    };
-    const collectionProducts = collectionKey === 'featured-products'
-      ? products.filter((product:any) => Boolean(product.spotlight))
-      : collectionKey === 'top-picks'
-        ? products.slice(0, 12)
-        : collectionKey === 'new-finds'
-          ? products.slice(0, 12)
-          : products;
-    const categories = [...new Set(products.map(product => String(product.category || 'Other')))].sort((a,b)=>a.localeCompare(b));
+  if (view === 'trust-safety')
     return (
-      <section className="customer-flow customer-collection-page">
-        <FlowHeading title={collectionTitles[collectionKey] || 'Shop products'} onBack={() => onNavigate('store')} />
-        {collectionKey === 'categories' ? (
-          <div className="customer-panel customer-collection-categories">
-            <p>Choose a category to browse products from {shopName}.</p>
-            <div className="customer-account-links">
-              {categories.map(category => <button type="button" className="customer-account-link" key={category} onClick={() => onNavigate(category.toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''))}>
-                <ShoppingBag size={18}/><span>{category}</span><ChevronRight size={16}/>
-              </button>)}
-            </div>
+      <section className="sf-flow">
+        <FlowHeading
+          title="Trust & safety"
+          subtitle="Practical checks to help you make informed decisions when shopping with independent sellers."
+          onBack={() => onNavigate('store')}
+          backLabel="Back to shop"
+        />
+        <div className="sf-panel sf-checkout-stack">
+          <div>
+            <h2>Before you pay</h2>
+            <p style={{ margin: '6px 0 0', color: 'var(--sf-ink-2)' }}>
+              Confirm the product, final price, seller identity, payment recipient and delivery or collection
+              arrangements. Ask for current photos or a demonstration when appropriate.
+            </p>
           </div>
-        ) : (
-          <>
-            {collectionKey === 'featured-products' && collectionProducts.length === 0 && <p className="customer-preview-note">This shop has not marked any products as featured yet. Browse the full catalogue instead.</p>}
-            <div className="market-products-grid customer-collection-grid">
-              {(collectionProducts.length ? collectionProducts : products).map(product => (
-                <article className="market-product-card" key={product.id}>
-                  <button type="button" className="market-home-product-open" onClick={() => onOpenProduct?.(product)}>
-                    <ProductThumb product={product}/>
-                    <strong className="market-card-product-title" title={product.name}>{product.name}</strong>
-                    <b>{formatKes(product.price)}</b>
-                    <small>{product.stockQuantity === 0 ? 'Out of stock' : product.stockQuantity == null ? 'Available' : product.stockQuantity + ' in stock'}</small>
-                  </button>
-                  <button type="button" className="market-product-add" disabled={product.stockQuantity === 0} onClick={() => onCartChange({...cart,[product.id]:Math.min(99,product.stockQuantity ?? 99,(cart[product.id]||0)+1)})}>Add to cart</button>
-                </article>
-              ))}
-            </div>
-          </>
-        )}
+          <div>
+            <h2>Protect your account and money</h2>
+            <p style={{ margin: '6px 0 0', color: 'var(--sf-ink-2)' }}>
+              Never share your M-PESA PIN, password or one-time verification code. Verify payment status in your own
+              official payment app; do not rely on screenshots or forwarded messages.
+            </p>
+          </div>
+          <div>
+            <h2>Keep a record</h2>
+            <p style={{ margin: '6px 0 0', color: 'var(--sf-ink-2)' }}>
+              Keep the listing, order reference, seller conversation and proof of payment. Agree return or refund terms
+              in writing before paying.
+            </p>
+          </div>
+          <div>
+            <button type="button" className="sf-btn sf-btn-primary" onClick={() => onNavigate('my-reports')}>
+              Report a problem
+            </button>
+          </div>
+        </div>
       </section>
     );
-  }
 
-  if (view === 'trust-safety') return (
-    <section className="customer-flow storefront-all-faqs">
-      <FlowHeading title="Trust & safety" onBack={() => onNavigate('store')} backLabel="Back to shop" />
-      <p className="storefront-all-faqs-intro">Practical checks to help you make informed decisions when shopping with independent sellers.</p>
-      <div className="customer-panel customer-account-detail">
-        <h2>Before you pay</h2><p>Confirm the product, final price, seller identity, payment recipient and delivery or collection arrangements. Ask for current photos or a demonstration when appropriate.</p>
-        <h2>Protect your account and money</h2><p>Never share your M-PESA PIN, password or one-time verification code. Verify payment status in your own official payment app; do not rely on screenshots or forwarded messages.</p>
-        <h2>Keep a record</h2><p>Keep the listing, order reference, seller conversation and proof of payment. Agree return or refund terms in writing before paying.</p>
-        <h2>Report a concern</h2><p>Stop a suspicious transaction, preserve relevant evidence and use Reports & Complaints or contact DASNET support. If you sent money, contact your payment provider promptly.</p>
-        <p><strong>Important:</strong> DASMARKET provides marketplace and storefront tools. It does not independently inspect every item or guarantee every seller, delivery or direct payment.</p>
-        <button type="button" className="customer-primary-button" onClick={()=>onNavigate('my-reports')}>Report a problem</button>
-      </div>
-    </section>
-  );
-
-  if (view === 'faqs') return (
-    <section className="customer-flow storefront-all-faqs">
-      <FlowHeading title="Frequently asked questions" onBack={() => onNavigate('store')} backLabel="Back to shop" />
-      <p className="storefront-all-faqs-intro">Helpful answers about buying, sellers, payments, delivery and staying safe on DASNET.</p>
-      <div className="storefront-all-faqs-list">{(shopFaqs.length?shopFaqs:marketplaceFaqs.map(([question,answer])=>({question,answer}))).map((faq:any)=><details key={faq.question}><summary>{faq.question}<span>＋</span></summary><p>{faq.answer}</p></details>)}</div>
-    </section>
-  );
+  if (view === 'faqs')
+    return (
+      <section className="sf-flow">
+        <FlowHeading
+          title="Frequently asked questions"
+          subtitle="Helpful answers about buying, sellers, payments, delivery and staying safe on DASNET."
+          onBack={() => onNavigate('store')}
+          backLabel="Back to shop"
+        />
+        <div className="sf-faq-list">
+          {(shopFaqs.length ? shopFaqs : marketplaceFaqs.map(([question, answer]) => ({ question, answer }))).map(
+            (faq: any) => (
+              <details key={faq.question}>
+                <summary>
+                  <span>{faq.question}</span>
+                  <span>+</span>
+                </summary>
+                <p>{faq.answer}</p>
+              </details>
+            ),
+          )}
+        </div>
+      </section>
+    );
 
   if (view === 'store') return null;
-  const pageContent = view === 'cart' ? renderCart() : view === 'checkout/delivery' ? (lines.length ? renderCheckoutDelivery() : renderCart()) : view === 'checkout/payment' ? (lines.length ? renderCheckoutPayment() : renderCart()) : view === 'checkout/review' ? (lines.length ? renderReview() : renderCart()) : view === 'checkout/processing' ? renderPaymentProcessing() : view === 'checkout/complete' ? renderSuccess() : view === 'orders' || view.startsWith('orders/') ? renderOrders() : view === 'order-detail' ? renderOrderDetail() : view === 'order-tracking' ? renderTracking() : view === 'account' ? renderAccount() : view === 'profile' ? renderProfile() : renderAccountSection() || (<section className="customer-flow"><FlowHeading title="Shopping assistant" onBack={() => onNavigate('store')} /><div className="customer-panel customer-account-detail"><Search size={24} /><p>{accountSectionCopy.assistant.description}</p><button type="button" className="customer-secondary-button" onClick={() => onNavigate('store')}>Back to the store</button></div></section>);
-  // Buyer account pages are standalone destinations; keep storefront discovery off account routes.
-  return <div className="customer-workspace-shell buyer-account-workspace">{pageContent}</div>;
+
+  const pageContent =
+    view === 'cart'
+      ? renderCart()
+      : view === 'checkout/delivery'
+      ? lines.length
+        ? renderCheckoutDelivery()
+        : renderCart()
+      : view === 'checkout/payment'
+      ? lines.length
+        ? renderCheckoutPayment()
+        : renderCart()
+      : view === 'checkout/review'
+      ? lines.length
+        ? renderReview()
+        : renderCart()
+      : view === 'checkout/processing'
+      ? renderPaymentProcessing()
+      : view === 'checkout/complete'
+      ? renderSuccess()
+      : view === 'orders' || view.startsWith('orders/')
+      ? renderOrders()
+      : view === 'order-detail'
+      ? renderOrderDetail()
+      : view === 'order-tracking'
+      ? renderTracking()
+      : view === 'account'
+      ? renderAccount()
+      : view === 'profile'
+      ? renderProfile()
+      : renderAccountSection() || (
+          <section className="sf-flow">
+            <FlowHeading title="Shopping assistant" onBack={() => onNavigate('store')} />
+            <div className="sf-state-box">
+              <Search size={24} />
+              <p>{accountSectionCopy.assistant.description}</p>
+              <button type="button" className="sf-btn sf-btn-secondary" onClick={() => onNavigate('store')}>
+                Back to the store
+              </button>
+            </div>
+          </section>
+        );
+
+  const buyerDashboardViews = new Set([
+    'account',
+    'orders',
+    'order-detail',
+    'order-tracking',
+    'inbox',
+    'wishlist',
+    'recently-viewed',
+    'address-book',
+    'address-book/edit',
+    'vouchers',
+    'reviews',
+    'notifications',
+    'my-reports',
+    'report-shop',
+    'followed-shops',
+    'newsletter',
+    'notification-settings',
+    'public-profile',
+    'account-management',
+    'close-account',
+    'assistant',
+  ]);
+  const showProductDiscovery = buyerDashboardViews.has(view) || view.startsWith('orders/');
+  const viewedCategories = new Set(
+    recentlyViewedProducts.map((product) => String(product.category || '').toLowerCase()).filter(Boolean),
+  );
+  const discoveryProducts = products
+    .filter((product) => product.stockQuantity !== 0)
+    .slice()
+    .sort(
+      (a, b) =>
+        Number(viewedCategories.has(String(b.category || '').toLowerCase())) -
+          Number(viewedCategories.has(String(a.category || '').toLowerCase())) ||
+        Number(Boolean((b as any).spotlight)) - Number(Boolean((a as any).spotlight)),
+    )
+    .slice(0, 4);
+
+  return (
+    <div>
+      {pageContent}
+      {showProductDiscovery && discoveryProducts.length > 0 && (
+        <section className="sf-discovery" aria-label="Product recommendations">
+          <div className="sf-section-head">
+            <div>
+              <span className="sf-kicker">MORE TO EXPLORE</span>
+              <h2>Discover more products</h2>
+            </div>
+            <button type="button" className="sf-link-action" onClick={() => onNavigate('collection/all-products')}>
+              View all <ArrowRight size={15} />
+            </button>
+          </div>
+          <div className="sf-discovery-track">
+            {discoveryProducts.map((product) => (
+              <article className="sf-card" key={product.id}>
+                <button
+                  type="button"
+                  className="sf-card-open"
+                  onClick={() => onOpenProduct?.(product)}
+                  aria-label={`View ${product.name}`}
+                >
+                  <span className="sf-card-media">
+                    <ProductThumb product={product} />
+                  </span>
+                  <div className="sf-card-body">
+                    <span className="sf-card-cat">{product.category || 'Product'}</span>
+                    <span className="sf-card-title">{product.name}</span>
+                    <div className="sf-card-meta-row">
+                      <strong className="sf-card-price">{formatKes(product.price)}</strong>
+                      <small className="sf-card-stock">
+                        {product.stockQuantity == null ? 'Available' : `${product.stockQuantity} in stock`}
+                      </small>
+                    </div>
+                  </div>
+                </button>
+                <div className="sf-card-foot">
+                  <button
+                    type="button"
+                    className="sf-card-add"
+                    disabled={product.stockQuantity === 0}
+                    onClick={() =>
+                      onCartChange({
+                        ...cart,
+                        [product.id]: Math.min(99, product.stockQuantity ?? 99, (cart[product.id] || 0) + 1),
+                      })
+                    }
+                  >
+                    Add to cart
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  );
 }
