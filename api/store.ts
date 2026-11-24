@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { getDb, hasDatabaseConfig } from '../server/db.js';
+import { quoteUsdInKes, initializeCentralPaystack, getSellerPaystackCredentials, getCentralPaystackCredentials } from '../server/paystack.js';
 import { sendTransactionalEmail, sendTenantTransactionalEmail, sendUsingResendConfig, brandedEmail, encryptTenantEmailConfig, decryptTenantEmailConfig, escapeEmailHtml } from '../server/email.js';
 
 // Keep a stack trace for legacy URL parser warnings so the originating dependency
@@ -13,6 +14,17 @@ if(!warningProcess.__dasnetDep0169Trace){
 const env=(k:string)=>(process.env[k]||'').trim();
 const send=(res:any,s:number,b:unknown)=>res.status(s).json(b);
 const hash=(s:string)=>crypto.createHash('sha256').update(s).digest('hex');
+function credentialsKey():Buffer{const raw=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');const key=/^[a-f0-9]{64}$/i.test(raw)?Buffer.from(raw,'hex'):Buffer.from(raw,'base64');if(key.length!==32)throw Error('Credential encryption is not configured correctly.');return key;}
+function encryptPrivate(value:any){const iv=crypto.randomBytes(12),cipher=crypto.createCipheriv('aes-256-gcm',credentialsKey(),iv),data=Buffer.concat([cipher.update(JSON.stringify(value),'utf8'),cipher.final()]);return {v:1,iv:iv.toString('base64'),tag:cipher.getAuthTag().toString('base64'),data:data.toString('base64')};}
+function decryptPrivate(blob:any){if(!blob?.iv||!blob?.tag||!blob?.data)return {};const decipher=crypto.createDecipheriv('aes-256-gcm',credentialsKey(),Buffer.from(blob.iv,'base64'));decipher.setAuthTag(Buffer.from(blob.tag,'base64'));return JSON.parse(Buffer.concat([decipher.update(Buffer.from(blob.data,'base64')),decipher.final()]).toString('utf8'));}
+async function sendKycOtp(phone:string,code:string){
+ const key=env('SMS_OTS_API_TOKEN')||env('OTS_API_TOKEN'),senderRaw=env('SMS_OTS_SENDER_ID')||env('SENDER_ID'),senders=[...new Set(senderRaw.split(/\r?\n/).map(x=>x.trim()).filter(Boolean))];
+ if(!key||senders.length!==1)throw Error('SMS verification is not configured.');
+ const response=await fetch('https://sms.ots.co.ke/api/v3/sms/send',{method:'POST',headers:{Authorization:'Bearer '+key,Accept:'application/json','Content-Type':'application/json'},body:JSON.stringify({recipient:phone,sender_id:senders[0],type:'plain',message:'DASMARKET card KYC phone verification code: '+code+'. Expires in 10 minutes. Never share this code.'}),signal:AbortSignal.timeout(12000)});
+ const body:any=await response.json().catch(()=>({}));if(!response.ok||body?.status===false||body?.success===false||body?.error)throw Error('Could not send verification SMS. Try again later.');
+}
+
+
 const db=()=>getDb();
 function token(req:any){const c=String(req.headers.cookie||'').split(';').map((s:string)=>s.trim()).find((s:string)=>s.startsWith('das_session='));try{return c?decodeURIComponent(c.slice(12)):''}catch{return ''}}
 async function buyerSession(sql:any,req:any,tenantId:string){
@@ -193,7 +205,7 @@ const storageEnv=(k:string)=>(process.env[k]||'').trim();
 const fileTypes:any={pdf:{mime:'application/pdf',ext:'pdf'},doc:{mime:'application/msword',ext:'doc'},docx:{mime:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',ext:'docx'},xls:{mime:'application/vnd.ms-excel',ext:'xls'},xlsx:{mime:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',ext:'xlsx'},txt:{mime:'text/plain',ext:'txt'},jpg:{mime:'image/jpeg',ext:'jpg'},jpeg:{mime:'image/jpeg',ext:'jpeg'},png:{mime:'image/png',ext:'png'},webp:{mime:'image/webp',ext:'webp'}};
 function awsEncode(s:string){return encodeURIComponent(s).replace(/[!'()*]/g,c=>'%'+c.charCodeAt(0).toString(16).toUpperCase())}
 function hmac(key:any,value:string,encoding?:any){return crypto.createHmac('sha256',key).update(value).digest(encoding)}
-function storageUrl(key:string,method:'PUT'|'GET',mime='application/octet-stream'){
+export function storageUrl(key:string,method:'PUT'|'GET',mime='application/octet-stream'){
  const endpoint=storageEnv('AWS_ENDPOINT_URL_S3'),access=storageEnv('AWS_ACCESS_KEY_ID'),secret=storageEnv('AWS_SECRET_ACCESS_KEY'),configuredRegion=storageEnv('AWS_REGION'),bucket=storageEnv('NEON_STORAGE_BUCKET')||'documents';
  if(!endpoint||!access||!secret)throw Error('ATTACHMENT_STORAGE_CONFIG');
  const host=new URL(endpoint).host,endpointRegion=host.match(/\.([a-z]{2}-[a-z]+-\d)\.aws\.neon\.tech$/)?.[1],region=endpointRegion||configuredRegion||'us-east-2',now=new Date(),amz=now.toISOString().slice(0,19).replace(/[-:T]/g,'')+'Z',day=amz.slice(0,8),scope=day+'/'+region+'/s3/aws4_request',path='/'+bucket+'/'+key.split('/').map(awsEncode).join('/');
@@ -544,6 +556,7 @@ export default async function handler(req:any,res:any){
    return send(res,200,{ok:true,found:jobs.length,processed,failed,inventoryChecked,inventoryReleased,inventoryHeld});
   }
   const me=await seller(sql,req);
+  if(!me)return send(res,401,{error:'Sign in to manage your shop.'});
   if(req.method==='POST'&&action==='products-test-seed'){
    if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission to generate test products.'});
    const categories=[
@@ -688,6 +701,47 @@ export default async function handler(req:any,res:any){
    const configs=await sql`SELECT pc.*,pt.shortcode AS central_till_shortcode,pt.environment AS central_till_environment,pt.encrypted_credentials AS central_till_credentials,pb.shortcode AS central_paybill_shortcode,pb.environment AS central_paybill_environment,pb.encrypted_credentials AS central_paybill_credentials FROM public.tenants t LEFT JOIN public.payment_configs pc ON pc.tenant_id=t.id LEFT JOIN public.platform_payment_methods pt ON pt.method='till' LEFT JOIN public.platform_payment_methods pb ON pb.method='paybill' WHERE t.id=${tenantId} LIMIT 1`;
    const cfg=configs[0]||{},key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');
    const method=String(cfg.default_payout_method||cfg.payout_method||'till')==='paybill'?'paybill':'till';let payment:any=null;
+   if(requestedMethod==='paystack'||requestedMethod==='card'){
+    if(String(me?.slug||'').toLowerCase()!=='kingsley'){
+     const kyc=await sql`SELECT status,phone_verified_at FROM public.tenant_card_kyc WHERE tenant_id=${tenantId} LIMIT 1`;
+     if(kyc[0]?.status!=='approved'||!kyc[0]?.phone_verified_at)return send(res,403,{error:'This shop has not completed card KYC. Choose M-PESA instead.'});
+    }
+    const routeRows=await sql`SELECT account_mode,connection_status,paystack_subaccount_code,subaccount_status FROM public.tenant_paystack_configs WHERE tenant_id=${tenantId} LIMIT 1`;
+    const route=routeRows[0]?.account_mode==='own_paystack'&&routeRows[0]?.connection_status==='connected'?'own_paystack':'central_paystack';
+    if(route==='central_paystack'&&(!routeRows[0]?.paystack_subaccount_code||routeRows[0]?.subaccount_status!=='active'))return send(res,409,{error:'This shop must complete Paystack settlement onboarding before card checkout is available.'});
+    const ownerEmail=String(customerEmail||buyer.email||'').trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ownerEmail))return send(res,400,{error:'Add a valid email address to your buyer account before card checkout.'});
+    const orderNo='DAS-'+Date.now().toString(36).toUpperCase()+'-'+crypto.randomBytes(2).toString('hex').toUpperCase(),customerChatToken=crypto.randomBytes(32).toString('hex'),idem='checkout-'+idempotency;
+    const orderLines=lines.map((l:any)=>({product_id:l.p.id,product_name:l.p.name,quantity:l.qty,unit_price_minor:Number(l.p.price_minor),line_total_minor:l.line}));
+    const reference='DASORD_'+crypto.randomBytes(18).toString('hex');
+    const created=await sql`WITH created_order AS (
+      INSERT INTO public.orders(tenant_id,order_number,customer_name,customer_phone,customer_email,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,subtotal_minor,delivery_fee_minor,total_minor,coupon_code,discount_minor,checkout_idempotency_key,checkout_fingerprint,status)
+      VALUES(${tenantId},${orderNo},${name},${phone},${ownerEmail},${deliveryMethod},${deliveryCounty||null},${deliverySubCounty||null},${deliveryEstate||null},${deliveryAddress||null},${deliveryDirections||null},${pickupStation||null},${total},${deliveryFeeMinor},${payableTotal},${couponCode||null},${discountMinor},${idempotency},${checkoutFingerprint},'pending')
+      ON CONFLICT (tenant_id,checkout_idempotency_key) WHERE checkout_idempotency_key IS NOT NULL DO NOTHING RETURNING id,order_number
+     ), new_chat AS (UPDATE public.orders o SET customer_chat_token_hash=${hash(customerChatToken)} FROM created_order c WHERE o.id=c.id AND o.tenant_id=${tenantId} RETURNING o.id,o.order_number), new_items AS (
+      INSERT INTO public.order_items(tenant_id,order_id,product_id,product_name,quantity,unit_price_minor,line_total_minor)
+      SELECT ${tenantId},c.id,i.product_id,i.product_name,i.quantity,i.unit_price_minor,i.line_total_minor FROM new_chat c CROSS JOIN jsonb_to_recordset(${JSON.stringify(orderLines)}::jsonb) AS i(product_id uuid,product_name text,quantity integer,unit_price_minor bigint,line_total_minor bigint) RETURNING order_id
+     ), new_payment AS (
+      INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_reference,payment_route,provider_result)
+      SELECT ${tenantId},c.id,'paystack',${paymentPhone},${payableTotal},'KES','initiated',${idem},${reference},${route},${JSON.stringify({source:'buyer_checkout',paymentRoute:route})}::jsonb FROM new_chat c CROSS JOIN (SELECT COUNT(*) FROM new_items) ready RETURNING id,order_id
+     ) SELECT c.id,c.order_number,p.id AS payment_id FROM new_chat c JOIN new_payment p ON p.order_id=c.id`;
+    if(!created.length)return send(res,409,{error:'This checkout was already submitted. Check your order status before trying again.'});
+    try{
+     const callbackUrl=(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/paystack/callback',metadata={paymentId:created[0].payment_id,tenantId,orderId:created[0].id,source:'buyer_checkout'};
+     let initialized:any;
+     if(route==='own_paystack'){
+      const own=await getSellerPaystackCredentials(tenantId),response=await fetch('https://api.paystack.co/transaction/initialize',{method:'POST',headers:{Authorization:'Bearer '+own.secretKey,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({email:ownerEmail,reference,amount:payableTotal,currency:'KES',callback_url:callbackUrl,metadata}),signal:AbortSignal.timeout(15000)}),payload:any=await response.json().catch(()=>({}));
+      if(!response.ok||payload?.status!==true||!payload?.data?.authorization_url||!payload?.data?.access_code)throw Error(String(payload?.message||'Seller Paystack could not initialize this KES payment.'));
+      initialized={authorizationUrl:payload.data.authorization_url,accessCode:payload.data.access_code,reference:payload.data.reference};
+     }else initialized=await initializeCentralPaystack({email:ownerEmail,reference,amountSubunits:payableTotal,callbackUrl,metadata,subaccountCode:String(routeRows[0].paystack_subaccount_code)});
+     await sql`UPDATE public.payments SET provider_checkout_id=${initialized.accessCode},status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({authorizationUrl:initialized.authorizationUrl,accessCode:initialized.accessCode,reference,source:'buyer_checkout',paymentRoute:route})}::jsonb,updated_at=now() WHERE id=${created[0].payment_id} AND status='initiated'`;
+     await audit(sql,tenantId,buyer.user_id||null,'buyer.order.paystack.initialized','order',created[0].id,{orderNumber:created[0].order_number,amountMinor:payableTotal,paymentRoute:route});
+     return send(res,201,{ok:true,orderId:created[0].id,orderNumber:created[0].order_number,paymentStatus:'pending',paymentMethod:'paystack',authorizationUrl:initialized.authorizationUrl,reference,subtotal:total/100,deliveryFee:deliveryFeeMinor/100,discount:discountMinor/100,total:payableTotal/100,currency:'KES',chatToken:customerChatToken});
+    }catch(error:any){
+     await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({source:'buyer_checkout',initializationError:String(error?.message||error).slice(0,300)})}::jsonb,updated_at=now() WHERE id=${created[0].payment_id} AND status='initiated'`;
+     return send(res,502,{error:String(error?.message||'Could not start Paystack checkout. No card payment was confirmed.'),orderNumber:created[0].order_number});
+    }
+   }
    try{
     if(method==='till'&&!((cfg.till_party_b)||(cfg.payout_method==='till'&&cfg.party_b)))return send(res,409,{error:'The shop Till destination is not configured.'});
     if(method==='paybill'&&!((cfg.paybill_party_b)||(cfg.payout_method==='paybill'&&cfg.party_b)))return send(res,409,{error:'The shop PayBill destination is not configured.'});
@@ -845,7 +899,7 @@ export default async function handler(req:any,res:any){
    const name=String(buyer.full_name||'').trim().slice(0,120),phone=normalizePhone(buyer.phone),paymentPhone=requestedMethod==='delivery'?'':normalizePhone(b.paymentPhone||buyer.phone),checkoutEmail=String(b.customerEmail||'').trim().toLowerCase().slice(0,254),customerEmail=checkoutEmail||String(buyer.email||'').trim().toLowerCase().slice(0,254);
    if(checkoutEmail&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(checkoutEmail))return send(res,400,{error:'Enter a valid email address or leave the email field blank.'});
    if(checkoutEmail&&checkoutEmail!==String(buyer.email||'').trim().toLowerCase())await sql`UPDATE public.store_customers SET email=${checkoutEmail},updated_at=now() WHERE id=${buyer.id} AND tenant_id=${shops[0].id}`;
-   if(!name||!phone||(requestedMethod!=='delivery'&&!paymentPhone)||!items.length||items.length>30)return send(res,400,{error:'Your buyer account or payment phone is invalid, or the cart is empty.'});
+   if(!name||!phone||(requestedMethod==='mpesa'&&!paymentPhone)||!['delivery','mpesa','paystack','card'].includes(requestedMethod)||!items.length||items.length>30)return send(res,400,{error:'Your buyer account, payment method or cart is invalid.'});
    if(!/^[a-zA-Z0-9:_-]{12,100}$/.test(idempotency))return send(res,400,{error:'Checkout session expired. Refresh checkout and try again.'});
    if(!['home','pickup'].includes(deliveryMethod))return send(res,400,{error:'Choose a valid delivery method.'});
    if(deliveryMethod==='home'&&(!deliveryCounty||!deliverySubCounty||!deliveryEstate||!deliveryAddress))return send(res,400,{error:'Complete county, sub-county, estate/area and physical delivery address.'});
@@ -1051,6 +1105,127 @@ export default async function handler(req:any,res:any){
    const id=String(req.query?.id||''),r=await sql`DELETE FROM public.store_coupons WHERE id=${id} AND tenant_id=${me.tenant_id} RETURNING id`;
    return r.length?send(res,200,{ok:true}):send(res,404,{error:'Coupon not found.'});
   }
+  if(req.method==='GET'&&action==='paystack-seller'){
+   const rows=await sql`SELECT account_mode,account_email,connection_status,subaccount_status,paystack_subaccount_code,last_verified_at,updated_at,encrypted_credentials FROM public.tenant_paystack_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
+    const commissionRows=await sql`SELECT commission_percent FROM public.platform_paystack_config WHERE id='central' LIMIT 1`;
+   const c=rows[0]||{};
+   return send(res,200,{paystack:{accountMode:c.account_mode||'central_subaccount',accountEmail:c.account_email||'',connectionStatus:c.connection_status||'not_connected',subaccountStatus:c.subaccount_status||'not_created',subaccountCode:c.paystack_subaccount_code||null,lastVerifiedAt:c.last_verified_at||null,ownCredentialsConfigured:!!c.encrypted_credentials?.data,centralCommissionPercent:Number(commissionRows[0]?.commission_percent??5),updatedAt:c.updated_at||null,webhookUrl:(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/paystack/seller-webhook?shop='+encodeURIComponent(String(me.slug||'')),callbackUrl:(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/paystack/seller-callback?shop='+encodeURIComponent(String(me.slug||''))}});
+  }
+  if(req.method==='POST'&&action==='paystack-seller'){
+   if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner can manage Paystack settings.'});
+   const mode=String(req.body?.accountMode||'central_subaccount');
+   if(!['central_subaccount','own_paystack'].includes(mode))return send(res,400,{error:'Choose a valid Paystack account mode.'});
+   const existing=await sql`SELECT encrypted_credentials FROM public.tenant_paystack_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
+   if(mode==='central_subaccount'){
+    await sql`INSERT INTO public.tenant_paystack_configs(tenant_id,account_mode,connection_status,updated_at) VALUES(${me.tenant_id},'central_subaccount','not_connected',now()) ON CONFLICT(tenant_id) DO UPDATE SET account_mode='central_subaccount',encrypted_credentials='{}'::jsonb,account_email=NULL,connection_status='not_connected',updated_at=now()`;
+    await audit(sql,me.tenant_id,me.user_id,'seller.paystack.mode_changed','paystack_config',me.tenant_id,{accountMode:mode});
+    return send(res,200,{ok:true,accountMode:mode});
+   }
+   const email=String(req.body?.accountEmail||'').trim().toLowerCase(),secretKey=String(req.body?.secretKey||'').trim();
+   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return send(res,400,{error:'Enter the email address registered with your Paystack account.'});
+   if(!/^sk_(test|live)_[A-Za-z0-9]+$/.test(secretKey))return send(res,400,{error:'Enter a valid Paystack secret key. Do not use your public key.'});
+   const response=await fetch('https://api.paystack.co/balance',{headers:{Authorization:'Bearer '+secretKey,Accept:'application/json'},signal:AbortSignal.timeout(12000)});
+   const verified:any=await response.json().catch(()=>({}));
+   if(!response.ok||verified?.status!==true)return send(res,400,{error:'Paystack could not verify this secret key. Check the key and account environment.'});
+   const encrypted=encryptPrivate({secretKey,environment:secretKey.startsWith('sk_live_')?'live':'test'});
+   await sql`INSERT INTO public.tenant_paystack_configs(tenant_id,account_mode,encrypted_credentials,account_email,connection_status,connected_at,last_verified_at,updated_at) VALUES(${me.tenant_id},'own_paystack',${JSON.stringify(encrypted)}::jsonb,${email},'connected',now(),now(),now()) ON CONFLICT(tenant_id) DO UPDATE SET account_mode='own_paystack',encrypted_credentials=EXCLUDED.encrypted_credentials,account_email=EXCLUDED.account_email,connection_status='connected',connected_at=COALESCE(public.tenant_paystack_configs.connected_at,now()),last_verified_at=now(),last_error_code=NULL,updated_at=now()`;
+   await audit(sql,me.tenant_id,me.user_id,'seller.paystack.connected','paystack_config',me.tenant_id,{accountMode:mode,environment:secretKey.startsWith('sk_live_')?'live':'test',credentialEncrypted:true});
+   return send(res,200,{ok:true,accountMode:mode,connectionStatus:'connected'});
+  }
+  if(req.method==='POST'&&action==='card-kyc-otp'){
+   if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner can verify the KYC phone.'});
+   const mode=String(req.body?.mode||'request'),user=await sql`SELECT phone FROM public.users WHERE id=${me.user_id} LIMIT 1`,phone=normalizePhone(String(user[0]?.phone||''));
+   if(!phone)return send(res,400,{error:'Add and verify a Kenyan mobile number on your seller account first.'});
+   if(mode==='request'){
+    const recent=await sql`SELECT id FROM public.auth_otp_challenges WHERE phone=${phone} AND purpose='card_kyc' AND created_at>now()-interval '60 seconds' AND consumed_at IS NULL LIMIT 1`;
+    if(recent.length)return send(res,429,{error:'Wait 60 seconds before requesting another code.'});
+    const count=await sql`SELECT count(*)::int n FROM public.auth_otp_challenges WHERE phone=${phone} AND purpose='card_kyc' AND created_at>now()-interval '1 hour'`;
+    if(Number(count[0]?.n||0)>=5)return send(res,429,{error:'You have reached the hourly SMS limit. Try again later.'});
+    const code=String(crypto.randomInt(0,1000000)).padStart(6,'0'),salt=crypto.randomBytes(16).toString('hex'),codeHash=hash(`${phone}:card_kyc:${salt}:${code}`);
+    const challenge=await sql`INSERT INTO public.auth_otp_challenges(phone,purpose,code_hash,code_salt,request_ip_hash,expires_at) VALUES(${phone},'card_kyc',${codeHash},${salt},${hash(String(req.headers['x-forwarded-for']||'')).slice(0,32)},now()+interval '10 minutes') RETURNING id`;
+    try{await sendKycOtp(phone,code);}catch(error){await sql`UPDATE public.auth_otp_challenges SET consumed_at=now() WHERE id=${challenge[0].id}`;throw error;}
+    return send(res,200,{ok:true,message:'Verification code sent to your registered seller phone.'});
+   }
+   if(mode==='verify'){
+    const code=String(req.body?.code||'').replace(/\D/g,'');
+    if(!/^\d{6}$/.test(code))return send(res,400,{error:'Enter the six-digit verification code.'});
+    const challenge=await sql`SELECT id,code_hash,code_salt,attempts FROM public.auth_otp_challenges WHERE phone=${phone} AND purpose='card_kyc' AND consumed_at IS NULL AND expires_at>now() ORDER BY created_at DESC LIMIT 1`;
+    if(!challenge.length)return send(res,400,{error:'That code has expired. Request a new one.'});
+    if(Number(challenge[0].attempts||0)>=5){await sql`UPDATE public.auth_otp_challenges SET consumed_at=now() WHERE id=${challenge[0].id}`;return send(res,429,{error:'Too many incorrect attempts. Request a new code.'});}
+    const valid=hash(`${phone}:card_kyc:${challenge[0].code_salt}:${code}`)===challenge[0].code_hash;
+    await sql`UPDATE public.auth_otp_challenges SET attempts=attempts+1,consumed_at=CASE WHEN ${valid} THEN now() ELSE consumed_at END WHERE id=${challenge[0].id}`;
+    if(!valid)return send(res,400,{error:'Incorrect verification code.'});
+    const updated=await sql`UPDATE public.tenant_card_kyc SET phone=${phone},phone_verified_at=now(),status=CASE WHEN id_front_object_key IS NOT NULL AND id_back_object_key IS NOT NULL THEN 'pending_review' ELSE 'more_information_required' END,updated_at=now() WHERE tenant_id=${me.tenant_id} RETURNING tenant_id`;
+    if(!updated.length)return send(res,400,{error:'Save your KYC identity details before verifying your phone.'});
+    return send(res,200,{ok:true,verified:true});
+   }
+   return send(res,400,{error:'Choose request or verify.'});
+  }
+
+  if(req.method==='POST'&&action==='card-kyc-document-upload'){
+   if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner can upload KYC documents.'});
+   const kind=String(req.body?.kind||''),name=String(req.body?.fileName||''),mime=String(req.body?.contentType||''),size=Number(req.body?.size||0),ext=(name.split('.').pop()||'').toLowerCase();
+   const allowed:any={jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',pdf:'application/pdf'};
+   if(!['id_front','id_back','business_document'].includes(kind)||!allowed[ext]||allowed[ext]!==mime)return send(res,415,{error:'Upload a JPG, PNG or PDF document.'});
+   if(!Number.isSafeInteger(size)||size<1||size>5242880)return send(res,413,{error:'Each KYC document must be 5 MB or smaller.'});
+   const objectKey=me.tenant_id+'/card-kyc/'+kind+'/'+crypto.randomUUID()+'-'+safeFileName(name);
+   return send(res,200,{ok:true,objectKey,uploadUrl:storageUrl(objectKey,'PUT',mime),expiresIn:300,contentType:mime,size});
+  }
+  if(req.method==='POST'&&action==='card-kyc-document-confirm'){
+   if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner can confirm KYC documents.'});
+   const kind=String(req.body?.kind||''),objectKey=String(req.body?.objectKey||''),mime=String(req.body?.contentType||''),size=Number(req.body?.size||0);
+   if(!['id_front','id_back','business_document'].includes(kind)||!objectKey.startsWith(me.tenant_id+'/card-kyc/'+kind+'/'))return send(res,400,{error:'Invalid KYC document reference.'});
+   if(!['image/jpeg','image/png','application/pdf'].includes(mime)||!Number.isSafeInteger(size)||size<1||size>5242880)return send(res,400,{error:'Invalid KYC document details.'});
+   try{await validateAttachmentObject(objectKey,mime,size);}catch{return send(res,400,{error:'The uploaded document could not be verified. Please upload it again.'});}
+   if(kind==='id_front')await sql`UPDATE public.tenant_card_kyc SET id_front_object_key=${objectKey},status=CASE WHEN id_back_object_key IS NOT NULL AND phone_verified_at IS NOT NULL THEN 'pending_review' ELSE 'more_information_required' END,updated_at=now() WHERE tenant_id=${me.tenant_id}`;
+   else if(kind==='id_back')await sql`UPDATE public.tenant_card_kyc SET id_back_object_key=${objectKey},status=CASE WHEN id_front_object_key IS NOT NULL AND phone_verified_at IS NOT NULL THEN 'pending_review' ELSE 'more_information_required' END,updated_at=now() WHERE tenant_id=${me.tenant_id}`;
+   else await sql`UPDATE public.tenant_card_kyc SET business_document_object_key=${objectKey},updated_at=now() WHERE tenant_id=${me.tenant_id}`;
+   return send(res,200,{ok:true,kind});
+  }
+  if(req.method==='POST'&&action==='paystack-subaccount'){
+   if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner can configure settlement.'});
+   const [config,kyc,user]=await Promise.all([
+    sql`SELECT account_mode,subaccount_status,paystack_subaccount_code FROM public.tenant_paystack_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`,
+    sql`SELECT status,phone_verified_at,id_front_object_key,id_back_object_key FROM public.tenant_card_kyc WHERE tenant_id=${me.tenant_id} LIMIT 1`,
+    sql`SELECT email,phone,display_name FROM public.users WHERE id=${me.user_id} LIMIT 1`
+   ]);
+   if(config[0]?.account_mode!=='central_subaccount')return send(res,409,{error:'Choose the DASMARKET central Paystack account mode first.'});
+   if(config[0]?.paystack_subaccount_code)return send(res,200,{ok:true,subaccountCode:config[0].paystack_subaccount_code,subaccountStatus:config[0].subaccount_status});
+   if(String(me.slug||'').toLowerCase()!=='kingsley'&&(kyc[0]?.status!=='approved'||!kyc[0]?.phone_verified_at||!kyc[0]?.id_front_object_key||!kyc[0]?.id_back_object_key))return send(res,403,{error:'Complete card KYC approval, phone verification and both ID uploads before creating a settlement subaccount.'});
+   const b=req.body||{},businessName=String(b.businessName||'').trim().slice(0,120),accountNumber=String(b.accountNumber||'').replace(/\s/g,''),bankCode=String(b.bankCode||'').trim(),accountName=String(b.accountName||'').trim().slice(0,120),email=String(user[0]?.email||'').trim(),phone=normalizePhone(String(user[0]?.phone||''));
+   if(businessName.length<3||accountName.length<3||!/^[0-9]{5,20}$/.test(accountNumber)||!/^[A-Za-z0-9_-]{2,20}$/.test(bankCode)||!phone||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return send(res,400,{error:'Enter the registered business name, account holder, valid bank code and account number. Your seller account must have a verified phone and email.'});
+   const central=await getCentralPaystackCredentials();
+   const resolveUrl='https://api.paystack.co/bank/resolve?account_number='+encodeURIComponent(accountNumber)+'&bank_code='+encodeURIComponent(bankCode);
+   const resolvedResponse=await fetch(resolveUrl,{headers:{Authorization:'Bearer '+central.secretKey,Accept:'application/json'},signal:AbortSignal.timeout(12000)}),resolved:any=await resolvedResponse.json().catch(()=>({}));
+   if(!resolvedResponse.ok||resolved?.status!==true||!resolved?.data?.account_number)return send(res,400,{error:String(resolved?.message||'Paystack could not verify this bank account. Check the bank code and account number.')});
+   if(String(resolved.data.account_number)!==accountNumber)return send(res,400,{error:'Paystack returned a different account number. Please verify your details.'});
+   const normalizedAccountName=(v:string)=>String(v||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+   if(resolved.data.account_name&&normalizedAccountName(String(resolved.data.account_name))!==normalizedAccountName(accountName))return send(res,400,{error:'The account holder name returned by Paystack does not match the name entered. Check the bank details before continuing.'});
+   const commissionRows=await sql`SELECT commission_percent FROM public.platform_paystack_config WHERE id='central' LIMIT 1`;
+   const commissionPercent=Math.min(20,Math.max(0,Number(commissionRows[0]?.commission_percent??5)));
+   const createdResponse=await fetch('https://api.paystack.co/subaccount',{method:'POST',headers:{Authorization:'Bearer '+central.secretKey,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({business_name:businessName,settlement_bank:bankCode,account_number:accountNumber,percentage_charge:commissionPercent,primary_contact_email:email,primary_contact_name:accountName,phone}),signal:AbortSignal.timeout(15000)}),created:any=await createdResponse.json().catch(()=>({}));
+   if(!createdResponse.ok||created?.status!==true||!created?.data?.subaccount_code)return send(res,502,{error:String(created?.message||'Paystack could not create the seller settlement subaccount.')});
+   const encrypted=encryptPrivate({businessName,accountName,accountNumber,bankCode,bankName:String(b.bankName||'').slice(0,100)});
+   await sql`UPDATE public.tenant_paystack_configs SET encrypted_bank_details=${JSON.stringify(encrypted)}::jsonb,settlement_status='verified',paystack_subaccount_code=${String(created.data.subaccount_code)},subaccount_status='active',updated_at=now() WHERE tenant_id=${me.tenant_id}`;
+   await audit(sql,me.tenant_id,me.user_id,'seller.paystack.subaccount.created','paystack_subaccount',me.tenant_id,{subaccountCreated:true,bankAccountVerified:true,percentageCharge:commissionPercent});
+   return send(res,200,{ok:true,subaccountCode:String(created.data.subaccount_code),subaccountStatus:'active'});
+  }
+  if(req.method==='GET'&&action==='card-kyc'){
+   const rows=await sql`SELECT status,encrypted_identity,phone,phone_verified_at,id_front_object_key,id_back_object_key,business_document_object_key,submitted_at,reviewed_at,review_note FROM public.tenant_card_kyc WHERE tenant_id=${me.tenant_id} LIMIT 1`;
+   const k=rows[0]||{};
+   return send(res,200,{kyc:{status:k.status||'not_submitted',identitySaved:!!k.encrypted_identity?.data,phone:k.phone||'',phoneVerified:!!k.phone_verified_at,idFrontUploaded:!!k.id_front_object_key,idBackUploaded:!!k.id_back_object_key,businessDocumentUploaded:!!k.business_document_object_key,submittedAt:k.submitted_at||null,reviewedAt:k.reviewed_at||null,reviewNote:k.review_note||''}});
+  }
+  if(req.method==='POST'&&action==='card-kyc'){
+   if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner can submit card KYC.'});
+   const fullName=String(req.body?.fullName||'').trim().slice(0,140),idNumber=String(req.body?.idNumber||'').trim().replace(/\s/g,'').slice(0,40),phoneRaw=String(req.body?.phone||'').trim(),phone=normalizePhone(phoneRaw),businessName=String(req.body?.businessName||'').trim().slice(0,140);
+   if(fullName.length<3||idNumber.length<5||!phone||!businessName)return send(res,400,{error:'Enter your legal name, ID number, Kenyan phone number and registered business/shop name.'});
+   const user=await sql`SELECT phone FROM public.users WHERE id=${me.user_id} LIMIT 1`;
+   if(!user.length||normalizePhone(String(user[0].phone||''))!==phone)return send(res,400,{error:'Use the verified phone number already registered on your DASMARKET seller account.'});
+   const encrypted=encryptPrivate({fullName,idNumber,businessName});
+   await sql`INSERT INTO public.tenant_card_kyc(tenant_id,encrypted_identity,phone,status,submitted_at,updated_at) VALUES(${me.tenant_id},${JSON.stringify(encrypted)}::jsonb,${phone},'more_information_required',now(),now()) ON CONFLICT(tenant_id) DO UPDATE SET encrypted_identity=EXCLUDED.encrypted_identity,phone_verified_at=CASE WHEN public.tenant_card_kyc.phone IS DISTINCT FROM EXCLUDED.phone THEN NULL ELSE public.tenant_card_kyc.phone_verified_at END,phone=EXCLUDED.phone,status='more_information_required',submitted_at=now(),reviewed_at=NULL,reviewed_by=NULL,review_note='ID document images and fresh phone OTP verification are still required.',updated_at=now()`;
+   await audit(sql,me.tenant_id,me.user_id,'seller.card_kyc.submitted','card_kyc',me.tenant_id,{phoneLast4:phone.slice(-4),identityEncrypted:true,documentsPending:true});
+   return send(res,200,{ok:true,status:'more_information_required',message:'Your identity details were saved securely. ID document images and fresh phone OTP confirmation are still required before formal review.'});
+  }
   if(req.method==='GET'&&action==='payment-settings'){
    const rows=await sql`SELECT payout_method,party_b,account_reference,shortcode,account_type,environment,encrypted_credentials,till_party_b,paybill_party_b,default_payout_method FROM public.payment_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
    const c=rows[0]||{};
@@ -1199,6 +1374,53 @@ export default async function handler(req:any,res:any){
    }
    const cfg=config[0]?.setting_value||{};
    return send(res,200,{subscription:currentSubscription,plans,trialDays:Math.max(0,Math.min(30,Number(trialConfig[0]?.trial_days??7))),payment:{configured:!!(cfg.method&&cfg.destination),method:cfg.method||null},lastPayment:lastPayment[0]?{...lastPayment[0],amount:Number(lastPayment[0].amount_minor)/100}:null});
+  }
+  if(req.method==='POST'&&action==='subscription-paystack'){
+   const planId=String(req.body?.planId||'');
+   if(!/^[0-9a-f-]{36}$/i.test(planId))return send(res,400,{error:'Choose a valid subscription plan.'});
+   const [plans,subs]=await Promise.all([
+    sql`SELECT id,code,name,price_minor,currency,interval_days FROM public.subscription_plans WHERE id=${planId} AND is_active=true LIMIT 1`,
+    sql`SELECT s.id,s.status,sp.code AS plan_code FROM public.subscriptions s JOIN public.subscription_plans sp ON sp.id=s.plan_id WHERE s.tenant_id=${me.tenant_id} ORDER BY s.created_at DESC LIMIT 1`
+   ]);
+   if(!plans.length)return send(res,404,{error:'That subscription plan is no longer available.'});
+   if(subs[0]?.plan_code==='lifetime-license')return send(res,409,{error:'This shop already has a lifetime platform licence.'});
+   if(String(me.slug||'').toLowerCase()!=='kingsley'){
+    const kyc=await sql`SELECT status,phone_verified_at FROM public.tenant_card_kyc WHERE tenant_id=${me.tenant_id} LIMIT 1`;
+    if(kyc[0]?.status!=='approved'||!kyc[0]?.phone_verified_at)return send(res,403,{error:'Card payments are locked until this shop completes DASMARKET card KYC and phone verification. M-PESA remains available.'});
+   }
+   const plan=plans[0],currency=String(plan.currency||'KES').trim().toUpperCase(),priceMinor=Number(plan.price_minor);
+   if(!Number.isSafeInteger(priceMinor)||priceMinor<1)return send(res,400,{error:'This plan does not have a payable price.'});
+   let amountMinor=priceMinor,fx:any=null;
+   if(currency==='USD'){
+    fx=await quoteUsdInKes(priceMinor/100);
+    amountMinor=fx.amountSubunits;
+   }else if(currency!=='KES')return send(res,400,{error:'Paystack checkout currently supports KES plans and USD plans converted to KES.'});
+   const isLifetime=plan.code==='lifetime-license',reference='DASPS_'+crypto.randomBytes(18).toString('hex');
+   const routeRows=await sql`SELECT account_mode,connection_status FROM public.tenant_paystack_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
+   const paymentRoute=routeRows[0]?.account_mode==='own_paystack'&&routeRows[0]?.connection_status==='connected'?'own_paystack':'central_paystack';
+   const paymentId=crypto.randomUUID(),meta={source:isLifetime?'seller_lifetime_license':'seller_subscription',planId:plan.id,intervalDays:isLifetime?36500:Number(plan.interval_days),subscriptionId:subs[0]?.id||null,paymentRoute,originalCurrency:currency};
+   const inserted=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,amount_minor,currency,status,idempotency_key,provider_reference,payment_route,original_usd_amount,fx_rate_used,charged_kes_amount,provider_result)
+    VALUES(${me.tenant_id},NULL,'paystack',${amountMinor},'KES','initiated',${paymentId},${reference},${paymentRoute},${fx?.originalUsdAmount??null},${fx?.fxRateUsed??null},${fx?.chargedKesAmount??(amountMinor/100)},${JSON.stringify(meta)}::jsonb) RETURNING id`;
+   try{
+    const callbackUrl=(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/paystack/callback';
+    const ownerRows=await sql`SELECT email FROM public.users WHERE id=${me.user_id} LIMIT 1`;
+    const ownerEmail=String(ownerRows[0]?.email||'').trim();if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(ownerEmail))throw Error('Add a valid billing email to your DASMARKET account before using card payments.');
+    let initialized:any;
+    const metadata={paymentId:inserted[0].id,tenantId:me.tenant_id,source:meta.source,planId:plan.id};
+    if(paymentRoute==='own_paystack'){
+     const own=await getSellerPaystackCredentials(me.tenant_id);
+     const response=await fetch('https://api.paystack.co/transaction/initialize',{method:'POST',headers:{Authorization:'Bearer '+own.secretKey,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({email:ownerEmail,reference,amount:amountMinor,currency:'KES',callback_url:callbackUrl,metadata}),signal:AbortSignal.timeout(15000)});
+     const payload:any=await response.json().catch(()=>({}));
+     if(!response.ok||payload?.status!==true||!payload?.data?.authorization_url||!payload?.data?.access_code)throw Error(String(payload?.message||'Seller Paystack could not initialize this KES payment.'));
+     initialized={authorizationUrl:payload.data.authorization_url,accessCode:payload.data.access_code,reference:payload.data.reference};
+    }else{const settlement=await sql`SELECT paystack_subaccount_code,subaccount_status FROM public.tenant_paystack_configs WHERE tenant_id=${me.tenant_id} AND account_mode='central_subaccount' LIMIT 1`;if(!settlement[0]?.paystack_subaccount_code||settlement[0]?.subaccount_status!=='active')throw Error('Complete seller settlement bank onboarding before using central Paystack card checkout.');initialized=await initializeCentralPaystack({email:ownerEmail,reference,amountSubunits:amountMinor,callbackUrl,metadata,subaccountCode:String(settlement[0].paystack_subaccount_code)});}
+    await sql`UPDATE public.payments SET provider_checkout_id=${initialized.accessCode},status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({authorizationUrl:initialized.authorizationUrl,accessCode:initialized.accessCode,reference:initialized.reference})}::jsonb,updated_at=now() WHERE id=${inserted[0].id} AND status='initiated'`;
+    await audit(sql,me.tenant_id,me.user_id,'subscription.paystack.initialized','subscription',subs[0]?.id||me.tenant_id,{planId:plan.id,amountMinor,currency:'KES',fxRate:fx?.fxRateUsed||null});
+    return send(res,200,{ok:true,authorizationUrl:initialized.authorizationUrl,reference:initialized.reference,amountKes:amountMinor/100,currency:'KES'});
+   }catch(error:any){
+    await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({initializationError:String(error?.message||error).slice(0,300)})}::jsonb,updated_at=now() WHERE id=${inserted[0].id} AND status='initiated'`;
+    return send(res,502,{error:String(error?.message||'Paystack could not initialize this subscription payment.')});
+   }
   }
   if(req.method==='POST'&&action==='subscription-stk'){
    const b=req.body||{},planId=String(b.planId||''),phone=normalizePhone(b.phone);
