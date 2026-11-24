@@ -585,7 +585,14 @@ export function StorefrontFlow({
         } catch {}
       })
       .catch((error) => {
-        if (live) setCheckoutError(error.message || 'Could not load your saved delivery details.');
+        // Saved delivery preferences are optional. A stale or unavailable buyer
+        // session must not surface a seller-workspace authentication message
+        // on the buyer's checkout review screen or block placing the order.
+        const message = String(error?.message || '');
+        const isAuthenticationError = /sign in|unauthori[sz]ed|forbidden/i.test(message);
+        if (live && !isAuthenticationError) {
+          setCheckoutError(message || 'Could not load your saved delivery details.');
+        }
       })
       .finally(() => {
         if (live) setDeliveryPreferenceLoading(false);
