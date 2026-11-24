@@ -17,6 +17,13 @@ const hash=(s:string)=>crypto.createHash('sha256').update(s).digest('hex');
 function credentialsKey():Buffer{const raw=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');const key=/^[a-f0-9]{64}$/i.test(raw)?Buffer.from(raw,'hex'):Buffer.from(raw,'base64');if(key.length!==32)throw Error('Credential encryption is not configured correctly.');return key;}
 function encryptPrivate(value:any){const iv=crypto.randomBytes(12),cipher=crypto.createCipheriv('aes-256-gcm',credentialsKey(),iv),data=Buffer.concat([cipher.update(JSON.stringify(value),'utf8'),cipher.final()]);return {v:1,iv:iv.toString('base64'),tag:cipher.getAuthTag().toString('base64'),data:data.toString('base64')};}
 function decryptPrivate(blob:any){if(!blob?.iv||!blob?.tag||!blob?.data)return {};const decipher=crypto.createDecipheriv('aes-256-gcm',credentialsKey(),Buffer.from(blob.iv,'base64'));decipher.setAuthTag(Buffer.from(blob.tag,'base64'));return JSON.parse(Buffer.concat([decipher.update(Buffer.from(blob.data,'base64')),decipher.final()]).toString('utf8'));}
+async function sendKycOtp(phone:string,code:string){
+ const key=env('SMS_OTS_API_TOKEN')||env('OTS_API_TOKEN'),senderRaw=env('SMS_OTS_SENDER_ID')||env('SENDER_ID'),senders=[...new Set(senderRaw.split(/\r?\n/).map(x=>x.trim()).filter(Boolean))];
+ if(!key||senders.length!==1)throw Error('SMS verification is not configured.');
+ const response=await fetch('https://sms.ots.co.ke/api/v3/sms/send',{method:'POST',headers:{Authorization:'Bearer '+key,Accept:'application/json','Content-Type':'application/json'},body:JSON.stringify({recipient:phone,sender_id:senders[0],type:'plain',message:'DASMARKET card KYC phone verification code: '+code+'. Expires in 10 minutes. Never share this code.'}),signal:AbortSignal.timeout(12000)});
+ const body:any=await response.json().catch(()=>({}));if(!response.ok||body?.status===false||body?.success===false||body?.error)throw Error('Could not send verification SMS. Try again later.');
+}
+
 
 const db=()=>getDb();
 function token(req:any){const c=String(req.headers.cookie||'').split(';').map((s:string)=>s.trim()).find((s:string)=>s.startsWith('das_session='));try{return c?decodeURIComponent(c.slice(12)):''}catch{return ''}}
@@ -1082,6 +1089,34 @@ export default async function handler(req:any,res:any){
    await sql`INSERT INTO public.tenant_paystack_configs(tenant_id,account_mode,encrypted_credentials,account_email,connection_status,connected_at,last_verified_at,updated_at) VALUES(${me.tenant_id},'own_paystack',${JSON.stringify(encrypted)}::jsonb,${email},'connected',now(),now(),now()) ON CONFLICT(tenant_id) DO UPDATE SET account_mode='own_paystack',encrypted_credentials=EXCLUDED.encrypted_credentials,account_email=EXCLUDED.account_email,connection_status='connected',connected_at=COALESCE(public.tenant_paystack_configs.connected_at,now()),last_verified_at=now(),last_error_code=NULL,updated_at=now()`;
    await audit(sql,me.tenant_id,me.user_id,'seller.paystack.connected','paystack_config',me.tenant_id,{accountMode:mode,environment:secretKey.startsWith('sk_live_')?'live':'test',credentialEncrypted:true});
    return send(res,200,{ok:true,accountMode:mode,connectionStatus:'connected'});
+  }
+  if(req.method==='POST'&&action==='card-kyc-otp'){
+   if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner can verify the KYC phone.'});
+   const mode=String(req.body?.mode||'request'),user=await sql`SELECT phone FROM public.users WHERE id=${me.user_id} LIMIT 1`,phone=normalizePhone(String(user[0]?.phone||''));
+   if(!phone)return send(res,400,{error:'Add and verify a Kenyan mobile number on your seller account first.'});
+   if(mode==='request'){
+    const recent=await sql`SELECT id FROM public.auth_otp_challenges WHERE phone=${phone} AND purpose='card_kyc' AND created_at>now()-interval '60 seconds' AND consumed_at IS NULL LIMIT 1`;
+    if(recent.length)return send(res,429,{error:'Wait 60 seconds before requesting another code.'});
+    const count=await sql`SELECT count(*)::int n FROM public.auth_otp_challenges WHERE phone=${phone} AND purpose='card_kyc' AND created_at>now()-interval '1 hour'`;
+    if(Number(count[0]?.n||0)>=5)return send(res,429,{error:'You have reached the hourly SMS limit. Try again later.'});
+    const code=String(crypto.randomInt(0,1000000)).padStart(6,'0'),salt=crypto.randomBytes(16).toString('hex'),codeHash=hash(`${phone}:card_kyc:${salt}:${code}`);
+    const challenge=await sql`INSERT INTO public.auth_otp_challenges(phone,purpose,code_hash,code_salt,request_ip_hash,expires_at) VALUES(${phone},'card_kyc',${codeHash},${salt},${hash(String(req.headers['x-forwarded-for']||'')).slice(0,32)},now()+interval '10 minutes') RETURNING id`;
+    try{await sendKycOtp(phone,code);}catch(error){await sql`UPDATE public.auth_otp_challenges SET consumed_at=now() WHERE id=${challenge[0].id}`;throw error;}
+    return send(res,200,{ok:true,message:'Verification code sent to your registered seller phone.'});
+   }
+   if(mode==='verify'){
+    const code=String(req.body?.code||'').replace(/\D/g,'');
+    if(!/^\d{6}$/.test(code))return send(res,400,{error:'Enter the six-digit verification code.'});
+    const challenge=await sql`SELECT id,code_hash,code_salt,attempts FROM public.auth_otp_challenges WHERE phone=${phone} AND purpose='card_kyc' AND consumed_at IS NULL AND expires_at>now() ORDER BY created_at DESC LIMIT 1`;
+    if(!challenge.length)return send(res,400,{error:'That code has expired. Request a new one.'});
+    if(Number(challenge[0].attempts||0)>=5){await sql`UPDATE public.auth_otp_challenges SET consumed_at=now() WHERE id=${challenge[0].id}`;return send(res,429,{error:'Too many incorrect attempts. Request a new code.'});}
+    const valid=hash(`${phone}:card_kyc:${challenge[0].code_salt}:${code}`)===challenge[0].code_hash;
+    await sql`UPDATE public.auth_otp_challenges SET attempts=attempts+1,consumed_at=CASE WHEN ${valid} THEN now() ELSE consumed_at END WHERE id=${challenge[0].id}`;
+    if(!valid)return send(res,400,{error:'Incorrect verification code.'});
+    await sql`UPDATE public.tenant_card_kyc SET phone=${phone},phone_verified_at=now(),updated_at=now() WHERE tenant_id=${me.tenant_id}`;
+    return send(res,200,{ok:true,verified:true});
+   }
+   return send(res,400,{error:'Choose request or verify.'});
   }
   if(req.method==='GET'&&action==='card-kyc'){
    const rows=await sql`SELECT status,phone,phone_verified_at,submitted_at,reviewed_at,review_note FROM public.tenant_card_kyc WHERE tenant_id=${me.tenant_id} LIMIT 1`;
