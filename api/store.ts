@@ -1403,7 +1403,8 @@ export default async function handler(req:any,res:any){
     const ownerEmail=String(ownerRows[0]?.email||'').trim();if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(ownerEmail))throw Error('Add a valid billing email to your DASMARKET account before using card payments.');
     let initialized:any;
     const metadata={paymentId:inserted[0].id,tenantId:me.tenant_id,source:meta.source,planId:plan.id};
-    initialized=await initializeCentralPaystack({email:ownerEmail,reference,amountSubunits:amountMinor,callbackUrl,metadata});\n    await sql`UPDATE public.payments SET provider_checkout_id=${initialized.accessCode},status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({authorizationUrl:initialized.authorizationUrl,accessCode:initialized.accessCode,reference:initialized.reference})}::jsonb,updated_at=now() WHERE id=${inserted[0].id} AND status='initiated'`;
+    initialized=await initializeCentralPaystack({email:ownerEmail,reference,amountSubunits:amountMinor,callbackUrl,metadata});
+    await sql`UPDATE public.payments SET provider_checkout_id=${initialized.accessCode},status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({authorizationUrl:initialized.authorizationUrl,accessCode:initialized.accessCode,reference:initialized.reference})}::jsonb,updated_at=now() WHERE id=${inserted[0].id} AND status='initiated'`;
     await audit(sql,me.tenant_id,me.user_id,'subscription.paystack.initialized','subscription',subs[0]?.id||me.tenant_id,{planId:plan.id,amountMinor,currency:'KES',fxRate:fx?.fxRateUsed||null});
     return send(res,200,{ok:true,authorizationUrl:initialized.authorizationUrl,reference:initialized.reference,amountKes:amountMinor/100,currency:'KES'});
    }catch(error:any){
