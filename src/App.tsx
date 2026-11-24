@@ -279,7 +279,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
 
   {!isBuyerAccountRoute&&buyerPage!=='store'&&buyerPage!=='buyer-login'&&buyerPage!=='buyer-signup'&&<nav className="buyer-account-routebar buyer-global-routebar" aria-label="Store navigation"><button type="button" className="buyer-account-home-link" onClick={()=>navigateBuyerPage('store')}><Home size={17}/><span>Shop home</span></button><span className="buyer-account-route-divider">/</span><button type="button" className="buyer-account-overview-link" onClick={()=>navigateBuyerPage(buyerCustomer?'account':'buyer-login')}><UserRound size={16}/><span>My account</span></button></nav>}
   {buyerPage==='store'?<>
-    <main className={"ds-store"+((filter!=='All products'||search.trim()||buyerPage.startsWith('collection/'))?" is-listing-mode":"")}>
+    <main className={"ds-store"+((filter!=='All products'||search.trim()||availabilityFilter!=='all'||buyerPage.startsWith('collection/'))?" is-listing-mode":"")}>
       <header className="ds-store-navigation">
         <div className="ds-store-navigation-main">
           <button type="button" className="ds-store-menu-trigger" aria-label="Open shop categories" onClick={()=>{if(window.innerWidth>760)setDesktopSidebarOpen(v=>!v);else setMobileSidebarOpen(true)}}><Menu size={21}/></button>
