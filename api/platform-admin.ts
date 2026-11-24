@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { storageUrl } from './store.js';
 import { getDb } from '../server/db.js';
 import { sendTenantTransactionalEmail, brandedEmail } from '../server/email.js';
 const env=(k:string)=>(process.env[k]||'').trim();
@@ -28,6 +29,15 @@ export default async function handler(req:any,res:any){
     try{const decipher=crypto.createDecipheriv('aes-256-gcm',keyBytes,Buffer.from(blob.iv,'base64'));decipher.setAuthTag(Buffer.from(blob.tag,'base64'));saved=JSON.parse(Buffer.concat([decipher.update(Buffer.from(blob.data,'base64')),decipher.final()]).toString('utf8'));}catch{return send(res,500,{error:'Saved Paystack configuration could not be decrypted.'});}
    }
    return send(res,200,{paystack:{environment:rows[0]?.environment||'test',testConfigured:!!(saved.test?.secretKey&&saved.test?.publicKey),testWebhookConfigured:!!saved.test?.webhookSecret,liveConfigured:!!(saved.live?.secretKey&&saved.live?.publicKey),liveWebhookConfigured:!!saved.live?.webhookSecret,updatedAt:rows[0]?.updated_at||null}});
+  }
+  if(req.method==='GET'&&String(req.query?.action||'')==='card_kyc_queue'){
+   const rows=await sql`SELECT k.tenant_id,k.encrypted_identity,k.id_front_object_key,k.id_back_object_key,k.business_document_object_key,k.phone,k.phone_verified_at,k.status,k.submitted_at,k.reviewed_at,k.review_note,t.name AS shop_name,t.slug FROM public.tenant_card_kyc k JOIN public.tenants t ON t.id=k.tenant_id ORDER BY CASE WHEN k.status='pending_review' THEN 0 ELSE 1 END,k.submitted_at DESC LIMIT 100`;
+   const key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY'),keyBytes=/^[0-9a-f]{64}$/i.test(key)?Buffer.from(key,'hex'):Buffer.from(key,'base64');
+   if(keyBytes.length!==32)return send(res,503,{error:'Credential encryption is not configured correctly.'});
+   const items=rows.map((k:any)=>{let identity:any={};try{const blob=k.encrypted_identity,decipher=crypto.createDecipheriv('aes-256-gcm',keyBytes,Buffer.from(blob.iv,'base64'));decipher.setAuthTag(Buffer.from(blob.tag,'base64'));identity=JSON.parse(Buffer.concat([decipher.update(Buffer.from(blob.data,'base64')),decipher.final()]).toString('utf8'));}catch{}
+    return {tenantId:k.tenant_id,shopName:k.shop_name,slug:k.slug,identity,phone:k.phone,phoneVerified:!!k.phone_verified_at,status:k.status,submittedAt:k.submitted_at,reviewedAt:k.reviewed_at,reviewNote:k.review_note,idFrontUrl:k.id_front_object_key?storageUrl(k.id_front_object_key,'GET'):null,idBackUrl:k.id_back_object_key?storageUrl(k.id_back_object_key,'GET'):null,businessDocumentUrl:k.business_document_object_key?storageUrl(k.business_document_object_key,'GET'):null,documentsComplete:!!(k.id_front_object_key&&k.id_back_object_key)});
+   });
+   return send(res,200,{items});
   }
   if(req.method==='GET'&&String(req.query?.action||'')==='detail'){
    const type=String(req.query?.type||''),id=String(req.query?.id||'');
@@ -305,6 +315,16 @@ export default async function handler(req:any,res:any){
    const methods:any={till:{configured:false,shortcode:'',environment:'production'},paybill:{configured:false,shortcode:'',environment:'production'}};
    for(const row of cfg){const secret=row.encrypted_credentials||{};methods[row.method]={configured:!!(secret.data&&row.shortcode),shortcode:row.shortcode||'',environment:row.environment||'production'};}
    return send(res,200,{summary:summary[0],tenants,daraja:{methods}});
+  }
+  if(req.body?.action==='review_card_kyc'){
+   const tenantId=String(req.body?.tenantId||''),status=String(req.body?.status||''),note=String(req.body?.note||'').trim().slice(0,1200);
+   if(!/^[0-9a-f-]{36}$/i.test(tenantId)||!['approved','rejected','more_information_required'].includes(status))return send(res,400,{error:'Invalid KYC review decision.'});
+   const rows=await sql`SELECT status,phone_verified_at,id_front_object_key,id_back_object_key FROM public.tenant_card_kyc WHERE tenant_id=${tenantId} LIMIT 1`;
+   if(!rows.length)return send(res,404,{error:'KYC application not found.'});
+   if(status==='approved'&&(!rows[0].phone_verified_at||!rows[0].id_front_object_key||!rows[0].id_back_object_key))return send(res,409,{error:'Cannot approve until phone verification and both national ID sides are complete.'});
+   await sql`UPDATE public.tenant_card_kyc SET status=${status},reviewed_at=now(),reviewed_by=${users[0].id},review_note=${note||null},updated_at=now() WHERE tenant_id=${tenantId}`;
+   await sql`INSERT INTO public.audit_logs(actor_user_id,action,resource_type,resource_id,metadata) VALUES(${users[0].id},'platform.card_kyc.reviewed','card_kyc',${tenantId},${JSON.stringify({status,noteLength:note.length})}::jsonb)`;
+   return send(res,200,{ok:true,status});
   }
   if(req.body?.action==='save_central_paystack'){
    const key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');
