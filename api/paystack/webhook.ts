@@ -56,7 +56,7 @@ export default async function handler(req:any,res:any){
  if(!reference)return send(res,400,{error:'Missing transaction reference'});
  try{
   const sql=getDb();
-  const existing=await sql`SELECT p.id,p.tenant_id,p.order_id,p.amount_minor,p.currency,p.status,o.order_number FROM public.payments p JOIN public.orders o ON o.id=p.order_id AND o.tenant_id=p.tenant_id WHERE p.provider='paystack' AND p.provider_reference=${reference} LIMIT 1`;
+  const existing=await sql`SELECT p.id,p.tenant_id,p.order_id,p.amount_minor,p.currency,p.status,p.provider_result,o.order_number FROM public.payments p LEFT JOIN public.orders o ON o.id=p.order_id AND o.tenant_id=p.tenant_id WHERE p.provider='paystack' AND p.provider_reference=${reference} LIMIT 1`;
   if(!existing.length)return res.status(200).json({received:true,unmatched:true});
   const payment=existing[0];
   if(payment.status==='succeeded')return res.status(200).json({received:true,duplicate:true});
@@ -66,6 +66,24 @@ export default async function handler(req:any,res:any){
    await sql`UPDATE public.payments SET provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paystackVerification:'mismatch_or_pending',reference})}::jsonb,updated_at=now() WHERE id=${payment.id} AND tenant_id=${payment.tenant_id} AND status IN ('initiated','pending')`;
    return res.status(200).json({received:true,verified:false,reviewRequired:true});
   }
+  const source=String(payment.provider_result?.source||'');
+  if(['seller_subscription','seller_lifetime_license'].includes(source)){
+   const planId=String(payment.provider_result?.planId||''),intervalDays=Number(payment.provider_result?.intervalDays),lifetime=source==='seller_lifetime_license';
+   if(!/^[0-9a-f-]{36}$/i.test(planId)||(lifetime?intervalDays!==36500:![30,90,180,365].includes(intervalDays)))return res.status(200).json({received:true,verified:true,reviewRequired:true,reason:'subscription_metadata_invalid'});
+   const marked=await sql`UPDATE public.payments SET status='succeeded',provider_receipt=${String(tx.id||reference)},verified_at=now(),provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paystack:{reference,channel:tx.channel||null,paidAt:tx.paid_at||null}})}::jsonb,updated_at=now() WHERE id=${payment.id} AND tenant_id=${payment.tenant_id} AND status IN ('initiated','pending') RETURNING id`;
+   if(!marked.length)return res.status(200).json({received:true,duplicate:true});
+   const current=await sql`SELECT id FROM public.subscriptions WHERE tenant_id=${payment.tenant_id} ORDER BY created_at DESC LIMIT 1`;
+   if(current.length){
+    if(lifetime)await sql`UPDATE public.subscriptions SET plan_id=${planId},status='active',trial_ends_at=NULL,current_period_start=now(),current_period_end='9999-12-31 23:59:59+00'::timestamptz,provider_payment_id=${payment.id},updated_at=now() WHERE id=${current[0].id}`;
+    else await sql`UPDATE public.subscriptions SET plan_id=${planId},status='active',trial_ends_at=NULL,current_period_start=now(),current_period_end=now()+make_interval(days=>${intervalDays}),provider_payment_id=${payment.id},updated_at=now() WHERE id=${current[0].id}`;
+   }else{
+    if(lifetime)await sql`INSERT INTO public.subscriptions(tenant_id,plan_id,status,trial_ends_at,current_period_start,current_period_end,provider_payment_id) VALUES(${payment.tenant_id},${planId},'active',NULL,now(),'9999-12-31 23:59:59+00'::timestamptz,${payment.id})`;
+    else await sql`INSERT INTO public.subscriptions(tenant_id,plan_id,status,trial_ends_at,current_period_start,current_period_end,provider_payment_id) VALUES(${payment.tenant_id},${planId},'active',NULL,now(),now()+make_interval(days=>${intervalDays}),${payment.id})`;
+   }
+   await sql`UPDATE public.tenants SET status='active',updated_at=now() WHERE id=${payment.tenant_id} AND status IN ('trial','past_due')`;
+   return res.status(200).json({received:true,verified:true,subscriptionActivated:true});
+  }
+  if(!payment.order_id)return res.status(200).json({received:true,verified:true,reviewRequired:true,reason:'payment_order_missing'});
   await sql`SELECT public.consume_inventory_reservations(${payment.id})`;
   const settlement=await sql`WITH wanted AS (
     SELECT product_id,SUM(quantity)::integer AS quantity FROM public.order_items WHERE tenant_id=${payment.tenant_id} AND order_id=${payment.order_id} AND product_id IS NOT NULL GROUP BY product_id
