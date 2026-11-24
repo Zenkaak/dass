@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { getDb, hasDatabaseConfig } from '../server/db.js';
-import { quoteUsdInKes, initializeCentralPaystack } from '../server/paystack.js';
+import { quoteUsdInKes, initializeCentralPaystack, getSellerPaystackCredentials } from '../server/paystack.js';
 import { sendTransactionalEmail, sendTenantTransactionalEmail, sendUsingResendConfig, brandedEmail, encryptTenantEmailConfig, decryptTenantEmailConfig, escapeEmailHtml } from '../server/email.js';
 
 // Keep a stack trace for legacy URL parser warnings so the originating dependency
@@ -1326,14 +1326,24 @@ export default async function handler(req:any,res:any){
     amountMinor=fx.amountSubunits;
    }else if(currency!=='KES')return send(res,400,{error:'Paystack checkout currently supports KES plans and USD plans converted to KES.'});
    const isLifetime=plan.code==='lifetime-license',reference='DASPS_'+crypto.randomBytes(18).toString('hex');
-   const paymentId=crypto.randomUUID(),meta={source:isLifetime?'seller_lifetime_license':'seller_subscription',planId:plan.id,intervalDays:isLifetime?36500:Number(plan.interval_days),subscriptionId:subs[0]?.id||null,paymentRoute:'central_paystack',originalCurrency:currency};
+   const routeRows=await sql`SELECT account_mode,connection_status FROM public.tenant_paystack_configs WHERE tenant_id=${me.tenant_id} LIMIT 1`;
+   const paymentRoute=routeRows[0]?.account_mode==='own_paystack'&&routeRows[0]?.connection_status==='connected'?'own_paystack':'central_paystack';
+   const paymentId=crypto.randomUUID(),meta={source:isLifetime?'seller_lifetime_license':'seller_subscription',planId:plan.id,intervalDays:isLifetime?36500:Number(plan.interval_days),subscriptionId:subs[0]?.id||null,paymentRoute,originalCurrency:currency};
    const inserted=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,amount_minor,currency,status,idempotency_key,provider_reference,payment_route,original_usd_amount,fx_rate_used,charged_kes_amount,provider_result)
-    VALUES(${me.tenant_id},NULL,'paystack',${amountMinor},'KES','initiated',${paymentId},${reference},'central_paystack',${fx?.originalUsdAmount??null},${fx?.fxRateUsed??null},${fx?.chargedKesAmount??(amountMinor/100)},${JSON.stringify(meta)}::jsonb) RETURNING id`;
+    VALUES(${me.tenant_id},NULL,'paystack',${amountMinor},'KES','initiated',${paymentId},${reference},${paymentRoute},${fx?.originalUsdAmount??null},${fx?.fxRateUsed??null},${fx?.chargedKesAmount??(amountMinor/100)},${JSON.stringify(meta)}::jsonb) RETURNING id`;
    try{
     const callbackUrl=(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/paystack/callback';
     const ownerRows=await sql`SELECT email FROM public.users WHERE id=${me.user_id} LIMIT 1`;
     const ownerEmail=String(ownerRows[0]?.email||'').trim();if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(ownerEmail))throw Error('Add a valid billing email to your DASMARKET account before using card payments.');
-    const initialized=await initializeCentralPaystack({email:ownerEmail,reference,amountSubunits:amountMinor,callbackUrl,metadata:{paymentId:inserted[0].id,tenantId:me.tenant_id,source:meta.source,planId:plan.id}});
+    let initialized:any;
+    const metadata={paymentId:inserted[0].id,tenantId:me.tenant_id,source:meta.source,planId:plan.id};
+    if(paymentRoute==='own_paystack'){
+     const own=await getSellerPaystackCredentials(me.tenant_id);
+     const response=await fetch('https://api.paystack.co/transaction/initialize',{method:'POST',headers:{Authorization:'Bearer '+own.secretKey,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({email:ownerEmail,reference,amount:amountMinor,currency:'KES',callback_url:callbackUrl,metadata}),signal:AbortSignal.timeout(15000)});
+     const payload:any=await response.json().catch(()=>({}));
+     if(!response.ok||payload?.status!==true||!payload?.data?.authorization_url||!payload?.data?.access_code)throw Error(String(payload?.message||'Seller Paystack could not initialize this KES payment.'));
+     initialized={authorizationUrl:payload.data.authorization_url,accessCode:payload.data.access_code,reference:payload.data.reference};
+    }else initialized=await initializeCentralPaystack({email:ownerEmail,reference,amountSubunits:amountMinor,callbackUrl,metadata});
     await sql`UPDATE public.payments SET provider_checkout_id=${initialized.accessCode},status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({authorizationUrl:initialized.authorizationUrl,accessCode:initialized.accessCode,reference:initialized.reference})}::jsonb,updated_at=now() WHERE id=${inserted[0].id} AND status='initiated'`;
     await audit(sql,me.tenant_id,me.user_id,'subscription.paystack.initialized','subscription',subs[0]?.id||me.tenant_id,{planId:plan.id,amountMinor,currency:'KES',fxRate:fx?.fxRateUsed||null});
     return send(res,200,{ok:true,authorizationUrl:initialized.authorizationUrl,reference:initialized.reference,amountKes:amountMinor/100,currency:'KES'});
