@@ -1113,7 +1113,8 @@ export default async function handler(req:any,res:any){
     const valid=hash(`${phone}:card_kyc:${challenge[0].code_salt}:${code}`)===challenge[0].code_hash;
     await sql`UPDATE public.auth_otp_challenges SET attempts=attempts+1,consumed_at=CASE WHEN ${valid} THEN now() ELSE consumed_at END WHERE id=${challenge[0].id}`;
     if(!valid)return send(res,400,{error:'Incorrect verification code.'});
-    await sql`UPDATE public.tenant_card_kyc SET phone=${phone},phone_verified_at=now(),updated_at=now() WHERE tenant_id=${me.tenant_id}`;
+    const updated=await sql`UPDATE public.tenant_card_kyc SET phone=${phone},phone_verified_at=now(),status=CASE WHEN id_front_object_key IS NOT NULL AND id_back_object_key IS NOT NULL THEN 'pending_review' ELSE 'more_information_required' END,updated_at=now() WHERE tenant_id=${me.tenant_id} RETURNING tenant_id`;
+    if(!updated.length)return send(res,400,{error:'Save your KYC identity details before verifying your phone.'});
     return send(res,200,{ok:true,verified:true});
    }
    return send(res,400,{error:'Choose request or verify.'});
@@ -1140,9 +1141,9 @@ export default async function handler(req:any,res:any){
    return send(res,200,{ok:true,kind});
   }
   if(req.method==='GET'&&action==='card-kyc'){
-   const rows=await sql`SELECT status,phone,phone_verified_at,id_front_object_key,id_back_object_key,business_document_object_key,submitted_at,reviewed_at,review_note FROM public.tenant_card_kyc WHERE tenant_id=${me.tenant_id} LIMIT 1`;
+   const rows=await sql`SELECT status,encrypted_identity,phone,phone_verified_at,id_front_object_key,id_back_object_key,business_document_object_key,submitted_at,reviewed_at,review_note FROM public.tenant_card_kyc WHERE tenant_id=${me.tenant_id} LIMIT 1`;
    const k=rows[0]||{};
-   return send(res,200,{kyc:{status:k.status||'not_submitted',phone:k.phone||'',phoneVerified:!!k.phone_verified_at,idFrontUploaded:!!k.id_front_object_key,idBackUploaded:!!k.id_back_object_key,businessDocumentUploaded:!!k.business_document_object_key,submittedAt:k.submitted_at||null,reviewedAt:k.reviewed_at||null,reviewNote:k.review_note||''}});
+   return send(res,200,{kyc:{status:k.status||'not_submitted',identitySaved:!!k.encrypted_identity?.data,phone:k.phone||'',phoneVerified:!!k.phone_verified_at,idFrontUploaded:!!k.id_front_object_key,idBackUploaded:!!k.id_back_object_key,businessDocumentUploaded:!!k.business_document_object_key,submittedAt:k.submitted_at||null,reviewedAt:k.reviewed_at||null,reviewNote:k.review_note||''}});
   }
   if(req.method==='POST'&&action==='card-kyc'){
    if(!['owner','admin'].includes(me.role))return send(res,403,{error:'Only the shop owner can submit card KYC.'});
