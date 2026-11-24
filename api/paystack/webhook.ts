@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { getDb, hasDatabaseConfig } from '../../server/db.js';
-import { getCentralPaystackCredentials } from '../../server/paystack.js';
+import { getCentralPaystackCredentials, getSellerPaystackCredentials } from '../../server/paystack.js';
 
 export const config = { api: { bodyParser: false } };
 const send=(res:any,status:number,body:any)=>res.status(status).json(body);
@@ -16,8 +16,7 @@ function safeEqualHex(expected:Buffer,value:string){
  const actual=Buffer.from(value,'hex');
  return actual.length===expected.length&&crypto.timingSafeEqual(expected,actual);
 }
-async function verifySignature(raw:Buffer,req:any){
- const credentials=await getCentralPaystackCredentials();
+async function verifySignature(raw:Buffer,req:any,credentials:any){
  const modern=String(req.headers['paystack-signature']||'');
  if(modern&&credentials.webhookSecret){
   let timestamp=0,entries:string[]=[];
@@ -46,9 +45,6 @@ export default async function handler(req:any,res:any){
  let raw:Buffer;
  try{raw=await rawBody(req);}catch{return send(res,400,{error:'Invalid webhook body'});}
  if(raw.length>1024*1024)return send(res,413,{error:'Webhook payload too large'});
- let credentials:any;
- try{credentials=await getCentralPaystackCredentials();}catch{return send(res,503,{error:'Central Paystack credentials are not configured'});}
- try{if(!await verifySignature(raw,req))return send(res,401,{error:'Invalid Paystack signature'});}catch{return send(res,503,{error:'Webhook verification is not configured'});}
  let event:any;
  try{event=JSON.parse(raw.toString('utf8'));}catch{return send(res,400,{error:'Invalid JSON'});}
  if(event?.event!=='charge.success')return res.status(200).json({received:true,ignored:true});
@@ -56,9 +52,11 @@ export default async function handler(req:any,res:any){
  if(!reference)return send(res,400,{error:'Missing transaction reference'});
  try{
   const sql=getDb();
-  const existing=await sql`SELECT p.id,p.tenant_id,p.order_id,p.amount_minor,p.currency,p.status,p.provider_result,o.order_number FROM public.payments p LEFT JOIN public.orders o ON o.id=p.order_id AND o.tenant_id=p.tenant_id WHERE p.provider='paystack' AND p.provider_reference=${reference} LIMIT 1`;
+  const existing=await sql`SELECT p.id,p.tenant_id,p.order_id,p.amount_minor,p.currency,p.status,p.payment_route,p.provider_result,o.order_number FROM public.payments p LEFT JOIN public.orders o ON o.id=p.order_id AND o.tenant_id=p.tenant_id WHERE p.provider='paystack' AND p.provider_reference=${reference} LIMIT 1`;
   if(!existing.length)return res.status(200).json({received:true,unmatched:true});
   const payment=existing[0];
+  const credentials=payment.payment_route==='own_paystack'?await getSellerPaystackCredentials(String(payment.tenant_id)):await getCentralPaystackCredentials();
+  if(!await verifySignature(raw,req,credentials))return send(res,401,{error:'Invalid Paystack signature'});
   if(payment.status==='succeeded')return res.status(200).json({received:true,duplicate:true});
   const verification=await verifyTransaction(reference,credentials.secretKey),tx=verification.data;
   const matches=verification.ok&&tx?.status==='success'&&String(tx.reference)===reference&&String(tx.currency||'').toUpperCase()==='KES'&&String(payment.currency||'').trim().toUpperCase()==='KES'&&Number(tx.amount)===Number(payment.amount_minor);
