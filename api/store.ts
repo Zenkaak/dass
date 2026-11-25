@@ -712,7 +712,7 @@ export default async function handler(req:any,res:any){
         await releaseInventory(sql,String(prior[0].id));
         prior[0].status='failed';
        }else if(retryWithCard&&prior[0]?.provider_result?.authorizationUrl){
-        return send(res,200,{ok:true,paymentMethod:'paystack',authorizationUrl:prior[0].provider_result.authorizationUrl,reference:prior[0].provider_reference});
+        return send(res,200,{ok:true,paymentMethod:'paystack',authorizationUrl:prior[0].provider_result.authorizationUrl,accessCode:prior[0].provider_result.accessCode||prior[0].provider_checkout_id||'',reference:prior[0].provider_reference});
        }else if(!verifyRes.ok){
         return send(res,503,{error:'We could not verify the previous Paystack attempt. Please try again shortly.'});
        }else{
@@ -783,7 +783,7 @@ export default async function handler(req:any,res:any){
      }else initialized=await initializeCentralPaystack({email:ownerEmail,reference,amountSubunits:amount,callbackUrl,metadata,subaccountCode:String(routeRows[0].paystack_subaccount_code)});
      await sql`UPDATE public.payments SET provider_checkout_id=${initialized.accessCode},status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({authorizationUrl:initialized.authorizationUrl,accessCode:initialized.accessCode,reference,source:'buyer_payment_retry',paymentRoute:route})}::jsonb,updated_at=now() WHERE id=${inserted[0].id} AND status='initiated'`;
      await audit(sql,tenantId,buyer.user_id||null,'buyer.order.paystack.retried','order',order.id,{orderNumber:order.order_number,amountMinor:amount,paymentRoute:route});
-     return send(res,200,{ok:true,paymentMethod:'paystack',authorizationUrl:initialized.authorizationUrl,reference,message:'Opening secure card checkout.'});
+     return send(res,200,{ok:true,paymentMethod:'paystack',authorizationUrl:initialized.authorizationUrl,accessCode:initialized.accessCode,reference,message:'Opening secure card checkout.'});
     }catch(error:any){
      await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({source:'buyer_payment_retry',initializationError:String(error?.message||error).slice(0,300)})}::jsonb,updated_at=now() WHERE id=${inserted[0].id} AND status='initiated'`;
      await releaseInventory(sql,String(inserted[0].id));
@@ -1044,7 +1044,7 @@ export default async function handler(req:any,res:any){
         await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paystackVerifyStatus:txStatus||'not_found'})}::jsonb,updated_at=now() WHERE id=${existing.payment_id} AND status IN ('initiated','pending')`;
         await releaseInventory(sql,String(existing.payment_id));
        }else if(existing.provider_result?.authorizationUrl){
-        return send(res,200,{ok:true,orderId:existing.id,orderNumber:existing.order_number,paymentStatus:'pending',paymentMethod:'paystack',authorizationUrl:existing.provider_result.authorizationUrl,reference:existing.provider_reference,subtotal:Number(existing.subtotal_minor)/100,deliveryFee:Number(existing.delivery_fee_minor||0)/100,discount:Number(existing.discount_minor||0)/100,total:Number(existing.total_minor)/100,couponCode:existing.coupon_code||null,currency:'KES',chatToken:''});
+        return send(res,200,{ok:true,orderId:existing.id,orderNumber:existing.order_number,paymentStatus:'pending',paymentMethod:'paystack',authorizationUrl:existing.provider_result.authorizationUrl,accessCode:existing.provider_result.accessCode||existing.provider_checkout_id||'',reference:existing.provider_reference,subtotal:Number(existing.subtotal_minor)/100,deliveryFee:Number(existing.delivery_fee_minor||0)/100,discount:Number(existing.discount_minor||0)/100,total:Number(existing.total_minor)/100,couponCode:existing.coupon_code||null,currency:'KES',chatToken:''});
        }else{
         return send(res,503,{error:'We could not verify your existing Paystack session yet. Check your orders or try again shortly.'});
        }
@@ -1082,7 +1082,7 @@ export default async function handler(req:any,res:any){
      }else initialized=await initializeCentralPaystack({email:ownerEmail,reference:targetReference,amountSubunits:payableTotal,callbackUrl,metadata,subaccountCode:String(routeRows[0].paystack_subaccount_code)});
      await sql`UPDATE public.payments SET provider_checkout_id=${initialized.accessCode},status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({authorizationUrl:initialized.authorizationUrl,accessCode:initialized.accessCode,reference:targetReference,source:'buyer_checkout',paymentRoute:route})}::jsonb,updated_at=now() WHERE id=${targetPaymentId} AND status='initiated'`;
      await audit(sql,tenantId,buyer.user_id||null,'buyer.order.paystack.initialized','order',targetOrderId,{orderNumber:targetOrderNumber,amountMinor:payableTotal,paymentRoute:route});
-     return send(res,httpStatus,{ok:true,orderId:targetOrderId,orderNumber:targetOrderNumber,paymentStatus:'pending',paymentMethod:'paystack',authorizationUrl:initialized.authorizationUrl,reference:targetReference,subtotal:total/100,deliveryFee:deliveryFeeMinor/100,discount:discountMinor/100,total:payableTotal/100,currency:'KES',chatToken:targetChatToken});
+     return send(res,httpStatus,{ok:true,orderId:targetOrderId,orderNumber:targetOrderNumber,paymentStatus:'pending',paymentMethod:'paystack',authorizationUrl:initialized.authorizationUrl,accessCode:initialized.accessCode,reference:targetReference,subtotal:total/100,deliveryFee:deliveryFeeMinor/100,discount:discountMinor/100,total:payableTotal/100,currency:'KES',chatToken:targetChatToken});
     }catch(error:any){
      await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({source:'buyer_checkout',initializationError:String(error?.message||error).slice(0,300)})}::jsonb,updated_at=now() WHERE id=${targetPaymentId} AND status='initiated'`;
      await releaseInventory(sql,targetPaymentId);
