@@ -82,25 +82,33 @@ function categoryRoute(value:string){const parent=storefrontCategories.find(c=>c
 function isHostScopedDomain(){const host=window.location.hostname.toLowerCase();const tenantSubdomain=host.endsWith('.dasmarket.co.ke')&&!['www','app','mambu'].includes(host.split('.')[0]);const isPlatformHost=host==='dasmarket.co.ke'||host==='www.dasmarket.co.ke'||host==='app.dasmarket.co.ke'||host==='mambu.dasmarket.co.ke'||host.endsWith('.vercel.app')||host.endsWith('.run.app')||host.endsWith('.googleusercontent.com')||host.endsWith('.aistudio.google.com')||host==='localhost'||host==='127.0.0.1';return Boolean(tenantSubdomain||(!isPlatformHost&&!tenantSubdomain));}
 function getCartScopeKey(slug:string){return slug.trim()||('host:'+window.location.hostname.toLowerCase());}
 function sanitizeCartMap(saved:any):Record<string,number>{if(!saved||typeof saved!=='object'||Array.isArray(saved))return {};return Object.fromEntries(Object.entries(saved).filter(([id,q])=>typeof id==='string'&&id.trim().length>0&&Number.isInteger(q)&&Number(q)>0).map(([id,q])=>[id,Math.min(99,Number(q))]));}
-function readStoredCart(scopeKey:string):Record<string,number>{try{const primary=sanitizeCartMap(JSON.parse(localStorage.getItem('dasnet-cart-'+scopeKey)||'{}'));if(scopeKey.startsWith('host:')){const legacy=sanitizeCartMap(JSON.parse(localStorage.getItem('dasnet-cart-')||'{}'));for(const [id,q] of Object.entries(legacy)){if(!primary[id])primary[id]=q;}}return primary;}catch{return {};}}
-function compactCartSnapshot(product:LiveProduct,includeDataImage=true):LiveProduct{const firstImg=product.images?.[0]||product.imageUrl||'';const safeImg=!includeDataImage&&firstImg.startsWith('data:')?'':firstImg;return {id:product.id,name:product.name,price:Number(product.price)||0,currency:product.currency||'KES',stockQuantity:product.stockQuantity??null,active:product.active!==false,category:product.category||'Shop',parentCategory:product.parentCategory,sku:product.sku,type:product.type||'physical',description:product.description?String(product.description).slice(0,240):'',images:safeImg?[safeImg]:[],imageUrl:safeImg||undefined,spotlight:product.spotlight};}
-function readCartSnapshots(scopeKey:string):Record<string,LiveProduct>{try{const raw=localStorage.getItem('dasnet-cart-items-'+scopeKey);const parsed=raw?JSON.parse(raw):{};const result:Record<string,LiveProduct>={};if(parsed&&typeof parsed==='object'&&!Array.isArray(parsed)){for(const [id,item] of Object.entries(parsed)){if(item&&typeof item==='object'&&typeof (item as any).id==='string'&&typeof (item as any).name==='string')result[id]=item as LiveProduct;}}return result;}catch{return {};}}
-function writeCartSnapshots(scopeKey:string,cart:Record<string,number>,knownProducts:LiveProduct[]){const activeIds=Object.keys(cart).filter(id=>cart[id]>0);if(!activeIds.length){try{localStorage.removeItem('dasnet-cart-items-'+scopeKey);}catch{}return;}const existing=readCartSnapshots(scopeKey);const next:Record<string,LiveProduct>={};for(const id of activeIds){const live=knownProducts.find(p=>p.id===id)||existing[id];if(live)next[id]=compactCartSnapshot(live,true);}try{localStorage.setItem('dasnet-cart-items-'+scopeKey,JSON.stringify(next));}catch{const slim:Record<string,LiveProduct>={};for(const [id,item] of Object.entries(next))slim[id]=compactCartSnapshot(item,false);try{localStorage.setItem('dasnet-cart-items-'+scopeKey,JSON.stringify(slim));}catch{}}}
 function readBuyerSessionHint(scopeKey:string){try{const raw=sessionStorage.getItem('dasnet-buyer-session-'+scopeKey);if(!raw)return null;const parsed=JSON.parse(raw);return parsed&&typeof parsed==='object'&&parsed.phone?parsed:null;}catch{return null;}}
 function readCachedStorefront(slug:string){if(!slug)return null;try{const raw=localStorage.getItem('dasnet-storefront-cache-'+slug);if(!raw)return null;const value=JSON.parse(raw);if(!value||!Array.isArray(value.products)||!value.shop)return null;/* A legacy partial cache without totalProducts must never make a large catalogue look complete. */if(value.products.length<35&&value.totalProducts===undefined)return null;return {shop:value.shop,products:value.products.slice(0,60) as LiveProduct[],totalProducts:Number(value.totalProducts??value.products.length)}}catch{return null}}
 function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug: string; initialBuyerPage?: string }) {
  const [slug,setSlug]=useState(initialSlug);
+ const slugRef=useRef<string>(initialSlug);
+ slugRef.current=slug;
  const initialCartScope=getCartScopeKey(initialSlug);
  const cartScopeRef=useRef<string>(initialCartScope);
  const cachedStorefront=readCachedStorefront(slug);
- const initialCartState=useRef<Record<string,number>|null>(null);
- if(initialCartState.current===null)initialCartState.current=readStoredCart(initialCartScope);
- const initialCartSnapshots=readCartSnapshots(initialCartScope);
  const [reconnectTick,setReconnectTick]=useState(0);
  useEffect(()=>{const bump=()=>setReconnectTick(t=>t+1);window.addEventListener('online',bump);return()=>window.removeEventListener('online',bump)},[]);
+ useEffect(()=>{
+  try{
+   for(let i=localStorage.length-1;i>=0;i--){
+    const key=localStorage.key(i);
+    if(key&&(key.startsWith('dasnet-cart-')||key.startsWith('dasnet-cart-items-')||key.startsWith('dasnet-delivery-pref-')))localStorage.removeItem(key);
+   }
+  }catch{}
+ },[]);
  const previousPaymentStatus=useRef<string|null>(null);const [chatToken,setChatToken]=useState(''),[chatOrderId,setChatOrderId]=useState(''),[chatOrderNumber,setChatOrderNumber]=useState(''),[chatOrder,setChatOrder]=useState<any>(null),[chatMessages,setChatMessages]=useState<any[]>([]),[chatAttachments,setChatAttachments]=useState<any[]>([]),[chatDraft,setChatDraft]=useState(''),[chatSending,setChatSending]=useState(false),[paymentCelebration,setPaymentCelebration]=useState(false),[chatError,setChatError]=useState('');
- const [filter,setFilter]=useState('All products'),[search,setSearch]=useState(''),[sortOrder,setSortOrder]=useState('recommended'),[products,setProducts]=useState<LiveProduct[]>(()=>{const base=cachedStorefront?.products||[];const known=new Set(base.map(p=>p.id));const restored=Object.keys(initialCartState.current||{}).map(id=>initialCartSnapshots[id]).filter((p):p is LiveProduct=>Boolean(p)&&!known.has(p.id));return [...base,...restored];});
- const [catalogueOffset,setCatalogueOffset]=useState(cachedStorefront?.products.length||0),[catalogueTotal,setCatalogueTotal]=useState(cachedStorefront?.totalProducts||0),[catalogueHasMore,setCatalogueHasMore]=useState(true),[loadingMore,setLoadingMore]=useState(false);const catalogueSentinelRef=useRef<HTMLDivElement|null>(null);const [shop,setShop]=useState<{name:string;description:string;logoUrl?:string;whatsappNumber?:string;contactPhone?:string;contactEmail?:string;termsAndConditions?:string;privacyPolicy?:string;returnPolicy?:string;deliveryPolicy?:string;deliveryHomeFee?:number;deliveryPickupFee?:number;cashOnDeliveryEnabled?:boolean;cashOnPickupEnabled?:boolean;faqs?:Array<{question:string;answer:string}>;theme?:string}|null>(()=>cachedStorefront?.shop||null),[loading,setLoading]=useState(!cachedStorefront),[error,setError]=useState(''),[notFound,setNotFound]=useState(false),[cart,setCart]=useState<Record<string,number>>(()=>initialCartState.current||{}),[selectedProduct,setSelectedProduct]=useState<LiveProduct|null>(null),[mobileSidebarOpen,setMobileSidebarOpen]=useState(false),[desktopSidebarOpen,setDesktopSidebarOpen]=useState(false),[buyerMobileNavOpen,setBuyerMobileNavOpen]=useState(false);
+ const [filter,setFilter]=useState('All products'),[search,setSearch]=useState(''),[sortOrder,setSortOrder]=useState('recommended'),[products,setProducts]=useState<LiveProduct[]>(()=>cachedStorefront?.products||[]);
+ const [catalogueOffset,setCatalogueOffset]=useState(cachedStorefront?.products.length||0),[catalogueTotal,setCatalogueTotal]=useState(cachedStorefront?.totalProducts||0),[catalogueHasMore,setCatalogueHasMore]=useState(true),[loadingMore,setLoadingMore]=useState(false);const catalogueSentinelRef=useRef<HTMLDivElement|null>(null);const [shop,setShop]=useState<{name:string;description:string;logoUrl?:string;whatsappNumber?:string;contactPhone?:string;contactEmail?:string;termsAndConditions?:string;privacyPolicy?:string;returnPolicy?:string;deliveryPolicy?:string;deliveryHomeFee?:number;deliveryPickupFee?:number;cashOnDeliveryEnabled?:boolean;cashOnPickupEnabled?:boolean;faqs?:Array<{question:string;answer:string}>;theme?:string}|null>(()=>cachedStorefront?.shop||null),[loading,setLoading]=useState(!cachedStorefront),[error,setError]=useState(''),[notFound,setNotFound]=useState(false),[cart,setCart]=useState<Record<string,number>>({}),[cartHydrating,setCartHydrating]=useState(false),[selectedProduct,setSelectedProduct]=useState<LiveProduct|null>(null),[mobileSidebarOpen,setMobileSidebarOpen]=useState(false),[desktopSidebarOpen,setDesktopSidebarOpen]=useState(false),[buyerMobileNavOpen,setBuyerMobileNavOpen]=useState(false);
+ const cartRef=useRef<Record<string,number>>({});
+ const guestPendingCartRef=useRef<Record<string,number>>({});
+ const cartHydratedForUserRef=useRef<string>('');
+ const cartSyncQueueRef=useRef<Promise<void>>(Promise.resolve());
+ const cartSyncPendingCountRef=useRef<number>(0);
  useEffect(()=>{if(!notFound)return;const previousTitle=document.title;const robots=document.head.querySelector('meta[name="robots"]') as HTMLMetaElement|null;const previousRobots=robots?.content||'';const meta=robots||document.createElement('meta');meta.name='robots';meta.content='noindex,nofollow';if(!robots)document.head.appendChild(meta);const canonical=document.head.querySelector('link[rel="canonical"]') as HTMLLinkElement|null;const previousCanonical=canonical?.href||'';canonical?.remove();document.title='Shop not found | DASMARKET';return()=>{document.title=previousTitle;if(previousRobots){meta.content=previousRobots}else{meta.remove()}if(previousCanonical){const restored=document.createElement('link');restored.rel='canonical';restored.href=previousCanonical;document.head.appendChild(restored)}}},[notFound]);
   useEffect(()=>{
     if(!mobileSidebarOpen&&!desktopSidebarOpen&&!buyerMobileNavOpen)return;
@@ -120,7 +128,102 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
   });
 }
  const [buyerCustomer,setBuyerCustomer]=useState<any>(()=>readBuyerSessionHint(initialCartScope)),[buyerAuthChecked,setBuyerAuthChecked]=useState(false),[buyerReturnPage,setBuyerReturnPage]=useState<string>(()=>{try{return sessionStorage.getItem('dasnet-buyer-return-'+initialCartScope)||'account';}catch{return 'account';}});
+ const buyerCustomerRef=useRef<any>(buyerCustomer);
+ buyerCustomerRef.current=buyerCustomer;
+ const buyerAuthCheckedRef=useRef<boolean>(buyerAuthChecked);
+ buyerAuthCheckedRef.current=buyerAuthChecked;
  const updateBuyerReturnPage=(next:string)=>{setBuyerReturnPage(next);try{sessionStorage.setItem('dasnet-buyer-return-'+getCartScopeKey(slug),next);}catch{}};
+ async function hydrateServerCart(targetSlug:string,guestItemsToMerge?:Record<string,number>,forUserPhone?:string){
+  if(!targetSlug)return;
+  const cleanMerge=sanitizeCartMap(guestItemsToMerge);
+  const hasMerge=Object.keys(cleanMerge).length>0;
+  setCartHydrating(true);
+  try{
+   const response=await fetch(
+    '/api/buyer?action=buyer-cart'+(hasMerge?'':'&slug='+encodeURIComponent(targetSlug)),
+    hasMerge
+     ?{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug:targetSlug,mode:'merge',cart:cleanMerge})}
+     :{credentials:'same-origin',cache:'no-store'}
+   );
+   if(response.status===401||response.status===403)return;
+   const data=await readApiResponse(response);
+   if(!response.ok)throw Error(data.error||'Could not load saved cart.');
+   const serverCart=sanitizeCartMap(data.cart);
+   if(hasMerge||cartSyncPendingCountRef.current===0){
+    cartRef.current=serverCart;
+    setCart(serverCart);
+   }
+   const serverProducts:LiveProduct[]=Array.isArray(data.items)
+    ?data.items.map((entry:any)=>entry?.product).filter((p:any):p is LiveProduct=>Boolean(p&&p.id))
+    :[];
+   if(serverProducts.length){
+    setProducts((current:LiveProduct[])=>{
+     const byId=new Map(current.map((p:LiveProduct)=>[p.id,p]));
+     for(const sp of serverProducts)byId.set(sp.id,sp);
+     return Array.from(byId.values());
+    });
+   }
+   const userKey=forUserPhone||buyerCustomerRef.current?.phone;
+   if(userKey)cartHydratedForUserRef.current=`${targetSlug}:${userKey}`;
+  }catch(err){
+   console.warn('Database cart sync unavailable:',err);
+  }finally{
+   setCartHydrating(false);
+  }
+ }
+ function updateCart(nextOrUpdater:Record<string,number>|((prev:Record<string,number>)=>Record<string,number>)){
+  const resolvedNext=sanitizeCartMap(typeof nextOrUpdater==='function'?nextOrUpdater(cartRef.current):nextOrUpdater);
+  cartRef.current=resolvedNext;
+  setCart(resolvedNext);
+  const activeCustomer=buyerCustomerRef.current;
+  const activeSlug=slugRef.current;
+  if(activeCustomer?.phone&&activeSlug){
+   guestPendingCartRef.current={};
+   cartSyncPendingCountRef.current+=1;
+   const snapshot={...resolvedNext};
+   cartSyncQueueRef.current=cartSyncQueueRef.current
+    .catch(()=>{})
+    .then(async()=>{
+     try{
+      const isEmpty=Object.keys(snapshot).length===0;
+      const response=await fetch('/api/buyer?action=buyer-cart',{
+       method:'POST',
+       credentials:'same-origin',
+       headers:{'Content-Type':'application/json'},
+       body:JSON.stringify(isEmpty?{slug:activeSlug,mode:'clear'}:{slug:activeSlug,mode:'sync',cart:snapshot}),
+      });
+      if(!response.ok){
+       const d=await response.json().catch(()=>({}));
+       throw Error(d.error||'Could not save cart.');
+      }
+     }catch(err){
+      console.warn('Cart database sync failed:',err);
+     }finally{
+      cartSyncPendingCountRef.current=Math.max(0,cartSyncPendingCountRef.current-1);
+     }
+    });
+  }else{
+   guestPendingCartRef.current={...resolvedNext};
+  }
+ }
+ function signOutBuyer(){
+  const activeSlug=slugRef.current;
+  fetch('/api/buyer-auth?action=logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug:activeSlug}),credentials:'same-origin'})
+   .finally(()=>{
+    const scope=getCartScopeKey(activeSlug);
+    try{
+     sessionStorage.removeItem('dasnet-buyer-session-'+scope);
+     sessionStorage.removeItem('dasnet-buyer-return-'+scope);
+    }catch{}
+    cartHydratedForUserRef.current='';
+    guestPendingCartRef.current={};
+    cartRef.current={};
+    setCart({});
+    buyerCustomerRef.current=null;
+    setBuyerCustomer(null);
+    navigateBuyerPage('store');
+   });
+ }
   useEffect(()=>{
     let live=true;
     if(!buyerCustomer?.phone||!buyerAuthChecked||!slug)return;
@@ -130,31 +233,50 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
       .catch(error=>console.warn('Buyer account sync unavailable:',error));
     return()=>{live=false;};
   },[slug,buyerCustomer?.phone,buyerAuthChecked]);
+  useEffect(()=>{
+   if(!buyerAuthChecked||!slug)return;
+   if(!buyerCustomer?.phone){
+    cartHydratedForUserRef.current='';
+    return;
+   }
+   const key=`${slug}:${buyerCustomer.phone}`;
+   if(cartHydratedForUserRef.current!==key){
+    const pending=sanitizeCartMap(guestPendingCartRef.current);
+    guestPendingCartRef.current={};
+    void hydrateServerCart(slug,Object.keys(pending).length?pending:undefined,buyerCustomer.phone);
+   }
+  },[slug,buyerAuthChecked,buyerCustomer?.phone]);
+  useEffect(()=>{
+   if(!slug)return;
+   const refreshFromServer=()=>{
+    if(document.visibilityState==='hidden')return;
+    if(!buyerAuthCheckedRef.current||!buyerCustomerRef.current?.phone)return;
+    if(cartSyncPendingCountRef.current>0)return;
+    void hydrateServerCart(slugRef.current);
+   };
+   window.addEventListener('focus',refreshFromServer);
+   document.addEventListener('visibilitychange',refreshFromServer);
+   return()=>{
+    window.removeEventListener('focus',refreshFromServer);
+    document.removeEventListener('visibilitychange',refreshFromServer);
+   };
+  },[slug]);
 
  const [buyerNotifications,setBuyerNotifications]=useState<any[]>([]),[buyerNotificationsOpen,setBuyerNotificationsOpen]=useState(false),[buyerInitialReportId,setBuyerInitialReportId]=useState('');
  const [recentlyViewed,setRecentlyViewed]=useState<string[]>(()=>{try{const saved=JSON.parse(localStorage.getItem('dasnet-recently-viewed-'+initialCartScope)||'[]');return Array.isArray(saved)?saved:[]}catch{return[]}});
  const isHostScoped=isHostScopedDomain();
  const storeBasePath=isHostScoped?'':`/${slug}`;
  const buyerPath=(page:string)=>page==='store'?(storeBasePath||'/'):`${storeBasePath}/${page}`||`/${page}`;
- function navigateBuyerPage(page:string){if(page==='reports'||page==='report-shop')page='my-reports';if(['recently-viewed','followed-shops','notification-settings','public-profile','newsletter'].includes(page))page='account';if((['account','profile','orders','order-detail','order-tracking','inbox','wishlist','recently-viewed','address-book','address-book/edit','vouchers','reviews','notifications','my-reports','followed-shops','newsletter','notification-settings','public-profile','account-management','close-account'].includes(page)||page.startsWith('orders/')||page.startsWith('my-reports/'))&&!buyerCustomer){updateBuyerReturnPage(page);page='buyer-login'}if((page==='checkout/delivery'||page==='checkout/payment'||page==='checkout/review')&&!buyerCustomer){updateBuyerReturnPage(page);page='buyer-login'}if(page==='store'){setFilter('All products');setSearch('');setExpandedCategory('');setSelectedProduct(null)}setBuyerPage(page);if(page!=='product-detail')setSelectedProduct(null);setMobileSidebarOpen(false);setDesktopSidebarOpen(false);setBuyerMobileNavOpen(false);setBuyerNotificationsOpen(false);const nextPath=buyerPath(page);if(window.location.pathname!==nextPath)window.history.pushState({buyerPage:page},'',nextPath);window.scrollTo({top:0,behavior:'instant' as ScrollBehavior})}
+ function navigateBuyerPage(page:string){if(page==='reports'||page==='report-shop')page='my-reports';if(['recently-viewed','followed-shops','notification-settings','public-profile','newsletter'].includes(page))page='account';if((['account','profile','orders','order-detail','order-tracking','inbox','wishlist','recently-viewed','address-book','address-book/edit','vouchers','reviews','notifications','my-reports','followed-shops','newsletter','notification-settings','public-profile','account-management','close-account'].includes(page)||page.startsWith('orders/')||page.startsWith('my-reports/'))&&!buyerCustomer){updateBuyerReturnPage(page);page='buyer-login'}if((page==='checkout/delivery'||page==='checkout/payment'||page==='checkout/review')&&!buyerCustomer){updateBuyerReturnPage(page);page='buyer-login'}if(page==='store'){setFilter('All products');setSearch('');setExpandedCategory('');setSelectedProduct(null)}setBuyerPage(page);if(page!=='product-detail')setSelectedProduct(null);setMobileSidebarOpen(false);setDesktopSidebarOpen(false);setBuyerMobileNavOpen(false);setBuyerNotificationsOpen(false);const nextPath=buyerPath(page);if(window.location.pathname!==nextPath)window.history.pushState({buyerPage:page},'',nextPath);if((page==='cart'||page.startsWith('checkout/'))&&buyerCustomerRef.current?.phone&&buyerAuthCheckedRef.current&&slugRef.current&&cartSyncPendingCountRef.current===0){void hydrateServerCart(slugRef.current);}window.scrollTo({top:0,behavior:'instant' as ScrollBehavior})}
  function selectStoreCategory(category:string){const parent=storefrontCategories.find(c=>c.name===category||c.subcategories.includes(category));const filterValue=category.startsWith('All ')?(parent?.name||category):category;setFilter(filterValue);setSearch('');setSelectedProduct(null);setProducts([]);setCatalogueOffset(0);setCatalogueHasMore(false);setLoadingMore(false);setLoading(true);setBuyerPage('store');setMobileSidebarOpen(false);setDesktopSidebarOpen(false);const nextPath=buyerPath('store');if(window.location.pathname!==nextPath)window.history.replaceState({buyerPage:'store'},'',nextPath)}
  function openProduct(product:LiveProduct){setSelectedProduct(product);setBuyerPage('product-detail');setMobileSidebarOpen(false);const parent=storefrontCategories.find(c=>c.name===product.category||c.subcategories.includes(product.category));const route=(parent?categorySlug(parent.name):'products')+'/'+(parent&&product.category!==parent.name?categorySlug(product.category).replace(/-/g,''):'products')+'/'+encodeURIComponent(product.sku||product.id);window.history.pushState({productSku:product.sku||product.id},'',(storeBasePath||'')+'/'+route);window.scrollTo({top:0,left:0,behavior:'instant' as ScrollBehavior})}
  function closeProduct(){const route=categoryRoute(selectedProduct?.category||'');if(selectedProduct?.category)setFilter(selectedProduct.category);setBuyerPage('store');setSelectedProduct(null);window.history.pushState({},'',route?(storeBasePath+'/'+route):buyerPath('store'))}
- // Migrate temporary host-scoped cart/snapshots when custom-domain storefront resolves its slug, before saving.
+ // Migrate temporary host-scoped storefront preferences when custom-domain storefront resolves its slug.
  useEffect(()=>{
   const nextScope=getCartScopeKey(slug);
   const prevScope=cartScopeRef.current;
   if(nextScope===prevScope)return;
-  const savedForResolved=readStoredCart(nextScope);
-  const prevCart=prevScope.startsWith('host:')?readStoredCart(prevScope):{};
-  const mergedCart:Record<string,number>={...savedForResolved};
-  for(const [id,qty] of Object.entries(prevCart))mergedCart[id]=Math.min(99,(mergedCart[id]||0)+qty);
-  const resolvedSnapshots=readCartSnapshots(nextScope);
-  const prevSnapshots=prevScope.startsWith('host:')?readCartSnapshots(prevScope):{};
-  const mergedSnapshots:Record<string,LiveProduct>={...resolvedSnapshots,...prevSnapshots};
   cartScopeRef.current=nextScope;
-  setCart(mergedCart);
-  try{localStorage.setItem('dasnet-cart-'+nextScope,JSON.stringify(mergedCart));if(prevScope.startsWith('host:')){localStorage.removeItem('dasnet-cart-'+prevScope);localStorage.removeItem('dasnet-cart-');localStorage.removeItem('dasnet-cart-items-'+prevScope);}}catch{}
   const resolvedWish=(()=>{try{const s=JSON.parse(localStorage.getItem('dasnet-wishlist-'+nextScope)||'[]');return Array.isArray(s)?s.filter((id:any)=>typeof id==='string'):[];}catch{return[];}})();
   if(resolvedWish.length)setWishlistIds(current=>Array.from(new Set([...resolvedWish,...current])));
   const resolvedRecent=(()=>{try{const s=JSON.parse(localStorage.getItem('dasnet-recently-viewed-'+nextScope)||'[]');return Array.isArray(s)?s:[];}catch{return[];}})();
@@ -163,21 +285,12 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
   const cachedForResolved=readCachedStorefront(nextScope);
   setProducts(current=>{
    const known=new Set(current.map(p=>p.id));
-   const snapshotItems=Object.keys(mergedCart).map(id=>mergedSnapshots[id]).filter((p):p is LiveProduct=>Boolean(p)&&!known.has(p.id));
-   for(const item of snapshotItems)known.add(item.id);
    const cachedItems=(cachedForResolved?.products||[]).filter(p=>!known.has(p.id));
-   return [...current,...snapshotItems,...cachedItems];
+   return [...current,...cachedItems];
   });
  },[slug]);
- useEffect(()=>{
-  const targetScope=getCartScopeKey(slug);
-  if(cartScopeRef.current!==targetScope)return;
-  try{localStorage.setItem('dasnet-cart-'+targetScope,JSON.stringify(cart));}catch{}
-  writeCartSnapshots(targetScope,cart,products);
- },[cart,products,slug]);
- // Restore cart products outside the first catalogue page after refresh or reconnect.
+ // Restore cart products outside the first catalogue page if missing from active product list.
  useEffect(()=>{let live=true;const missing=Object.keys(cart).filter(id=>cart[id]>0&&!products.some((product:LiveProduct)=>product.id===id)).slice(0,50);if(!slug||!missing.length)return()=>{live=false};const params=new URLSearchParams({limit:String(missing.length),offset:'0',ids:missing.join(',')});fetch('/api/storefront?slug='+encodeURIComponent(slug)+'&'+params.toString(),{cache:'no-store'}).then(async response=>{const data=await readApiResponse(response);if(!response.ok)throw Error(data.error||'Could not restore saved cart items');if(!live)return;const restored:LiveProduct[]=Array.isArray(data.products)?data.products:[];if(restored.length)setProducts((current:LiveProduct[])=>{const known=new Set(current.map((product:LiveProduct)=>product.id));return [...current,...restored.filter((product:LiveProduct)=>!known.has(product.id))]});}).catch(error=>console.warn('Saved cart restoration failed:',error));return()=>{live=false}},[cart,products,slug,reconnectTick]);
-  useEffect(()=>{const targetScope=getCartScopeKey(slug);const syncCart=(event:StorageEvent)=>{if(event.key==='dasnet-cart-'+targetScope){try{setCart(sanitizeCartMap(JSON.parse(event.newValue||'{}')));}catch{}}};window.addEventListener('storage',syncCart);return()=>window.removeEventListener('storage',syncCart)},[slug]);
   useEffect(()=>{
     let live=true;
     // Custom-domain storefronts start with an empty slug until /api/storefront resolves
@@ -254,7 +367,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
  async function uploadCustomerAttachment(file?:File){if(!file||(!chatToken&&!chatOrderId))return;if(file.size>10485760){setChatError('Each attachment must be 10 MB or smaller.');return;}setChatError('');try{const sign=await fetch('/api/buyer?action=chat-attachment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(chatToken?{token:chatToken,mode:'upload',fileName:file.name,contentType:file.type,size:file.size}:{orderId:chatOrderId,slug,mode:'upload',fileName:file.name,contentType:file.type,size:file.size})});const sd=await readApiResponse(sign);if(!sign.ok)throw Error(sd.error||'Could not prepare upload');await uploadToObjectStorage(sd.uploadUrl,file,'Chat attachment');const done=await fetch('/api/buyer?action=chat-attachment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(chatToken?{token:chatToken,mode:'complete',attachmentId:sd.attachmentId}:{orderId:chatOrderId,slug,mode:'complete',attachmentId:sd.attachmentId})});const dd=await readApiResponse(done);if(!done.ok)throw Error(dd.error||'Could not confirm upload');setChatAttachments(a=>[...a,dd.attachment]);}catch(e:any){setChatError(e.message)}}
  async function downloadCustomerAttachment(id:string){try{const r=await fetch('/api/buyer?action=chat-attachment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(chatToken?{token:chatToken,mode:'download',attachmentId:id}:{orderId:chatOrderId,slug,mode:'download',attachmentId:id})});const d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Download unavailable');window.open(d.url,'_blank','noopener,noreferrer')}catch(e:any){setChatError(e.message)}}
  useEffect(()=>{const t=window.setTimeout(()=>{void import('./StorefrontFlow');void import('./BuyerAuthPage');},60);return()=>window.clearTimeout(t);},[]);
- useEffect(()=>{let live=true;const runFetch=()=>{setNotFound(false);if(!cachedStorefront||filter!=='All products'||search.trim())setLoading(true);const params=new URLSearchParams({limit:'60',offset:'0'});if(filter.trim()&&filter.trim().toLocaleLowerCase()!=='all products')params.set('category',categoryApiFilter(filter.trim()));if(search.trim())params.set('search',search.trim());const base=slug?'/api/storefront?slug='+encodeURIComponent(slug)+'&':'/api/storefront?';fetch(base+params.toString(),{cache:'no-store'}).then(async r=>{const d=await readApiResponse(r);if(!r.ok){if(r.status===400||r.status===404){setNotFound(true);setCatalogueHasMore(false);setCatalogueTotal(0);setProducts([]);setShop(null)}throw Error(d.error||'Shop unavailable')}if(!live)return;const nextProducts:LiveProduct[]=Array.isArray(d.products)?d.products:[];const resolvedSlug=String(d.shop?.slug||slug||'').trim();setShop(d.shop);if(!slug&&resolvedSlug)setSlug(resolvedSlug);setProducts((current:LiveProduct[])=>{const incomingIds=new Set(nextProducts.map((p:LiveProduct)=>p.id));const preservedCartProducts=current.filter((p:LiveProduct)=>cart[p.id]>0&&!incomingIds.has(p.id));return [...nextProducts,...preservedCartProducts];});setCatalogueOffset(Number(d.nextOffset||nextProducts.length));setCatalogueTotal(Number(d.totalProducts??nextProducts.length));setCatalogueHasMore(Boolean(d.hasMore));const requestedProduct=new URLSearchParams(window.location.search).get('product');if(requestedProduct){const match=nextProducts.find((product:any)=>product.id===requestedProduct||product.sku===requestedProduct||product.slug===requestedProduct);if(match){setSelectedProduct(match);setBuyerPage('product-detail')}}setError('');if(resolvedSlug&&filter.trim().toLocaleLowerCase()==='all products'&&!search.trim()){try{localStorage.setItem('dasnet-storefront-cache-'+resolvedSlug,JSON.stringify({shop:d.shop,products:nextProducts.slice(0,60),totalProducts:Number(d.totalProducts??nextProducts.length),cachedAt:Date.now()}))}catch{}}}).catch(e=>{if(live)setError(e.message)}).finally(()=>{if(live)setLoading(false)})};if(!search.trim()){runFetch();return()=>{live=false};}const timer=window.setTimeout(runFetch,180);return()=>{live=false;window.clearTimeout(timer)}},[slug,filter,search,reconnectTick]);
+ useEffect(()=>{let live=true;const runFetch=()=>{setNotFound(false);if(!cachedStorefront||filter!=='All products'||search.trim())setLoading(true);const params=new URLSearchParams({limit:'60',offset:'0'});if(filter.trim()&&filter.trim().toLocaleLowerCase()!=='all products')params.set('category',categoryApiFilter(filter.trim()));if(search.trim())params.set('search',search.trim());const base=slug?'/api/storefront?slug='+encodeURIComponent(slug)+'&':'/api/storefront?';fetch(base+params.toString(),{cache:'no-store'}).then(async r=>{const d=await readApiResponse(r);if(!r.ok){if(r.status===400||r.status===404){setNotFound(true);setCatalogueHasMore(false);setCatalogueTotal(0);setProducts([]);setShop(null)}throw Error(d.error||'Shop unavailable')}if(!live)return;const nextProducts:LiveProduct[]=Array.isArray(d.products)?d.products:[];const resolvedSlug=String(d.shop?.slug||slug||'').trim();setShop(d.shop);if(!slug&&resolvedSlug)setSlug(resolvedSlug);setProducts((current:LiveProduct[])=>{const incomingIds=new Set(nextProducts.map((p:LiveProduct)=>p.id));const preservedCartProducts=current.filter((p:LiveProduct)=>cartRef.current[p.id]>0&&!incomingIds.has(p.id));return [...nextProducts,...preservedCartProducts];});setCatalogueOffset(Number(d.nextOffset||nextProducts.length));setCatalogueTotal(Number(d.totalProducts??nextProducts.length));setCatalogueHasMore(Boolean(d.hasMore));const requestedProduct=new URLSearchParams(window.location.search).get('product');if(requestedProduct){const match=nextProducts.find((product:any)=>product.id===requestedProduct||product.sku===requestedProduct||product.slug===requestedProduct);if(match){setSelectedProduct(match);setBuyerPage('product-detail')}}setError('');if(resolvedSlug&&filter.trim().toLocaleLowerCase()==='all products'&&!search.trim()){try{localStorage.setItem('dasnet-storefront-cache-'+resolvedSlug,JSON.stringify({shop:d.shop,products:nextProducts.slice(0,60),totalProducts:Number(d.totalProducts??nextProducts.length),cachedAt:Date.now()}))}catch{}}}).catch(e=>{if(live)setError(e.message)}).finally(()=>{if(live)setLoading(false)})};if(!search.trim()){runFetch();return()=>{live=false};}const timer=window.setTimeout(runFetch,180);return()=>{live=false;window.clearTimeout(timer)}},[slug,filter,search,reconnectTick]);
   // Contact details refresh with the storefront request; avoid polling the full catalogue.
   useEffect(()=>{let live=true;const refresh=async()=>{if(!buyerCustomer){if(live)setBuyerNotifications([]);return}try{if(localStorage.getItem('dasnet-buyer-notifications-'+slug)==='false'){if(live)setBuyerNotifications([]);return}const r=await fetch('/api/buyer?action=buyer-notifications&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'});if(!r.ok)return;const d=await r.json();if(live)setBuyerNotifications(Array.isArray(d.notifications)?d.notifications:[])}catch{}};refresh();const timer=window.setInterval(refresh,15000);return()=>{live=false;window.clearInterval(timer)}},[slug,buyerCustomer?.id]);
     async function loadMoreProducts(){if(loadingMore||!catalogueHasMore)return;setLoadingMore(true);try{const base=slug?'/api/storefront?slug='+encodeURIComponent(slug)+'&':'/api/storefront?';const params=new URLSearchParams({limit:'60',offset:String(catalogueOffset)});if(filter.trim()&&filter.trim().toLocaleLowerCase()!=='all products')params.set('category',categoryApiFilter(filter.trim()));if(search.trim())params.set('search',search.trim());const response=await fetch(base+params.toString(),{cache:'no-store'});const data=await readApiResponse(response);if(!response.ok){const failure:any=new Error(data.error||'Could not load more products');failure.status=response.status;if(response.status===400||response.status===404)setCatalogueHasMore(false);throw failure;}const incoming=Array.isArray(data.products)?data.products:[];setProducts((current:LiveProduct[])=>{const known=new Set(current.map((p:LiveProduct)=>p.id));return [...current,...incoming.filter((p:LiveProduct)=>!known.has(p.id))]});setCatalogueOffset(Number(data.nextOffset||catalogueOffset+incoming.length));if(data.totalProducts!==undefined)setCatalogueTotal(Number(data.totalProducts));setCatalogueHasMore(Boolean(data.hasMore));}catch(error:any){if(error?.status===404||error?.status===400){setNotFound(true);setCatalogueHasMore(false);setProducts([]);setShop(null)}setError(error.message||'Could not load more products')}finally{setLoadingMore(false)}}
@@ -330,10 +443,10 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
 
  const isBuyerAccountRoute=buyerPage==='account'||['orders','order-detail','order-tracking','profile','inbox','wishlist','recently-viewed','address-book','vouchers','reviews','notifications','my-reports','report-shop','followed-shops','newsletter','notification-settings','public-profile','account-management','close-account','assistant'].includes(buyerPage)||buyerPage.startsWith('orders/')||buyerPage.startsWith('my-reports/')||buyerPage.startsWith('address-book/');
 
- if(buyerPage==='buyer-login'||buyerPage==='buyer-signup') return <Deferred><BuyerAuthPage slug={slug} shopName={shop?.name||'This shop'} initial={buyerPage==='buyer-signup'?'signup':'login'} onBack={()=>navigateBuyerPage('store')} onPolicyNavigate={(page)=>navigateBuyerPage(page)} onAuthenticated={(customer)=>{setBuyerCustomer(customer);try{const scope=getCartScopeKey(slug);if(customer)sessionStorage.setItem('dasnet-buyer-session-'+scope,JSON.stringify({id:customer.id,name:customer.name,phone:customer.phone,email:customer.email,address:customer.address,alternativePhone:customer.alternativePhone}));}catch{}const target=buyerReturnPage||'account';try{sessionStorage.removeItem('dasnet-buyer-return-'+getCartScopeKey(slug));}catch{}setBuyerPage(target);const next=buyerPath(target);if(window.location.pathname!==next)window.history.replaceState({buyerPage:target},'',next)}}/></Deferred>;
+ if(buyerPage==='buyer-login'||buyerPage==='buyer-signup') return <Deferred><BuyerAuthPage slug={slug} shopName={shop?.name||'This shop'} initial={buyerPage==='buyer-signup'?'signup':'login'} onBack={()=>navigateBuyerPage('store')} onPolicyNavigate={(page)=>navigateBuyerPage(page)} onAuthenticated={(customer)=>{buyerCustomerRef.current=customer;setBuyerCustomer(customer);buyerAuthCheckedRef.current=true;setBuyerAuthChecked(true);try{const scope=getCartScopeKey(slug);if(customer)sessionStorage.setItem('dasnet-buyer-session-'+scope,JSON.stringify({id:customer.id,name:customer.name,phone:customer.phone,email:customer.email,address:customer.address,alternativePhone:customer.alternativePhone}));}catch{}const guestPending=sanitizeCartMap(guestPendingCartRef.current);guestPendingCartRef.current={};if(slug&&customer?.phone)void hydrateServerCart(slug,Object.keys(guestPending).length?guestPending:undefined,customer.phone);const target=buyerReturnPage||'account';try{sessionStorage.removeItem('dasnet-buyer-return-'+getCartScopeKey(slug));}catch{}setBuyerPage(target);const next=buyerPath(target);if(window.location.pathname!==next)window.history.replaceState({buyerPage:target},'',next)}}/></Deferred>;
 
  const addSingleToCart=(productId:string,stockQuantity:number|null)=>{
-  setCart(c=>({...c,[productId]:Math.min(99,stockQuantity??99,(c[productId]||0)+1)}));
+  updateCart(c=>({...c,[productId]:Math.min(99,stockQuantity??99,(c[productId]||0)+1)}));
  };
 
  const renderProductCard=(p:LiveProduct,tag?:string,eager=false)=>{
@@ -526,7 +639,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
     </div>
     {buyerCustomer&&(
      <div className="sf-drawer-footer">
-      <button type="button" className="sf-drawer-logout" onClick={()=>{fetch('/api/buyer-auth?action=logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug}),credentials:'same-origin'}).finally(()=>{const scope=getCartScopeKey(slug);try{sessionStorage.removeItem('dasnet-buyer-session-'+scope);sessionStorage.removeItem('dasnet-buyer-return-'+scope);}catch{}setBuyerCustomer(null);setCart({});navigateBuyerPage('store')})}}>
+      <button type="button" className="sf-drawer-logout" onClick={signOutBuyer}>
        <LogOut size={16}/> Sign out
       </button>
      </div>
@@ -598,7 +711,8 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
    onRetryConnection={()=>setReconnectTick(t=>t+1)}
    recentlyViewed={recentlyViewed}
    cart={cart}
-   onCartChange={setCart}
+   cartLoading={cartHydrating}
+   onCartChange={updateCart}
    view={buyerPage}
    initialOrderNumber={emailOrderNumber.current}
    onNavigate={navigateBuyerPage}
@@ -613,7 +727,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
    onOpenProduct={(product)=>openProduct(product as LiveProduct)}
    notifications={buyerNotifications}
    onProfileUpdated={setBuyerCustomer}
-   onSignOut={()=>{fetch('/api/buyer-auth?action=logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug})}).finally(()=>{const scope=getCartScopeKey(slug);try{sessionStorage.removeItem('dasnet-buyer-session-'+scope);sessionStorage.removeItem('dasnet-buyer-return-'+scope);}catch{}setBuyerCustomer(null);navigateBuyerPage('store')})}}
+   onSignOut={signOutBuyer}
    chatPanel={chatPanel}
    onOpenChat={(token,orderNumber,orderId)=>{setChatToken(token||'');setChatOrderId(orderId||'');setChatOrderNumber(orderNumber);setChatMessages([]);setChatAttachments([]);setChatOrder(null);setChatDraft('');setChatError('');}}
    onOrderCreated={(token,orderNumber)=>{setChatToken(token);setChatOrderId('');setChatOrderNumber(orderNumber);setChatError('');}}
@@ -679,7 +793,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
         <span>Our support team is ready to assist you.</span>
         <button type="button" className="sf-btn sf-btn-primary" style={{minHeight:36,fontSize:13}} onClick={()=>navigateBuyerPage('assistant')}>Contact Us</button>
        </div>
-       <button type="button" className="sf-account-logout" onClick={()=>{fetch('/api/buyer-auth?action=logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug}),credentials:'same-origin'}).finally(()=>{const scope=getCartScopeKey(slug);try{sessionStorage.removeItem('dasnet-buyer-session-'+scope);sessionStorage.removeItem('dasnet-buyer-return-'+scope);}catch{}setBuyerCustomer(null);navigateBuyerPage('store')})}}>
+       <button type="button" className="sf-account-logout" onClick={signOutBuyer}>
         <LogOut size={16}/><span>Logout</span>
        </button>
       </aside>
@@ -954,7 +1068,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
        saved={wishlistIds.includes(selectedProduct.id)}
        onToggleSaved={()=>toggleWishlist(selectedProduct.id)}
        onBack={closeProduct}
-       onAdd={(quantity)=>setCart(c=>({...c,[selectedProduct.id]:Math.min(99,selectedProduct.stockQuantity??99,(c[selectedProduct.id]||0)+quantity)}))}
+       onAdd={(quantity)=>updateCart(c=>({...c,[selectedProduct.id]:Math.min(99,selectedProduct.stockQuantity??99,(c[selectedProduct.id]||0)+quantity)}))}
        onOpen={openProduct}
       />
      ):(
@@ -979,11 +1093,13 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
      )}
      {renderFooter()}
     </>
+   ):isCheckoutFlowRoute?(
+    <Deferred>{renderFlow()}</Deferred>
    ):(
     <>
      {renderShopDrawer()}
-     {renderStoreHeader(isCheckoutFlowRoute)}
-     {!isCheckoutFlowRoute&&(
+     {renderStoreHeader(false)}
+     {buyerPage!=='cart'&&(
       <nav className="sf-routebar" aria-label="Store navigation">
        <div className="sf-routebar-inner">
         <div className="sf-routebar-nav">

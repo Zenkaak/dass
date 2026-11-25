@@ -13,7 +13,8 @@ async function restricted(sql:any,scope:'seller'|'buyer',phone:string,email:stri
 async function recordSignals(sql:any,customerId:string,phone:string,email:string,ip:string){for(const [kind,value] of [['phone',phone],['email',email.toLowerCase()],['ip',ip]] as string[][]){if(value)await sql`INSERT INTO public.auth_identity_signals(customer_id,identity_type,identity_hash) VALUES(${customerId},${kind},${identityHash(value.trim().toLowerCase())}) ON CONFLICT DO NOTHING`;}}
 const passwordHash=(password:string,salt:string)=>crypto.scryptSync(password,salt,64).toString('hex');
 const equal=(a:string,b:string)=>{const x=Buffer.from(a),y=Buffer.from(b);return x.length===y.length&&crypto.timingSafeEqual(x,y)};
-function cookie(res:any,value:string,maxAge:number){res.setHeader('Set-Cookie',[ `das_buyer_auth=${encodeURIComponent(value)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`,`das_buyer_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0` ])}
+function cookieAttrs(req:any,maxAge:number){const proto=String(req.headers['x-forwarded-proto']||'').split(',')[0].trim().toLowerCase();const origin=String(req.headers.origin||'').trim().toLowerCase();const isHttps=proto==='https'||Boolean(req.secure)||origin.startsWith('https://');return isHttps?`Path=/; HttpOnly; Secure; SameSite=None; Partitioned; Max-Age=${maxAge}`:`Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}`;}
+function cookie(req:any,res:any,value:string,maxAge:number){const attrs=cookieAttrs(req,maxAge),clearAttrs=cookieAttrs(req,0);res.setHeader('Set-Cookie',[ `das_buyer_auth=${encodeURIComponent(value)}; ${attrs}`,`das_buyer_session=; ${clearAttrs}` ])}
 function cookieValue(req:any,name:string){const item=String(req.headers.cookie||'').split(';').map((x:string)=>x.trim()).find((x:string)=>x.startsWith(name+'='));try{return item?decodeURIComponent(item.slice(name.length+1)):''}catch{return ''}}
 function globalToken(req:any){return cookieValue(req,'das_buyer_auth')||cookieValue(req,'das_session')}
 function legacyToken(req:any){return cookieValue(req,'das_buyer_session')}
@@ -107,7 +108,7 @@ export default async function handler(req:any,res:any){
     SELECT p.* FROM profile p JOIN session s ON true
    `;
    if(!rows.length)return send(res,409,{error:'This phone could not be linked safely. Sign in to the existing DASNET account or contact support.'});
-   await recordSignals(sql,rows[0].id,phone,email,requestIp(req));cookie(res,token,604800);try{const welcome=brandedEmail(tenant.name,'Welcome to '+tenant.name,'Hi '+name+', your buyer account is ready. You can now place orders, track deliveries and receive updates from the shop.');await sendTenantTransactionalEmail(sql,tenantId,{to:email,subject:'Welcome to '+tenant.name,...welcome,idempotencyKey:'buyer-welcome-'+rows[0].id});}catch(emailError:any){console.error('Buyer welcome email could not be sent',String(emailError?.message||emailError).slice(0,200));}return send(res,201,{ok:true,customer:customer(rows[0])});
+   await recordSignals(sql,rows[0].id,phone,email,requestIp(req));cookie(req,res,token,604800);try{const welcome=brandedEmail(tenant.name,'Welcome to '+tenant.name,'Hi '+name+', your buyer account is ready. You can now place orders, track deliveries and receive updates from the shop.');await sendTenantTransactionalEmail(sql,tenantId,{to:email,subject:'Welcome to '+tenant.name,...welcome,idempotencyKey:'buyer-welcome-'+rows[0].id});}catch(emailError:any){console.error('Buyer welcome email could not be sent',String(emailError?.message||emailError).slice(0,200));}return send(res,201,{ok:true,customer:customer(rows[0])});
   }
   if(req.method==='POST'&&action==='login'){
    const identifier=String(body.phone||'').trim(),isEmail=identifier.includes('@'),email=isEmail?identifier.toLowerCase():'',phone=isEmail?'':phoneOf(identifier),password=String(body.password||'');
@@ -135,7 +136,7 @@ export default async function handler(req:any,res:any){
     SELECT p.* FROM profile p JOIN session s ON true
    `;
    if(!rows.length)return send(res,409,{error:'A buyer profile for this phone is already linked to a different identity. Contact support to reconcile it.'});
-   cookie(res,token,604800);return send(res,200,{ok:true,customer:customer(rows[0])});
+   cookie(req,res,token,604800);return send(res,200,{ok:true,customer:customer(rows[0])});
   }
   if(req.method==='POST'&&action==='reset-password'){
    const phone=phoneOf(body.phone),password=String(body.password||''),code=String(body.code||'');
@@ -189,7 +190,7 @@ export default async function handler(req:any,res:any){
     if(rows.length){
      const token=crypto.randomBytes(32).toString('base64url');
      await sql`INSERT INTO public.auth_sessions(token_hash,user_id,expires_at) VALUES(${hash(token)},${rows[0].user_id},now()+interval '7 days')`;
-     cookie(res,token,604800);return send(res,200,{customer:customer(rows[0])});
+     cookie(req,res,token,604800);return send(res,200,{customer:customer(rows[0])});
     }
    }
    return send(res,401,{error:'Sign in required'});
@@ -198,7 +199,8 @@ export default async function handler(req:any,res:any){
    const current=globalToken(req),legacy=legacyToken(req);let userId='';
    if(current){const rows=await sql`SELECT user_id FROM public.auth_sessions WHERE token_hash=${hash(current)} AND user_id IN (SELECT user_id FROM public.store_customers WHERE tenant_id=${tenantId}) LIMIT 1`;userId=rows[0]?.user_id||'';if(userId)await sql`DELETE FROM public.store_customer_sessions WHERE customer_id IN (SELECT id FROM public.store_customers WHERE user_id=${userId} AND tenant_id=${tenantId})`;if(userId)await sql`DELETE FROM public.auth_sessions WHERE token_hash=${hash(current)}`;}
    if(legacy){const rows=await sql`SELECT c.user_id FROM public.store_customer_sessions s JOIN public.store_customers c ON c.id=s.customer_id WHERE s.tenant_id=${tenantId} AND s.token_hash=${hash(legacy)} LIMIT 1`;if(!userId)userId=rows[0]?.user_id||'';if(userId)await sql`DELETE FROM public.store_customer_sessions WHERE customer_id IN (SELECT id FROM public.store_customers WHERE user_id=${userId})`;else await sql`DELETE FROM public.store_customer_sessions WHERE tenant_id=${tenantId} AND token_hash=${hash(legacy)}`;}
-   res.setHeader('Set-Cookie',[`das_buyer_auth=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`,`das_buyer_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`]);
+   const clearAttrs=cookieAttrs(req,0);
+   res.setHeader('Set-Cookie',[`das_buyer_auth=; ${clearAttrs}`,`das_buyer_session=; ${clearAttrs}`]);
    return send(res,200,{ok:true});
   }
   return send(res,404,{error:'Unknown buyer authentication action'});

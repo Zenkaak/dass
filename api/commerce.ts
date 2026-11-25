@@ -4,7 +4,7 @@ const ACTIONS:Record<string,Set<string>>={
  buyer:new Set([
   'coupons-public','coupon-validate','complaint-attachment','buyer-reports',
   'buyer-notifications','complaint','customer-orders','customer-chat',
-  'buyer-account-data','buyer-delivery-preference','buyer-follow-shop','buyer-wishlist','buyer-newsletter','buyer-close-account',
+  'buyer-account-data','buyer-delivery-preference','buyer-follow-shop','buyer-wishlist','buyer-newsletter','buyer-close-account','buyer-cart',
   'product-reviews','order','chat-attachment','customer-payment-status'
  ]),
  merchant:new Set([

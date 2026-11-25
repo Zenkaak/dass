@@ -151,6 +151,7 @@ type StorefrontFlowProps = {
   onRetryConnection?: () => void;
   recentlyViewed?: string[];
   cart: Record<string, number>;
+  cartLoading?: boolean;
   onCartChange: (next: Record<string, number>) => void;
   view: string;
   initialReportId?: string;
@@ -203,7 +204,7 @@ function readCheckoutDraft(scopeKey: string): CheckoutDraftState {
   if (scopeKey.startsWith('host:')) keys.push('dasnet-checkout-draft-default');
   for (const key of keys) {
     try {
-      const raw = sessionStorage.getItem(key) || localStorage.getItem(key);
+      const raw = sessionStorage.getItem(key);
       if (!raw) continue;
       const parsed = JSON.parse(raw);
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed as CheckoutDraftState;
@@ -217,9 +218,6 @@ function writeCheckoutDraft(scopeKey: string, draft: CheckoutDraftState) {
   const serialized = JSON.stringify(draft);
   try {
     sessionStorage.setItem(key, serialized);
-  } catch {}
-  try {
-    localStorage.setItem(key, serialized);
   } catch {}
 }
 
@@ -345,41 +343,22 @@ function ProductThumb({ product }: { product: StoreProduct }) {
   );
 }
 
-function CheckoutProgress({
-  step,
-  onNavigate,
+function CheckoutTopBar({
+  title,
+  onBack,
 }: {
-  step: 1 | 2 | 3;
-  onNavigate?: (next: string) => void;
+  title: string;
+  onBack: () => void;
 }) {
-  const items: Array<{ n: 1 | 2 | 3; label: string; route: string }> = [
-    { n: 1, label: 'Delivery', route: 'checkout/delivery' },
-    { n: 2, label: 'Payment', route: 'checkout/payment' },
-    { n: 3, label: 'Summary', route: 'checkout/review' },
-  ];
   return (
-    <nav className="sf-checkout-progress" aria-label="Checkout steps">
-      {items.map((item) => {
-        const isComplete = item.n < step;
-        const isCurrent = item.n === step;
-        const canJump = isComplete && Boolean(onNavigate);
-        const Tag = canJump ? 'button' : 'div';
-        return (
-          <Tag
-            key={item.n}
-            {...(canJump ? { type: 'button' as const, onClick: () => onNavigate?.(item.route) } : {})}
-            className={`sf-progress-step ${isCurrent ? 'current' : isComplete ? 'complete' : ''}`}
-            aria-current={isCurrent ? 'step' : undefined}
-          >
-            <span>{isComplete ? <Check size={13} strokeWidth={2.75} /> : item.n}</span>
-            <div>
-              <strong>{item.label}</strong>
-              <small>{isComplete ? 'Done' : isCurrent ? 'Current' : 'Next'}</small>
-            </div>
-          </Tag>
-        );
-      })}
-    </nav>
+    <header className="sf-checkout-topbar">
+      <div className="sf-checkout-topbar-inner">
+        <button type="button" className="sf-checkout-topbar-back" onClick={onBack} aria-label="Go back">
+          <ArrowLeft size={20} strokeWidth={2} />
+        </button>
+        <h1>{title}</h1>
+      </div>
+    </header>
   );
 }
 
@@ -516,6 +495,7 @@ export function StorefrontFlow({
   onRetryConnection,
   recentlyViewed: recentlyViewedIds = [],
   cart,
+  cartLoading = false,
   onCartChange,
   view,
   initialReportId,
@@ -649,6 +629,7 @@ export function StorefrontFlow({
   const [contactEditor, setContactEditor] = useState(false);
   const [voucherOpen, setVoucherOpen] = useState(false);
   const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
+  const [checkoutReturnToSummary, setCheckoutReturnToSummary] = useState(false);
 
   const [voucherCode, setVoucherCode] = useState(() => initialDraft.voucherCode || '');
   const [voucherMessage, setVoucherMessage] = useState('');
@@ -778,33 +759,13 @@ export function StorefrontFlow({
 
   useEffect(() => {
     let live = true;
-    if (!slug) {
+    if (!slug || !initialCustomerPhone) {
       setDeliveryPreferenceLoading(false);
       return () => {
         live = false;
       };
     }
-    const cacheKey = `dasnet-delivery-pref-${slug}`;
-    try {
-      const saved = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-      if (saved && typeof saved === 'object') {
-        if (!deliveryCounty && !deliveryAddress && !pickupStation) {
-          setDeliveryMethod(saved.deliveryMethod === 'home' ? 'home' : 'pickup');
-        }
-        if (saved.deliveryCounty && !deliveryCounty) setDeliveryCounty(saved.deliveryCounty);
-        if (saved.deliverySubCounty && !deliverySubCounty) setDeliverySubCounty(saved.deliverySubCounty);
-        if (saved.deliveryEstate && !deliveryEstate) setDeliveryEstate(saved.deliveryEstate);
-        if (saved.deliveryAddress && !deliveryAddress) setDeliveryAddress(saved.deliveryAddress);
-        if (saved.deliveryDirections && !deliveryDirections) setDeliveryDirections(saved.deliveryDirections);
-        if (saved.pickupStation && !pickupStation) setPickupStation(saved.pickupStation);
-      }
-    } catch {}
-    if (!initialCustomerPhone) {
-      setDeliveryPreferenceLoading(false);
-      return () => {
-        live = false;
-      };
-    }
+    setDeliveryPreferenceLoading(true);
     fetch('/api/buyer?action=buyer-delivery-preference&slug=' + encodeURIComponent(slug), {
       credentials: 'same-origin',
       cache: 'no-store',
@@ -824,9 +785,6 @@ export function StorefrontFlow({
         setDeliveryAddress((current) => current || p.deliveryAddress || initialCustomerAddress);
         setDeliveryDirections((current) => current || p.deliveryDirections || '');
         setPickupStation((current) => current || p.pickupStation || '');
-        try {
-          localStorage.setItem(cacheKey, JSON.stringify(p));
-        } catch {}
       })
       .catch((error) => {
         // Saved delivery preferences are optional. A stale or unavailable buyer
@@ -1277,6 +1235,28 @@ export function StorefrontFlow({
     .map((id) => products.find((product) => product.id === id))
     .filter((product): product is StoreProduct => Boolean(product));
 
+  const canJumpDirectToReview = () => {
+    const contactReady = Boolean(customerName.trim() && customerPhone.trim());
+    const deliveryReady =
+      deliveryMethod === 'home'
+        ? Boolean(deliveryCounty && deliverySubCounty.trim() && deliveryEstate.trim() && deliveryAddress.trim())
+        : Boolean(deliveryCounty && pickupStation.trim());
+    const activeMpesa = (paymentPhone || customerPhone || '').trim().replace(/[\s().-]/g, '');
+    const payReady =
+      paymentMethod === 'delivery'
+        ? cashOptionEnabled
+        : paymentMethod === 'card'
+        ? customerName.trim().length >= 2 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim())
+        : /^\+?254[17]\d{8}$|^0[17]\d{8}$/.test(activeMpesa);
+    return contactReady && deliveryReady && payReady;
+  };
+
+  const handleProceedToCheckout = () => {
+    setCheckoutError('');
+    setCheckoutReturnToSummary(false);
+    onNavigate(canJumpDirectToReview() ? 'checkout/review' : 'checkout/delivery');
+  };
+
   function updateQuantity(id: string, quantity: number) {
     const next = { ...cart };
     if (quantity <= 0) delete next[id];
@@ -1421,6 +1401,7 @@ export function StorefrontFlow({
         if (String(data.paymentStatus || '').toLowerCase() === 'succeeded') {
           checkoutIdempotency.current = null;
           clearCheckoutDraft(getCheckoutScopeKey(slug));
+          setCheckoutReturnToSummary(false);
           onCartChange({});
           onOrderCreated?.(order.chatToken || '', order.orderNumber);
           onNavigate('checkout/complete');
@@ -1443,6 +1424,7 @@ export function StorefrontFlow({
               window.clearTimeout(loadGuard);
               checkoutIdempotency.current = null;
               clearCheckoutDraft(getCheckoutScopeKey(slug));
+              setCheckoutReturnToSummary(false);
               onCartChange({});
               setCardFallbackUrl(null);
               setSubmitting(false);
@@ -1482,6 +1464,7 @@ export function StorefrontFlow({
         if (String(data.paymentStatus || '').toLowerCase() === 'pending') {
           checkoutIdempotency.current = null;
           clearCheckoutDraft(getCheckoutScopeKey(slug));
+          setCheckoutReturnToSummary(false);
           onCartChange({});
           setPaymentPollMessage(data.message || 'Paystack processed this payment; confirming your receipt.');
           onNavigate('checkout/processing');
@@ -1491,6 +1474,7 @@ export function StorefrontFlow({
       }
       checkoutIdempotency.current = null;
       clearCheckoutDraft(getCheckoutScopeKey(slug));
+      setCheckoutReturnToSummary(false);
       onCartChange({});
       if (isCash) {
         setPaymentPollMessage(
@@ -1573,7 +1557,13 @@ export function StorefrontFlow({
                       'Door delivery'}
                 </span>
               </div>
-              <button type="button" onClick={() => onNavigate('checkout/delivery')}>
+              <button
+                type="button"
+                onClick={() => {
+                  setCheckoutReturnToSummary(false);
+                  onNavigate('checkout/delivery');
+                }}
+              >
                 Edit
               </button>
             </div>
@@ -1615,7 +1605,7 @@ export function StorefrontFlow({
             type="button"
             className="sf-btn sf-btn-accent"
             disabled={!lines.length}
-            onClick={() => onNavigate('checkout/delivery')}
+            onClick={handleProceedToCheckout}
           >
             Checkout ({formatKes(subtotal)}) <ArrowRight size={17} />
           </button>
@@ -1630,8 +1620,8 @@ export function StorefrontFlow({
       <div className="sf-alert" role="status" style={{ marginBottom: 14, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
         <span>
           {!isOnline
-            ? 'You are offline. Your cart items and checkout details remain saved on this device.'
-            : 'Connection was interrupted while refreshing store data. Your cart remains saved.'}
+            ? 'You are offline. Reconnect to sync your cart and continue checkout.'
+            : 'Connection was interrupted while refreshing store data.'}
         </span>
         {onRetryConnection && (
           <button type="button" className="sf-btn sf-btn-secondary" style={{ minHeight: 34, padding: '0 12px', fontSize: 12.5 }} onClick={onRetryConnection}>
@@ -1647,75 +1637,89 @@ export function StorefrontFlow({
       currentStep === 'checkout/delivery'
         ? 'Delivery details'
         : currentStep === 'checkout/payment'
-        ? 'Payment'
+        ? 'Payment method'
         : currentStep === 'checkout/review'
-        ? 'Review your order'
-        : `Your cart (${rawCartCount} ${rawCartCount === 1 ? 'item' : 'items'})`;
+        ? 'Place your order'
+        : `Cart (${rawCartCount})`;
+    const isCheckout = currentStep.startsWith('checkout/');
     return (
-      <section className="sf-flow sf-flow-compact">
-        <FlowHeading
-          title={stepLabel}
-          subtitle="Your cart items are saved on this device."
-          onBack={() => onNavigate('store')}
-          backLabel="Back to shop"
-        />
-        <div className="sf-state-box">
-          <span className="sf-state-icon">
-            <ShoppingBag size={26} />
-          </span>
-          <h2>
-            {!isOnline || storeError
-              ? `Waiting to reconnect (${rawCartCount} saved ${rawCartCount === 1 ? 'item' : 'items'})`
-              : `Restoring your cart (${rawCartCount} ${rawCartCount === 1 ? 'item' : 'items'})…`}
-          </h2>
-          <p>
-            {!isOnline || storeError
-              ? 'We kept your cart safely stored on this device. Reconnect to reload item prices and continue checkout.'
-              : 'Loading your saved items for checkout…'}
-          </p>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
-            {onRetryConnection && (!isOnline || storeError || !productsLoading) && (
-              <button type="button" className="sf-btn sf-btn-primary" onClick={onRetryConnection}>
-                Retry connection
+      <>
+        {isCheckout && <CheckoutTopBar title={stepLabel} onBack={() => onNavigate('cart')} />}
+        <section className="sf-flow sf-flow-compact">
+          {!isCheckout && (
+            <FlowHeading
+              title={stepLabel}
+              onBack={() => onNavigate('store')}
+              backLabel="Back to shop"
+            />
+          )}
+          <div className="sf-state-box">
+            <span className="sf-state-icon">
+              <ShoppingBag size={26} />
+            </span>
+            <h2>
+              {!isOnline || storeError
+                ? `Waiting to reconnect (${rawCartCount} ${rawCartCount === 1 ? 'item' : 'items'})`
+                : `Loading your cart (${rawCartCount} ${rawCartCount === 1 ? 'item' : 'items'})…`}
+            </h2>
+            <p>
+              {!isOnline || storeError
+                ? 'Reconnect to load item prices and continue checkout.'
+                : 'Loading your saved items from your account…'}
+            </p>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+              {onRetryConnection && (!isOnline || storeError || !productsLoading) && (
+                <button type="button" className="sf-btn sf-btn-primary" onClick={onRetryConnection}>
+                  Retry connection
+                </button>
+              )}
+              <button type="button" className="sf-btn sf-btn-secondary" onClick={() => onNavigate('store')}>
+                Back to shop
               </button>
-            )}
-            <button type="button" className="sf-btn sf-btn-secondary" onClick={() => onNavigate('store')}>
-              Back to shop
-            </button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </>
     );
   }
 
   function renderCart() {
     const itemCount = lines.reduce((count, line) => count + line.quantity, 0);
-    const whatsappDigits = shopWhatsappNumber.replace(/\D/g, '');
+    const rawWaDigits = shopWhatsappNumber.replace(/\D/g, '');
+    const whatsappDigits = rawWaDigits.startsWith('0') ? '254' + rawWaDigits.slice(1) : rawWaDigits;
     if (!lines.length && rawCartCount > 0) {
       return renderRestoringCartState('cart');
     }
+    if (!lines.length && cartLoading) {
+      return (
+        <section className="sf-flow sf-flow-compact">
+          <div className="sf-state-box">
+            <span className="sf-state-icon">
+              <ShoppingBag size={26} />
+            </span>
+            <h2>Loading your cart…</h2>
+            <p>Checking your saved items for {shopName}.</p>
+          </div>
+        </section>
+      );
+    }
     return (
-      <section className="sf-flow sf-flow-compact">
-        <FlowHeading
-          title={`Your cart (${itemCount})`}
-          subtitle="Review quantities before checkout."
-          onBack={() => onNavigate('store')}
-          backLabel="Continue shopping"
-        />
+      <section className="sf-flow sf-flow-compact sf-cart-page-flow">
         {renderOfflineBanner()}
         {lines.length ? (
           <>
-            <div className="sf-cart-mobile-summary" aria-label="Cart summary">
-              <span className="sf-kicker">CART SUMMARY</span>
-              <div>
+            <div className="sf-cart-mobile-summary-band" aria-label="Cart summary">
+              <div className="sf-cart-band-label">CART SUMMARY</div>
+              <div className="sf-cart-subtotal-row">
                 <span>Subtotal</span>
                 <strong className="sf-num">{formatKes(subtotal)}</strong>
               </div>
+              <div className="sf-cart-band-label">CART ({itemCount})</div>
             </div>
 
-            <div className="sf-two-col">
-              <div className="sf-panel">
-                <div className="sf-panel-head">
+            <div className="sf-two-col sf-cart-layout">
+              <div className="sf-panel sf-cart-panel">
+                <div className="sf-panel-head sf-cart-desktop-head">
                   <h2>Cart ({itemCount})</h2>
                   <span className="sf-num" style={{ color: 'var(--sf-muted)', fontSize: 13 }}>
                     {lines.length} {lines.length === 1 ? 'product' : 'products'}
@@ -1737,7 +1741,7 @@ export function StorefrontFlow({
                           {product.name}
                         </button>
                         <div className="sf-cart-price-row">
-                          <strong className="sf-cart-unit">{formatKes(product.price)}</strong>
+                          <strong className="sf-cart-unit sf-num">{formatKes(product.price)}</strong>
                           {quantity > 1 && (
                             <span className="sf-cart-line-sub sf-num">
                               · {formatKes(product.price * quantity)} total
@@ -1750,10 +1754,10 @@ export function StorefrontFlow({
                           {product.stockQuantity === 0
                             ? 'Out of stock'
                             : product.stockQuantity == null
-                            ? 'In stock'
+                            ? 'In Stock'
                             : product.stockQuantity <= 5
                             ? `Only ${Math.max(0, product.stockQuantity)} left`
-                            : 'In stock'}
+                            : 'In Stock'}
                         </small>
                       </div>
                       <div className="sf-cart-end">
@@ -1791,7 +1795,7 @@ export function StorefrontFlow({
                     </article>
                   ))}
                 </div>
-                <div style={{ paddingTop: 14, borderTop: '1px solid var(--sf-line)' }}>
+                <div className="sf-cart-continue-desktop">
                   <button type="button" className="sf-btn sf-btn-ghost" onClick={() => onNavigate('store')}>
                     <ShoppingBag size={16} /> Continue shopping
                   </button>
@@ -1815,21 +1819,42 @@ export function StorefrontFlow({
                 <button
                   type="button"
                   className="sf-btn sf-btn-accent"
-                  onClick={() => onNavigate('checkout/delivery')}
+                  onClick={handleProceedToCheckout}
                 >
                   Checkout ({formatKes(subtotal)}) <ArrowRight size={17} />
                 </button>
                 <div className="sf-summary-note">
                   <ShieldCheck size={15} style={{ flexShrink: 0, marginTop: 2 }} />
-                  <span>Delivery options and payment methods are confirmed on the next steps.</span>
+                  <span>Delivery options and payment methods are confirmed on checkout.</span>
                 </div>
               </aside>
+            </div>
+
+            <div className="sf-cart-mobile-actions">
+              {whatsappDigits.length >= 10 && (
+                <a
+                  href={`https://wa.me/${whatsappDigits}?text=${encodeURIComponent(`Hello ${shopName}, I need help with my cart.`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="sf-checkout-call-btn"
+                  aria-label={`Contact ${shopName}`}
+                >
+                  <Phone size={18} />
+                </a>
+              )}
+              <button
+                type="button"
+                className="sf-btn sf-btn-accent sf-checkout-main-cta"
+                onClick={handleProceedToCheckout}
+              >
+                Checkout ({formatKes(subtotal)})
+              </button>
             </div>
 
             {recentlyViewedProducts.length > 0 && (
               <section className="sf-cart-recent" aria-label="Recently viewed products">
                 <div className="sf-panel-head" style={{ borderBottom: 0, marginBottom: 10, paddingBottom: 0 }}>
-                  <h2>Recently viewed</h2>
+                  <h2>Recently Viewed</h2>
                 </div>
                 <div className="sf-cart-recent-track">
                   {recentlyViewedProducts.slice(0, 8).map((product) => (
@@ -1849,27 +1874,6 @@ export function StorefrontFlow({
                 </div>
               </section>
             )}
-
-            <div className="sf-checkout-footer-bar sf-checkout-footer-mobile-only">
-              {whatsappDigits.length >= 10 && (
-                <a
-                  href={`https://wa.me/${whatsappDigits}?text=${encodeURIComponent(`Hello ${shopName}, I need help with my cart.`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="sf-checkout-call-btn"
-                  aria-label={`Contact ${shopName}`}
-                >
-                  <Phone size={18} />
-                </a>
-              )}
-              <button
-                type="button"
-                className="sf-btn sf-btn-accent sf-checkout-main-cta"
-                onClick={() => onNavigate('checkout/delivery')}
-              >
-                Checkout ({formatKes(subtotal)})
-              </button>
-            </div>
           </>
         ) : (
           <div className="sf-state-box">
@@ -1888,30 +1892,13 @@ export function StorefrontFlow({
   }
 
   function renderCheckoutDelivery() {
-    const syncLocalDeliveryCache = () => {
-      try {
-        localStorage.setItem(
-          `dasnet-delivery-pref-${slug}`,
-          JSON.stringify({
-            deliveryMethod,
-            deliveryCounty,
-            deliverySubCounty,
-            deliveryEstate,
-            deliveryAddress,
-            deliveryDirections,
-            pickupStation,
-          }),
-        );
-      } catch {}
-    };
-
     const pickupComplete = Boolean(deliveryCounty && pickupStation.trim());
     const homeAddressComplete = Boolean(
       deliveryCounty && deliverySubCounty.trim() && deliveryEstate.trim() && deliveryAddress.trim(),
     );
     const contactComplete = Boolean(customerName.trim() && customerPhone.trim());
 
-    const continueToPayment = () => {
+    const continueToNext = () => {
       setCheckoutError('');
       if (!contactComplete) {
         setContactEditor(true);
@@ -1937,11 +1924,12 @@ export function StorefrontFlow({
         return;
       }
 
-      syncLocalDeliveryCache();
       setPickupStationEditor(false);
       setHomeAddressEditor(false);
       setContactEditor(false);
-      onNavigate('checkout/payment');
+      const nextRoute = checkoutReturnToSummary ? 'checkout/review' : 'checkout/payment';
+      setCheckoutReturnToSummary(false);
+      onNavigate(nextRoute);
       void buyerFeatureRequest('buyer-delivery-preference', {
         deliveryMethod,
         deliveryCounty,
@@ -1954,345 +1942,342 @@ export function StorefrontFlow({
     };
 
     return (
-      <section className="sf-flow sf-flow-compact">
-        <CheckoutProgress step={1} onNavigate={onNavigate} />
-        <FlowHeading
+      <>
+        <CheckoutTopBar
           title="Delivery details"
-          subtitle={`Choose pickup or delivery from ${shopName}.`}
-          onBack={() => onNavigate('cart')}
-          backLabel="Back to cart"
+          onBack={() => {
+            const backTarget = checkoutReturnToSummary ? 'checkout/review' : 'cart';
+            setCheckoutReturnToSummary(false);
+            onNavigate(backTarget);
+          }}
         />
-        {renderOfflineBanner()}
+        <section className="sf-flow sf-flow-compact sf-checkout-page-flow">
+          {renderOfflineBanner()}
 
-        <div className="sf-choice-grid" role="tablist" aria-label="Delivery method">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={deliveryMethod === 'pickup'}
-            className={`sf-choice-card ${deliveryMethod === 'pickup' ? 'active' : ''}`}
-            onClick={() => {
-              setCheckoutError('');
-              setDeliveryMethod('pickup');
-            }}
-          >
-            <span className="sf-choice-icon">
-              <MapPin size={19} />
-            </span>
-            <span className="sf-choice-copy">
-              <strong>
-                Pickup station{' '}
-                <span className="sf-choice-fee">
-                  {shopDeliveryPickupFee ? formatKes(shopDeliveryPickupFee) : 'Free'}
-                </span>
-              </strong>
-              <small>Collect from your chosen station</small>
-            </span>
-            <span className="sf-choice-check">{deliveryMethod === 'pickup' ? <Check size={13} /> : ''}</span>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={deliveryMethod === 'home'}
-            className={`sf-choice-card ${deliveryMethod === 'home' ? 'active' : ''}`}
-            onClick={() => {
-              setCheckoutError('');
-              setDeliveryMethod('home');
-            }}
-          >
-            <span className="sf-choice-icon">
-              <Package size={19} />
-            </span>
-            <span className="sf-choice-copy">
-              <strong>
-                Door delivery{' '}
-                <span className="sf-choice-fee">
-                  {shopDeliveryHomeFee ? formatKes(shopDeliveryHomeFee) : 'Free'}
-                </span>
-              </strong>
-              <small>Delivered to your home or office</small>
-            </span>
-            <span className="sf-choice-check">{deliveryMethod === 'home' ? <Check size={13} /> : ''}</span>
-          </button>
-        </div>
-
-        <div className="sf-two-col">
-          <div className="sf-checkout-stack">
-            {deliveryMethod === 'pickup' ? (
-              <div className="sf-panel" id="checkout-delivery-panel">
-                <div className="sf-panel-head">
-                  <div>
-                    <h2>Pickup location</h2>
-                    <p>{pickupComplete && !pickupStationEditor ? 'Saved collection point' : 'Choose your county and collection station'}</p>
-                  </div>
-                </div>
-                {pickupComplete && !pickupStationEditor ? (
-                  <div className="sf-saved-location-box">
-                    <span className="sf-choice-icon" style={{ width: 34, height: 34 }}>
-                      <MapPin size={16} />
-                    </span>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <strong>{pickupStation}</strong>
-                      <small>
-                        {[deliverySubCounty, deliveryCounty, deliveryDirections].filter(Boolean).join(' · ')}
-                      </small>
-                    </div>
-                    <button
-                      type="button"
-                      className="sf-btn sf-btn-secondary"
-                      style={{ minHeight: 34, padding: '0 12px', fontSize: 12.5 }}
-                      onClick={() => setPickupStationEditor(true)}
-                    >
-                      Change
-                    </button>
-                  </div>
-                ) : (
-                  <div className="sf-form-grid">
-                    <SearchableLocationSelect
-                      label="County"
-                      value={deliveryCounty}
-                      options={kenyanCounties}
-                      placeholder="Select county (e.g. Nairobi)"
-                      onChange={(county) => {
-                        setDeliveryCounty(county);
-                        setDeliverySubCounty('');
-                      }}
-                    />
-                    <SearchableLocationSelect
-                      label="Sub-county (optional)"
-                      value={deliverySubCounty}
-                      options={kenyanSubCounties[deliveryCounty] || []}
-                      placeholder={deliveryCounty ? 'Select sub-county' : 'Select a county first'}
-                      disabled={!deliveryCounty}
-                      onChange={setDeliverySubCounty}
-                    />
-                    <label className="sf-field sf-form-full">
-                      Pickup station / collection point
-                      <input
-                        required
-                        value={pickupStation}
-                        onChange={(e) => setPickupStation(e.target.value)}
-                        placeholder="e.g. Pick-up Mtaani CBD, G4S Westlands, or shop counter"
-                      />
-                    </label>
-                    <label className="sf-field sf-form-full">
-                      Notes or nearby landmark <small>(optional)</small>
-                      <input
-                        value={deliveryDirections}
-                        onChange={(e) => setDeliveryDirections(e.target.value)}
-                        placeholder="Any collection instructions for the seller"
-                      />
-                    </label>
-                    {pickupComplete && (
-                      <div className="sf-form-full" style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                        <button
-                          type="button"
-                          className="sf-btn sf-btn-secondary"
-                          style={{ minHeight: 34, padding: '0 14px', fontSize: 12.5 }}
-                          onClick={() => {
-                            syncLocalDeliveryCache();
-                            setPickupStationEditor(false);
-                          }}
-                        >
-                          Done
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="sf-panel" id="checkout-delivery-panel">
-                <div className="sf-panel-head">
-                  <div>
-                    <h2>Delivery address</h2>
-                    <p>{homeAddressComplete && !homeAddressEditor ? 'Saved drop-off address' : 'Provide the exact location for courier or rider drop-off'}</p>
-                  </div>
-                </div>
-                {homeAddressComplete && !homeAddressEditor ? (
-                  <div className="sf-saved-location-box">
-                    <span className="sf-choice-icon" style={{ width: 34, height: 34 }}>
-                      <Package size={16} />
-                    </span>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <strong>{deliveryAddress}</strong>
-                      <small>
-                        {[deliveryEstate, deliverySubCounty, deliveryCounty, deliveryDirections].filter(Boolean).join(' · ')}
-                      </small>
-                    </div>
-                    <button
-                      type="button"
-                      className="sf-btn sf-btn-secondary"
-                      style={{ minHeight: 34, padding: '0 12px', fontSize: 12.5 }}
-                      onClick={() => setHomeAddressEditor(true)}
-                    >
-                      Change
-                    </button>
-                  </div>
-                ) : (
-                  <div className="sf-form-grid">
-                    <SearchableLocationSelect
-                      label="County"
-                      value={deliveryCounty}
-                      options={kenyanCounties}
-                      placeholder="Select county (e.g. Nairobi)"
-                      onChange={(county) => {
-                        setDeliveryCounty(county);
-                        setDeliverySubCounty('');
-                      }}
-                    />
-                    <SearchableLocationSelect
-                      label="Sub-county"
-                      value={deliverySubCounty}
-                      options={kenyanSubCounties[deliveryCounty] || []}
-                      placeholder={deliveryCounty ? 'Select sub-county' : 'Select a county first'}
-                      disabled={!deliveryCounty}
-                      onChange={setDeliverySubCounty}
-                    />
-                    <label className="sf-field">
-                      Estate / area
-                      <input
-                        required
-                        value={deliveryEstate}
-                        onChange={(e) => setDeliveryEstate(e.target.value)}
-                        placeholder="e.g. Kilimani"
-                      />
-                    </label>
-                    <label className="sf-field">
-                      Street / building / house no.
-                      <input
-                        required
-                        value={deliveryAddress}
-                        onChange={(e) => setDeliveryAddress(e.target.value)}
-                        placeholder="Building, street, floor or gate"
-                      />
-                    </label>
-                    <label className="sf-field sf-form-full">
-                      Directions / landmark <small>(optional)</small>
-                      <input
-                        value={deliveryDirections}
-                        onChange={(e) => setDeliveryDirections(e.target.value)}
-                        placeholder="Nearby landmark, gate details or delivery notes"
-                      />
-                    </label>
-                    {homeAddressComplete && (
-                      <div className="sf-form-full" style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                        <button
-                          type="button"
-                          className="sf-btn sf-btn-secondary"
-                          style={{ minHeight: 34, padding: '0 14px', fontSize: 12.5 }}
-                          onClick={() => {
-                            syncLocalDeliveryCache();
-                            setHomeAddressEditor(false);
-                          }}
-                        >
-                          Done
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="sf-panel" id="checkout-contact-panel">
-              <div className="sf-panel-head">
-                <div>
-                  <h2>Contact information</h2>
-                  <p>{contactComplete && !contactEditor ? 'Dispatch & SMS updates' : 'Used for dispatch and delivery coordination'}</p>
-                </div>
-              </div>
-              {contactComplete && !contactEditor ? (
-                <div className="sf-saved-location-box">
-                  <span className="sf-choice-icon" style={{ width: 34, height: 34 }}>
-                    <UserRound size={16} />
+          <div className="sf-choice-grid" role="tablist" aria-label="Delivery method">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={deliveryMethod === 'pickup'}
+              className={`sf-choice-card ${deliveryMethod === 'pickup' ? 'active' : ''}`}
+              onClick={() => {
+                setCheckoutError('');
+                setDeliveryMethod('pickup');
+              }}
+            >
+              <span className="sf-choice-icon">
+                <MapPin size={19} />
+              </span>
+              <span className="sf-choice-copy">
+                <strong>
+                  Pickup station{' '}
+                  <span className="sf-choice-fee">
+                    {shopDeliveryPickupFee ? formatKes(shopDeliveryPickupFee) : 'Free'}
                   </span>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <strong>{customerName}</strong>
-                    <small>{[customerPhone, customerEmail].filter(Boolean).join(' · ')}</small>
+                </strong>
+                <small>Collect from your chosen station</small>
+              </span>
+              <span className="sf-choice-check">{deliveryMethod === 'pickup' ? <Check size={13} /> : ''}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={deliveryMethod === 'home'}
+              className={`sf-choice-card ${deliveryMethod === 'home' ? 'active' : ''}`}
+              onClick={() => {
+                setCheckoutError('');
+                setDeliveryMethod('home');
+              }}
+            >
+              <span className="sf-choice-icon">
+                <Package size={19} />
+              </span>
+              <span className="sf-choice-copy">
+                <strong>
+                  Door delivery{' '}
+                  <span className="sf-choice-fee">
+                    {shopDeliveryHomeFee ? formatKes(shopDeliveryHomeFee) : 'Free'}
+                  </span>
+                </strong>
+                <small>Delivered to your home or office</small>
+              </span>
+              <span className="sf-choice-check">{deliveryMethod === 'home' ? <Check size={13} /> : ''}</span>
+            </button>
+          </div>
+
+          <div className="sf-two-col">
+            <div className="sf-checkout-stack">
+              {deliveryMethod === 'pickup' ? (
+                <div className="sf-panel" id="checkout-delivery-panel">
+                  <div className="sf-panel-head">
+                    <div>
+                      <h2>Pickup location</h2>
+                      <p>{pickupComplete && !pickupStationEditor ? 'Saved collection point' : 'Choose your county and collection station'}</p>
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    className="sf-btn sf-btn-secondary"
-                    style={{ minHeight: 34, padding: '0 12px', fontSize: 12.5 }}
-                    onClick={() => setContactEditor(true)}
-                  >
-                    Change
-                  </button>
-                </div>
-              ) : (
-                <div className="sf-form-grid">
-                  <label className="sf-field">
-                    Full name
-                    <input
-                      required
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      autoComplete="name"
-                      placeholder="Your full name"
-                    />
-                  </label>
-                  <label className="sf-field">
-                    Phone number
-                    <input
-                      required
-                      type="tel"
-                      value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
-                      autoComplete="tel"
-                      placeholder="07… or +254…"
-                    />
-                  </label>
-                  <label className="sf-field sf-form-full">
-                    Email address <small>(optional)</small>
-                    <input
-                      type="email"
-                      value={customerEmail}
-                      onChange={(e) => setCustomerEmail(e.target.value)}
-                      autoComplete="email"
-                      placeholder="you@example.com"
-                    />
-                  </label>
-                  {contactComplete && (
-                    <div className="sf-form-full" style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  {pickupComplete && !pickupStationEditor ? (
+                    <div className="sf-saved-location-box">
+                      <span className="sf-choice-icon" style={{ width: 34, height: 34 }}>
+                        <MapPin size={16} />
+                      </span>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <strong>{pickupStation}</strong>
+                        <small>
+                          {[deliverySubCounty, deliveryCounty, deliveryDirections].filter(Boolean).join(' · ')}
+                        </small>
+                      </div>
                       <button
                         type="button"
                         className="sf-btn sf-btn-secondary"
-                        style={{ minHeight: 34, padding: '0 14px', fontSize: 12.5 }}
-                        onClick={() => setContactEditor(false)}
+                        style={{ minHeight: 34, padding: '0 12px', fontSize: 12.5 }}
+                        onClick={() => setPickupStationEditor(true)}
                       >
-                        Done
+                        Change
                       </button>
+                    </div>
+                  ) : (
+                    <div className="sf-form-grid">
+                      <SearchableLocationSelect
+                        label="County"
+                        value={deliveryCounty}
+                        options={kenyanCounties}
+                        placeholder="Select county (e.g. Nairobi)"
+                        onChange={(county) => {
+                          setDeliveryCounty(county);
+                          setDeliverySubCounty('');
+                        }}
+                      />
+                      <SearchableLocationSelect
+                        label="Sub-county (optional)"
+                        value={deliverySubCounty}
+                        options={kenyanSubCounties[deliveryCounty] || []}
+                        placeholder={deliveryCounty ? 'Select sub-county' : 'Select a county first'}
+                        disabled={!deliveryCounty}
+                        onChange={setDeliverySubCounty}
+                      />
+                      <label className="sf-field sf-form-full">
+                        Pickup station / collection point
+                        <input
+                          required
+                          value={pickupStation}
+                          onChange={(e) => setPickupStation(e.target.value)}
+                          placeholder="e.g. Pick-up Mtaani CBD, G4S Westlands, or shop counter"
+                        />
+                      </label>
+                      <label className="sf-field sf-form-full">
+                        Notes or nearby landmark <small>(optional)</small>
+                        <input
+                          value={deliveryDirections}
+                          onChange={(e) => setDeliveryDirections(e.target.value)}
+                          placeholder="Any collection instructions for the seller"
+                        />
+                      </label>
+                      {pickupComplete && (
+                        <div className="sf-form-full" style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                          <button
+                            type="button"
+                            className="sf-btn sf-btn-secondary"
+                            style={{ minHeight: 34, padding: '0 14px', fontSize: 12.5 }}
+                            onClick={() => setPickupStationEditor(false)}
+                          >
+                            Done
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="sf-panel" id="checkout-delivery-panel">
+                  <div className="sf-panel-head">
+                    <div>
+                      <h2>Delivery address</h2>
+                      <p>{homeAddressComplete && !homeAddressEditor ? 'Saved drop-off address' : 'Provide the exact location for courier or rider drop-off'}</p>
+                    </div>
+                  </div>
+                  {homeAddressComplete && !homeAddressEditor ? (
+                    <div className="sf-saved-location-box">
+                      <span className="sf-choice-icon" style={{ width: 34, height: 34 }}>
+                        <Package size={16} />
+                      </span>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <strong>{deliveryAddress}</strong>
+                        <small>
+                          {[deliveryEstate, deliverySubCounty, deliveryCounty, deliveryDirections].filter(Boolean).join(' · ')}
+                        </small>
+                      </div>
+                      <button
+                        type="button"
+                        className="sf-btn sf-btn-secondary"
+                        style={{ minHeight: 34, padding: '0 12px', fontSize: 12.5 }}
+                        onClick={() => setHomeAddressEditor(true)}
+                      >
+                        Change
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="sf-form-grid">
+                      <SearchableLocationSelect
+                        label="County"
+                        value={deliveryCounty}
+                        options={kenyanCounties}
+                        placeholder="Select county (e.g. Nairobi)"
+                        onChange={(county) => {
+                          setDeliveryCounty(county);
+                          setDeliverySubCounty('');
+                        }}
+                      />
+                      <SearchableLocationSelect
+                        label="Sub-county"
+                        value={deliverySubCounty}
+                        options={kenyanSubCounties[deliveryCounty] || []}
+                        placeholder={deliveryCounty ? 'Select sub-county' : 'Select a county first'}
+                        disabled={!deliveryCounty}
+                        onChange={setDeliverySubCounty}
+                      />
+                      <label className="sf-field">
+                        Estate / area
+                        <input
+                          required
+                          value={deliveryEstate}
+                          onChange={(e) => setDeliveryEstate(e.target.value)}
+                          placeholder="e.g. Kilimani"
+                        />
+                      </label>
+                      <label className="sf-field">
+                        Street / building / house no.
+                        <input
+                          required
+                          value={deliveryAddress}
+                          onChange={(e) => setDeliveryAddress(e.target.value)}
+                          placeholder="Building, street, floor or gate"
+                        />
+                      </label>
+                      <label className="sf-field sf-form-full">
+                        Directions / landmark <small>(optional)</small>
+                        <input
+                          value={deliveryDirections}
+                          onChange={(e) => setDeliveryDirections(e.target.value)}
+                          placeholder="Nearby landmark, gate details or delivery notes"
+                        />
+                      </label>
+                      {homeAddressComplete && (
+                        <div className="sf-form-full" style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                          <button
+                            type="button"
+                            className="sf-btn sf-btn-secondary"
+                            style={{ minHeight: 34, padding: '0 14px', fontSize: 12.5 }}
+                            onClick={() => setHomeAddressEditor(false)}
+                          >
+                            Done
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
               )}
+
+              <div className="sf-panel" id="checkout-contact-panel">
+                <div className="sf-panel-head">
+                  <div>
+                    <h2>Contact information</h2>
+                    <p>{contactComplete && !contactEditor ? 'Dispatch & SMS updates' : 'Used for dispatch and delivery coordination'}</p>
+                  </div>
+                </div>
+                {contactComplete && !contactEditor ? (
+                  <div className="sf-saved-location-box">
+                    <span className="sf-choice-icon" style={{ width: 34, height: 34 }}>
+                      <UserRound size={16} />
+                    </span>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <strong>{customerName}</strong>
+                      <small>{[customerPhone, customerEmail].filter(Boolean).join(' · ')}</small>
+                    </div>
+                    <button
+                      type="button"
+                      className="sf-btn sf-btn-secondary"
+                      style={{ minHeight: 34, padding: '0 12px', fontSize: 12.5 }}
+                      onClick={() => setContactEditor(true)}
+                    >
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  <div className="sf-form-grid">
+                    <label className="sf-field">
+                      Full name
+                      <input
+                        required
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        autoComplete="name"
+                        placeholder="Your full name"
+                      />
+                    </label>
+                    <label className="sf-field">
+                      Phone number
+                      <input
+                        required
+                        type="tel"
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        autoComplete="tel"
+                        placeholder="07… or +254…"
+                      />
+                    </label>
+                    <label className="sf-field sf-form-full">
+                      Email address <small>(optional)</small>
+                      <input
+                        type="email"
+                        value={customerEmail}
+                        onChange={(e) => setCustomerEmail(e.target.value)}
+                        autoComplete="email"
+                        placeholder="you@example.com"
+                      />
+                    </label>
+                    {contactComplete && (
+                      <div className="sf-form-full" style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <button
+                          type="button"
+                          className="sf-btn sf-btn-secondary"
+                          style={{ minHeight: 34, padding: '0 14px', fontSize: 12.5 }}
+                          onClick={() => setContactEditor(false)}
+                        >
+                          Done
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
+
+            {renderSummary()}
           </div>
 
-          {renderSummary()}
-        </div>
+          {checkoutError && (
+            <p className="sf-alert error" style={{ marginTop: 14 }} role="alert">
+              {checkoutError}
+            </p>
+          )}
 
-        {checkoutError && (
-          <p className="sf-alert error" style={{ marginTop: 14 }} role="alert">
-            {checkoutError}
-          </p>
-        )}
-
-        <div className="sf-checkout-footer-bar">
-          <div>
-            <small>ORDER TOTAL</small>
-            <strong>{formatKes(total)}</strong>
+          <div className="sf-checkout-footer-bar">
+            <div>
+              <small>ORDER TOTAL</small>
+              <strong>{formatKes(total)}</strong>
+            </div>
+            <button
+              type="button"
+              className="sf-btn sf-btn-accent"
+              disabled={deliveryPreferenceLoading}
+              onClick={continueToNext}
+            >
+              {checkoutReturnToSummary ? 'Save delivery details' : 'Continue to payment'} <ArrowRight size={16} />
+            </button>
           </div>
-          <button
-            type="button"
-            className="sf-btn sf-btn-accent"
-            disabled={deliveryPreferenceLoading}
-            onClick={continueToPayment}
-          >
-            Continue to payment <ArrowRight size={16} />
-          </button>
-        </div>
-      </section>
+        </section>
+      </>
     );
   }
 
@@ -2341,15 +2326,17 @@ export function StorefrontFlow({
     };
 
     return (
-      <section className="sf-flow sf-flow-compact">
-        <CheckoutProgress step={2} onNavigate={onNavigate} />
-        <FlowHeading
+      <>
+        <CheckoutTopBar
           title="Payment method"
-          subtitle="Select your preferred payment method to continue."
-          onBack={() => onNavigate('checkout/delivery')}
-          backLabel="Delivery details"
+          onBack={() => {
+            const backTarget = checkoutReturnToSummary ? 'checkout/review' : 'checkout/delivery';
+            setCheckoutReturnToSummary(false);
+            onNavigate(backTarget);
+          }}
         />
-        {renderOfflineBanner()}
+        <section className="sf-flow sf-flow-compact sf-checkout-page-flow">
+          {renderOfflineBanner()}
 
         <div className="sf-two-col">
           <div className="sf-checkout-stack">
@@ -2629,10 +2616,11 @@ export function StorefrontFlow({
                 setPaymentModal('mpesa');
                 return;
               }
+              setCheckoutReturnToSummary(false);
               onNavigate('checkout/review');
             }}
           >
-            Continue to summary <ArrowRight size={17} />
+            {checkoutReturnToSummary ? 'Save payment method' : 'Continue to summary'} <ArrowRight size={17} />
           </button>
         </div>
 
@@ -2806,7 +2794,8 @@ export function StorefrontFlow({
             </section>
           </div>
         )}
-      </section>
+        </section>
+      </>
     );
   }
 
@@ -2839,282 +2828,295 @@ export function StorefrontFlow({
       : 'Confirm order';
 
     return (
-      <section className="sf-flow sf-flow-compact sf-place-order-flow">
-        <CheckoutProgress step={3} onNavigate={onNavigate} />
-        <FlowHeading
+      <>
+        <CheckoutTopBar
           title="Place your order"
-          onBack={() => onNavigate('checkout/payment')}
-          backLabel="Payment"
+          onBack={() => {
+            setCheckoutReturnToSummary(false);
+            onNavigate('cart');
+          }}
         />
+        <section className="sf-flow sf-flow-compact sf-place-order-flow">
+          <p className="sf-checkout-terms-strip">
+            By proceeding, you are automatically accepting the{' '}
+            <button
+              type="button"
+              className="sf-auth-link"
+              onClick={() => onNavigate('shop-terms')}
+            >
+              Terms &amp; Conditions
+            </button>
+            .
+          </p>
 
-        <p className="sf-checkout-terms-strip">
-          By proceeding, you are automatically accepting the{' '}
-          <button
-            type="button"
-            className="sf-auth-link"
-            onClick={() => onNavigate('shop-terms')}
-          >
-            Terms &amp; Conditions
-          </button>
-          .
-        </p>
+          {renderOfflineBanner()}
 
-        {renderOfflineBanner()}
-
-        <div className="sf-two-col sf-review-layout">
-          <div className="sf-checkout-stack sf-review-details-col">
-            <section className="sf-review-block" aria-labelledby="review-payment-heading">
-              <div className="sf-review-block-head">
-                <span id="review-payment-heading" className="sf-kicker">PAYMENT METHOD</span>
-                <button
-                  type="button"
-                  className="sf-review-change-btn"
-                  onClick={() => onNavigate('checkout/payment')}
-                >
-                  Change
-                </button>
-              </div>
-              <div className="sf-panel sf-panel-compact sf-review-card">
-                <div className="sf-review-method-row">
-                  {paymentMethod === 'delivery' ? (
-                    <CashProviderIcon compact />
-                  ) : paymentMethod === 'card' ? (
-                    <CardProviderIcon compact />
-                  ) : (
-                    <MpesaProviderIcon compact />
-                  )}
-                  <div style={{ minWidth: 0 }}>
-                    <strong>
-                      {paymentMethod === 'mpesa'
-                        ? 'Pay Now with M-PESA'
-                        : paymentMethod === 'card'
-                        ? 'Pay with Debit or Credit Card'
-                        : deliveryMethod === 'pickup'
-                        ? 'Pay on Pickup'
-                        : 'Cash on Delivery'}
-                    </strong>
-                    <p>
-                      {paymentMethod === 'delivery'
-                        ? `Pay cash upon ${deliveryMethod === 'pickup' ? 'collection at pickup point' : 'delivery after seller confirmation'}.`
-                        : paymentMethod === 'card'
-                        ? `Receipt to ${customerEmail.trim() || 'your email'} · Paystack opens securely when you confirm.`
-                        : `Pay fast and securely with M-PESA (${paymentPhone || customerPhone}).`}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section className="sf-review-block" aria-labelledby="review-delivery-heading">
-              <div className="sf-review-block-head">
-                <span id="review-delivery-heading" className="sf-kicker">DELIVERY DETAILS</span>
-                <button
-                  type="button"
-                  className="sf-review-change-btn"
-                  onClick={() => onNavigate('checkout/delivery')}
-                >
-                  Change
-                </button>
-              </div>
-              <div className="sf-panel sf-panel-compact sf-review-card">
-                <div className="sf-review-delivery-top">
-                  <span className="sf-review-delivery-icon" aria-hidden="true">
-                    {deliveryMethod === 'pickup' ? <MapPin size={18} /> : <Package size={18} />}
-                  </span>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div className="sf-review-delivery-title">
-                      <strong>{deliveryMethod === 'pickup' ? 'Pick-up Station' : 'Door Delivery'}</strong>
-                      <span className="sf-review-fee-note">
-                        ({deliveryFee ? formatKes(deliveryFee) : 'Free'})
-                      </span>
-                    </div>
-                    <p>
-                      Recipient: {customerName} · {customerPhone}
-                    </p>
-                  </div>
-                </div>
-                <div className="sf-review-destination-box">
-                  <MapPin size={16} aria-hidden="true" />
-                  <div style={{ minWidth: 0 }}>
-                    <small>{deliveryMethod === 'pickup' ? 'Pickup Station' : 'Delivery Address'}</small>
-                    <strong>{deliveryMethod === 'pickup' ? pickupStation : addressSummary}</strong>
-                    {deliverySubtext && <span>{deliverySubtext}</span>}
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section className="sf-review-block" aria-labelledby="review-shipment-heading">
-              <div className="sf-review-block-head">
-                <span id="review-shipment-heading" className="sf-review-shipment-label">Shipment 1/1</span>
-                <span className="sf-review-fulfilled-by">Fulfilled by {shopName}</span>
-              </div>
-              <div className="sf-panel sf-panel-compact sf-review-card">
-                <div className="sf-review-shipment-head">
-                  <strong>{deliveryMethod === 'pickup' ? 'Pick-up Station' : 'Door Delivery'}</strong>
-                  <small>
-                    {deliveryMethod === 'pickup'
-                      ? `Collect from ${pickupStation || deliveryCounty || 'selected station'}`
-                      : `Deliver to ${deliveryEstate || deliveryCounty || 'your address'}`}
-                  </small>
-                </div>
-                <div className="sf-review-shipment-items">
-                  {lines.map(({ product, quantity }) => (
-                    <article className="sf-review-shipment-item" key={product.id}>
-                      <div className="sf-review-shipment-thumb">
-                        <ProductThumb product={product} />
-                        <span className="sf-review-qty-badge sf-num">x{quantity}</span>
-                      </div>
-                      <div className="sf-review-shipment-copy">
-                        <strong>{product.name}</strong>
-                        <span className="sf-num">{formatKes(product.price * quantity)}</span>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </div>
-              <div className="sf-review-modify-wrap">
-                <button
-                  type="button"
-                  className="sf-review-change-btn sf-review-modify-btn"
-                  onClick={() => onNavigate('cart')}
-                >
-                  Modify cart
-                </button>
-              </div>
-            </section>
-          </div>
-
-          <aside className="sf-summary-card sf-review-summary-col" aria-labelledby="review-order-summary-heading">
-            <span id="review-order-summary-heading" className="sf-kicker">ORDER SUMMARY</span>
-            <div className="sf-review-summary-rows">
-              <div className="sf-summary-row">
-                <span>Item’s total ({itemCount})</span>
-                <strong>{formatKes(subtotal)}</strong>
-              </div>
-              <div className="sf-summary-row">
-                <span>Delivery fees</span>
-                <strong>{deliveryFee ? formatKes(deliveryFee) : 'Free'}</strong>
-              </div>
-              {appliedCoupon && (
-                <div className="sf-summary-row">
-                  <span>Voucher ({appliedCoupon.code})</span>
-                  <strong>−{formatKes(appliedCoupon.discount)}</strong>
-                </div>
-              )}
-              <div className="sf-summary-row sf-summary-total">
-                <span>Total</span>
-                <strong>{formatKes(total)}</strong>
-              </div>
-            </div>
-
-            <div className="sf-review-voucher-box">
-              {appliedCoupon ? (
-                <div className="sf-review-voucher-applied">
-                  <TicketPercent size={16} />
-                  <span>
-                    <strong>{appliedCoupon.code}</strong> · −{formatKes(appliedCoupon.discount)}
-                  </span>
+          <div className="sf-two-col sf-review-layout">
+            <div className="sf-checkout-stack sf-review-details-col">
+              <section className="sf-review-block" aria-labelledby="review-payment-heading">
+                <div className="sf-review-block-head">
+                  <span id="review-payment-heading" className="sf-kicker">PAYMENT METHOD</span>
                   <button
                     type="button"
                     className="sf-review-change-btn"
                     onClick={() => {
-                      setAppliedCoupon(null);
-                      setVoucherMessage('');
-                      setVoucherCode('');
+                      setCheckoutReturnToSummary(true);
+                      onNavigate('checkout/payment');
                     }}
                   >
-                    Remove
+                    Change
                   </button>
                 </div>
-              ) : (
-                <div className="sf-review-voucher-form">
-                  <div className="sf-review-voucher-input-wrap">
-                    <TicketPercent size={16} aria-hidden="true" />
-                    <input
-                      aria-label="Voucher code"
-                      value={voucherCode}
-                      onChange={(event) => {
-                        setVoucherCode(event.target.value);
-                        if (voucherMessage) setVoucherMessage('');
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter') {
-                          event.preventDefault();
-                          void applyVoucher();
-                        }
-                      }}
-                      placeholder="Enter code here"
-                    />
+                <div className="sf-panel sf-panel-compact sf-review-card">
+                  <div className="sf-review-method-row">
+                    {paymentMethod === 'delivery' ? (
+                      <CashProviderIcon compact />
+                    ) : paymentMethod === 'card' ? (
+                      <CardProviderIcon compact />
+                    ) : (
+                      <MpesaProviderIcon compact />
+                    )}
+                    <div style={{ minWidth: 0 }}>
+                      <strong>
+                        {paymentMethod === 'mpesa'
+                          ? 'Pay Now with M-PESA'
+                          : paymentMethod === 'card'
+                          ? 'Pay with Debit or Credit Card'
+                          : deliveryMethod === 'pickup'
+                          ? 'Pay on Pickup'
+                          : 'Cash on Delivery'}
+                      </strong>
+                      <p>
+                        {paymentMethod === 'delivery'
+                          ? `Pay cash upon ${deliveryMethod === 'pickup' ? 'collection at pickup point' : 'delivery after seller confirmation'}.`
+                          : paymentMethod === 'card'
+                          ? `Receipt to ${customerEmail.trim() || 'your email'} · Paystack opens securely when you confirm.`
+                          : `Pay now fast and securely with M-PESA (${paymentPhone || customerPhone}).`}
+                      </p>
+                    </div>
                   </div>
+                </div>
+              </section>
+
+              <section className="sf-review-block" aria-labelledby="review-delivery-heading">
+                <div className="sf-review-block-head">
+                  <span id="review-delivery-heading" className="sf-kicker">DELIVERY DETAILS</span>
                   <button
                     type="button"
-                    className="sf-review-voucher-apply"
-                    disabled={!voucherCode.trim()}
-                    onClick={() => void applyVoucher()}
+                    className="sf-review-change-btn"
+                    onClick={() => {
+                      setCheckoutReturnToSummary(true);
+                      onNavigate('checkout/delivery');
+                    }}
                   >
-                    APPLY
+                    Change
                   </button>
                 </div>
-              )}
-              {voucherMessage && (
-                <small className="sf-review-voucher-msg" role="status">
-                  {voucherMessage}
-                </small>
-              )}
+                <div className="sf-panel sf-panel-compact sf-review-card">
+                  <div className="sf-review-delivery-top">
+                    <span className="sf-review-delivery-icon" aria-hidden="true">
+                      {deliveryMethod === 'pickup' ? <MapPin size={18} /> : <Package size={18} />}
+                    </span>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div className="sf-review-delivery-title">
+                        <strong>{deliveryMethod === 'pickup' ? 'Pick-up Station' : 'Door Delivery'}</strong>
+                        <span className="sf-review-fee-note">
+                          ({deliveryFee ? formatKes(deliveryFee) : 'Free'})
+                        </span>
+                      </div>
+                      <p>
+                        Recipient: {customerName} · {customerPhone}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="sf-review-destination-box">
+                    <MapPin size={16} aria-hidden="true" />
+                    <div style={{ minWidth: 0 }}>
+                      <small>{deliveryMethod === 'pickup' ? 'Pickup Station' : 'Delivery Address'}</small>
+                      <strong>{deliveryMethod === 'pickup' ? pickupStation : addressSummary}</strong>
+                      {deliverySubtext && <span>{deliverySubtext}</span>}
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="sf-review-block" aria-labelledby="review-shipment-heading">
+                <div className="sf-review-block-head">
+                  <span id="review-shipment-heading" className="sf-review-shipment-label">Shipment 1/1</span>
+                  <span className="sf-review-fulfilled-by">Fulfilled by {shopName}</span>
+                </div>
+                <div className="sf-panel sf-panel-compact sf-review-card">
+                  <div className="sf-review-shipment-head">
+                    <strong>{deliveryMethod === 'pickup' ? 'Pick-up Station' : 'Door Delivery'}</strong>
+                    <small>
+                      {deliveryMethod === 'pickup'
+                        ? `Collect from ${pickupStation || deliveryCounty || 'selected station'}`
+                        : `Deliver to ${deliveryEstate || deliveryCounty || 'your address'}`}
+                    </small>
+                  </div>
+                  <div className="sf-review-shipment-items">
+                    {lines.map(({ product, quantity }) => (
+                      <article className="sf-review-shipment-item" key={product.id}>
+                        <div className="sf-review-shipment-thumb">
+                          <ProductThumb product={product} />
+                          <span className="sf-review-qty-badge sf-num">x{quantity}</span>
+                        </div>
+                        <div className="sf-review-shipment-copy">
+                          <strong>{product.name}</strong>
+                          <span className="sf-num">{formatKes(product.price * quantity)}</span>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+                <div className="sf-review-modify-wrap">
+                  <button
+                    type="button"
+                    className="sf-review-change-btn sf-review-modify-btn"
+                    onClick={() => {
+                      setCheckoutReturnToSummary(false);
+                      onNavigate('cart');
+                    }}
+                  >
+                    Modify cart
+                  </button>
+                </div>
+              </section>
             </div>
 
+            <aside className="sf-summary-card sf-review-summary-col" aria-labelledby="review-order-summary-heading">
+              <span id="review-order-summary-heading" className="sf-kicker">ORDER SUMMARY</span>
+              <div className="sf-review-summary-rows">
+                <div className="sf-summary-row">
+                  <span>Item’s total ({itemCount})</span>
+                  <strong>{formatKes(subtotal)}</strong>
+                </div>
+                <div className="sf-summary-row">
+                  <span>Delivery fees</span>
+                  <strong>{deliveryFee ? formatKes(deliveryFee) : 'Free'}</strong>
+                </div>
+                {appliedCoupon && (
+                  <div className="sf-summary-row">
+                    <span>Voucher ({appliedCoupon.code})</span>
+                    <strong>−{formatKes(appliedCoupon.discount)}</strong>
+                  </div>
+                )}
+                <div className="sf-summary-row sf-summary-total">
+                  <span>Total</span>
+                  <strong>{formatKes(total)}</strong>
+                </div>
+              </div>
+
+              <div className="sf-review-voucher-box">
+                {appliedCoupon ? (
+                  <div className="sf-review-voucher-applied">
+                    <TicketPercent size={16} />
+                    <span>
+                      <strong>{appliedCoupon.code}</strong> · −{formatKes(appliedCoupon.discount)}
+                    </span>
+                    <button
+                      type="button"
+                      className="sf-review-change-btn"
+                      onClick={() => {
+                        setAppliedCoupon(null);
+                        setVoucherMessage('');
+                        setVoucherCode('');
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <div className="sf-review-voucher-form">
+                    <div className="sf-review-voucher-input-wrap">
+                      <TicketPercent size={16} aria-hidden="true" />
+                      <input
+                        aria-label="Voucher code"
+                        value={voucherCode}
+                        onChange={(event) => {
+                          setVoucherCode(event.target.value);
+                          if (voucherMessage) setVoucherMessage('');
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            event.preventDefault();
+                            void applyVoucher();
+                          }
+                        }}
+                        placeholder="Enter code here"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      className="sf-review-voucher-apply"
+                      disabled={!voucherCode.trim()}
+                      onClick={() => void applyVoucher()}
+                    >
+                      APPLY
+                    </button>
+                  </div>
+                )}
+                {voucherMessage && (
+                  <small className="sf-review-voucher-msg" role="status">
+                    {voucherMessage}
+                  </small>
+                )}
+              </div>
+
+              <button
+                type="button"
+                className="sf-btn sf-btn-accent sf-review-desktop-confirm"
+                disabled={!canSubmit}
+                onClick={placeOrder}
+              >
+                {confirmLabel}
+              </button>
+              <p className="sf-summary-note">
+                <ShieldCheck size={15} style={{ flexShrink: 0, marginTop: 2 }} />
+                <span>Prices and stock are verified live before payment is processed.</span>
+              </p>
+            </aside>
+          </div>
+
+          {checkoutError && (
+            <p className="sf-alert error" style={{ marginTop: 14 }} role="alert">
+              {checkoutError}
+            </p>
+          )}
+          {cardFallbackUrl && paymentMethod === 'card' && (
+            <div style={{ marginTop: 10 }}>
+              <a className="sf-btn sf-btn-secondary" href={cardFallbackUrl} rel="noopener noreferrer">
+                Open Paystack card page <ArrowRight size={15} />
+              </a>
+            </div>
+          )}
+
+          <div className="sf-checkout-footer-bar sf-checkout-footer-mobile-only">
             <button
               type="button"
-              className="sf-btn sf-btn-accent sf-review-desktop-confirm"
+              className="sf-btn sf-btn-accent sf-checkout-main-cta"
               disabled={!canSubmit}
               onClick={placeOrder}
             >
               {confirmLabel}
             </button>
-            <p className="sf-summary-note">
-              <ShieldCheck size={15} style={{ flexShrink: 0, marginTop: 2 }} />
-              <span>Prices and stock are verified live before payment is processed.</span>
-            </p>
-          </aside>
-        </div>
-
-        {checkoutError && (
-          <p className="sf-alert error" style={{ marginTop: 14 }} role="alert">
-            {checkoutError}
-          </p>
-        )}
-        {cardFallbackUrl && paymentMethod === 'card' && (
-          <div style={{ marginTop: 10 }}>
-            <a className="sf-btn sf-btn-secondary" href={cardFallbackUrl} rel="noopener noreferrer">
-              Open Paystack card page <ArrowRight size={15} />
-            </a>
           </div>
-        )}
-
-        <div className="sf-checkout-footer-bar sf-checkout-footer-mobile-only">
-          <button
-            type="button"
-            className="sf-btn sf-btn-accent sf-checkout-main-cta"
-            disabled={!canSubmit}
-            onClick={placeOrder}
-          >
-            {confirmLabel}
-          </button>
-        </div>
-      </section>
+        </section>
+      </>
     );
   }
 
   function renderPaymentProcessing() {
     if (!activeOrder)
       return (
-        <section className="sf-flow">
-          <FlowHeading title="Payment processing" onBack={() => onNavigate('cart')} />
-          <div className="sf-state-box">
-            <p>Loading…</p>
-          </div>
-        </section>
+        <>
+          <CheckoutTopBar title="Payment status" onBack={() => onNavigate('cart')} />
+          <section className="sf-flow">
+            <div className="sf-state-box">
+              <p>Loading…</p>
+            </div>
+          </section>
+        </>
       );
 
     const paymentState = String(activeOrder.paymentStatus || 'pending').toLowerCase();
@@ -3125,103 +3127,110 @@ export function StorefrontFlow({
     const providerLabel = isCardOrder ? 'Paystack' : 'Safaricom';
 
     return (
-      <section className="sf-status-shell">
-        {paymentWaiting && <div className="sf-processing-ring" aria-hidden="true" />}
-        <span className="sf-kicker">
-          {paymentSucceeded ? 'PAYMENT CONFIRMED' : paymentTerminal ? 'PAYMENT NOT COMPLETED' : 'SECURE PAYMENT CHECK'}
-        </span>
-        <h1>
-          {paymentSucceeded
-            ? 'Your payment is confirmed'
-            : paymentState === 'cancelled'
-            ? isCardOrder ? 'Card payment cancelled' : 'You cancelled the M-PESA prompt'
-            : paymentState === 'failed'
-            ? isCardOrder ? 'Card payment failed' : 'M-PESA payment failed'
-            : paymentState === 'reversed'
-            ? 'Payment reversed'
-            : isCardOrder ? 'Confirming your card payment' : 'Confirming your M-PESA payment'}
-        </h1>
-        <p style={{ margin: 0, color: 'var(--sf-muted)' }}>
-          {paymentSucceeded
-            ? activeOrder.receipt
-              ? `${providerLabel} confirmed your payment. Receipt: ` + activeOrder.receipt
-              : `${providerLabel} confirmed your payment.`
-            : paymentTerminal
-            ? paymentState === 'cancelled'
-              ? `${providerLabel} confirmed that you cancelled the payment. No payment was collected. You can safely retry when ready.`
-              : `${providerLabel} confirmed that this payment did not complete. No payment was collected. You can retry when ready.`
-            : paymentProviderResponded
-            ? `${providerLabel} has responded. We are verifying the payment receipt before confirming your order.`
-            : 'Keep this page open while we wait for the payment confirmation.'}
-        </p>
-
-        <div className="sf-panel sf-kv-grid">
-          <div>
-            <small>ORDER NUMBER</small>
-            <strong className="sf-mono">{activeOrder.orderNumber}</strong>
-          </div>
-          <div>
-            <small>AMOUNT</small>
-            <strong>{formatKes(activeOrder.total)}</strong>
-          </div>
-          <div>
-            <small>{isCardOrder ? 'EMAIL' : 'PAYMENT PHONE'}</small>
-            <strong className="sf-mono">{isCardOrder ? activeOrder.customerEmail || customerEmail || '—' : paymentPhone || activeOrder.customerPhone}</strong>
-          </div>
-        </div>
-
-        <p
-          className={`sf-alert ${paymentSucceeded ? 'success' : paymentTerminal ? 'error' : ''}`}
-          role="status"
-        >
-          {paymentSucceeded
-            ? `Payment confirmed by ${providerLabel}.`
-            : paymentTerminal
-            ? paymentPollMessage || 'Payment request ended.'
-            : paymentPollMessage}
-        </p>
-
-        {paymentWaiting && (
-          <p className="sf-summary-note">
-            <ShieldCheck size={16} />
-            <span>
-              {isCardOrder
-                ? 'Your order will only be marked paid after Paystack’s payment confirmation is verified. Do not submit another card charge while this check is running.'
-                : 'Your order will only be marked paid after Safaricom’s payment receipt is verified. Do not send another payment prompt while this check is running.'}
-            </span>
+      <>
+        <CheckoutTopBar title="Payment status" onBack={() => onNavigate('orders')} />
+        <section className="sf-status-shell">
+          {paymentWaiting && <div className="sf-processing-ring" aria-hidden="true" />}
+          <span className="sf-kicker">
+            {paymentSucceeded ? 'PAYMENT CONFIRMED' : paymentTerminal ? 'PAYMENT NOT COMPLETED' : 'SECURE PAYMENT CHECK'}
+          </span>
+          <h1>
+            {paymentSucceeded
+              ? 'Your payment is confirmed'
+              : paymentState === 'cancelled'
+              ? isCardOrder ? 'Card payment cancelled' : 'You cancelled the M-PESA prompt'
+              : paymentState === 'failed'
+              ? isCardOrder ? 'Card payment failed' : 'M-PESA payment failed'
+              : paymentState === 'reversed'
+              ? 'Payment reversed'
+              : isCardOrder ? 'Confirming your card payment' : 'Confirming your M-PESA payment'}
+          </h1>
+          <p style={{ margin: 0, color: 'var(--sf-muted)' }}>
+            {paymentSucceeded
+              ? activeOrder.receipt
+                ? `${providerLabel} confirmed your payment. Receipt: ` + activeOrder.receipt
+                : `${providerLabel} confirmed your payment.`
+              : paymentTerminal
+              ? paymentState === 'cancelled'
+                ? `${providerLabel} confirmed that you cancelled the payment. No payment was collected. You can safely retry when ready.`
+                : `${providerLabel} confirmed that this payment did not complete. No payment was collected. You can retry when ready.`
+              : paymentProviderResponded
+              ? `${providerLabel} has responded. We are verifying the payment receipt before confirming your order.`
+              : 'Keep this page open while we wait for the payment confirmation.'}
           </p>
-        )}
 
-        <div>
-          <button
-            type="button"
-            className="sf-btn sf-btn-primary"
-            onClick={() => openOrder(activeOrder, 'order-detail')}
+          <div className="sf-panel sf-kv-grid">
+            <div>
+              <small>ORDER NUMBER</small>
+              <strong className="sf-mono">{activeOrder.orderNumber}</strong>
+            </div>
+            <div>
+              <small>AMOUNT</small>
+              <strong>{formatKes(activeOrder.total)}</strong>
+            </div>
+            <div>
+              <small>{isCardOrder ? 'EMAIL' : 'PAYMENT PHONE'}</small>
+              <strong className="sf-mono">{isCardOrder ? activeOrder.customerEmail || customerEmail || '—' : paymentPhone || activeOrder.customerPhone}</strong>
+            </div>
+          </div>
+
+          <p
+            className={`sf-alert ${paymentSucceeded ? 'success' : paymentTerminal ? 'error' : ''}`}
+            role="status"
           >
-            {paymentTerminal ? 'View order and retry' : 'View order status'}
-          </button>
-        </div>
-      </section>
+            {paymentSucceeded
+              ? `Payment confirmed by ${providerLabel}.`
+              : paymentTerminal
+              ? paymentPollMessage || 'Payment request ended.'
+              : paymentPollMessage}
+          </p>
+
+          {paymentWaiting && (
+            <p className="sf-summary-note">
+              <ShieldCheck size={16} />
+              <span>
+                {isCardOrder
+                  ? 'Your order will only be marked paid after Paystack’s payment confirmation is verified. Do not submit another card charge while this check is running.'
+                  : 'Your order will only be marked paid after Safaricom’s payment receipt is verified. Do not send another payment prompt while this check is running.'}
+              </span>
+            </p>
+          )}
+
+          <div>
+            <button
+              type="button"
+              className="sf-btn sf-btn-primary"
+              onClick={() => openOrder(activeOrder, 'order-detail')}
+            >
+              {paymentTerminal ? 'View order and retry' : 'View order status'}
+            </button>
+          </div>
+        </section>
+      </>
     );
   }
 
   function renderSuccess() {
     if (!activeOrder) {
       return (
-        <div className="sf-flow">
-          <FlowHeading title="Order confirmation" onBack={() => onNavigate('store')} />
-          <div className="sf-state-box">
-            <h2>No preview order yet</h2>
-            <button type="button" className="sf-btn sf-btn-primary" onClick={() => onNavigate('store')}>
-              Continue shopping
-            </button>
+        <>
+          <CheckoutTopBar title="Order confirmed" onBack={() => onNavigate('store')} />
+          <div className="sf-flow">
+            <div className="sf-state-box">
+              <h2>No preview order yet</h2>
+              <button type="button" className="sf-btn sf-btn-primary" onClick={() => onNavigate('store')}>
+                Continue shopping
+              </button>
+            </div>
           </div>
-        </div>
+        </>
       );
     }
 
     return (
-      <section className="sf-flow">
+      <>
+        <CheckoutTopBar title="Order confirmed" onBack={() => onNavigate('store')} />
+        <section className="sf-flow">
         <div className="sf-panel" style={{ marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
             <span className="sf-state-icon" style={{ background: 'var(--sf-success-bg)', color: 'var(--sf-success)' }}>
@@ -3339,7 +3348,8 @@ export function StorefrontFlow({
             </div>
           </section>
         )}
-      </section>
+        </section>
+      </>
     );
   }
 

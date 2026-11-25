@@ -269,7 +269,36 @@ function productOut(p:any,includeMetadata=false){
   if(value.startsWith('s3://'))return storageUrl(value.slice(5).replace(/^documents\//,''),'GET');
   return value;
  }).filter(Boolean);
- return {id:p.id,name:p.name,description:p.description,images,imageUrl:images[0]||'',category:String(p.metadata?.category||(p.product_type==='data_bundle'?'Data bundles':p.product_type==='digital'?'Digital products':'Shop products')),spotlight:Boolean(p.metadata?.spotlight),testProduct:Boolean(p.metadata?.test_product),type:p.product_type,price:Number(p.price_minor)/100,currency:p.currency,stockQuantity:p.stock_quantity,active:p.is_active,sku:p.sku||'',ratingAverage:Number(p.rating_average||0),ratingCount:Number(p.rating_count||0),...(includeMetadata?{metadata:p.metadata||{}}:{})};
+ return {id:p.id,name:p.name,description:p.description,images,imageUrl:images[0]||'',category:String(p.metadata?.category||(p.product_type==='data_bundle'?'Data bundles':p.product_type==='digital'?'Digital products':'Shop products')),parentCategory:String(p.metadata?.parent_category||''),spotlight:Boolean(p.metadata?.spotlight),testProduct:Boolean(p.metadata?.test_product),type:p.product_type,price:Number(p.price_minor)/100,currency:p.currency,stockQuantity:p.stock_quantity,active:p.is_active,sku:p.sku||'',ratingAverage:Number(p.rating_average||0),ratingCount:Number(p.rating_count||0),...(includeMetadata?{metadata:p.metadata||{}}:{})};
+}
+let buyerCartTableReady=false;
+async function ensureBuyerCartTable(sql:any){
+ if(buyerCartTableReady)return;
+ await sql`CREATE TABLE IF NOT EXISTS public.buyer_cart_items (buyer_user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,tenant_id uuid NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,product_id uuid NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,quantity integer NOT NULL CHECK (quantity > 0 AND quantity <= 99),created_at timestamptz NOT NULL DEFAULT now(),updated_at timestamptz NOT NULL DEFAULT now(),PRIMARY KEY (buyer_user_id, tenant_id, product_id))`;
+ await sql`CREATE INDEX IF NOT EXISTS buyer_cart_tenant_user_idx ON public.buyer_cart_items(tenant_id, buyer_user_id, updated_at DESC)`;
+ buyerCartTableReady=true;
+}
+function isTrustedSameOriginPost(req:any){
+ const originHeader=String(req.headers.origin||'').trim();
+ if(!originHeader)return true;
+ try{
+  const originHost=new URL(originHeader).host.toLowerCase();
+  const expectedHost=String(req.headers['x-forwarded-host']||req.headers.host||'').split(',')[0].trim().toLowerCase();
+  return Boolean(originHost&&expectedHost&&originHost===expectedHost);
+ }catch{return false;}
+}
+async function readBuyerCart(sql:any,userId:string,tenantId:string){
+ await ensureBuyerCartTable(sql);
+ await sql`DELETE FROM public.buyer_cart_items c WHERE c.buyer_user_id=${userId} AND c.tenant_id=${tenantId} AND NOT EXISTS (SELECT 1 FROM public.products p WHERE p.id=c.product_id AND p.tenant_id=c.tenant_id AND p.is_active=true AND (p.stock_quantity IS NULL OR p.stock_quantity>0))`;
+ const rows=await sql`SELECT c.quantity,p.id,p.name,p.description,p.product_type,p.price_minor,p.currency,p.stock_quantity,p.is_active,p.images,p.metadata,p.sku FROM public.buyer_cart_items c JOIN public.products p ON p.id=c.product_id AND p.tenant_id=c.tenant_id WHERE c.buyer_user_id=${userId} AND c.tenant_id=${tenantId} AND p.is_active=true AND (p.stock_quantity IS NULL OR p.stock_quantity>0) ORDER BY c.created_at ASC,c.product_id ASC`;
+ const cart:Record<string,number>={},items:Array<{product:any;quantity:number}>=[];
+ for(const r of rows){
+  const maxStock=r.stock_quantity===null||r.stock_quantity===undefined?99:Math.max(1,Number(r.stock_quantity));
+  const quantity=Math.max(1,Math.min(99,maxStock,Number(r.quantity)||1));
+  cart[String(r.id)]=quantity;
+  items.push({product:productOut(r),quantity});
+ }
+ return {cart,items};
 }
 export default async function handler(req:any,res:any){
  res.setHeader('Cache-Control','no-store');
@@ -281,12 +310,82 @@ export default async function handler(req:any,res:any){
   const sql=db();
   const requestedShopSlug=String(req.method==='GET'?req.query?.slug:(req.body?.slug||req.query?.slug)||'').toLowerCase().trim();
   if(requestedShopSlug)await sql`UPDATE public.tenants t SET status='past_due',updated_at=now() WHERE t.slug=${requestedShopSlug} AND t.status IN ('trial','active') AND EXISTS (SELECT 1 FROM public.subscriptions s WHERE s.tenant_id=t.id AND ((s.status='trialing' AND COALESCE(s.trial_ends_at,s.current_period_end)<=now()) OR (s.status='active' AND s.current_period_end<=now())))`;
-  if(['buyer-account-data','buyer-delivery-preference','buyer-follow-shop','buyer-wishlist','buyer-newsletter','buyer-close-account'].includes(action)){
+  if(['buyer-account-data','buyer-delivery-preference','buyer-follow-shop','buyer-wishlist','buyer-newsletter','buyer-close-account','buyer-cart'].includes(action)){
    const b=req.body||{},slug=String(req.method==='GET'?req.query?.slug:b.slug||'').toLowerCase().trim();
    const shops=await sql`SELECT id,slug,name FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
    if(!shops.length)return send(res,404,{error:'Shop not found.'});
    const buyer=await buyerSession(sql,req,shops[0].id);if(!buyer)return send(res,401,{error:'Sign in to manage your buyer account.'});
    const userId=buyer.user_id;if(!userId)return send(res,403,{error:'This legacy buyer session must be refreshed. Sign in again to continue.'});
+   if(action==='buyer-cart'){
+    if(req.method==='GET'){
+     if(!hasDatabaseConfig())return send(res,200,{ok:true,cart:{},items:[]});
+     const payload=await readBuyerCart(sql,userId,shops[0].id);
+     return send(res,200,{ok:true,...payload});
+    }
+    if(req.method==='DELETE'){
+     if(!isTrustedSameOriginPost(req))return send(res,403,{error:'Untrusted request origin.'});
+     await ensureBuyerCartTable(sql);
+     await sql`DELETE FROM public.buyer_cart_items WHERE buyer_user_id=${userId} AND tenant_id=${shops[0].id}`;
+     return send(res,200,{ok:true,cart:{},items:[]});
+    }
+    if(req.method==='POST'){
+     if(!isTrustedSameOriginPost(req))return send(res,403,{error:'Untrusted request origin.'});
+     await ensureBuyerCartTable(sql);
+     const mode=String(b.mode||'sync').trim().toLowerCase(),tenantId=shops[0].id;
+     if(!['sync','merge','set','clear'].includes(mode))return send(res,400,{error:'Unsupported cart operation.'});
+     if(mode==='clear'){
+      await sql`DELETE FROM public.buyer_cart_items WHERE buyer_user_id=${userId} AND tenant_id=${tenantId}`;
+      return send(res,200,{ok:true,cart:{},items:[]});
+     }
+     if(mode==='set'){
+      const productId=String(b.productId||'').trim(),qtyNum=Math.floor(Number(b.quantity));
+      if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(productId))return send(res,400,{error:'Choose a valid product.'});
+      if(!Number.isFinite(qtyNum)||qtyNum<0||qtyNum>99)return send(res,400,{error:'Invalid product quantity.'});
+      if(qtyNum===0){
+       await sql`DELETE FROM public.buyer_cart_items WHERE buyer_user_id=${userId} AND tenant_id=${tenantId} AND product_id=${productId}`;
+      }else{
+       const ps=await sql`SELECT id,stock_quantity FROM public.products WHERE id=${productId} AND tenant_id=${tenantId} AND is_active=true AND (stock_quantity IS NULL OR stock_quantity>0) LIMIT 1`;
+       if(!ps.length)return send(res,404,{error:'Product is unavailable.'});
+       const maxStock=ps[0].stock_quantity===null||ps[0].stock_quantity===undefined?99:Math.max(1,Number(ps[0].stock_quantity));
+       const clamped=Math.max(1,Math.min(99,maxStock,qtyNum));
+       await sql`INSERT INTO public.buyer_cart_items(buyer_user_id,tenant_id,product_id,quantity,updated_at) VALUES(${userId},${tenantId},${productId},${clamped},now()) ON CONFLICT(buyer_user_id,tenant_id,product_id) DO UPDATE SET quantity=EXCLUDED.quantity,updated_at=now()`;
+      }
+      return send(res,200,{ok:true,...(await readBuyerCart(sql,userId,tenantId))});
+     }
+     const rawItems=Array.isArray(b.items)?b.items:(b.cart&&typeof b.cart==='object'&&!Array.isArray(b.cart)?Object.entries(b.cart).map(([productId,quantity])=>({productId,quantity})):[]);
+     const itemMap=new Map<string,number>();
+     for(const entry of rawItems.slice(0,100)){
+      const productId=String(entry?.productId||entry?.id||'').trim();
+      const qty=Math.floor(Number(entry?.quantity));
+      if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(productId))continue;
+      if(!Number.isFinite(qty)||qty<=0)continue;
+      itemMap.set(productId,Math.min(99,(itemMap.get(productId)||0)+qty));
+     }
+     const sanitized=Array.from(itemMap.entries()).map(([product_id,quantity])=>({product_id,quantity}));
+     const productIds=sanitized.map(x=>x.product_id);
+     if(mode==='sync'){
+      if(!sanitized.length){
+       await sql`DELETE FROM public.buyer_cart_items WHERE buyer_user_id=${userId} AND tenant_id=${tenantId}`;
+       return send(res,200,{ok:true,cart:{},items:[]});
+      }
+      await sql`DELETE FROM public.buyer_cart_items WHERE buyer_user_id=${userId} AND tenant_id=${tenantId} AND NOT (product_id = ANY(${productIds}::uuid[]))`;
+      await sql`INSERT INTO public.buyer_cart_items(buyer_user_id,tenant_id,product_id,quantity,updated_at)
+       SELECT ${userId},${tenantId},p.id,LEAST(99,COALESCE(p.stock_quantity,99),GREATEST(1,r.quantity)),now()
+       FROM jsonb_to_recordset(${JSON.stringify(sanitized)}::jsonb) AS r(product_id uuid,quantity integer)
+       JOIN public.products p ON p.id=r.product_id AND p.tenant_id=${tenantId} AND p.is_active=true AND (p.stock_quantity IS NULL OR p.stock_quantity>0)
+       ON CONFLICT(buyer_user_id,tenant_id,product_id) DO UPDATE SET quantity=EXCLUDED.quantity,updated_at=now()`;
+      return send(res,200,{ok:true,...(await readBuyerCart(sql,userId,tenantId))});
+     }
+     if(sanitized.length){
+      await sql`INSERT INTO public.buyer_cart_items(buyer_user_id,tenant_id,product_id,quantity,updated_at)
+       SELECT ${userId},${tenantId},p.id,LEAST(99,COALESCE(p.stock_quantity,99),GREATEST(1,r.quantity)),now()
+       FROM jsonb_to_recordset(${JSON.stringify(sanitized)}::jsonb) AS r(product_id uuid,quantity integer)
+       JOIN public.products p ON p.id=r.product_id AND p.tenant_id=${tenantId} AND p.is_active=true AND (p.stock_quantity IS NULL OR p.stock_quantity>0)
+       ON CONFLICT(buyer_user_id,tenant_id,product_id) DO UPDATE SET quantity=LEAST(99,COALESCE((SELECT stock_quantity FROM public.products px WHERE px.id=EXCLUDED.product_id),99),public.buyer_cart_items.quantity+EXCLUDED.quantity),updated_at=now()`;
+     }
+     return send(res,200,{ok:true,...(await readBuyerCart(sql,userId,tenantId))});
+    }
+   }
    if(action==='buyer-delivery-preference'&&req.method==='GET'){
     const rows=await sql`SELECT delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,updated_at FROM public.buyer_delivery_preferences WHERE buyer_user_id=${userId} LIMIT 1`;
     const r=rows[0];return send(res,200,{preference:r?{deliveryMethod:r.delivery_method,deliveryCounty:r.delivery_county||'',deliverySubCounty:r.delivery_sub_county||'',deliveryEstate:r.delivery_estate||'',deliveryAddress:r.delivery_address||'',deliveryDirections:r.delivery_directions||'',pickupStation:r.pickup_station||'',updatedAt:r.updated_at}:null});
@@ -294,7 +393,9 @@ export default async function handler(req:any,res:any){
    if(action==='buyer-delivery-preference'&&req.method==='POST'){
     const method=String(b.deliveryMethod||'').trim(),county=String(b.deliveryCounty||'').trim().slice(0,80),subCounty=String(b.deliverySubCounty||'').trim().slice(0,100),estate=String(b.deliveryEstate||'').trim().slice(0,160),address=String(b.deliveryAddress||'').trim().slice(0,300),directions=String(b.deliveryDirections||'').trim().slice(0,500),pickup=String(b.pickupStation||'').trim().slice(0,200);
     if(!['home','pickup'].includes(method))return send(res,400,{error:'Choose a valid delivery method.'});
-    if(!county||!subCounty||!estate||!address||(method==='pickup'&&!pickup))return send(res,400,{error:'Complete the county, sub-county, estate, physical address and pickup point where required.'});
+    if(!county)return send(res,400,{error:'Select your county.'});
+    if(method==='home'&&(!subCounty||!estate||!address))return send(res,400,{error:'Complete the sub-county, estate, and physical delivery address.'});
+    if(method==='pickup'&&!pickup)return send(res,400,{error:'Enter your preferred pickup station or collection point.'});
     const rows=await sql`INSERT INTO public.buyer_delivery_preferences(buyer_user_id,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,updated_at) VALUES(${userId},${method},${county},${subCounty},${estate},${address},${directions||null},${pickup||null},now()) ON CONFLICT(buyer_user_id) DO UPDATE SET delivery_method=EXCLUDED.delivery_method,delivery_county=EXCLUDED.delivery_county,delivery_sub_county=EXCLUDED.delivery_sub_county,delivery_estate=EXCLUDED.delivery_estate,delivery_address=EXCLUDED.delivery_address,delivery_directions=EXCLUDED.delivery_directions,pickup_station=EXCLUDED.pickup_station,updated_at=now() RETURNING delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,updated_at`;
     const r=rows[0];return send(res,200,{ok:true,preference:{deliveryMethod:r.delivery_method,deliveryCounty:r.delivery_county,deliverySubCounty:r.delivery_sub_county,deliveryEstate:r.delivery_estate,deliveryAddress:r.delivery_address,deliveryDirections:r.delivery_directions||'',pickupStation:r.pickup_station||'',updatedAt:r.updated_at}});
    }
@@ -559,7 +660,7 @@ export default async function handler(req:any,res:any){
   // Buyer storefront chat and verified-review routes enforce their own
   // buyer-session or scoped order-token checks in their handlers. Do not
   // reject them at the seller-workspace authentication gate.
-  const buyerAccessibleActions=['coupons-public','coupon-validate','complaint-attachment','buyer-reports','buyer-notifications','complaint','customer-orders','customer-chat','buyer-account-data','buyer-delivery-preference','buyer-follow-shop','buyer-wishlist','buyer-newsletter','buyer-close-account','product-reviews','order','chat-attachment','customer-payment-status','customer-payment-retry'];
+  const buyerAccessibleActions=['coupons-public','coupon-validate','complaint-attachment','buyer-reports','buyer-notifications','complaint','customer-orders','customer-chat','buyer-account-data','buyer-delivery-preference','buyer-follow-shop','buyer-wishlist','buyer-newsletter','buyer-close-account','buyer-cart','product-reviews','order','chat-attachment','customer-payment-status','customer-payment-retry'];
   if(!me&&!buyerAccessibleActions.includes(action))return send(res,401,{error:'Sign in to manage your shop.'});
   if(req.method==='POST'&&action==='products-test-seed'){
    if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission to generate test products.'});
@@ -986,6 +1087,7 @@ export default async function handler(req:any,res:any){
      ) SELECT c.id,c.order_number,p.id AS payment_id FROM created_order c JOIN new_payment p ON p.order_id=c.id`;
     if(!cashOrder.length){const prior=await sql`SELECT o.id,o.order_number,o.total_minor,o.subtotal_minor,o.delivery_fee_minor,o.discount_minor,o.coupon_code FROM public.orders o WHERE o.tenant_id=${tenantId} AND o.checkout_idempotency_key=${idempotency} LIMIT 1`;if(!prior.length)return send(res,409,{error:'Checkout is already being processed. Refresh your orders in a moment.'});return send(res,200,{ok:true,orderId:prior[0].id,orderNumber:prior[0].order_number,paymentStatus:'cash_due',paymentMethod:'delivery',subtotal:Number(prior[0].subtotal_minor)/100,deliveryFee:Number(prior[0].delivery_fee_minor||0)/100,discount:Number(prior[0].discount_minor||0)/100,total:Number(prior[0].total_minor)/100,couponCode:prior[0].coupon_code||null,chatToken:''});}
     await reserveInventory(sql,String(cashOrder[0].payment_id));
+    if(buyer.user_id){try{await ensureBuyerCartTable(sql);await sql`DELETE FROM public.buyer_cart_items WHERE buyer_user_id=${buyer.user_id} AND tenant_id=${tenantId}`;}catch{}}
     try{await sql`CREATE TABLE IF NOT EXISTS public.tenant_email_configs(tenant_id uuid PRIMARY KEY REFERENCES public.tenants(id) ON DELETE CASCADE,encrypted_config jsonb NOT NULL,from_email text NOT NULL,reply_to_email text NOT NULL,notification_email text,enabled boolean NOT NULL DEFAULT true,updated_at timestamptz NOT NULL DEFAULT now())`;await sql`ALTER TABLE public.tenant_email_configs ADD COLUMN IF NOT EXISTS notification_email text`;const info=await sql`SELECT o.order_number,o.customer_name,o.customer_email,t.name AS shop_name,COALESCE(NULLIF(ec.notification_email,''),NULLIF(u.email,''),NULLIF(ec.reply_to_email,'')) AS seller_email FROM public.orders o JOIN public.tenants t ON t.id=o.tenant_id LEFT JOIN public.users u ON u.id=t.created_by LEFT JOIN public.tenant_email_configs ec ON ec.tenant_id=t.id AND ec.enabled=true WHERE o.id=${cashOrder[0].id} AND o.tenant_id=${tenantId} LIMIT 1`;const order=info[0];const mail=brandedEmail(String(order?.shop_name||'Your shop'),'Cash order received','An order has been placed with cash payment due when it is delivered or collected. The order summary is included below.',{'Order number':String(order?.order_number||''),'Buyer':String(order?.customer_name||name),'Collection':deliveryMethod==='pickup'?'Cash on pickup':'Cash on delivery','Amount due':(payableTotal/100).toLocaleString('en-KE',{style:'currency',currency:'KES'})});if(order?.customer_email)await sendTenantTransactionalEmail(sql,tenantId,{to:String(order.customer_email),subject:'Order received — cash payment due',...mail,idempotencyKey:'cash-order-buyer-'+String(order.order_number)});if(order?.seller_email)await sendTenantTransactionalEmail(sql,tenantId,{to:String(order.seller_email),subject:'New cash order — '+String(order.order_number),...mail,idempotencyKey:'cash-order-seller-'+String(order.order_number)});}catch(emailError:any){console.error('Cash order notification failed',String(emailError?.message||emailError).slice(0,200));}
     return send(res,201,{ok:true,orderId:cashOrder[0].id,orderNumber:cashOrder[0].order_number,paymentStatus:'cash_due',paymentMethod:'delivery',subtotal:total/100,deliveryFee:deliveryFeeMinor/100,discount:discountMinor/100,total:payableTotal/100,couponCode:couponCode||null,chatToken:customerChatToken,message:'Order placed. Cash is due when delivered or collected; seller acceptance is required.'});
    }
@@ -1190,6 +1292,7 @@ export default async function handler(req:any,res:any){
    const p=[{id:o[0].payment_id}];
    try{
     await reserveInventory(sql,String(p[0].id));
+    if(buyer.user_id){try{await ensureBuyerCartTable(sql);await sql`DELETE FROM public.buyer_cart_items WHERE buyer_user_id=${buyer.user_id} AND tenant_id=${tenantId}`;}catch{}}
     const callbackUrl=env('DASNET_DARAJA_CALLBACK_URL')||(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/payments?action=daraja-callback';
     const stk=await startStk(payment,o[0],paymentPhone,payableTotal/100,payment.accountType==='CustomerPayBillOnline'?(cfg.account_reference||''):orderNo.slice(-12),callbackUrl);
     await sql`UPDATE public.payments SET provider_checkout_id=${stk.checkoutId},status='pending',provider_result=${JSON.stringify({paymentMethod:method,source:'buyer_checkout',merchantRequestId:stk.merchantRequestId,response:stk.response})}::jsonb,updated_at=now() WHERE id=${p[0].id}`;
