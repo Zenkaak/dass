@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
+    "@paystack/inline-js": "^2.28.2",
     "@types/express": "^5.0.6",
     "@vitejs/plugin-react": "latest",
     "express": "^5.3.0",

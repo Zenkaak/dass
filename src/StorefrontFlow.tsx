@@ -3,6 +3,7 @@ import { defaultTerms, defaultPrivacy, defaultReturns, defaultDelivery } from '.
 import { marketplaceFaqs } from './marketplaceFaqs';
 import { DisputesPanel } from './DisputesPanel';
 import { fallbackProductImage } from './StorefrontProductDetail';
+import PaystackPop from '@paystack/inline-js';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   ArrowLeft,
@@ -94,6 +95,38 @@ type BuyerOrder = {
   deliveryStatus?: string | null;
   deliveryUpdatedAt?: string | null;
 };
+
+function safeHttpsUrl(value: unknown): string | null {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  try {
+    const parsed = new URL(value.trim());
+    return parsed.protocol === 'https:' ? parsed.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+function launchPaystackCardModal(options: {
+  accessCode: string;
+  onLoad?: () => void;
+  onSuccess: () => void;
+  onCancel: () => void;
+  onError: (message?: string) => void;
+}): boolean {
+  try {
+    const popup = new PaystackPop();
+    popup.resumeTransaction(options.accessCode, {
+      onLoad: () => options.onLoad?.(),
+      onSuccess: () => options.onSuccess(),
+      onCancel: () => options.onCancel(),
+      onError: (err) => options.onError(err?.message),
+    });
+    return true;
+  } catch (err) {
+    options.onError(err instanceof Error ? err.message : undefined);
+    return false;
+  }
+}
 
 type StorefrontFlowProps = {
   slug: string;
@@ -544,6 +577,7 @@ export function StorefrontFlow({
   const [retryingOrder, setRetryingOrder] = useState(false);
   const [retryPaymentPhone, setRetryPaymentPhone] = useState('');
   const [retryMessage, setRetryMessage] = useState('');
+  const [cardFallbackUrl, setCardFallbackUrl] = useState<string | null>(null);
   const [paymentCelebration, setPaymentCelebration] = useState(false);
   const lastPaymentStatus = useRef<string | null>(null);
   const [ordersLoading, setOrdersLoading] = useState(false);
@@ -1122,26 +1156,76 @@ export function StorefrontFlow({
 
   async function retryActiveOrderWithCard() {
     if (!activeOrder?.orderId || retryingOrder) return;
+    const targetOrderId = activeOrder.orderId;
     setRetryingOrder(true);
     setRetryMessage('');
+    setCardFallbackUrl(null);
+    let inlinePopupOpened = false;
     try {
       const r = await fetch('/api/payments?action=customer-payment-retry', {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug, orderId: activeOrder.orderId, paymentMethod: 'card' }),
+        body: JSON.stringify({ slug, orderId: targetOrderId, paymentMethod: 'card' }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw Error(d.error || 'Could not start card payment.');
-      if (d.authorizationUrl) {
-        window.location.assign(d.authorizationUrl);
+      if (d.accessCode) {
+        let settled = false;
+        const loadGuard = window.setTimeout(() => {
+          if (!settled) setRetryingOrder(false);
+        }, 8000);
+        inlinePopupOpened = launchPaystackCardModal({
+          accessCode: String(d.accessCode),
+          onLoad: () => {
+            settled = true;
+            window.clearTimeout(loadGuard);
+            setRetryingOrder(false);
+          },
+          onSuccess: () => {
+            settled = true;
+            window.clearTimeout(loadGuard);
+            setRetryingOrder(false);
+            setCardFallbackUrl(null);
+            setOrders((current) =>
+              current.map((order) =>
+                order.orderId === targetOrderId ? { ...order, paymentMethod: 'card', paymentStatus: 'pending' } : order,
+              ),
+            );
+            setPaymentPollMessage('Paystack received your card payment. Confirming your receipt…');
+            onNavigate('checkout/processing');
+          },
+          onCancel: () => {
+            settled = true;
+            window.clearTimeout(loadGuard);
+            setRetryingOrder(false);
+            setCardFallbackUrl(safeHttpsUrl(d.authorizationUrl));
+            setRetryMessage('Card form closed before completing payment. Click below to reopen the card fields.');
+          },
+          onError: (errMsg) => {
+            settled = true;
+            window.clearTimeout(loadGuard);
+            setRetryingOrder(false);
+            setCardFallbackUrl(safeHttpsUrl(d.authorizationUrl));
+            setRetryMessage(
+              errMsg || 'Could not load Paystack card fields here. Use the Paystack checkout link below or try again.',
+            );
+          },
+        });
+        if (inlinePopupOpened) return;
+        window.clearTimeout(loadGuard);
+      }
+      const fallbackUrl = safeHttpsUrl(d.authorizationUrl);
+      if (fallbackUrl) {
+        setCardFallbackUrl(fallbackUrl);
+        setRetryMessage('Could not open card fields inline in this browser. Open Paystack below to complete card payment.');
         return;
       }
       setRetryMessage(d.message || 'Check your order status shortly before retrying.');
     } catch (e: any) {
       setRetryMessage(e.message || 'Could not start card payment.');
     } finally {
-      setRetryingOrder(false);
+      if (!inlinePopupOpened) setRetryingOrder(false);
     }
   }
 
@@ -1236,6 +1320,8 @@ export function StorefrontFlow({
     }
     setSubmitting(true);
     setCheckoutError('');
+    setCardFallbackUrl(null);
+    let inlinePopupOpened = false;
     const fingerprint = JSON.stringify({
       slug,
       items: lines
@@ -1319,24 +1405,76 @@ export function StorefrontFlow({
       setOrders(updatedOrders);
       setActiveOrderNumber(order.orderNumber);
       if (paymentMethod === 'card') {
-        if (data.authorizationUrl) {
-          window.location.assign(data.authorizationUrl);
-          return;
-        }
-        checkoutIdempotency.current = null;
-        clearCheckoutDraft(getCheckoutScopeKey(slug));
-        onCartChange({});
         if (String(data.paymentStatus || '').toLowerCase() === 'succeeded') {
+          checkoutIdempotency.current = null;
+          clearCheckoutDraft(getCheckoutScopeKey(slug));
+          onCartChange({});
           onOrderCreated?.(order.chatToken || '', order.orderNumber);
           onNavigate('checkout/complete');
           return;
         }
+        if (data.accessCode) {
+          let settled = false;
+          const loadGuard = window.setTimeout(() => {
+            if (!settled) setSubmitting(false);
+          }, 8000);
+          inlinePopupOpened = launchPaystackCardModal({
+            accessCode: String(data.accessCode),
+            onLoad: () => {
+              settled = true;
+              window.clearTimeout(loadGuard);
+              setSubmitting(false);
+            },
+            onSuccess: () => {
+              settled = true;
+              window.clearTimeout(loadGuard);
+              checkoutIdempotency.current = null;
+              clearCheckoutDraft(getCheckoutScopeKey(slug));
+              onCartChange({});
+              setCardFallbackUrl(null);
+              setSubmitting(false);
+              setPaymentPollMessage('Paystack received your card payment. Confirming your receipt…');
+              onNavigate('checkout/processing');
+            },
+            onCancel: () => {
+              settled = true;
+              window.clearTimeout(loadGuard);
+              setSubmitting(false);
+              setCardFallbackUrl(safeHttpsUrl(data.authorizationUrl));
+              setCheckoutError(
+                'Card form closed before payment was completed. Click Pay with card to reopen the card fields, or finish later from My orders.',
+              );
+            },
+            onError: (errMsg) => {
+              settled = true;
+              window.clearTimeout(loadGuard);
+              setSubmitting(false);
+              setCardFallbackUrl(safeHttpsUrl(data.authorizationUrl));
+              setCheckoutError(
+                errMsg || 'Could not load Paystack card fields here. Use the Paystack checkout link below or try again.',
+              );
+            },
+          });
+          if (inlinePopupOpened) return;
+          window.clearTimeout(loadGuard);
+        }
+        const fallbackUrl = safeHttpsUrl(data.authorizationUrl);
+        if (fallbackUrl) {
+          setCardFallbackUrl(fallbackUrl);
+          setCheckoutError(
+            'Could not open card fields inline in this browser. Use the secure Paystack link below to complete payment.',
+          );
+          return;
+        }
         if (String(data.paymentStatus || '').toLowerCase() === 'pending') {
+          checkoutIdempotency.current = null;
+          clearCheckoutDraft(getCheckoutScopeKey(slug));
+          onCartChange({});
           setPaymentPollMessage(data.message || 'Paystack processed this payment; confirming your receipt.');
           onNavigate('checkout/processing');
           return;
         }
-        throw new Error('Paystack did not return a secure checkout URL. Check your orders or contact the shop before retrying.');
+        throw new Error('Paystack did not return a card checkout session. Check your orders or contact the shop before retrying.');
       }
       checkoutIdempotency.current = null;
       clearCheckoutDraft(getCheckoutScopeKey(slug));
@@ -1355,7 +1493,7 @@ export function StorefrontFlow({
     } catch (error) {
       setCheckoutError(error instanceof Error ? error.message : 'Checkout failed. Please try again.');
     } finally {
-      setSubmitting(false);
+      if (!inlinePopupOpened) setSubmitting(false);
     }
   }
 
@@ -2099,6 +2237,7 @@ export function StorefrontFlow({
     };
     const chooseMpesa = () => {
       setCheckoutError('');
+      setCardFallbackUrl(null);
       setPaymentMethod('mpesa');
       if (!isValidKenyanPhone(activeMpesaPhone)) {
         setPaymentModal('mpesa');
@@ -2145,10 +2284,10 @@ export function StorefrontFlow({
                   type="button"
                   className={`sf-choice-card ${paymentMethod === 'card' ? 'is-selected' : ''}`}
                   aria-pressed={paymentMethod === 'card'}
-                  onClick={() => { setCheckoutError(''); setPaymentMethod('card'); setPaymentModal(null); }}
+                  onClick={() => { setCheckoutError(''); setCardFallbackUrl(null); setPaymentMethod('card'); setPaymentModal(null); }}
                 >
                   <span className="sf-choice-icon">V</span>
-                  <span className="sf-choice-copy"><strong>Bank card</strong><small>Visa / Mastercard · Secure Paystack checkout</small></span>
+                  <span className="sf-choice-copy"><strong>Bank card</strong><small>Visa / Mastercard · Pay right on this page</small></span>
                   <span className="sf-choice-check">{paymentMethod === 'card' ? <Check size={13} /> : ''}</span>
                 </button>
 
@@ -2159,6 +2298,7 @@ export function StorefrontFlow({
                     aria-pressed={paymentMethod === 'delivery'}
                     onClick={() => {
                       setCheckoutError('');
+                      setCardFallbackUrl(null);
                       setPaymentMethod('delivery');
                       setPaymentModal(null);
                     }}
@@ -2196,7 +2336,7 @@ export function StorefrontFlow({
                 </div>
               ) : paymentMethod === 'card' ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div className="sf-alert"><ShieldCheck size={16} style={{ flexShrink: 0, marginTop: 2 }} /><span>You will be redirected to Paystack's secure checkout to pay by card in KES. Your order is confirmed as paid only after Paystack verifies the transaction.</span></div>
+                  <div className="sf-alert"><ShieldCheck size={16} style={{ flexShrink: 0, marginTop: 2 }} /><span>Paystack’s secure card fields open right inside your order checkout—without leaving this page. Your order is confirmed as paid only after Paystack verifies the transaction.</span></div>
                   <label className="sf-field">
                     Email address for card receipt
                     <input
@@ -2440,7 +2580,7 @@ export function StorefrontFlow({
                 <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--sf-muted)' }}>
                   {paymentMethod === 'delivery'
                     ? 'Cash due upon ' + (deliveryMethod === 'pickup' ? 'collection.' : 'delivery.')
-                    : paymentMethod === 'card' ? 'You will be redirected to Paystack’s secure card checkout.' : `Prompt to ${paymentPhone || customerPhone}`}
+                    : paymentMethod === 'card' ? 'Secure card fields open right here in checkout via Paystack.' : `Prompt to ${paymentPhone || customerPhone}`}
                 </p>
               </div>
             </div>
@@ -2499,6 +2639,13 @@ export function StorefrontFlow({
             {checkoutError}
           </p>
         )}
+        {cardFallbackUrl && paymentMethod === 'card' && (
+          <div style={{ marginTop: 10 }}>
+            <a className="sf-btn sf-btn-secondary" href={cardFallbackUrl} rel="noopener noreferrer">
+              Open Paystack card page <ArrowRight size={15} />
+            </a>
+          </div>
+        )}
 
         {orderConfirmed && (
           <div className="sf-alert success" style={{ marginTop: 14 }} role="status">
@@ -2533,11 +2680,11 @@ export function StorefrontFlow({
             {submitting
               ? paymentMethod === 'delivery'
                 ? 'Placing order…'
-                : paymentMethod === 'card' ? 'Opening secure card checkout…' : 'Requesting M-PESA…'
+                : paymentMethod === 'card' ? 'Loading card fields…' : 'Requesting M-PESA…'
               : orderConfirmed
               ? paymentMethod === 'delivery'
                 ? 'Place cash order'
-                : paymentMethod === 'card' ? 'Continue to card payment' : 'Pay with M-PESA'
+                : paymentMethod === 'card' ? 'Pay with card' : 'Pay with M-PESA'
               : 'Confirm order'}{' '}
             <ArrowRight size={17} />
           </button>
@@ -2625,8 +2772,9 @@ export function StorefrontFlow({
           <p className="sf-summary-note">
             <ShieldCheck size={16} />
             <span>
-              Your order will only be marked paid after Safaricom’s payment receipt is verified. Do not send another
-              payment prompt while this check is running.
+              {isCardOrder
+                ? 'Your order will only be marked paid after Paystack’s payment confirmation is verified. Do not submit another card charge while this check is running.'
+                : 'Your order will only be marked paid after Safaricom’s payment receipt is verified. Do not send another payment prompt while this check is running.'}
             </span>
           </p>
         )}
@@ -3406,8 +3554,8 @@ export function StorefrontFlow({
                       <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--sf-muted)' }}>
                         {activeOrder.paymentMethod === 'card'
                           ? paymentState === 'pending'
-                            ? 'Continue on Paystack to complete your card payment, or check if your transaction already cleared.'
-                            : 'No card payment was collected. Open secure Paystack checkout when ready.'
+                            ? 'Open the secure card fields right here to finish payment, or check if your transaction already cleared.'
+                            : 'No card payment was collected. Open the secure card fields here when ready.'
                           : paymentState === 'pending'
                           ? 'Check the previous M-PESA request first. Do not send another prompt while Safaricom is still processing it.'
                           : 'No payment was collected. You can request a fresh M-PESA prompt when ready.'}
@@ -3422,10 +3570,10 @@ export function StorefrontFlow({
                           disabled={retryingOrder}
                         >
                           {retryingOrder
-                            ? 'Opening Paystack…'
+                            ? 'Loading card fields…'
                             : paymentState === 'pending'
-                            ? 'Continue / check card payment'
-                            : 'Retry card payment'}
+                            ? 'Enter card details / check payment'
+                            : 'Enter card details'}
                         </button>
                         <button
                           type="button"
@@ -3433,6 +3581,7 @@ export function StorefrontFlow({
                           style={{ fontSize: 12.5 }}
                           onClick={() => {
                             setRetryMessage('');
+                            setCardFallbackUrl(null);
                             setShowMpesaSwitchRetry(true);
                           }}
                         >
@@ -3472,6 +3621,7 @@ export function StorefrontFlow({
                             style={{ fontSize: 12.5 }}
                             onClick={() => {
                               setRetryMessage('');
+                              setCardFallbackUrl(null);
                               setShowMpesaSwitchRetry(false);
                             }}
                           >
@@ -3484,6 +3634,11 @@ export function StorefrontFlow({
                       <small className="sf-alert" role="status">
                         {retryMessage}
                       </small>
+                    )}
+                    {cardFallbackUrl && activeOrder.paymentMethod === 'card' && (
+                      <a className="sf-btn sf-btn-secondary" href={cardFallbackUrl} rel="noopener noreferrer">
+                        Open Paystack card page <ArrowRight size={15} />
+                      </a>
                     )}
                   </div>
                 )}

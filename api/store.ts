@@ -711,8 +711,8 @@ export default async function handler(req:any,res:any){
         await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paystackVerifyStatus:txStatus||'not_found'})}::jsonb,updated_at=now() WHERE id=${prior[0].id} AND status IN ('initiated','pending')`;
         await releaseInventory(sql,String(prior[0].id));
         prior[0].status='failed';
-       }else if(retryWithCard&&prior[0]?.provider_result?.authorizationUrl){
-        return send(res,200,{ok:true,paymentMethod:'paystack',authorizationUrl:prior[0].provider_result.authorizationUrl,reference:prior[0].provider_reference});
+       }else if(retryWithCard&&(prior[0]?.provider_result?.accessCode||prior[0]?.provider_checkout_id||prior[0]?.provider_result?.authorizationUrl)){
+        return send(res,200,{ok:true,paymentMethod:'paystack',accessCode:String(prior[0]?.provider_result?.accessCode||prior[0]?.provider_checkout_id||'')||undefined,authorizationUrl:prior[0]?.provider_result?.authorizationUrl,reference:prior[0].provider_reference});
        }else if(!verifyRes.ok){
         return send(res,503,{error:'We could not verify the previous Paystack attempt. Please try again shortly.'});
        }else{
@@ -777,13 +777,13 @@ export default async function handler(req:any,res:any){
      const callbackUrl=(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/paystack/callback',metadata={paymentId:inserted[0].id,tenantId,orderId:order.id,source:'buyer_payment_retry'};
      let initialized:any;
      if(route==='own_paystack'){
-      const own=await getSellerPaystackCredentials(tenantId),response=await fetch('https://api.paystack.co/transaction/initialize',{method:'POST',headers:{Authorization:'Bearer '+own.secretKey,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({email:ownerEmail,reference,amount,currency:'KES',callback_url:callbackUrl,metadata}),signal:AbortSignal.timeout(15000)}),payload:any=await response.json().catch(()=>({}));
+      const own=await getSellerPaystackCredentials(tenantId),response=await fetch('https://api.paystack.co/transaction/initialize',{method:'POST',headers:{Authorization:'Bearer '+own.secretKey,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({email:ownerEmail,reference,amount,currency:'KES',channels:['card'],callback_url:callbackUrl,metadata}),signal:AbortSignal.timeout(15000)}),payload:any=await response.json().catch(()=>({}));
       if(!response.ok||payload?.status!==true||!payload?.data?.authorization_url||!payload?.data?.access_code)throw Error(String(payload?.message||'Seller Paystack could not initialize this KES payment.'));
       initialized={authorizationUrl:payload.data.authorization_url,accessCode:payload.data.access_code,reference:payload.data.reference};
-     }else initialized=await initializeCentralPaystack({email:ownerEmail,reference,amountSubunits:amount,callbackUrl,metadata,subaccountCode:String(routeRows[0].paystack_subaccount_code)});
+     }else initialized=await initializeCentralPaystack({email:ownerEmail,reference,amountSubunits:amount,callbackUrl,metadata,subaccountCode:String(routeRows[0].paystack_subaccount_code),channels:['card']});
      await sql`UPDATE public.payments SET provider_checkout_id=${initialized.accessCode},status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({authorizationUrl:initialized.authorizationUrl,accessCode:initialized.accessCode,reference,source:'buyer_payment_retry',paymentRoute:route})}::jsonb,updated_at=now() WHERE id=${inserted[0].id} AND status='initiated'`;
      await audit(sql,tenantId,buyer.user_id||null,'buyer.order.paystack.retried','order',order.id,{orderNumber:order.order_number,amountMinor:amount,paymentRoute:route});
-     return send(res,200,{ok:true,paymentMethod:'paystack',authorizationUrl:initialized.authorizationUrl,reference,message:'Opening secure card checkout.'});
+     return send(res,200,{ok:true,paymentMethod:'paystack',accessCode:initialized.accessCode,authorizationUrl:initialized.authorizationUrl,reference,message:'Enter your card details to complete payment.'});
     }catch(error:any){
      await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({source:'buyer_payment_retry',initializationError:String(error?.message||error).slice(0,300)})}::jsonb,updated_at=now() WHERE id=${inserted[0].id} AND status='initiated'`;
      await releaseInventory(sql,String(inserted[0].id));
@@ -1017,8 +1017,8 @@ export default async function handler(req:any,res:any){
     if(!created.length){
      const prior=await sql`SELECT o.id,o.order_number,o.checkout_fingerprint,o.subtotal_minor,o.delivery_fee_minor,o.total_minor,o.discount_minor,o.coupon_code,
        (SELECT COUNT(*)::int FROM public.order_items i WHERE i.tenant_id=o.tenant_id AND i.order_id=o.id) AS item_count,
-       p.id AS payment_id,p.status AS payment_status,p.provider,p.provider_reference,p.payment_route,p.provider_result
-       FROM public.orders o LEFT JOIN LATERAL (SELECT id,status,provider,provider_reference,payment_route,provider_result FROM public.payments WHERE tenant_id=o.tenant_id AND order_id=o.id ORDER BY created_at DESC LIMIT 1) p ON true
+       p.id AS payment_id,p.status AS payment_status,p.provider,p.provider_checkout_id,p.provider_reference,p.payment_route,p.provider_result
+       FROM public.orders o LEFT JOIN LATERAL (SELECT id,status,provider,provider_checkout_id,provider_reference,payment_route,provider_result FROM public.payments WHERE tenant_id=o.tenant_id AND order_id=o.id ORDER BY created_at DESC LIMIT 1) p ON true
        WHERE o.tenant_id=${tenantId} AND o.checkout_idempotency_key=${idempotency} LIMIT 1`;
      if(!prior.length)return send(res,409,{error:'Checkout is already being processed. Refresh your orders in a moment.'});
      const existing=prior[0];
@@ -1043,14 +1043,14 @@ export default async function handler(req:any,res:any){
        if((verifyRes.ok&&verifyJson?.status&&['failed','abandoned','reversed'].includes(txStatus))||verifyRes.status===404){
         await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paystackVerifyStatus:txStatus||'not_found'})}::jsonb,updated_at=now() WHERE id=${existing.payment_id} AND status IN ('initiated','pending')`;
         await releaseInventory(sql,String(existing.payment_id));
-       }else if(existing.provider_result?.authorizationUrl){
-        return send(res,200,{ok:true,orderId:existing.id,orderNumber:existing.order_number,paymentStatus:'pending',paymentMethod:'paystack',authorizationUrl:existing.provider_result.authorizationUrl,reference:existing.provider_reference,subtotal:Number(existing.subtotal_minor)/100,deliveryFee:Number(existing.delivery_fee_minor||0)/100,discount:Number(existing.discount_minor||0)/100,total:Number(existing.total_minor)/100,couponCode:existing.coupon_code||null,currency:'KES',chatToken:''});
+       }else if(existing.provider_result?.accessCode||existing.provider_checkout_id||existing.provider_result?.authorizationUrl){
+        return send(res,200,{ok:true,orderId:existing.id,orderNumber:existing.order_number,paymentStatus:'pending',paymentMethod:'paystack',accessCode:String(existing.provider_result?.accessCode||existing.provider_checkout_id||'')||undefined,authorizationUrl:existing.provider_result?.authorizationUrl,reference:existing.provider_reference,subtotal:Number(existing.subtotal_minor)/100,deliveryFee:Number(existing.delivery_fee_minor||0)/100,discount:Number(existing.discount_minor||0)/100,total:Number(existing.total_minor)/100,couponCode:existing.coupon_code||null,currency:'KES',chatToken:''});
        }else{
         return send(res,503,{error:'We could not verify your existing Paystack session yet. Check your orders or try again shortly.'});
        }
       }catch{
-       if(existing.provider_result?.authorizationUrl){
-        return send(res,200,{ok:true,orderId:existing.id,orderNumber:existing.order_number,paymentStatus:'pending',paymentMethod:'paystack',authorizationUrl:existing.provider_result.authorizationUrl,reference:existing.provider_reference,subtotal:Number(existing.subtotal_minor)/100,deliveryFee:Number(existing.delivery_fee_minor||0)/100,discount:Number(existing.discount_minor||0)/100,total:Number(existing.total_minor)/100,couponCode:existing.coupon_code||null,currency:'KES',chatToken:''});
+       if(existing.provider_result?.accessCode||existing.provider_checkout_id||existing.provider_result?.authorizationUrl){
+        return send(res,200,{ok:true,orderId:existing.id,orderNumber:existing.order_number,paymentStatus:'pending',paymentMethod:'paystack',accessCode:String(existing.provider_result?.accessCode||existing.provider_checkout_id||'')||undefined,authorizationUrl:existing.provider_result?.authorizationUrl,reference:existing.provider_reference,subtotal:Number(existing.subtotal_minor)/100,deliveryFee:Number(existing.delivery_fee_minor||0)/100,discount:Number(existing.discount_minor||0)/100,total:Number(existing.total_minor)/100,couponCode:existing.coupon_code||null,currency:'KES',chatToken:''});
        }
        return send(res,503,{error:'We could not verify your existing Paystack session yet. Check your orders or try again shortly.'});
       }
@@ -1076,13 +1076,13 @@ export default async function handler(req:any,res:any){
      const callbackUrl=(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/paystack/callback',metadata={paymentId:targetPaymentId,tenantId,orderId:targetOrderId,source:'buyer_checkout'};
      let initialized:any;
      if(route==='own_paystack'){
-      const own=await getSellerPaystackCredentials(tenantId),response=await fetch('https://api.paystack.co/transaction/initialize',{method:'POST',headers:{Authorization:'Bearer '+own.secretKey,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({email:ownerEmail,reference:targetReference,amount:payableTotal,currency:'KES',callback_url:callbackUrl,metadata}),signal:AbortSignal.timeout(15000)}),payload:any=await response.json().catch(()=>({}));
+      const own=await getSellerPaystackCredentials(tenantId),response=await fetch('https://api.paystack.co/transaction/initialize',{method:'POST',headers:{Authorization:'Bearer '+own.secretKey,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({email:ownerEmail,reference:targetReference,amount:payableTotal,currency:'KES',channels:['card'],callback_url:callbackUrl,metadata}),signal:AbortSignal.timeout(15000)}),payload:any=await response.json().catch(()=>({}));
       if(!response.ok||payload?.status!==true||!payload?.data?.authorization_url||!payload?.data?.access_code)throw Error(String(payload?.message||'Seller Paystack could not initialize this KES payment.'));
       initialized={authorizationUrl:payload.data.authorization_url,accessCode:payload.data.access_code,reference:payload.data.reference};
-     }else initialized=await initializeCentralPaystack({email:ownerEmail,reference:targetReference,amountSubunits:payableTotal,callbackUrl,metadata,subaccountCode:String(routeRows[0].paystack_subaccount_code)});
+     }else initialized=await initializeCentralPaystack({email:ownerEmail,reference:targetReference,amountSubunits:payableTotal,callbackUrl,metadata,subaccountCode:String(routeRows[0].paystack_subaccount_code),channels:['card']});
      await sql`UPDATE public.payments SET provider_checkout_id=${initialized.accessCode},status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({authorizationUrl:initialized.authorizationUrl,accessCode:initialized.accessCode,reference:targetReference,source:'buyer_checkout',paymentRoute:route})}::jsonb,updated_at=now() WHERE id=${targetPaymentId} AND status='initiated'`;
      await audit(sql,tenantId,buyer.user_id||null,'buyer.order.paystack.initialized','order',targetOrderId,{orderNumber:targetOrderNumber,amountMinor:payableTotal,paymentRoute:route});
-     return send(res,httpStatus,{ok:true,orderId:targetOrderId,orderNumber:targetOrderNumber,paymentStatus:'pending',paymentMethod:'paystack',authorizationUrl:initialized.authorizationUrl,reference:targetReference,subtotal:total/100,deliveryFee:deliveryFeeMinor/100,discount:discountMinor/100,total:payableTotal/100,currency:'KES',chatToken:targetChatToken});
+     return send(res,httpStatus,{ok:true,orderId:targetOrderId,orderNumber:targetOrderNumber,paymentStatus:'pending',paymentMethod:'paystack',accessCode:initialized.accessCode,authorizationUrl:initialized.authorizationUrl,reference:targetReference,subtotal:total/100,deliveryFee:deliveryFeeMinor/100,discount:discountMinor/100,total:payableTotal/100,currency:'KES',chatToken:targetChatToken});
     }catch(error:any){
      await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({source:'buyer_checkout',initializationError:String(error?.message||error).slice(0,300)})}::jsonb,updated_at=now() WHERE id=${targetPaymentId} AND status='initiated'`;
      await releaseInventory(sql,targetPaymentId);
