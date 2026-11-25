@@ -603,6 +603,7 @@ export function StorefrontFlow({
       : 'mpesa',
   );
   const [paymentModal, setPaymentModal] = useState<PaymentMethod | null>(null);
+  const [paymentModalError, setPaymentModalError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [paymentPollMessage, setPaymentPollMessage] = useState('Waiting for payment confirmation…');
   const [paymentProviderResponded, setPaymentProviderResponded] = useState(false);
@@ -2226,22 +2227,45 @@ export function StorefrontFlow({
   function renderCheckoutPayment() {
     const activeMpesaPhone = (paymentPhone || customerPhone || '').trim();
     const isValidKenyanPhone = (val: string) => /^\+?254[17]\d{8}$|^0[17]\d{8}$/.test(val.replace(/[\s().-]/g, ''));
+    const isValidEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
 
     const confirmMpesa = () => {
       if (!isValidKenyanPhone(paymentPhone.trim())) {
-        setCheckoutError('Enter a valid Kenyan M-PESA phone number to receive the payment prompt.');
+        setPaymentModalError('Enter a valid Kenyan M-PESA phone number to receive the payment prompt.');
         return;
       }
+      setPaymentModalError('');
       setCheckoutError('');
       setPaymentModal(null);
     };
     const chooseMpesa = () => {
       setCheckoutError('');
+      setPaymentModalError('');
       setCardFallbackUrl(null);
       setPaymentMethod('mpesa');
       if (!isValidKenyanPhone(activeMpesaPhone)) {
         setPaymentModal('mpesa');
       }
+    };
+    const confirmCardDetails = () => {
+      if (customerName.trim().length < 2) {
+        setPaymentModalError('Enter the billing or cardholder name for your receipt.');
+        return;
+      }
+      if (!isValidEmail(customerEmail)) {
+        setPaymentModalError('Enter a valid email address for your card payment receipt.');
+        return;
+      }
+      setPaymentModalError('');
+      setCheckoutError('');
+      setPaymentModal(null);
+    };
+    const chooseCard = () => {
+      setCheckoutError('');
+      setPaymentModalError('');
+      setCardFallbackUrl(null);
+      setPaymentMethod('card');
+      setPaymentModal('card');
     };
 
     return (
@@ -2284,10 +2308,13 @@ export function StorefrontFlow({
                   type="button"
                   className={`sf-choice-card ${paymentMethod === 'card' ? 'is-selected' : ''}`}
                   aria-pressed={paymentMethod === 'card'}
-                  onClick={() => { setCheckoutError(''); setCardFallbackUrl(null); setPaymentMethod('card'); setPaymentModal(null); }}
+                  onClick={chooseCard}
                 >
                   <span className="sf-choice-icon">V</span>
-                  <span className="sf-choice-copy"><strong>Bank card</strong><small>Visa / Mastercard · Pay right on this page</small></span>
+                  <span className="sf-choice-copy">
+                    <strong>Bank card</strong>
+                    <small>Visa / Mastercard · {isValidEmail(customerEmail) ? customerEmail.trim() : 'Enter billing details'}</small>
+                  </span>
                   <span className="sf-choice-check">{paymentMethod === 'card' ? <Check size={13} /> : ''}</span>
                 </button>
 
@@ -2298,6 +2325,7 @@ export function StorefrontFlow({
                     aria-pressed={paymentMethod === 'delivery'}
                     onClick={() => {
                       setCheckoutError('');
+                      setPaymentModalError('');
                       setCardFallbackUrl(null);
                       setPaymentMethod('delivery');
                       setPaymentModal(null);
@@ -2328,6 +2356,7 @@ export function StorefrontFlow({
                     style={{ minHeight: 34, padding: '0 12px', fontSize: 12.5 }}
                     onClick={() => {
                       setCheckoutError('');
+                      setPaymentModalError('');
                       setPaymentModal('mpesa');
                     }}
                   >
@@ -2336,19 +2365,39 @@ export function StorefrontFlow({
                 </div>
               ) : paymentMethod === 'card' ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div className="sf-alert"><ShieldCheck size={16} style={{ flexShrink: 0, marginTop: 2 }} /><span>Paystack’s secure card fields open right inside your order checkout—without leaving this page. Your order is confirmed as paid only after Paystack verifies the transaction.</span></div>
-                  <label className="sf-field">
-                    Email address for card receipt
-                    <input
-                      type="email"
-                      autoComplete="email"
-                      value={customerEmail}
-                      onChange={(e) => setCustomerEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      required
-                    />
-                    <small>Required by Paystack for card payment receipts.</small>
-                  </label>
+                  <div className="sf-saved-location-box">
+                    <span className="sf-choice-icon" style={{ width: 34, height: 34 }}>
+                      <WalletCards size={16} />
+                    </span>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <strong>
+                        {isValidEmail(customerEmail) ? `Card receipt to ${customerEmail.trim()}` : 'Card billing details not set'}
+                      </strong>
+                      <small>
+                        {isValidEmail(customerEmail)
+                          ? `${customerName.trim() || 'Buyer'} · Paystack opens secure card fields when you pay.`
+                          : 'Add your billing name and receipt email before reviewing your order.'}
+                      </small>
+                    </div>
+                    <button
+                      type="button"
+                      className="sf-btn sf-btn-secondary"
+                      style={{ minHeight: 34, padding: '0 12px', fontSize: 12.5 }}
+                      onClick={() => {
+                        setCheckoutError('');
+                        setPaymentModalError('');
+                        setPaymentModal('card');
+                      }}
+                    >
+                      {isValidEmail(customerEmail) ? 'Change' : 'Set details'}
+                    </button>
+                  </div>
+                  <div className="sf-alert">
+                    <ShieldCheck size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+                    <span>
+                      Your billing details are saved for this checkout. When you submit payment on the next step, Paystack’s encrypted modal collects your card number, expiry, and CVV safely right inside this page.
+                    </span>
+                  </div>
                 </div>
               ) : (
                 <div className="sf-alert">
@@ -2441,7 +2490,20 @@ export function StorefrontFlow({
             type="button"
             className="sf-btn sf-btn-accent"
             disabled={!lines.length}
-            onClick={() => onNavigate('checkout/review')}
+            onClick={() => {
+              setCheckoutError('');
+              if (paymentMethod === 'card' && (!isValidEmail(customerEmail) || customerName.trim().length < 2)) {
+                setPaymentModalError('Save your billing name and receipt email before reviewing your order.');
+                setPaymentModal('card');
+                return;
+              }
+              if (paymentMethod === 'mpesa' && !isValidKenyanPhone(activeMpesaPhone)) {
+                setPaymentModalError('Enter a valid Kenyan M-PESA phone number before reviewing your order.');
+                setPaymentModal('mpesa');
+                return;
+              }
+              onNavigate('checkout/review');
+            }}
           >
             Review your order <ArrowRight size={17} />
           </button>
@@ -2482,12 +2544,20 @@ export function StorefrontFlow({
                   autoComplete="tel"
                   placeholder="07XX XXX XXX or 2547XXXXXXXX"
                   value={paymentPhone}
-                  onChange={(e) => setPaymentPhone(e.target.value)}
+                  onChange={(e) => {
+                    setPaymentModalError('');
+                    setPaymentPhone(e.target.value);
+                  }}
                   required
                   maxLength={16}
                 />
                 <small>Your order remains pending until Safaricom confirms payment.</small>
               </label>
+              {paymentModalError && (
+                <p className="sf-alert error" style={{ margin: 0 }} role="alert">
+                  {paymentModalError}
+                </p>
+              )}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
                 <button type="button" className="sf-btn sf-btn-secondary" onClick={() => setPaymentModal(null)}>
                   Cancel
@@ -2496,6 +2566,93 @@ export function StorefrontFlow({
                   Use this number <ArrowRight size={15} />
                 </button>
               </div>
+            </section>
+          </div>
+        )}
+
+        {paymentModal === 'card' && (
+          <div
+            className="sf-modal-backdrop"
+            role="presentation"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) setPaymentModal(null);
+            }}
+          >
+            <section
+              className="sf-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="customer-card-modal-title"
+            >
+              <button
+                type="button"
+                className="sf-modal-close"
+                aria-label="Close card billing window"
+                onClick={() => setPaymentModal(null)}
+              >
+                ×
+              </button>
+              <span className="sf-kicker">BANK CARD · PAYSTACK</span>
+              <h2 id="customer-card-modal-title">Card billing details</h2>
+              <p style={{ margin: 0, fontSize: 13.5, color: 'var(--sf-muted)' }}>
+                Save your billing details to proceed to order review. Paystack’s encrypted popup collects your card number, expiry, and CVV when you pay.
+              </p>
+              <form
+                style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  confirmCardDetails();
+                }}
+              >
+                <label className="sf-field">
+                  Cardholder / billing name
+                  <input
+                    type="text"
+                    autoComplete="name"
+                    placeholder="Full name"
+                    value={customerName}
+                    onChange={(e) => {
+                      setPaymentModalError('');
+                      setCustomerName(e.target.value);
+                    }}
+                    required
+                    maxLength={120}
+                  />
+                </label>
+                <label className="sf-field">
+                  Email address for card receipt
+                  <input
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    value={customerEmail}
+                    onChange={(e) => {
+                      setPaymentModalError('');
+                      setCustomerEmail(e.target.value);
+                    }}
+                    required
+                    maxLength={254}
+                  />
+                  <small>Required by Paystack for card payment receipts.</small>
+                </label>
+                {paymentModalError && (
+                  <p className="sf-alert error" style={{ margin: 0 }} role="alert">
+                    {paymentModalError}
+                  </p>
+                )}
+                <div className="sf-alert" style={{ margin: 0 }}>
+                  <ShieldCheck size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+                  <span>For your protection, raw card numbers and CVVs are only entered inside Paystack’s encrypted card popup on the next step.</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                  <button type="button" className="sf-btn sf-btn-secondary" onClick={() => setPaymentModal(null)}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="sf-btn sf-btn-primary">
+                    Save details <ArrowRight size={15} />
+                  </button>
+                </div>
+              </form>
             </section>
           </div>
         )}
@@ -2580,7 +2737,9 @@ export function StorefrontFlow({
                 <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--sf-muted)' }}>
                   {paymentMethod === 'delivery'
                     ? 'Cash due upon ' + (deliveryMethod === 'pickup' ? 'collection.' : 'delivery.')
-                    : paymentMethod === 'card' ? 'Secure card fields open right here in checkout via Paystack.' : `Prompt to ${paymentPhone || customerPhone}`}
+                    : paymentMethod === 'card'
+                    ? `Receipt to ${customerEmail.trim() || 'your email'} · Paystack card fields open on Pay.`
+                    : `Prompt to ${paymentPhone || customerPhone}`}
                 </p>
               </div>
             </div>
