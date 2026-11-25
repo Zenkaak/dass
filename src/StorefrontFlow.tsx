@@ -3,6 +3,7 @@ import { defaultTerms, defaultPrivacy, defaultReturns, defaultDelivery } from '.
 import { marketplaceFaqs } from './marketplaceFaqs';
 import { DisputesPanel } from './DisputesPanel';
 import { fallbackProductImage } from './StorefrontProductDetail';
+import { CardNetworkLogos, CardProviderIcon, CashProviderIcon, MpesaProviderIcon } from './PaymentProviderIcons';
 import PaystackPop from '@paystack/inline-js';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
@@ -14,6 +15,7 @@ import {
   ChevronRight,
   Flag,
   Heart,
+  Lock,
   Mail,
   MapPin,
   MessageCircle,
@@ -1550,6 +1552,22 @@ export function StorefrontFlow({
               ))}
             </div>
           )}
+          {view === 'checkout/payment' && (
+            <div className="sf-summary-delivery-recap">
+              <div>
+                <strong>{deliveryMethod === 'pickup' ? 'Collection point' : 'Delivery destination'}</strong>
+                <span>
+                  {deliveryMethod === 'pickup'
+                    ? pickupStation || deliveryCounty || 'Pickup station'
+                    : [deliveryAddress, deliveryEstate, deliverySubCounty, deliveryCounty].filter(Boolean).join(', ') ||
+                      'Door delivery'}
+                </span>
+              </div>
+              <button type="button" onClick={() => onNavigate('checkout/delivery')}>
+                Edit
+              </button>
+            </div>
+          )}
           {view === 'cart' ? (
             <div className="sf-summary-row sf-summary-total">
               <span>Subtotal</span>
@@ -1579,7 +1597,7 @@ export function StorefrontFlow({
           )}
           <p className="sf-summary-note">
             <ShieldCheck size={15} style={{ flexShrink: 0, marginTop: 2 }} />
-            <span>Prices and stock are rechecked before M-PESA is requested.</span>
+            <span>Prices and stock are verified live before payment is processed.</span>
           </p>
         </div>
         {view === 'cart' && (
@@ -2273,7 +2291,7 @@ export function StorefrontFlow({
         <CheckoutProgress step={2} />
         <FlowHeading
           title="Payment"
-          subtitle="Select how you would like to complete your payment."
+          subtitle="Select your preferred payment method to continue."
           onBack={() => onNavigate('checkout/delivery')}
           backLabel="Delivery details"
         />
@@ -2281,48 +2299,82 @@ export function StorefrontFlow({
 
         <div className="sf-two-col">
           <div className="sf-checkout-stack">
-            <div className="sf-panel">
-              <div className="sf-panel-head">
+            <div className="sf-panel sf-pay-panel">
+              <div className="sf-pay-panel-head">
                 <div>
                   <h2>Choose a payment method</h2>
-                  <p>Choose M-PESA, bank card{cashOptionEnabled ? ' or cash' : ''}.</p>
+                  <p>Select M-PESA, debit or credit card{cashOptionEnabled ? ', or cash on arrival' : ''}.</p>
                 </div>
+                <span className="sf-pay-security-meta">
+                  <Lock size={13} />
+                  <span>Encrypted · KES</span>
+                </span>
               </div>
-              <div className="sf-choice-grid" role="group" aria-label="Available payment methods">
+
+              <div className="sf-pay-list" role="radiogroup" aria-label="Available payment methods">
                 <button
                   type="button"
-                  className={`sf-choice-card ${paymentMethod === 'mpesa' ? 'is-selected' : ''}`}
-                  aria-pressed={paymentMethod === 'mpesa'}
+                  role="radio"
+                  aria-checked={paymentMethod === 'mpesa'}
+                  className={`sf-pay-option ${paymentMethod === 'mpesa' ? 'is-selected' : ''}`}
                   onClick={chooseMpesa}
                 >
-                  <span className="sf-choice-icon" style={{ color: '#166534' }}>
-                    M
+                  <span className="sf-pay-radio" aria-hidden="true">
+                    {paymentMethod === 'mpesa' ? <Check size={12} strokeWidth={3} /> : null}
                   </span>
-                  <span className="sf-choice-copy">
-                    <strong>M-PESA</strong>
-                    <small>STK Push · {activeMpesaPhone || 'Enter number'}</small>
+                  <MpesaProviderIcon />
+                  <span className="sf-pay-option-body">
+                    <span className="sf-pay-option-title">
+                      <strong>M-PESA</strong>
+                    </span>
+                    <span className="sf-pay-option-sub">
+                      Instant STK Push prompt · Confirmed by Safaricom
+                    </span>
+                    {paymentMethod === 'mpesa' && activeMpesaPhone && (
+                      <span className="sf-pay-option-meta">Number: {activeMpesaPhone}</span>
+                    )}
                   </span>
-                  <span className="sf-choice-check">{paymentMethod === 'mpesa' ? <Check size={13} /> : ''}</span>
+                  <span className="sf-pay-option-action">
+                    {paymentMethod === 'mpesa' ? (activeMpesaPhone ? 'Selected' : 'Set number') : 'Select'}
+                  </span>
                 </button>
+
                 <button
                   type="button"
-                  className={`sf-choice-card ${paymentMethod === 'card' ? 'is-selected' : ''}`}
-                  aria-pressed={paymentMethod === 'card'}
+                  role="radio"
+                  aria-checked={paymentMethod === 'card'}
+                  className={`sf-pay-option ${paymentMethod === 'card' ? 'is-selected' : ''}`}
                   onClick={chooseCard}
                 >
-                  <span className="sf-choice-icon">V</span>
-                  <span className="sf-choice-copy">
-                    <strong>Bank card</strong>
-                    <small>Visa / Mastercard · {isValidEmail(customerEmail) ? customerEmail.trim() : 'Enter billing details'}</small>
+                  <span className="sf-pay-radio" aria-hidden="true">
+                    {paymentMethod === 'card' ? <Check size={12} strokeWidth={3} /> : null}
                   </span>
-                  <span className="sf-choice-check">{paymentMethod === 'card' ? <Check size={13} /> : ''}</span>
+                  <CardProviderIcon />
+                  <span className="sf-pay-option-body">
+                    <span className="sf-pay-option-title">
+                      <strong>Debit or Credit Card</strong>
+                      <CardNetworkLogos />
+                    </span>
+                    <span className="sf-pay-option-sub">
+                      Pay on this page via Paystack · Visa, Mastercard &amp; Verve
+                    </span>
+                    {paymentMethod === 'card' && isValidEmail(customerEmail) && (
+                      <span className="sf-pay-option-meta">
+                        Receipt to {customerEmail.trim()} · {customerName.trim() || 'Buyer'}
+                      </span>
+                    )}
+                  </span>
+                  <span className="sf-pay-option-action">
+                    {paymentMethod === 'card' ? (isValidEmail(customerEmail) ? 'Edit details' : 'Add details') : 'Select'}
+                  </span>
                 </button>
 
                 {cashOptionEnabled && (
                   <button
                     type="button"
-                    className={`sf-choice-card ${paymentMethod === 'delivery' ? 'is-selected' : ''}`}
-                    aria-pressed={paymentMethod === 'delivery'}
+                    role="radio"
+                    aria-checked={paymentMethod === 'delivery'}
+                    className={`sf-pay-option ${paymentMethod === 'delivery' ? 'is-selected' : ''}`}
                     onClick={() => {
                       setCheckoutError('');
                       setPaymentModalError('');
@@ -2331,87 +2383,108 @@ export function StorefrontFlow({
                       setPaymentModal(null);
                     }}
                   >
-                    <span className="sf-choice-icon">K</span>
-                    <span className="sf-choice-copy">
-                      <strong>{deliveryMethod === 'pickup' ? 'Pay on pickup' : 'Cash on delivery'}</strong>
-                      <small>{deliveryMethod === 'pickup' ? 'Pay when you collect' : 'Pay when delivered'}</small>
+                    <span className="sf-pay-radio" aria-hidden="true">
+                      {paymentMethod === 'delivery' ? <Check size={12} strokeWidth={3} /> : null}
                     </span>
-                    <span className="sf-choice-check">{paymentMethod === 'delivery' ? <Check size={13} /> : ''}</span>
+                    <CashProviderIcon />
+                    <span className="sf-pay-option-body">
+                      <span className="sf-pay-option-title">
+                        <strong>{deliveryMethod === 'pickup' ? 'Pay on pickup' : 'Cash on delivery'}</strong>
+                      </span>
+                      <span className="sf-pay-option-sub">
+                        {deliveryMethod === 'pickup'
+                          ? 'Pay in cash when collecting at your pickup point'
+                          : 'Pay in cash upon delivery after seller confirmation'}
+                      </span>
+                    </span>
+                    <span className="sf-pay-option-action">
+                      {paymentMethod === 'delivery' ? 'Selected' : 'Select'}
+                    </span>
                   </button>
                 )}
               </div>
 
-              {paymentMethod === 'mpesa' ? (
-                <div className="sf-saved-location-box">
-                  <span className="sf-choice-icon" style={{ width: 34, height: 34, color: '#166534' }}>
-                    M
-                  </span>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <strong>STK prompt to {activeMpesaPhone || 'Not set'}</strong>
-                    <small>Pending until you confirm your M-PESA PIN on your phone.</small>
-                  </div>
-                  <button
-                    type="button"
-                    className="sf-btn sf-btn-secondary"
-                    style={{ minHeight: 34, padding: '0 12px', fontSize: 12.5 }}
-                    onClick={() => {
-                      setCheckoutError('');
-                      setPaymentModalError('');
-                      setPaymentModal('mpesa');
-                    }}
-                  >
-                    {activeMpesaPhone ? 'Change' : 'Set number'}
-                  </button>
-                </div>
-              ) : paymentMethod === 'card' ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div className="sf-saved-location-box">
-                    <span className="sf-choice-icon" style={{ width: 34, height: 34 }}>
-                      <WalletCards size={16} />
-                    </span>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <strong>
-                        {isValidEmail(customerEmail) ? `Card receipt to ${customerEmail.trim()}` : 'Card billing details not set'}
-                      </strong>
-                      <small>
-                        {isValidEmail(customerEmail)
-                          ? `${customerName.trim() || 'Buyer'} · Paystack opens secure card fields when you pay.`
-                          : 'Add your billing name and receipt email before reviewing your order.'}
-                      </small>
+              <div className="sf-pay-active-strip">
+                {paymentMethod === 'mpesa' ? (
+                  <>
+                    <div className="sf-pay-active-row">
+                      <div className="sf-pay-active-info">
+                        <MpesaProviderIcon compact />
+                        <div style={{ minWidth: 0 }}>
+                          <strong>STK prompt to {activeMpesaPhone || 'Not set yet'}</strong>
+                          <small>
+                            You’ll receive a PIN prompt on your Safaricom line when you tap Pay on the next step.
+                          </small>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="sf-btn sf-btn-secondary"
+                        onClick={() => {
+                          setCheckoutError('');
+                          setPaymentModalError('');
+                          setPaymentModal('mpesa');
+                        }}
+                      >
+                        {activeMpesaPhone ? 'Change number' : 'Enter number'}
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      className="sf-btn sf-btn-secondary"
-                      style={{ minHeight: 34, padding: '0 12px', fontSize: 12.5 }}
-                      onClick={() => {
-                        setCheckoutError('');
-                        setPaymentModalError('');
-                        setPaymentModal('card');
-                      }}
-                    >
-                      {isValidEmail(customerEmail) ? 'Change' : 'Set details'}
-                    </button>
-                  </div>
-                  <div className="sf-alert">
-                    <ShieldCheck size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+                    <p className="sf-pay-trust-line">
+                      <ShieldCheck size={15} />
+                      <span>Your order is marked paid only after Safaricom verifies your M-PESA receipt.</span>
+                    </p>
+                  </>
+                ) : paymentMethod === 'card' ? (
+                  <>
+                    <div className="sf-pay-active-row">
+                      <div className="sf-pay-active-info">
+                        <CardProviderIcon compact />
+                        <div style={{ minWidth: 0 }}>
+                          <strong>
+                            {isValidEmail(customerEmail)
+                              ? `Card receipt to ${customerEmail.trim()}`
+                              : 'Billing details needed'}
+                          </strong>
+                          <small>
+                            {isValidEmail(customerEmail)
+                              ? `${customerName.trim() || 'Buyer'} · Card number, expiry & CVV open safely via Paystack on Pay.`
+                              : 'Save your billing name and receipt email before proceeding to review.'}
+                          </small>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="sf-btn sf-btn-secondary"
+                        onClick={() => {
+                          setCheckoutError('');
+                          setPaymentModalError('');
+                          setPaymentModal('card');
+                        }}
+                      >
+                        {isValidEmail(customerEmail) ? 'Edit details' : 'Enter details'}
+                      </button>
+                    </div>
+                    <p className="sf-pay-trust-line">
+                      <ShieldCheck size={15} />
+                      <span>
+                        Secured by Paystack · Your card number and CVV are entered only inside Paystack’s encrypted modal on the next step.
+                      </span>
+                    </p>
+                  </>
+                ) : (
+                  <p className="sf-pay-trust-line">
+                    <ShieldCheck size={15} />
                     <span>
-                      Your billing details are saved for this checkout. When you submit payment on the next step, Paystack’s encrypted modal collects your card number, expiry, and CVV safely right inside this page.
+                      {deliveryMethod === 'pickup'
+                        ? 'Pay cash only when collecting your confirmed order from the seller.'
+                        : 'Pay cash only upon delivery after the seller accepts and dispatches your order.'}
                     </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="sf-alert">
-                  <ShieldCheck size={16} style={{ flexShrink: 0, marginTop: 2 }} />
-                  <span>
-                    {deliveryMethod === 'pickup'
-                      ? 'Pay cash only when collecting your confirmed order.'
-                      : 'Pay cash only upon delivery after seller confirmation.'}
-                  </span>
-                </div>
-              )}
+                  </p>
+                )}
+              </div>
 
-              <p className="sf-disabled-methods-note">
-                Airtel Money is not enabled for this shop. Card payments use Paystack when the seller has completed card onboarding.
+              <p className="sf-pay-footnote">
+                Airtel Money is unavailable for this shop. Card checkout uses Paystack where seller card onboarding is active.
               </p>
             </div>
 
@@ -2531,41 +2604,55 @@ export function StorefrontFlow({
               >
                 ×
               </button>
-              <span className="sf-kicker">M-PESA STK PUSH</span>
-              <h2 id="customer-payment-modal-title">M-PESA payment number</h2>
+              <div className="sf-pay-modal-head">
+                <MpesaProviderIcon compact />
+                <div>
+                  <span className="sf-kicker">M-PESA STK PUSH</span>
+                  <h2 id="customer-payment-modal-title">M-PESA payment number</h2>
+                </div>
+              </div>
               <p style={{ margin: 0, fontSize: 13.5, color: 'var(--sf-muted)' }}>
                 Enter the Kenyan mobile number that should receive the STK payment prompt.
               </p>
-              <label className="sf-field">
-                Phone number to pay with
-                <input
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="tel"
-                  placeholder="07XX XXX XXX or 2547XXXXXXXX"
-                  value={paymentPhone}
-                  onChange={(e) => {
-                    setPaymentModalError('');
-                    setPaymentPhone(e.target.value);
-                  }}
-                  required
-                  maxLength={16}
-                />
-                <small>Your order remains pending until Safaricom confirms payment.</small>
-              </label>
-              {paymentModalError && (
-                <p className="sf-alert error" style={{ margin: 0 }} role="alert">
-                  {paymentModalError}
-                </p>
-              )}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-                <button type="button" className="sf-btn sf-btn-secondary" onClick={() => setPaymentModal(null)}>
-                  Cancel
-                </button>
-                <button type="button" className="sf-btn sf-btn-primary" onClick={confirmMpesa}>
-                  Use this number <ArrowRight size={15} />
-                </button>
-              </div>
+              <form
+                style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  confirmMpesa();
+                }}
+              >
+                <label className="sf-field">
+                  Phone number to pay with
+                  <input
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    autoFocus
+                    placeholder="07XX XXX XXX or 2547XXXXXXXX"
+                    value={paymentPhone}
+                    onChange={(e) => {
+                      setPaymentModalError('');
+                      setPaymentPhone(e.target.value);
+                    }}
+                    required
+                    maxLength={16}
+                  />
+                  <small>Your order remains pending until Safaricom confirms payment.</small>
+                </label>
+                {paymentModalError && (
+                  <p className="sf-alert error" style={{ margin: 0 }} role="alert">
+                    {paymentModalError}
+                  </p>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                  <button type="button" className="sf-btn sf-btn-secondary" onClick={() => setPaymentModal(null)}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="sf-btn sf-btn-primary">
+                    Use this number <ArrowRight size={15} />
+                  </button>
+                </div>
+              </form>
             </section>
           </div>
         )}
@@ -2592,10 +2679,15 @@ export function StorefrontFlow({
               >
                 ×
               </button>
-              <span className="sf-kicker">BANK CARD · PAYSTACK</span>
-              <h2 id="customer-card-modal-title">Card billing details</h2>
+              <div className="sf-pay-modal-head">
+                <CardProviderIcon compact />
+                <div>
+                  <span className="sf-kicker">BANK CARD · PAYSTACK</span>
+                  <h2 id="customer-card-modal-title">Card billing details</h2>
+                </div>
+              </div>
               <p style={{ margin: 0, fontSize: 13.5, color: 'var(--sf-muted)' }}>
-                Save your billing details to proceed to order review. Paystack’s encrypted popup collects your card number, expiry, and CVV when you pay.
+                Save your billing name and receipt email to proceed to order review. Paystack’s encrypted modal collects your card number, expiry, and CVV when you pay.
               </p>
               <form
                 style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
@@ -2624,6 +2716,7 @@ export function StorefrontFlow({
                   <input
                     type="email"
                     autoComplete="email"
+                    autoFocus={!isValidEmail(customerEmail)}
                     placeholder="you@example.com"
                     value={customerEmail}
                     onChange={(e) => {
@@ -2640,9 +2733,12 @@ export function StorefrontFlow({
                     {paymentModalError}
                   </p>
                 )}
-                <div className="sf-alert" style={{ margin: 0 }}>
-                  <ShieldCheck size={16} style={{ flexShrink: 0, marginTop: 2 }} />
-                  <span>For your protection, raw card numbers and CVVs are only entered inside Paystack’s encrypted card popup on the next step.</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+                  <span className="sf-pay-trust-line" style={{ fontSize: 12 }}>
+                    <Lock size={13} />
+                    <span>Card number &amp; CVV entered securely via Paystack</span>
+                  </span>
+                  <CardNetworkLogos />
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
                   <button type="button" className="sf-btn sf-btn-secondary" onClick={() => setPaymentModal(null)}>
@@ -2733,14 +2829,25 @@ export function StorefrontFlow({
                     Edit
                   </button>
                 </div>
-                <strong style={{ fontSize: 14 }}>{paymentLabels[paymentMethod]}</strong>
-                <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--sf-muted)' }}>
-                  {paymentMethod === 'delivery'
-                    ? 'Cash due upon ' + (deliveryMethod === 'pickup' ? 'collection.' : 'delivery.')
-                    : paymentMethod === 'card'
-                    ? `Receipt to ${customerEmail.trim() || 'your email'} · Paystack card fields open on Pay.`
-                    : `Prompt to ${paymentPhone || customerPhone}`}
-                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 2 }}>
+                  {paymentMethod === 'delivery' ? (
+                    <CashProviderIcon compact />
+                  ) : paymentMethod === 'card' ? (
+                    <CardProviderIcon compact />
+                  ) : (
+                    <MpesaProviderIcon compact />
+                  )}
+                  <div>
+                    <strong style={{ fontSize: 14, display: 'block' }}>{paymentLabels[paymentMethod]}</strong>
+                    <p style={{ margin: '2px 0 0', fontSize: 13, color: 'var(--sf-muted)' }}>
+                      {paymentMethod === 'delivery'
+                        ? 'Cash due upon ' + (deliveryMethod === 'pickup' ? 'collection.' : 'delivery.')
+                        : paymentMethod === 'card'
+                        ? `Receipt to ${customerEmail.trim() || 'your email'} · Paystack card fields open on Pay.`
+                        : `Prompt to ${paymentPhone || customerPhone}`}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
