@@ -8,7 +8,7 @@ const ACTIONS:Record<string,Set<string>>={
   'product-reviews','order','chat-attachment','customer-payment-status'
  ]),
  merchant:new Set([
-  'store-settings','coupons','coupon','payment-settings','payout-settings','subscription','subscription-billing-email','subscription-stk','subscription-paystack','paystack-seller','paystack-subaccount','paystack-subaccount-status','card-kyc','card-kyc-otp','card-kyc-document-upload','card-kyc-document-confirm',
+  'store-settings','coupons','coupon','payment-settings','payout-settings','subscription','subscription-stk','subscription-paystack','paystack-seller','paystack-subaccount','paystack-subaccount-status','card-kyc','card-kyc-otp','card-kyc-document-upload','card-kyc-document-confirm',
   'api-credentials','email-credentials','email-test','transactions','tickets','ticket','profile','settings',
   'products','orders','product-image-upload','products-bulk','product',
   'product-status','order-chat','order-status','order-delivery-status',

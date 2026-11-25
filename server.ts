@@ -31,26 +31,26 @@ async function startServer() {
   const [
     { default: authHandler },
     { default: buyerAuthHandler },
-    { default: buyerHandler },
+    { default: commerceHandler },
     { default: customDomainHandler },
     { default: disputeCronHandler },
     { default: disputesHandler },
     { default: emailCronHandler },
-    { default: merchantHandler },
-    { default: paymentsHandler },
+    { default: paystackCallbackHandler },
+    { default: paystackWebhookHandler },
     { default: platformAdminHandler },
     { default: storeHandler },
     { default: storefrontHandler },
   ] = await Promise.all([
     import('./api/auth.ts'),
     import('./api/buyer-auth.ts'),
-    import('./api/buyer.ts'),
+    import('./api/commerce.ts'),
     import('./api/custom-domain.ts'),
     import('./api/dispute-cron.ts'),
     import('./api/disputes.ts'),
     import('./api/email-cron.ts'),
-    import('./api/merchant.ts'),
-    import('./api/payments.ts'),
+    import('./api/paystack/callback.ts'),
+    import('./api/paystack/webhook.ts'),
     import('./api/platform-admin.ts'),
     import('./api/store.ts'),
     import('./api/storefront.ts'),
@@ -58,6 +58,7 @@ async function startServer() {
 
   const app = express();
   app.set('trust proxy', true);
+  app.use('/api/paystack/webhook', express.raw({ type: 'application/json', limit: '1mb' }));
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true }));
 
@@ -71,15 +72,28 @@ async function startServer() {
     };
   };
 
+  const commerceGroup = (group: 'buyer' | 'merchant' | 'payments') => {
+    const handler = wrap(commerceHandler);
+    return (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      const parsed = new URL(req.url, 'http://localhost');
+      parsed.searchParams.set('group', group);
+      req.url = parsed.pathname + parsed.search;
+      return handler(req, res, next);
+    };
+  };
+
   app.all('/api/auth', wrap(authHandler));
   app.all('/api/buyer-auth', wrap(buyerAuthHandler));
-  app.all('/api/buyer', wrap(buyerHandler));
+  app.all('/api/buyer', commerceGroup('buyer'));
+  app.all('/api/merchant', commerceGroup('merchant'));
+  app.all('/api/payments', commerceGroup('payments'));
+  app.all('/api/commerce', wrap(commerceHandler));
   app.all('/api/custom-domain', wrap(customDomainHandler));
   app.all('/api/dispute-cron', wrap(disputeCronHandler));
   app.all('/api/disputes', wrap(disputesHandler));
   app.all('/api/email-cron', wrap(emailCronHandler));
-  app.all('/api/merchant', wrap(merchantHandler));
-  app.all('/api/payments', wrap(paymentsHandler));
+  app.all('/api/paystack/callback', wrap(paystackCallbackHandler));
+  app.all('/api/paystack/webhook', wrap(paystackWebhookHandler));
   app.all('/api/platform-admin', wrap(platformAdminHandler));
   app.all('/api/store', wrap(storeHandler));
   app.all('/api/storefront', wrap(storefrontHandler));

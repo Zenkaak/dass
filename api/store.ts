@@ -612,10 +612,31 @@ export default async function handler(req:any,res:any){
    if(!buyer)return send(res,401,{error:'Sign in to check this payment.'});
    const owned=await sql`SELECT id,order_number FROM public.orders WHERE id=${orderId} AND tenant_id=${tenantId} AND right(regexp_replace(customer_phone,'[^0-9]','','g'),9)=right(regexp_replace(${buyer.phone},'[^0-9]','','g'),9) LIMIT 1`;
    if(!owned.length)return send(res,404,{error:'Order not found for this buyer.'});
-   const payments=await sql`SELECT id,status,provider_checkout_id,provider_receipt,provider_result FROM public.payments WHERE tenant_id=${tenantId} AND order_id=${orderId} ORDER BY created_at DESC LIMIT 1`;
+   const payments=await sql`SELECT id,status,provider,provider_checkout_id,provider_reference,payment_route,provider_receipt,provider_result FROM public.payments WHERE tenant_id=${tenantId} AND order_id=${orderId} ORDER BY created_at DESC LIMIT 1`;
    if(!payments.length)return send(res,200,{orderId,paymentStatus:'unpaid',terminal:true});
    const payment=payments[0];
    if(['succeeded','failed','cancelled','reversed'].includes(String(payment.status)))return send(res,200,{orderId,paymentStatus:payment.status,receipt:payment.provider_receipt||null,terminal:true});
+   if(payment.provider==='paystack'){
+    if(!payment.provider_reference)return send(res,200,{orderId,paymentStatus:payment.status||'pending',terminal:false,queryAvailable:false});
+    try{
+     const creds=payment.payment_route==='own_paystack'?await getSellerPaystackCredentials(tenantId):await getCentralPaystackCredentials();
+     const verifyRes=await fetch('https://api.paystack.co/transaction/verify/'+encodeURIComponent(String(payment.provider_reference)),{headers:{Authorization:'Bearer '+creds.secretKey,Accept:'application/json'},signal:AbortSignal.timeout(12000)});
+     const verifyJson:any=await verifyRes.json().catch(()=>({})),txStatus=String(verifyJson?.data?.status||'').toLowerCase();
+     if(verifyRes.ok&&verifyJson?.status&&txStatus==='success'){
+      return send(res,200,{orderId,paymentStatus:'pending',receipt:null,terminal:false,queryAvailable:true,providerResponded:true,message:'Paystack processed your card payment; confirming your receipt.'});
+     }
+     if(verifyRes.ok&&verifyJson?.status&&['failed','reversed'].includes(txStatus)){
+      const terminalStatus=txStatus==='reversed'?'reversed':'failed';
+      await sql`UPDATE public.payments SET status=${terminalStatus},provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paystackVerifyStatus:txStatus})}::jsonb,updated_at=now() WHERE id=${payment.id} AND status IN ('initiated','pending')`;
+      await releaseInventory(sql,String(payment.id));
+      return send(res,200,{orderId,paymentStatus:terminalStatus,receipt:null,terminal:true,message:'Paystack confirmed that the card payment was not completed.'});
+     }
+     return send(res,200,{orderId,paymentStatus:'pending',receipt:null,terminal:false,queryAvailable:true,message:'Waiting for Paystack card confirmation…'});
+    }catch(queryError:any){
+     console.error('Buyer Paystack status query failed',{paymentId:payment.id,error:String(queryError?.message||queryError)});
+     return send(res,200,{orderId,paymentStatus:payment.status||'pending',receipt:null,terminal:false,queryAvailable:false,message:'Still checking with Paystack.'});
+    }
+   }
    if(!payment.provider_checkout_id)return send(res,200,{orderId,paymentStatus:payment.status||'pending',terminal:false,queryAvailable:false});
    try{
     const config=await sql`SELECT p.provider_result,pc.shortcode,pc.environment,pc.encrypted_credentials,pc.payout_method,pc.default_payout_method,pc.party_b,pc.till_party_b,pc.paybill_party_b,pc.account_reference,pm.shortcode AS central_shortcode,pm.environment AS central_environment,pm.encrypted_credentials AS central_credentials
@@ -655,23 +676,58 @@ export default async function handler(req:any,res:any){
     FROM public.orders o
     LEFT JOIN LATERAL (SELECT p.status,p.provider,p.provider_receipt,p.provider_result->>'inventoryIssue' AS inventory_issue FROM public.payments p WHERE p.tenant_id=o.tenant_id AND p.order_id=o.id ORDER BY p.created_at DESC LIMIT 1) pay ON true
     WHERE o.tenant_id=${shops[0].id} AND right(regexp_replace(o.customer_phone,'[^0-9]','','g'),9)=right(regexp_replace(${customer.phone},'[^0-9]','','g'),9) ORDER BY o.created_at DESC LIMIT 100`;
-   return send(res,200,{orders:rows.map((o:any)=>({id:o.id,orderNumber:o.order_number,createdAt:o.created_at,customerName:o.customer_name,customerPhone:o.customer_phone,customerEmail:o.customer_email||'',subtotal:Number(o.subtotal_minor)/100,deliveryFee:Number(o.delivery_fee_minor||0)/100,discount:Number(o.discount_minor||0)/100,couponCode:o.coupon_code||null,total:Number(o.total_minor)/100,orderStatus:o.status,deliveryStatus:o.delivery_status||'pending_delivery',deliveryUpdatedAt:o.delivery_updated_at,deliveryMethod:o.delivery_method||'home',deliveryCounty:o.delivery_county||'',deliverySubCounty:o.delivery_sub_county||'',deliveryEstate:o.delivery_estate||'',deliveryAddress:o.delivery_address||'',deliveryDirections:o.delivery_directions||'',pickupStation:o.pickup_station||'',paymentStatus:o.provider==='cash_on_delivery'&&o.payment_status==='pending'?'cash_due':(o.payment_status||'unpaid'),paymentMethod:o.provider==='cash_on_delivery'?'delivery':'mpesa',paymentIssue:o.inventory_issue||null,receipt:o.provider_receipt||null,items:(o.items||[]).map((i:any)=>({id:i.id,name:i.name,quantity:Number(i.quantity),price:Number(i.price)/100,lineTotal:Number(i.lineTotal)/100}))}))});
+   return send(res,200,{orders:rows.map((o:any)=>({id:o.id,orderNumber:o.order_number,createdAt:o.created_at,customerName:o.customer_name,customerPhone:o.customer_phone,customerEmail:o.customer_email||'',subtotal:Number(o.subtotal_minor)/100,deliveryFee:Number(o.delivery_fee_minor||0)/100,discount:Number(o.discount_minor||0)/100,couponCode:o.coupon_code||null,total:Number(o.total_minor)/100,orderStatus:o.status,deliveryStatus:o.delivery_status||'pending_delivery',deliveryUpdatedAt:o.delivery_updated_at,deliveryMethod:o.delivery_method||'home',deliveryCounty:o.delivery_county||'',deliverySubCounty:o.delivery_sub_county||'',deliveryEstate:o.delivery_estate||'',deliveryAddress:o.delivery_address||'',deliveryDirections:o.delivery_directions||'',pickupStation:o.pickup_station||'',paymentStatus:o.provider==='cash_on_delivery'&&o.payment_status==='pending'?'cash_due':(o.payment_status||'unpaid'),paymentMethod:o.provider==='cash_on_delivery'?'delivery':(o.provider==='paystack'?'card':'mpesa'),paymentIssue:o.inventory_issue||null,receipt:o.provider_receipt||null,items:(o.items||[]).map((i:any)=>({id:i.id,name:i.name,quantity:Number(i.quantity),price:Number(i.price)/100,lineTotal:Number(i.lineTotal)/100}))}))});
   }
   if(req.method==='POST'&&action==='customer-payment-retry'){
-   const b=req.body||{},slug=String(b.slug||'').toLowerCase().trim(),orderId=String(b.orderId||'').trim(),paymentPhone=normalizePhone(b.paymentPhone||'');
+   const b=req.body||{},slug=String(b.slug||'').toLowerCase().trim(),orderId=String(b.orderId||'').trim(),paymentPhone=normalizePhone(b.paymentPhone||''),requestedRetryMethod=String(b.paymentMethod||'').toLowerCase();
    if(!slug||!orderId)return send(res,400,{error:'Order reference is required.'});
    const shops=await sql`SELECT id FROM public.tenants WHERE slug=${slug} AND status IN ('trial','active') LIMIT 1`;
    if(!shops.length)return send(res,404,{error:'Shop not found.'});
    const tenantId=shops[0].id,buyer=await buyerSession(sql,req,tenantId);
    if(!buyer)return send(res,401,{error:'Sign in to retry payment.'});
-   const orders=await sql`SELECT id,order_number,total_minor,status,customer_phone FROM public.orders WHERE id=${orderId} AND tenant_id=${tenantId} AND right(regexp_replace(customer_phone,'[^0-9]','','g'),9)=right(regexp_replace(${buyer.phone},'[^0-9]','','g'),9) LIMIT 1`;
+   const orders=await sql`SELECT id,order_number,total_minor,status,customer_phone,customer_email FROM public.orders WHERE id=${orderId} AND tenant_id=${tenantId} AND right(regexp_replace(customer_phone,'[^0-9]','','g'),9)=right(regexp_replace(${buyer.phone},'[^0-9]','','g'),9) LIMIT 1`;
    if(!orders.length)return send(res,404,{error:'Order not found for this buyer.'});
-   const order=orders[0];if(!paymentPhone)return send(res,400,{error:'Enter a valid Kenyan M-PESA phone number to receive the payment prompt.'});
+   const order=orders[0];
    if(['cancelled','refunded'].includes(String(order.status)))return send(res,409,{error:'This order is cancelled or refunded and cannot be paid.'});
-   const prior=await sql`SELECT id,status,provider_checkout_id,provider_result FROM public.payments WHERE tenant_id=${tenantId} AND order_id=${order.id} ORDER BY created_at DESC LIMIT 1`;
+   const prior=await sql`SELECT id,status,provider,provider_checkout_id,provider_reference,payment_route,provider_result FROM public.payments WHERE tenant_id=${tenantId} AND order_id=${order.id} ORDER BY created_at DESC LIMIT 1`;
    if(prior[0]?.status==='succeeded')return send(res,409,{error:'This order is already paid.'});
+   const retryWithCard=requestedRetryMethod==='paystack'||requestedRetryMethod==='card'||(!paymentPhone&&prior[0]?.provider==='paystack');
+   if(!retryWithCard&&!paymentPhone)return send(res,400,{error:'Enter a valid Kenyan M-PESA phone number to receive the payment prompt.'});
    if(['initiated','pending'].includes(String(prior[0]?.status||''))){
-    if(prior[0]?.status==='initiated'&&!prior[0]?.provider_checkout_id){
+    if(prior[0]?.provider==='paystack'){
+     if(prior[0]?.status==='initiated'&&!prior[0]?.provider_checkout_id){
+      await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||jsonb_build_object('recoveryNote','Paystack checkout was never initialized'),updated_at=now() WHERE id=${prior[0].id} AND status='initiated'`;
+      await releaseInventory(sql,String(prior[0].id));
+      prior[0].status='failed';
+     }else if(prior[0]?.provider_reference){
+      try{
+       const creds=prior[0].payment_route==='own_paystack'?await getSellerPaystackCredentials(tenantId):await getCentralPaystackCredentials();
+       const verifyRes=await fetch('https://api.paystack.co/transaction/verify/'+encodeURIComponent(String(prior[0].provider_reference)),{headers:{Authorization:'Bearer '+creds.secretKey,Accept:'application/json'},signal:AbortSignal.timeout(12000)});
+       const verifyJson:any=await verifyRes.json().catch(()=>({})),txStatus=String(verifyJson?.data?.status||'').toLowerCase();
+       if(verifyRes.ok&&verifyJson?.status&&txStatus==='success'){
+        return send(res,409,{error:'Paystack reports this payment as completed. We are waiting for the verified receipt before confirming your order.'});
+       }
+       if((verifyRes.ok&&verifyJson?.status&&['failed','abandoned','reversed'].includes(txStatus))||verifyRes.status===404){
+        await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paystackVerifyStatus:txStatus||'not_found'})}::jsonb,updated_at=now() WHERE id=${prior[0].id} AND status IN ('initiated','pending')`;
+        await releaseInventory(sql,String(prior[0].id));
+        prior[0].status='failed';
+       }else if(retryWithCard&&prior[0]?.provider_result?.authorizationUrl){
+        return send(res,200,{ok:true,paymentMethod:'paystack',authorizationUrl:prior[0].provider_result.authorizationUrl,reference:prior[0].provider_reference});
+       }else if(!verifyRes.ok){
+        return send(res,503,{error:'We could not verify the previous Paystack attempt. Please try again shortly.'});
+       }else{
+        return send(res,409,{error:'A card payment session is still open for this order. Complete it on Paystack or wait before switching payment methods.'});
+       }
+      }catch(queryError:any){
+       console.error('Pending Paystack verify failed before retry',{paymentId:prior[0].id,error:String(queryError?.message||queryError)});
+       return send(res,503,{error:'We could not verify the previous Paystack attempt. Please try again shortly.'});
+      }
+     }else{
+      await sql`UPDATE public.payments SET status='failed',updated_at=now() WHERE id=${prior[0].id} AND status IN ('initiated','pending')`;
+      await releaseInventory(sql,String(prior[0].id));
+      prior[0].status='failed';
+     }
+    }else if(prior[0]?.status==='initiated'&&!prior[0]?.provider_checkout_id){
      await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||jsonb_build_object('recoveryNote','STK request was never recorded as accepted'),updated_at=now() WHERE id=${prior[0].id} AND status='initiated'`;
      await releaseInventory(sql,String(prior[0].id));
      prior[0].status='failed';
@@ -688,6 +744,7 @@ export default async function handler(req:any,res:any){
        const terminalStatus=resultCode==='1032'?'cancelled':'failed';
        await sql`UPDATE public.payments SET status=${terminalStatus},provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({queryResultCode:resultCode,queryResultDescription:String(verification.ResultDesc||'')})}::jsonb,updated_at=now() WHERE id=${prior[0].id} AND status IN ('initiated','pending')`;
        await releaseInventory(sql,String(prior[0].id));
+       prior[0].status=terminalStatus;
       }else if(resultCode==='0'){
        return send(res,409,{error:'Safaricom reports this payment as completed or still processing. We are waiting for the verified payment receipt before allowing another prompt. Do not pay again yet.'});
       }else{
@@ -701,51 +758,41 @@ export default async function handler(req:any,res:any){
      return send(res,409,{error:'The previous M-PESA request has no Safaricom reference yet. Please contact the shop before starting another payment.'});
     }
    }
-   if(prior[0]?.status!=='failed'&&prior[0]?.status!=='cancelled'&&!(prior[0]?.status==='initiated'&&!prior[0]?.provider_checkout_id))return send(res,409,{error:'Retry is available only after a payment has failed or been cancelled.'});
-   const configs=await sql`SELECT pc.*,pt.shortcode AS central_till_shortcode,pt.environment AS central_till_environment,pt.encrypted_credentials AS central_till_credentials,pb.shortcode AS central_paybill_shortcode,pb.environment AS central_paybill_environment,pb.encrypted_credentials AS central_paybill_credentials FROM public.tenants t LEFT JOIN public.payment_configs pc ON pc.tenant_id=t.id LEFT JOIN public.platform_payment_methods pt ON pt.method='till' LEFT JOIN public.platform_payment_methods pb ON pb.method='paybill' WHERE t.id=${tenantId} LIMIT 1`;
-   const cfg=configs[0]||{},key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');
-   const method=String(cfg.default_payout_method||cfg.payout_method||'till')==='paybill'?'paybill':'till';let payment:any=null;
-   if(requestedMethod==='paystack'||requestedMethod==='card'){
-    if(String(me?.slug||'').toLowerCase()!=='kingsley'){
+   if(prior.length&&prior[0]?.status!=='failed'&&prior[0]?.status!=='cancelled'&&prior[0]?.status!=='reversed')return send(res,409,{error:'Retry is available only after a payment has failed or been cancelled.'});
+   const amount=Number(order.total_minor);if(!Number.isSafeInteger(amount)||amount<1)return send(res,400,{error:'This order has an invalid total.'});
+   if(retryWithCard){
+    if(slug!=='kingsley'){
      const kyc=await sql`SELECT status,phone_verified_at FROM public.tenant_card_kyc WHERE tenant_id=${tenantId} LIMIT 1`;
      if(kyc[0]?.status!=='approved'||!kyc[0]?.phone_verified_at)return send(res,403,{error:'This shop has not completed card KYC. Choose M-PESA instead.'});
     }
     const routeRows=await sql`SELECT account_mode,connection_status,paystack_subaccount_code,subaccount_status FROM public.tenant_paystack_configs WHERE tenant_id=${tenantId} LIMIT 1`;
     const route=routeRows[0]?.account_mode==='own_paystack'&&routeRows[0]?.connection_status==='connected'?'own_paystack':'central_paystack';
     if(route==='central_paystack'&&(!routeRows[0]?.paystack_subaccount_code||routeRows[0]?.subaccount_status!=='active'))return send(res,409,{error:'This shop must complete Paystack settlement onboarding before card checkout is available.'});
-    const ownerEmail=String(customerEmail||buyer.email||'').trim();
+    const ownerEmail=String(order.customer_email||buyer.email||'').trim();
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ownerEmail))return send(res,400,{error:'Add a valid email address to your buyer account before card checkout.'});
-    const orderNo='DAS-'+Date.now().toString(36).toUpperCase()+'-'+crypto.randomBytes(2).toString('hex').toUpperCase(),customerChatToken=crypto.randomBytes(32).toString('hex'),idem='checkout-'+idempotency;
-    const orderLines=lines.map((l:any)=>({product_id:l.p.id,product_name:l.p.name,quantity:l.qty,unit_price_minor:Number(l.p.price_minor),line_total_minor:l.line}));
-    const reference='DASORD_'+crypto.randomBytes(18).toString('hex');
-    const created=await sql`WITH created_order AS (
-      INSERT INTO public.orders(tenant_id,order_number,customer_name,customer_phone,customer_email,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,subtotal_minor,delivery_fee_minor,total_minor,coupon_code,discount_minor,checkout_idempotency_key,checkout_fingerprint,status)
-      VALUES(${tenantId},${orderNo},${name},${phone},${ownerEmail},${deliveryMethod},${deliveryCounty||null},${deliverySubCounty||null},${deliveryEstate||null},${deliveryAddress||null},${deliveryDirections||null},${pickupStation||null},${total},${deliveryFeeMinor},${payableTotal},${couponCode||null},${discountMinor},${idempotency},${checkoutFingerprint},'pending')
-      ON CONFLICT (tenant_id,checkout_idempotency_key) WHERE checkout_idempotency_key IS NOT NULL DO NOTHING RETURNING id,order_number
-     ), new_chat AS (UPDATE public.orders o SET customer_chat_token_hash=${hash(customerChatToken)} FROM created_order c WHERE o.id=c.id AND o.tenant_id=${tenantId} RETURNING o.id,o.order_number), new_items AS (
-      INSERT INTO public.order_items(tenant_id,order_id,product_id,product_name,quantity,unit_price_minor,line_total_minor)
-      SELECT ${tenantId},c.id,i.product_id,i.product_name,i.quantity,i.unit_price_minor,i.line_total_minor FROM new_chat c CROSS JOIN jsonb_to_recordset(${JSON.stringify(orderLines)}::jsonb) AS i(product_id uuid,product_name text,quantity integer,unit_price_minor bigint,line_total_minor bigint) RETURNING order_id
-     ), new_payment AS (
-      INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_reference,payment_route,provider_result)
-      SELECT ${tenantId},c.id,'paystack',${paymentPhone},${payableTotal},'KES','initiated',${idem},${reference},${route},${JSON.stringify({source:'buyer_checkout',paymentRoute:route})}::jsonb FROM new_chat c CROSS JOIN (SELECT COUNT(*) FROM new_items) ready RETURNING id,order_id
-     ) SELECT c.id,c.order_number,p.id AS payment_id FROM new_chat c JOIN new_payment p ON p.order_id=c.id`;
-    if(!created.length)return send(res,409,{error:'This checkout was already submitted. Check your order status before trying again.'});
+    const paymentId=crypto.randomUUID(),reference='DASORD_'+crypto.randomBytes(18).toString('hex');
+    const inserted=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_reference,payment_route,provider_result) VALUES(${tenantId},${order.id},'paystack',${normalizePhone(order.customer_phone||buyer.phone||'')||null},${amount},'KES','initiated',${paymentId},${reference},${route},${JSON.stringify({source:'buyer_payment_retry',paymentRoute:route})}::jsonb) RETURNING id`;
+    try{await reserveInventory(sql,String(inserted[0].id));}catch(reservationError:any){await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({inventoryReservationError:String(reservationError?.message||reservationError)})}::jsonb,updated_at=now() WHERE id=${inserted[0].id}`;if(String(reservationError?.message)==='OUT_OF_STOCK')return send(res,409,{error:'Stock changed while you were checking out. Please update your cart and try again.'});throw reservationError;}
     try{
-     const callbackUrl=(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/paystack/callback',metadata={paymentId:created[0].payment_id,tenantId,orderId:created[0].id,source:'buyer_checkout'};
+     const callbackUrl=(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/paystack/callback',metadata={paymentId:inserted[0].id,tenantId,orderId:order.id,source:'buyer_payment_retry'};
      let initialized:any;
      if(route==='own_paystack'){
-      const own=await getSellerPaystackCredentials(tenantId),response=await fetch('https://api.paystack.co/transaction/initialize',{method:'POST',headers:{Authorization:'Bearer '+own.secretKey,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({email:ownerEmail,reference,amount:payableTotal,currency:'KES',callback_url:callbackUrl,metadata}),signal:AbortSignal.timeout(15000)}),payload:any=await response.json().catch(()=>({}));
+      const own=await getSellerPaystackCredentials(tenantId),response=await fetch('https://api.paystack.co/transaction/initialize',{method:'POST',headers:{Authorization:'Bearer '+own.secretKey,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({email:ownerEmail,reference,amount,currency:'KES',callback_url:callbackUrl,metadata}),signal:AbortSignal.timeout(15000)}),payload:any=await response.json().catch(()=>({}));
       if(!response.ok||payload?.status!==true||!payload?.data?.authorization_url||!payload?.data?.access_code)throw Error(String(payload?.message||'Seller Paystack could not initialize this KES payment.'));
       initialized={authorizationUrl:payload.data.authorization_url,accessCode:payload.data.access_code,reference:payload.data.reference};
-     }else initialized=await initializeCentralPaystack({email:ownerEmail,reference,amountSubunits:payableTotal,callbackUrl,metadata,subaccountCode:String(routeRows[0].paystack_subaccount_code)});
-     await sql`UPDATE public.payments SET provider_checkout_id=${initialized.accessCode},status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({authorizationUrl:initialized.authorizationUrl,accessCode:initialized.accessCode,reference,source:'buyer_checkout',paymentRoute:route})}::jsonb,updated_at=now() WHERE id=${created[0].payment_id} AND status='initiated'`;
-     await audit(sql,tenantId,buyer.user_id||null,'buyer.order.paystack.initialized','order',created[0].id,{orderNumber:created[0].order_number,amountMinor:payableTotal,paymentRoute:route});
-     return send(res,201,{ok:true,orderId:created[0].id,orderNumber:created[0].order_number,paymentStatus:'pending',paymentMethod:'paystack',authorizationUrl:initialized.authorizationUrl,accessCode:initialized.accessCode,reference,subtotal:total/100,deliveryFee:deliveryFeeMinor/100,discount:discountMinor/100,total:payableTotal/100,currency:'KES',chatToken:customerChatToken});
+     }else initialized=await initializeCentralPaystack({email:ownerEmail,reference,amountSubunits:amount,callbackUrl,metadata,subaccountCode:String(routeRows[0].paystack_subaccount_code)});
+     await sql`UPDATE public.payments SET provider_checkout_id=${initialized.accessCode},status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({authorizationUrl:initialized.authorizationUrl,accessCode:initialized.accessCode,reference,source:'buyer_payment_retry',paymentRoute:route})}::jsonb,updated_at=now() WHERE id=${inserted[0].id} AND status='initiated'`;
+     await audit(sql,tenantId,buyer.user_id||null,'buyer.order.paystack.retried','order',order.id,{orderNumber:order.order_number,amountMinor:amount,paymentRoute:route});
+     return send(res,200,{ok:true,paymentMethod:'paystack',authorizationUrl:initialized.authorizationUrl,reference,message:'Opening secure card checkout.'});
     }catch(error:any){
-     await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({source:'buyer_checkout',initializationError:String(error?.message||error).slice(0,300)})}::jsonb,updated_at=now() WHERE id=${created[0].payment_id} AND status='initiated'`;
-     return send(res,502,{error:String(error?.message||'Could not start Paystack checkout. No card payment was confirmed.'),orderNumber:created[0].order_number});
+     await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({source:'buyer_payment_retry',initializationError:String(error?.message||error).slice(0,300)})}::jsonb,updated_at=now() WHERE id=${inserted[0].id} AND status='initiated'`;
+     await releaseInventory(sql,String(inserted[0].id));
+     return send(res,502,{error:String(error?.message||'Could not start Paystack checkout. No card payment was confirmed.')});
     }
    }
+   const configs=await sql`SELECT pc.*,pt.shortcode AS central_till_shortcode,pt.environment AS central_till_environment,pt.encrypted_credentials AS central_till_credentials,pb.shortcode AS central_paybill_shortcode,pb.environment AS central_paybill_environment,pb.encrypted_credentials AS central_paybill_credentials FROM public.tenants t LEFT JOIN public.payment_configs pc ON pc.tenant_id=t.id LEFT JOIN public.platform_payment_methods pt ON pt.method='till' LEFT JOIN public.platform_payment_methods pb ON pb.method='paybill' WHERE t.id=${tenantId} LIMIT 1`;
+   const cfg=configs[0]||{},key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');
+   const method=String(cfg.default_payout_method||cfg.payout_method||'till')==='paybill'?'paybill':'till';let payment:any=null;
    try{
     if(method==='till'&&!((cfg.till_party_b)||(cfg.payout_method==='till'&&cfg.party_b)))return send(res,409,{error:'The shop Till destination is not configured.'});
     if(method==='paybill'&&!((cfg.paybill_party_b)||(cfg.payout_method==='paybill'&&cfg.party_b)))return send(res,409,{error:'The shop PayBill destination is not configured.'});
@@ -762,7 +809,6 @@ export default async function handler(req:any,res:any){
    }catch(e:any){console.error('Buyer retry credentials failed',e?.message||e);return send(res,503,{error:'Payment credentials could not be loaded securely.'});}
    if(!payment?.consumerKey||!payment?.consumerSecret||!payment?.passkey||!payment?.shortcode||!payment?.partyB)return send(res,503,{error:'This shop has not completed the required M-PESA payment setup.'});
    if(payment.environment!=='production')return send(res,503,{error:'Live payment retry is disabled while this shop is using sandbox credentials.'});
-   const amount=Number(order.total_minor);if(!Number.isSafeInteger(amount)||amount<1)return send(res,400,{error:'This order has an invalid total.'});
    const paymentId=crypto.randomUUID();
    const inserted=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result) VALUES(${tenantId},${order.id},'mpesa_daraja',${paymentPhone},${amount},'KES','initiated',${paymentId},${JSON.stringify({paymentMethod:method,source:'buyer_payment_retry'})}::jsonb) RETURNING id`;
    try{await reserveInventory(sql,String(inserted[0].id));}catch(reservationError:any){await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({inventoryReservationError:String(reservationError?.message||reservationError)})}::jsonb,updated_at=now() WHERE id=${inserted[0].id}`;if(String(reservationError?.message)==='OUT_OF_STOCK')return send(res,409,{error:'Stock changed while you were checking out. Please update your cart and try again.'});throw reservationError;}
@@ -776,7 +822,7 @@ export default async function handler(req:any,res:any){
      await sql`UPDATE public.payments SET status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paymentMethod:method,source:'buyer_payment_retry',stkSubmissionAmbiguous:true,manualReviewRequired:true,error:String(e?.message||'STK submission response was lost')})}::jsonb,updated_at=now() WHERE id=${inserted[0].id}`;
      await sql`UPDATE public.inventory_reservations SET expires_at=now()+interval '30 minutes',updated_at=now() WHERE payment_id=${inserted[0].id} AND status='active'`;
      console.error('Buyer retry STK submission outcome is ambiguous; retained for review',e?.message||e);
-     return send(res,202,{ok:true,orderId:existing.id,orderNumber:existing.order_number,paymentStatus:'pending',manualReviewRequired:true,subtotal:Number(existing.subtotal_minor)/100,deliveryFee:Number(existing.delivery_fee_minor||0)/100,discount:Number(existing.discount_minor||0)/100,total:Number(existing.total_minor)/100,couponCode:existing.coupon_code||null,chatToken:'',message:'Safaricom did not return a confirmation. Do not retry yet; this payment is being held for review to avoid duplicate prompts.'});
+     return send(res,202,{ok:true,orderId:order.id,orderNumber:order.order_number,paymentStatus:'pending',manualReviewRequired:true,chatToken:'',message:'Safaricom did not return a confirmation. Do not retry yet; this payment is being held for review to avoid duplicate prompts.'});
     }
     await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paymentMethod:method,source:'buyer_payment_retry',error:String(e?.message||'STK request failed')})}::jsonb,updated_at=now() WHERE id=${inserted[0].id}`;await releaseInventory(sql,String(inserted[0].id));
     console.error('Buyer payment retry failed',e?.message||e);return send(res,502,{error:e?.message||'Could not start the M-PESA payment prompt.'});
@@ -922,9 +968,28 @@ export default async function handler(req:any,res:any){
    if(requestedMethod==='delivery'&&!(deliveryMethod==='home'?cfg.cash_on_delivery_enabled:cfg.cash_on_pickup_enabled))return send(res,409,{error:deliveryMethod==='home'?'This shop is not accepting cash on delivery. Choose M-PESA instead.':'This shop is not accepting cash on pickup. Choose M-PESA instead.'});
    const method=requestedMethod==='paybill'?'paybill':requestedMethod==='till'?'till':((cfg.default_payout_method||cfg.payout_method||'till')==='paybill'?'paybill':'till');
    const deliveryFeeMinor=Math.max(0,Number(deliveryMethod==='pickup'?cfg.delivery_pickup_fee_minor:cfg.delivery_home_fee_minor)||0),payableTotal=total-discountMinor+deliveryFeeMinor;
-   const checkoutFingerprint=hash(JSON.stringify({buyer:phone,paymentMethod:requestedMethod,items:lines.map((l:any)=>({id:l.p.id,quantity:l.qty,unitPrice:Number(l.p.price_minor)})).sort((a:any,b:any)=>a.id.localeCompare(b.id)),couponCode,deliveryMethod,deliveryCounty,deliverySubCounty,deliveryEstate,deliveryAddress,deliveryDirections,pickupStation,paymentPhone:requestedMethod==='delivery'?'':paymentPhone,method:requestedMethod==='delivery'?'cash':method,subtotalMinor:total,discountMinor,deliveryFeeMinor}));
+   const checkoutFingerprint=hash(JSON.stringify({buyer:phone,items:lines.map((l:any)=>({id:l.p.id,quantity:l.qty,unitPrice:Number(l.p.price_minor)})).sort((a:any,b:any)=>a.id.localeCompare(b.id)),couponCode,deliveryMethod,deliveryCounty,deliverySubCounty,deliveryEstate,deliveryAddress,deliveryDirections,pickupStation,paymentPhone:requestedMethod==='delivery'?'':paymentPhone,method:requestedMethod==='delivery'?'cash':(requestedMethod==='paystack'||requestedMethod==='card')?'paystack':method,subtotalMinor:total,discountMinor,deliveryFeeMinor}));
+   if(requestedMethod==='delivery'){
+    const orderNo='DAS-'+Date.now().toString(36).toUpperCase()+'-'+crypto.randomBytes(2).toString('hex').toUpperCase();
+    const customerChatToken=crypto.randomBytes(32).toString('hex'),idem='checkout-'+idempotency;
+    const orderLines=lines.map((l:any)=>({product_id:l.p.id,product_name:l.p.name,quantity:l.qty,unit_price_minor:Number(l.p.price_minor),line_total_minor:l.line}));
+    const cashOrder=await sql`WITH created_order AS (
+      INSERT INTO public.orders(tenant_id,order_number,customer_name,customer_phone,customer_email,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,subtotal_minor,delivery_fee_minor,total_minor,coupon_code,discount_minor,checkout_idempotency_key,checkout_fingerprint,customer_chat_token_hash,status)
+      VALUES(${tenantId},${orderNo},${name},${phone},${customerEmail||null},${deliveryMethod},${deliveryCounty||null},${deliverySubCounty||null},${deliveryEstate||null},${deliveryAddress||null},${deliveryDirections||null},${pickupStation||null},${total},${deliveryFeeMinor},${payableTotal},${couponCode||null},${discountMinor},${idempotency},${checkoutFingerprint},${hash(customerChatToken)},'pending')
+      ON CONFLICT (tenant_id,checkout_idempotency_key) WHERE checkout_idempotency_key IS NOT NULL DO NOTHING RETURNING id,order_number
+     ), new_items AS (
+      INSERT INTO public.order_items(tenant_id,order_id,product_id,product_name,quantity,unit_price_minor,line_total_minor)
+      SELECT ${tenantId},c.id,i.product_id,i.product_name,i.quantity,i.unit_price_minor,i.line_total_minor FROM created_order c CROSS JOIN jsonb_to_recordset(${JSON.stringify(orderLines)}::jsonb) AS i(product_id uuid,product_name text,quantity integer,unit_price_minor bigint,line_total_minor bigint) RETURNING order_id
+     ), new_payment AS (
+      INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result)
+      SELECT ${tenantId},c.id,'cash_on_delivery',${phone},${payableTotal},'KES','pending',${idem},${JSON.stringify({paymentMethod:'delivery',source:'buyer_checkout_cash',collectionType:deliveryMethod==='pickup'?'cash_on_pickup':'cash_on_delivery',paymentStatus:'cash_due'})}::jsonb FROM created_order c CROSS JOIN (SELECT COUNT(*) FROM new_items) items_ready RETURNING id,order_id
+     ) SELECT c.id,c.order_number,p.id AS payment_id FROM created_order c JOIN new_payment p ON p.order_id=c.id`;
+    if(!cashOrder.length){const prior=await sql`SELECT o.id,o.order_number,o.total_minor,o.subtotal_minor,o.delivery_fee_minor,o.discount_minor,o.coupon_code FROM public.orders o WHERE o.tenant_id=${tenantId} AND o.checkout_idempotency_key=${idempotency} LIMIT 1`;if(!prior.length)return send(res,409,{error:'Checkout is already being processed. Refresh your orders in a moment.'});return send(res,200,{ok:true,orderId:prior[0].id,orderNumber:prior[0].order_number,paymentStatus:'cash_due',paymentMethod:'delivery',subtotal:Number(prior[0].subtotal_minor)/100,deliveryFee:Number(prior[0].delivery_fee_minor||0)/100,discount:Number(prior[0].discount_minor||0)/100,total:Number(prior[0].total_minor)/100,couponCode:prior[0].coupon_code||null,chatToken:''});}
+    await reserveInventory(sql,String(cashOrder[0].payment_id));
+    try{await sql`CREATE TABLE IF NOT EXISTS public.tenant_email_configs(tenant_id uuid PRIMARY KEY REFERENCES public.tenants(id) ON DELETE CASCADE,encrypted_config jsonb NOT NULL,from_email text NOT NULL,reply_to_email text NOT NULL,notification_email text,enabled boolean NOT NULL DEFAULT true,updated_at timestamptz NOT NULL DEFAULT now())`;await sql`ALTER TABLE public.tenant_email_configs ADD COLUMN IF NOT EXISTS notification_email text`;const info=await sql`SELECT o.order_number,o.customer_name,o.customer_email,t.name AS shop_name,COALESCE(NULLIF(ec.notification_email,''),NULLIF(u.email,''),NULLIF(ec.reply_to_email,'')) AS seller_email FROM public.orders o JOIN public.tenants t ON t.id=o.tenant_id LEFT JOIN public.users u ON u.id=t.created_by LEFT JOIN public.tenant_email_configs ec ON ec.tenant_id=t.id AND ec.enabled=true WHERE o.id=${cashOrder[0].id} AND o.tenant_id=${tenantId} LIMIT 1`;const order=info[0];const mail=brandedEmail(String(order?.shop_name||'Your shop'),'Cash order received','An order has been placed with cash payment due when it is delivered or collected. The order summary is included below.',{'Order number':String(order?.order_number||''),'Buyer':String(order?.customer_name||name),'Collection':deliveryMethod==='pickup'?'Cash on pickup':'Cash on delivery','Amount due':(payableTotal/100).toLocaleString('en-KE',{style:'currency',currency:'KES'})});if(order?.customer_email)await sendTenantTransactionalEmail(sql,tenantId,{to:String(order.customer_email),subject:'Order received — cash payment due',...mail,idempotencyKey:'cash-order-buyer-'+String(order.order_number)});if(order?.seller_email)await sendTenantTransactionalEmail(sql,tenantId,{to:String(order.seller_email),subject:'New cash order — '+String(order.order_number),...mail,idempotencyKey:'cash-order-seller-'+String(order.order_number)});}catch(emailError:any){console.error('Cash order notification failed',String(emailError?.message||emailError).slice(0,200));}
+    return send(res,201,{ok:true,orderId:cashOrder[0].id,orderNumber:cashOrder[0].order_number,paymentStatus:'cash_due',paymentMethod:'delivery',subtotal:total/100,deliveryFee:deliveryFeeMinor/100,discount:discountMinor/100,total:payableTotal/100,couponCode:couponCode||null,chatToken:customerChatToken,message:'Order placed. Cash is due when delivered or collected; seller acceptance is required.'});
+   }
    if(requestedMethod==='paystack'||requestedMethod==='card'){
-    // Buyer card checkout is a Paystack flow and must never fall through to Daraja STK.
     if(slug!=='kingsley'){
      const kyc=await sql`SELECT status,phone_verified_at FROM public.tenant_card_kyc WHERE tenant_id=${tenantId} LIMIT 1`;
      if(kyc[0]?.status!=='approved'||!kyc[0]?.phone_verified_at)return send(res,403,{error:'This shop has not completed card KYC. Choose M-PESA instead.'});
@@ -932,81 +997,97 @@ export default async function handler(req:any,res:any){
     const routeRows=await sql`SELECT account_mode,connection_status,paystack_subaccount_code,subaccount_status FROM public.tenant_paystack_configs WHERE tenant_id=${tenantId} LIMIT 1`;
     const route=routeRows[0]?.account_mode==='own_paystack'&&routeRows[0]?.connection_status==='connected'?'own_paystack':'central_paystack';
     if(route==='central_paystack'&&(!routeRows[0]?.paystack_subaccount_code||routeRows[0]?.subaccount_status!=='active'))return send(res,409,{error:'This shop must complete Paystack settlement onboarding before card checkout is available.'});
-    const ownerEmail=String(customerEmail||buyer.email||'').trim().toLowerCase();
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ownerEmail))return send(res,400,{error:'Add a valid email address to your buyer account before card checkout.'});
+    const ownerEmail=String(customerEmail||buyer.email||'').trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ownerEmail))return send(res,400,{error:'Add a valid email address before card checkout.'});
     const orderNo='DAS-'+Date.now().toString(36).toUpperCase()+'-'+crypto.randomBytes(2).toString('hex').toUpperCase(),customerChatToken=crypto.randomBytes(32).toString('hex'),idem='checkout-'+idempotency;
     const orderLines=lines.map((l:any)=>({product_id:l.p.id,product_name:l.p.name,quantity:l.qty,unit_price_minor:Number(l.p.price_minor),line_total_minor:l.line}));
     const reference='DASORD_'+crypto.randomBytes(18).toString('hex');
-    let paymentReference=reference;
     const created=await sql`WITH created_order AS (
-      INSERT INTO public.orders(tenant_id,order_number,customer_name,customer_phone,customer_email,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,subtotal_minor,delivery_fee_minor,total_minor,coupon_code,discount_minor,checkout_idempotency_key,checkout_fingerprint,status)
-      VALUES(${tenantId},${orderNo},${name},${phone},${ownerEmail},${deliveryMethod},${deliveryCounty||null},${deliverySubCounty||null},${deliveryEstate||null},${deliveryAddress||null},${deliveryDirections||null},${pickupStation||null},${total},${deliveryFeeMinor},${payableTotal},${couponCode||null},${discountMinor},${idempotency},${checkoutFingerprint},'pending')
+      INSERT INTO public.orders(tenant_id,order_number,customer_name,customer_phone,customer_email,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,subtotal_minor,delivery_fee_minor,total_minor,coupon_code,discount_minor,checkout_idempotency_key,checkout_fingerprint,customer_chat_token_hash,status)
+      VALUES(${tenantId},${orderNo},${name},${phone},${ownerEmail},${deliveryMethod},${deliveryCounty||null},${deliverySubCounty||null},${deliveryEstate||null},${deliveryAddress||null},${deliveryDirections||null},${pickupStation||null},${total},${deliveryFeeMinor},${payableTotal},${couponCode||null},${discountMinor},${idempotency},${checkoutFingerprint},${hash(customerChatToken)},'pending')
       ON CONFLICT (tenant_id,checkout_idempotency_key) WHERE checkout_idempotency_key IS NOT NULL DO NOTHING RETURNING id,order_number
-     ), new_chat AS (UPDATE public.orders o SET customer_chat_token_hash=${hash(customerChatToken)} FROM created_order c WHERE o.id=c.id AND o.tenant_id=${tenantId} RETURNING o.id,o.order_number), new_items AS (
+     ), new_items AS (
       INSERT INTO public.order_items(tenant_id,order_id,product_id,product_name,quantity,unit_price_minor,line_total_minor)
-      SELECT ${tenantId},c.id,i.product_id,i.product_name,i.quantity,i.unit_price_minor,i.line_total_minor FROM new_chat c CROSS JOIN jsonb_to_recordset(${JSON.stringify(orderLines)}::jsonb) AS i(product_id uuid,product_name text,quantity integer,unit_price_minor bigint,line_total_minor bigint) RETURNING order_id
+      SELECT ${tenantId},c.id,i.product_id,i.product_name,i.quantity,i.unit_price_minor,i.line_total_minor FROM created_order c CROSS JOIN jsonb_to_recordset(${JSON.stringify(orderLines)}::jsonb) AS i(product_id uuid,product_name text,quantity integer,unit_price_minor bigint,line_total_minor bigint) RETURNING order_id
      ), new_payment AS (
       INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_reference,payment_route,provider_result)
-      SELECT ${tenantId},c.id,'paystack',${paymentPhone},${payableTotal},'KES','initiated',${idem},${paymentReference},${route},${JSON.stringify({source:'buyer_checkout',paymentRoute:route})}::jsonb FROM new_chat c CROSS JOIN (SELECT COUNT(*) FROM new_items) ready RETURNING id,order_id
-     ) SELECT c.id,c.order_number,p.id AS payment_id FROM new_chat c JOIN new_payment p ON p.order_id=c.id`;
-    let checkout=created[0]||null;
-    if(!checkout){
-     const prior=await sql`SELECT o.id,o.order_number,o.checkout_fingerprint,p.id AS payment_id,p.status AS payment_status,p.provider_result FROM public.orders o LEFT JOIN LATERAL (SELECT id,status,provider_result FROM public.payments WHERE tenant_id=o.tenant_id AND order_id=o.id ORDER BY created_at DESC LIMIT 1) p ON true WHERE o.tenant_id=${tenantId} AND o.checkout_idempotency_key=${idempotency} LIMIT 1`;
-     if(!prior.length)return send(res,409,{error:'This checkout is already being processed. Check your orders before trying again.'});
-     const previous=prior[0];
-     if(previous.checkout_fingerprint!==checkoutFingerprint)return send(res,409,{error:'Your cart or delivery details changed. Start a fresh checkout to continue.'});
-     if(previous.payment_status==='succeeded')return send(res,409,{error:'This order is already paid. Check your orders.'});
-     if(previous.payment_status==='pending'){
-      const savedUrl=String(previous.provider_result?.authorizationUrl||'');
-      if(savedUrl.startsWith('https://'))return send(res,200,{ok:true,orderId:previous.id,orderNumber:previous.order_number,paymentStatus:'pending',paymentMethod:'paystack',authorizationUrl:savedUrl,accessCode:previous.provider_result?.accessCode||'',reference:previous.provider_result?.reference||'',total:payableTotal/100,currency:'KES'});
-      return send(res,409,{error:'A card payment attempt is already being checked. Do not retry yet; contact the shop if it remains pending.'});
+      SELECT ${tenantId},c.id,'paystack',${phone},${payableTotal},'KES','initiated',${idem},${reference},${route},${JSON.stringify({source:'buyer_checkout',paymentRoute:route})}::jsonb FROM created_order c CROSS JOIN (SELECT COUNT(*) FROM new_items) ready RETURNING id,order_id
+     ) SELECT c.id,c.order_number,p.id AS payment_id FROM created_order c JOIN new_payment p ON p.order_id=c.id`;
+    let targetOrderId='',targetOrderNumber='',targetPaymentId='',targetReference=reference,targetChatToken=customerChatToken,httpStatus=201;
+    if(!created.length){
+     const prior=await sql`SELECT o.id,o.order_number,o.checkout_fingerprint,o.subtotal_minor,o.delivery_fee_minor,o.total_minor,o.discount_minor,o.coupon_code,
+       (SELECT COUNT(*)::int FROM public.order_items i WHERE i.tenant_id=o.tenant_id AND i.order_id=o.id) AS item_count,
+       p.id AS payment_id,p.status AS payment_status,p.provider,p.provider_reference,p.payment_route,p.provider_result
+       FROM public.orders o LEFT JOIN LATERAL (SELECT id,status,provider,provider_reference,payment_route,provider_result FROM public.payments WHERE tenant_id=o.tenant_id AND order_id=o.id ORDER BY created_at DESC LIMIT 1) p ON true
+       WHERE o.tenant_id=${tenantId} AND o.checkout_idempotency_key=${idempotency} LIMIT 1`;
+     if(!prior.length)return send(res,409,{error:'Checkout is already being processed. Refresh your orders in a moment.'});
+     const existing=prior[0];
+     if(existing.checkout_fingerprint!==checkoutFingerprint)return send(res,409,{error:'Your cart or delivery details changed. Start a fresh checkout to continue.'});
+     if(Number(existing.item_count||0)===0){
+      await sql`INSERT INTO public.order_items(tenant_id,order_id,product_id,product_name,quantity,unit_price_minor,line_total_minor)
+        SELECT ${tenantId},${existing.id},i.product_id,i.product_name,i.quantity,i.unit_price_minor,i.line_total_minor
+        FROM jsonb_to_recordset(${JSON.stringify(orderLines)}::jsonb) AS i(product_id uuid,product_name text,quantity integer,unit_price_minor bigint,line_total_minor bigint)
+        WHERE NOT EXISTS (SELECT 1 FROM public.order_items WHERE tenant_id=${tenantId} AND order_id=${existing.id})`;
      }
-     if(!['failed','cancelled'].includes(String(previous.payment_status||'')))return send(res,409,{error:'This order is still being processed. Check its status before retrying.'});
-     await releaseInventory(sql,String(previous.payment_id||''));
-     paymentReference='DASORD_'+crypto.randomBytes(18).toString('hex');
-     const retry=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_reference,payment_route,provider_result) VALUES(${tenantId},${previous.id},'paystack',${paymentPhone},${payableTotal},'KES','initiated',${crypto.randomUUID()},${paymentReference},${route},${JSON.stringify({source:'buyer_checkout_retry',paymentRoute:route})}::jsonb) RETURNING id`;
-     checkout={id:previous.id,order_number:previous.order_number,payment_id:retry[0]?.id};
+     if(existing.payment_status==='succeeded'){
+      return send(res,200,{ok:true,orderId:existing.id,orderNumber:existing.order_number,paymentStatus:'succeeded',paymentMethod:'paystack',subtotal:Number(existing.subtotal_minor)/100,deliveryFee:Number(existing.delivery_fee_minor||0)/100,discount:Number(existing.discount_minor||0)/100,total:Number(existing.total_minor)/100,couponCode:existing.coupon_code||null,currency:'KES',chatToken:''});
+     }
+     if(existing.payment_status==='pending'&&existing.provider==='paystack'&&existing.provider_reference){
+      try{
+       const creds=existing.payment_route==='own_paystack'?await getSellerPaystackCredentials(tenantId):await getCentralPaystackCredentials();
+       const verifyRes=await fetch('https://api.paystack.co/transaction/verify/'+encodeURIComponent(String(existing.provider_reference)),{headers:{Authorization:'Bearer '+creds.secretKey,Accept:'application/json'},signal:AbortSignal.timeout(12000)});
+       const verifyJson:any=await verifyRes.json().catch(()=>({})),txStatus=String(verifyJson?.data?.status||'').toLowerCase();
+       if(verifyRes.ok&&verifyJson?.status&&txStatus==='success'){
+        return send(res,200,{ok:true,orderId:existing.id,orderNumber:existing.order_number,paymentStatus:'pending',paymentMethod:'paystack',subtotal:Number(existing.subtotal_minor)/100,deliveryFee:Number(existing.delivery_fee_minor||0)/100,discount:Number(existing.discount_minor||0)/100,total:Number(existing.total_minor)/100,couponCode:existing.coupon_code||null,currency:'KES',chatToken:'',message:'Paystack processed this payment; confirming your receipt.'});
+       }
+       if((verifyRes.ok&&verifyJson?.status&&['failed','abandoned','reversed'].includes(txStatus))||verifyRes.status===404){
+        await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paystackVerifyStatus:txStatus||'not_found'})}::jsonb,updated_at=now() WHERE id=${existing.payment_id} AND status IN ('initiated','pending')`;
+        await releaseInventory(sql,String(existing.payment_id));
+       }else if(existing.provider_result?.authorizationUrl){
+        return send(res,200,{ok:true,orderId:existing.id,orderNumber:existing.order_number,paymentStatus:'pending',paymentMethod:'paystack',authorizationUrl:existing.provider_result.authorizationUrl,reference:existing.provider_reference,subtotal:Number(existing.subtotal_minor)/100,deliveryFee:Number(existing.delivery_fee_minor||0)/100,discount:Number(existing.discount_minor||0)/100,total:Number(existing.total_minor)/100,couponCode:existing.coupon_code||null,currency:'KES',chatToken:''});
+       }else{
+        return send(res,503,{error:'We could not verify your existing Paystack session yet. Check your orders or try again shortly.'});
+       }
+      }catch{
+       if(existing.provider_result?.authorizationUrl){
+        return send(res,200,{ok:true,orderId:existing.id,orderNumber:existing.order_number,paymentStatus:'pending',paymentMethod:'paystack',authorizationUrl:existing.provider_result.authorizationUrl,reference:existing.provider_reference,subtotal:Number(existing.subtotal_minor)/100,deliveryFee:Number(existing.delivery_fee_minor||0)/100,discount:Number(existing.discount_minor||0)/100,total:Number(existing.total_minor)/100,couponCode:existing.coupon_code||null,currency:'KES',chatToken:''});
+       }
+       return send(res,503,{error:'We could not verify your existing Paystack session yet. Check your orders or try again shortly.'});
+      }
+     }else if(existing.payment_status==='initiated'&&existing.payment_id){
+      await sql`UPDATE public.payments SET status='failed',updated_at=now() WHERE id=${existing.payment_id} AND status='initiated'`;
+      await releaseInventory(sql,String(existing.payment_id));
+     }
+     const retryRef='DASORD_'+crypto.randomBytes(18).toString('hex'),retryKey=crypto.randomUUID();
+     const recovered=await sql`INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_reference,payment_route,provider_result) VALUES(${tenantId},${existing.id},'paystack',${phone},${Number(existing.total_minor)},'KES','initiated',${retryKey},${retryRef},${route},${JSON.stringify({source:'buyer_checkout_recovery',paymentRoute:route})}::jsonb) RETURNING id`;
+     if(!recovered.length)return send(res,409,{error:'We could not recover this checkout. Please return to your cart and try again.'});
+     targetOrderId=String(existing.id);targetOrderNumber=String(existing.order_number);targetPaymentId=String(recovered[0].id);targetReference=retryRef;targetChatToken='';httpStatus=200;
+    }else{
+     targetOrderId=String(created[0].id);targetOrderNumber=String(created[0].order_number);targetPaymentId=String(created[0].payment_id);
     }
-    if(!checkout?.payment_id)return send(res,409,{error:'We could not prepare this card payment. Contact the shop before retrying.'});
     try{
-     await reserveInventory(sql,String(checkout.payment_id));
-     const callbackUrl=(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/+$/,'')+'/api/paystack/callback',metadata={paymentId:checkout.payment_id,tenantId,orderId:checkout.id,source:'buyer_checkout'};
+     await reserveInventory(sql,targetPaymentId);
+    }catch(reservationError:any){
+     await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({inventoryReservationError:String(reservationError?.message||reservationError)})}::jsonb,updated_at=now() WHERE id=${targetPaymentId}`;
+     if(String(reservationError?.message)==='OUT_OF_STOCK')return send(res,409,{error:'One or more items went out of stock during checkout. Update your cart and try again.'});
+     throw reservationError;
+    }
+    try{
+     const callbackUrl=(env('DASNET_PUBLIC_URL')||'https://dasmarket.co.ke').replace(/\/$/,'')+'/api/paystack/callback',metadata={paymentId:targetPaymentId,tenantId,orderId:targetOrderId,source:'buyer_checkout'};
      let initialized:any;
      if(route==='own_paystack'){
-      const own=await getSellerPaystackCredentials(tenantId),response=await fetch('https://api.paystack.co/transaction/initialize',{method:'POST',headers:{Authorization:'Bearer '+own.secretKey,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({email:ownerEmail,reference:paymentReference,amount:payableTotal,currency:'KES',callback_url:callbackUrl,metadata}),signal:AbortSignal.timeout(15000)}),payload:any=await response.json().catch(()=>({}));
+      const own=await getSellerPaystackCredentials(tenantId),response=await fetch('https://api.paystack.co/transaction/initialize',{method:'POST',headers:{Authorization:'Bearer '+own.secretKey,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({email:ownerEmail,reference:targetReference,amount:payableTotal,currency:'KES',callback_url:callbackUrl,metadata}),signal:AbortSignal.timeout(15000)}),payload:any=await response.json().catch(()=>({}));
       if(!response.ok||payload?.status!==true||!payload?.data?.authorization_url||!payload?.data?.access_code)throw Error(String(payload?.message||'Seller Paystack could not initialize this KES payment.'));
-      initialized={authorizationUrl:payload.data.authorization_url,accessCode:payload.data.access_code,reference:payload.data.reference||paymentReference};
-     }else initialized=await initializeCentralPaystack({email:ownerEmail,reference:paymentReference,amountSubunits:payableTotal,callbackUrl,metadata,subaccountCode:String(routeRows[0].paystack_subaccount_code)});
-     if(!String(initialized.authorizationUrl||'').startsWith('https://'))throw Error('Paystack did not return a valid secure checkout URL.');
-     await sql`UPDATE public.payments SET provider_checkout_id=${initialized.accessCode},status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({authorizationUrl:initialized.authorizationUrl,accessCode:initialized.accessCode,reference:initialized.reference||paymentReference,source:'buyer_checkout',paymentRoute:route})}::jsonb,updated_at=now() WHERE id=${checkout.payment_id} AND status='initiated'`;
-     await audit(sql,tenantId,buyer.user_id||null,'buyer.order.paystack.initialized','order',checkout.id,{orderNumber:checkout.order_number,amountMinor:payableTotal,paymentRoute:route});
-     return send(res,201,{ok:true,orderId:checkout.id,orderNumber:checkout.order_number,paymentStatus:'pending',paymentMethod:'paystack',authorizationUrl:initialized.authorizationUrl,accessCode:initialized.accessCode,reference:initialized.reference||paymentReference,subtotal:total/100,deliveryFee:deliveryFeeMinor/100,discount:discountMinor/100,total:payableTotal/100,currency:'KES',chatToken:customerChatToken});
+      initialized={authorizationUrl:payload.data.authorization_url,accessCode:payload.data.access_code,reference:payload.data.reference};
+     }else initialized=await initializeCentralPaystack({email:ownerEmail,reference:targetReference,amountSubunits:payableTotal,callbackUrl,metadata,subaccountCode:String(routeRows[0].paystack_subaccount_code)});
+     await sql`UPDATE public.payments SET provider_checkout_id=${initialized.accessCode},status='pending',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({authorizationUrl:initialized.authorizationUrl,accessCode:initialized.accessCode,reference:targetReference,source:'buyer_checkout',paymentRoute:route})}::jsonb,updated_at=now() WHERE id=${targetPaymentId} AND status='initiated'`;
+     await audit(sql,tenantId,buyer.user_id||null,'buyer.order.paystack.initialized','order',targetOrderId,{orderNumber:targetOrderNumber,amountMinor:payableTotal,paymentRoute:route});
+     return send(res,httpStatus,{ok:true,orderId:targetOrderId,orderNumber:targetOrderNumber,paymentStatus:'pending',paymentMethod:'paystack',authorizationUrl:initialized.authorizationUrl,reference:targetReference,subtotal:total/100,deliveryFee:deliveryFeeMinor/100,discount:discountMinor/100,total:payableTotal/100,currency:'KES',chatToken:targetChatToken});
     }catch(error:any){
-     await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({source:'buyer_checkout',initializationError:String(error?.message||error).slice(0,300)})}::jsonb,updated_at=now() WHERE id=${checkout.payment_id} AND status='initiated'`;
-     await releaseInventory(sql,String(checkout.payment_id));
-     console.error('Buyer Paystack checkout initialization failed',{paymentId:checkout.payment_id,error:String(error?.message||error).slice(0,240)});
-     return send(res,502,{error:String(error?.message||'Could not start Paystack checkout. No card payment was confirmed.'),orderNumber:checkout.order_number});
+     await sql`UPDATE public.payments SET status='failed',provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({source:'buyer_checkout',initializationError:String(error?.message||error).slice(0,300)})}::jsonb,updated_at=now() WHERE id=${targetPaymentId} AND status='initiated'`;
+     await releaseInventory(sql,targetPaymentId);
+     return send(res,502,{error:String(error?.message||'Could not start Paystack checkout. No card payment was confirmed.'),orderId:targetOrderId,orderNumber:targetOrderNumber});
     }
-   }
-   if(requestedMethod==='delivery'){
-    const orderNo='DAS-'+Date.now().toString(36).toUpperCase()+'-'+crypto.randomBytes(2).toString('hex').toUpperCase();
-    const customerChatToken=crypto.randomBytes(32).toString('hex'),idem='checkout-'+idempotency;
-    const orderLines=lines.map((l:any)=>({product_id:l.p.id,product_name:l.p.name,quantity:l.qty,unit_price_minor:Number(l.p.price_minor),line_total_minor:l.line}));
-    const cashOrder=await sql`WITH created_order AS (
-      INSERT INTO public.orders(tenant_id,order_number,customer_name,customer_phone,customer_email,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,subtotal_minor,delivery_fee_minor,total_minor,coupon_code,discount_minor,checkout_idempotency_key,checkout_fingerprint,status)
-      VALUES(${tenantId},${orderNo},${name},${phone},${customerEmail||null},${deliveryMethod},${deliveryCounty||null},${deliverySubCounty||null},${deliveryEstate||null},${deliveryAddress||null},${deliveryDirections||null},${pickupStation||null},${total},${deliveryFeeMinor},${payableTotal},${couponCode||null},${discountMinor},${idempotency},${checkoutFingerprint},'pending')
-      ON CONFLICT (tenant_id,checkout_idempotency_key) WHERE checkout_idempotency_key IS NOT NULL DO NOTHING RETURNING id,order_number
-     ), new_chat AS (UPDATE public.orders o SET customer_chat_token_hash=${hash(customerChatToken)} FROM created_order c WHERE o.id=c.id AND o.tenant_id=${tenantId} RETURNING o.id,o.order_number), new_items AS (
-      INSERT INTO public.order_items(tenant_id,order_id,product_id,product_name,quantity,unit_price_minor,line_total_minor)
-      SELECT ${tenantId},c.id,i.product_id,i.product_name,i.quantity,i.unit_price_minor,i.line_total_minor FROM new_chat c CROSS JOIN jsonb_to_recordset(${JSON.stringify(orderLines)}::jsonb) AS i(product_id uuid,product_name text,quantity integer,unit_price_minor bigint,line_total_minor bigint) RETURNING order_id
-     ), new_payment AS (
-      INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result)
-      SELECT ${tenantId},c.id,'cash_on_delivery',${phone},${payableTotal},'KES','pending',${idem},${JSON.stringify({paymentMethod:'delivery',source:'buyer_checkout_cash',collectionType:deliveryMethod==='pickup'?'cash_on_pickup':'cash_on_delivery',paymentStatus:'cash_due'})}::jsonb FROM new_chat c CROSS JOIN (SELECT COUNT(*) FROM new_items) items_ready RETURNING id,order_id
-     ) SELECT c.id,c.order_number,p.id AS payment_id FROM new_chat c JOIN new_payment p ON p.order_id=c.id`;
-    if(!cashOrder.length){const prior=await sql`SELECT o.id,o.order_number,o.total_minor,o.subtotal_minor,o.delivery_fee_minor,o.discount_minor,o.coupon_code FROM public.orders o WHERE o.tenant_id=${tenantId} AND o.checkout_idempotency_key=${idempotency} LIMIT 1`;if(!prior.length)return send(res,409,{error:'Checkout is already being processed. Refresh your orders in a moment.'});return send(res,200,{ok:true,orderId:prior[0].id,orderNumber:prior[0].order_number,paymentStatus:'cash_due',paymentMethod:'delivery',subtotal:Number(prior[0].subtotal_minor)/100,deliveryFee:Number(prior[0].delivery_fee_minor||0)/100,discount:Number(prior[0].discount_minor||0)/100,total:Number(prior[0].total_minor)/100,couponCode:prior[0].coupon_code||null,chatToken:''});}
-    await reserveInventory(sql,String(cashOrder[0].payment_id));
-    try{await sql`CREATE TABLE IF NOT EXISTS public.tenant_email_configs(tenant_id uuid PRIMARY KEY REFERENCES public.tenants(id) ON DELETE CASCADE,encrypted_config jsonb NOT NULL,from_email text NOT NULL,reply_to_email text NOT NULL,notification_email text,enabled boolean NOT NULL DEFAULT true,updated_at timestamptz NOT NULL DEFAULT now())`;await sql`ALTER TABLE public.tenant_email_configs ADD COLUMN IF NOT EXISTS notification_email text`;const info=await sql`SELECT o.order_number,o.customer_name,o.customer_email,t.name AS shop_name,COALESCE(NULLIF(ec.notification_email,''),NULLIF(u.email,''),NULLIF(ec.reply_to_email,'')) AS seller_email FROM public.orders o JOIN public.tenants t ON t.id=o.tenant_id LEFT JOIN public.users u ON u.id=t.created_by LEFT JOIN public.tenant_email_configs ec ON ec.tenant_id=t.id AND ec.enabled=true WHERE o.id=${cashOrder[0].id} AND o.tenant_id=${tenantId} LIMIT 1`;const order=info[0];const mail=brandedEmail(String(order?.shop_name||'Your shop'),'Cash order received','An order has been placed with cash payment due when it is delivered or collected. The order summary is included below.',{'Order number':String(order?.order_number||''),'Buyer':String(order?.customer_name||name),'Collection':deliveryMethod==='pickup'?'Cash on pickup':'Cash on delivery','Amount due':(payableTotal/100).toLocaleString('en-KE',{style:'currency',currency:'KES'})});if(order?.customer_email)await sendTenantTransactionalEmail(sql,tenantId,{to:String(order.customer_email),subject:'Order received — cash payment due',...mail,idempotencyKey:'cash-order-buyer-'+String(order.order_number)});if(order?.seller_email)await sendTenantTransactionalEmail(sql,tenantId,{to:String(order.seller_email),subject:'New cash order — '+String(order.order_number),...mail,idempotencyKey:'cash-order-seller-'+String(order.order_number)});}catch(emailError:any){console.error('Cash order notification failed',String(emailError?.message||emailError).slice(0,200));}
-    return send(res,201,{ok:true,orderId:cashOrder[0].id,orderNumber:cashOrder[0].order_number,paymentStatus:'cash_due',paymentMethod:'delivery',subtotal:total/100,deliveryFee:deliveryFeeMinor/100,discount:discountMinor/100,total:payableTotal/100,couponCode:couponCode||null,chatToken:customerChatToken,message:'Order placed. Cash is due when delivered or collected; seller acceptance is required.'});
    }
    try{
     if(method==='till'&&!((cfg.till_party_b)||(cfg.payout_method==='till'&&cfg.party_b)))return send(res,409,{error:'A Till / Buy Goods destination is not configured for this seller.'});
@@ -1030,26 +1111,22 @@ export default async function handler(req:any,res:any){
    // One PostgreSQL statement commits the order, chat token, line items and
    // payment intent together. A failure cannot leave a half-created order.
    const o=await sql`WITH created_order AS (
-     INSERT INTO public.orders(tenant_id,order_number,customer_name,customer_phone,customer_email,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,subtotal_minor,delivery_fee_minor,total_minor,coupon_code,discount_minor,checkout_idempotency_key,checkout_fingerprint,status)
-     VALUES(${tenantId},${orderNo},${name},${phone},${customerEmail||null},${deliveryMethod},${deliveryCounty||null},${deliverySubCounty||null},${deliveryEstate||null},${deliveryAddress||null},${deliveryDirections||null},${pickupStation||null},${total},${deliveryFeeMinor},${payableTotal},${couponCode||null},${discountMinor},${idempotency},${checkoutFingerprint},'pending')
+     INSERT INTO public.orders(tenant_id,order_number,customer_name,customer_phone,customer_email,delivery_method,delivery_county,delivery_sub_county,delivery_estate,delivery_address,delivery_directions,pickup_station,subtotal_minor,delivery_fee_minor,total_minor,coupon_code,discount_minor,checkout_idempotency_key,checkout_fingerprint,customer_chat_token_hash,status)
+     VALUES(${tenantId},${orderNo},${name},${phone},${customerEmail||null},${deliveryMethod},${deliveryCounty||null},${deliverySubCounty||null},${deliveryEstate||null},${deliveryAddress||null},${deliveryDirections||null},${pickupStation||null},${total},${deliveryFeeMinor},${payableTotal},${couponCode||null},${discountMinor},${idempotency},${checkoutFingerprint},${hash(customerChatToken)},'pending')
      ON CONFLICT (tenant_id,checkout_idempotency_key) WHERE checkout_idempotency_key IS NOT NULL DO NOTHING
      RETURNING id,order_number
-   ), new_chat AS (
-     UPDATE public.orders o SET customer_chat_token_hash=${hash(customerChatToken)}
-     FROM created_order c WHERE o.id=c.id AND o.tenant_id=${tenantId}
-     RETURNING o.id,o.order_number
    ), new_items AS (
      INSERT INTO public.order_items(tenant_id,order_id,product_id,product_name,quantity,unit_price_minor,line_total_minor)
      SELECT ${tenantId},c.id,i.product_id,i.product_name,i.quantity,i.unit_price_minor,i.line_total_minor
-     FROM new_chat c CROSS JOIN jsonb_to_recordset(${JSON.stringify(orderLines)}::jsonb) AS i(product_id uuid,product_name text,quantity integer,unit_price_minor bigint,line_total_minor bigint)
+     FROM created_order c CROSS JOIN jsonb_to_recordset(${JSON.stringify(orderLines)}::jsonb) AS i(product_id uuid,product_name text,quantity integer,unit_price_minor bigint,line_total_minor bigint)
      RETURNING order_id
    ), new_payment AS (
      INSERT INTO public.payments(tenant_id,order_id,provider,phone,amount_minor,currency,status,idempotency_key,provider_result)
      SELECT ${tenantId},c.id,'mpesa_daraja',${paymentPhone},${payableTotal},'KES','initiated',${idem},${JSON.stringify({paymentMethod:method,source:'buyer_checkout'})}::jsonb
-     FROM new_chat c CROSS JOIN (SELECT COUNT(*) FROM new_items) AS items_ready
+     FROM created_order c CROSS JOIN (SELECT COUNT(*) FROM new_items) AS items_ready
      RETURNING id,order_id
    )
-   SELECT c.id,c.order_number,p.id AS payment_id FROM new_chat c JOIN new_payment p ON p.order_id=c.id`;
+   SELECT c.id,c.order_number,p.id AS payment_id FROM created_order c JOIN new_payment p ON p.order_id=c.id`;
    if(!o.length){
     const prior=await sql`SELECT o.id,o.order_number,o.checkout_fingerprint,o.subtotal_minor,o.delivery_fee_minor,o.total_minor,o.discount_minor,o.coupon_code,
       (SELECT COUNT(*)::int FROM public.order_items i WHERE i.tenant_id=o.tenant_id AND i.order_id=o.id) AS item_count,

@@ -110,6 +110,9 @@ type StorefrontFlowProps = {
   shopCashOnPickupEnabled?: boolean;
   shopFaqs?: Array<{ question: string; answer: string }>;
   products: StoreProduct[];
+  productsLoading?: boolean;
+  storeError?: string;
+  onRetryConnection?: () => void;
   recentlyViewed?: string[];
   cart: Record<string, number>;
   onCartChange: (next: Record<string, number>) => void;
@@ -132,6 +135,69 @@ type StorefrontFlowProps = {
   onOpenChat?: (token: string, orderNumber: string, orderId?: string) => void;
   onProfileUpdated?: (customer: any) => void;
 };
+
+type CheckoutDraftState = {
+  paymentMethod?: PaymentMethod;
+  paymentPhone?: string;
+  deliveryMethod?: DeliveryMethod;
+  deliveryCounty?: string;
+  deliverySubCounty?: string;
+  deliveryEstate?: string;
+  deliveryAddress?: string;
+  deliveryDirections?: string;
+  pickupStation?: string;
+  customerName?: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  voucherCode?: string;
+  orderConfirmed?: boolean;
+};
+
+function getCheckoutScopeKey(slug: string) {
+  const trimmed = String(slug || '').trim();
+  if (trimmed) return trimmed;
+  try {
+    return 'host:' + window.location.hostname.toLowerCase();
+  } catch {
+    return 'default';
+  }
+}
+
+function readCheckoutDraft(scopeKey: string): CheckoutDraftState {
+  const keys = [`dasnet-checkout-draft-${scopeKey}`];
+  if (scopeKey.startsWith('host:')) keys.push('dasnet-checkout-draft-default');
+  for (const key of keys) {
+    try {
+      const raw = sessionStorage.getItem(key) || localStorage.getItem(key);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed as CheckoutDraftState;
+    } catch {}
+  }
+  return {};
+}
+
+function writeCheckoutDraft(scopeKey: string, draft: CheckoutDraftState) {
+  const key = `dasnet-checkout-draft-${scopeKey}`;
+  const serialized = JSON.stringify(draft);
+  try {
+    sessionStorage.setItem(key, serialized);
+  } catch {}
+  try {
+    localStorage.setItem(key, serialized);
+  } catch {}
+}
+
+function clearCheckoutDraft(scopeKey: string) {
+  for (const key of [`dasnet-checkout-draft-${scopeKey}`, `dasnet-checkout-idem-${scopeKey}`]) {
+    try {
+      sessionStorage.removeItem(key);
+    } catch {}
+    try {
+      localStorage.removeItem(key);
+    } catch {}
+  }
+}
 
 const kenyanCounties = [
   'Baringo', 'Bomet', 'Bungoma', 'Busia', 'Elgeyo-Marakwet', 'Embu', 'Garissa', 'Homa Bay', 'Isiolo',
@@ -218,41 +284,6 @@ const accountSectionCopy: Record<string, { title: string; description: string }>
   'notification-settings': { title: 'Notification settings', description: 'Notification preferences.' },
   'public-profile': { title: 'My profile', description: 'Your buyer profile details.' },
 };
-
-declare global {
-  interface Window {
-    PaystackPop?: new () => {
-      resumeTransaction: (
-        accessCode: string,
-        callbacks?: {
-          onSuccess?: (transaction: { reference?: string; status?: string }) => void;
-          onCancel?: () => void;
-          onError?: (error: { message?: string }) => void;
-          onLoad?: () => void;
-        },
-      ) => unknown;
-    };
-    __dasmarketPaystackInlineLoading?: Promise<void>;
-  }
-}
-
-async function loadPaystackInline() {
-  if (window.PaystackPop) return;
-  if (!window.__dasmarketPaystackInlineLoading) {
-    window.__dasmarketPaystackInlineLoading = new Promise<void>((resolve, reject) => {
-      const existing = document.querySelector<HTMLScriptElement>('script[data-paystack-inline="v2"]');
-      const script = existing || document.createElement('script');
-      script.src = 'https://js.paystack.co/v2/inline.js';
-      script.async = true;
-      script.dataset.paystackInline = 'v2';
-      script.onload = () => window.PaystackPop ? resolve() : reject(new Error('Paystack secure checkout could not be loaded.'));
-      script.onerror = () => reject(new Error('Paystack secure checkout could not be loaded. Check your connection and try again.'));
-      if (!existing) document.head.appendChild(script);
-    });
-  }
-  await window.__dasmarketPaystackInlineLoading;
-  if (!window.PaystackPop) throw new Error('Paystack secure checkout is unavailable in this browser.');
-}
 
 function formatKes(amount: number) {
   return `KES ${Math.max(0, Math.round(amount)).toLocaleString('en-KE')}`;
@@ -431,6 +462,9 @@ export function StorefrontFlow({
   shopCashOnPickupEnabled = false,
   shopFaqs = [],
   products,
+  productsLoading = false,
+  storeError = '',
+  onRetryConnection,
   recentlyViewed: recentlyViewedIds = [],
   cart,
   onCartChange,
@@ -452,6 +486,34 @@ export function StorefrontFlow({
   onOpenChat,
   onProfileUpdated,
 }: StorefrontFlowProps) {
+  const initialDraftScope = getCheckoutScopeKey(slug);
+  const draftScopeRef = useRef(initialDraftScope);
+  const initialDraftRef = useRef<CheckoutDraftState | null>(null);
+  if (initialDraftRef.current === null) {
+    initialDraftRef.current = readCheckoutDraft(initialDraftScope);
+  }
+  const initialDraft = initialDraftRef.current;
+
+  const [isOnline, setIsOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine !== false));
+  useEffect(() => {
+    const goOnline = () => {
+      setIsOnline(true);
+      onRetryConnection?.();
+    };
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, [onRetryConnection]);
+
+  const rawCartCount = useMemo(
+    () => Object.values(cart).reduce((sum, quantity) => sum + (Number(quantity) > 0 ? Number(quantity) : 0), 0),
+    [cart],
+  );
+
   const lines = useMemo(
     () =>
       Object.entries(cart)
@@ -470,7 +532,15 @@ export function StorefrontFlow({
 
   const [orders, setOrders] = useState<BuyerOrder[]>([]);
   const [chatThreads, setChatThreads] = useState<any[]>([]);
-  const checkoutIdempotency = useRef<{ fingerprint: string; key: string } | null>(null);
+  const checkoutIdempotency = useRef<{ fingerprint: string; key: string } | null>((() => {
+    try {
+      const raw = sessionStorage.getItem(`dasnet-checkout-idem-${initialDraftScope}`);
+      const parsed = raw ? JSON.parse(raw) : null;
+      return parsed && typeof parsed.fingerprint === 'string' && typeof parsed.key === 'string' ? parsed : null;
+    } catch {
+      return null;
+    }
+  })());
   const [retryingOrder, setRetryingOrder] = useState(false);
   const [retryPaymentPhone, setRetryPaymentPhone] = useState('');
   const [retryMessage, setRetryMessage] = useState('');
@@ -493,30 +563,36 @@ export function StorefrontFlow({
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMessage, setProfileMessage] = useState('');
 
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mpesa');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(() =>
+    initialDraft.paymentMethod === 'card' || initialDraft.paymentMethod === 'delivery' || initialDraft.paymentMethod === 'mpesa'
+      ? initialDraft.paymentMethod
+      : 'mpesa',
+  );
   const [paymentModal, setPaymentModal] = useState<PaymentMethod | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [paymentPollMessage, setPaymentPollMessage] = useState('Waiting for payment confirmation…');
   const [paymentProviderResponded, setPaymentProviderResponded] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
 
-  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('pickup');
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>(() =>
+    initialDraft.deliveryMethod === 'home' ? 'home' : 'pickup',
+  );
   const cashOptionEnabled = deliveryMethod === 'pickup' ? shopCashOnPickupEnabled : shopCashOnDeliveryEnabled;
   useEffect(() => {
     if (paymentMethod === 'delivery' && !cashOptionEnabled) setPaymentMethod('mpesa');
   }, [paymentMethod, cashOptionEnabled]);
 
-  const [deliveryCounty, setDeliveryCounty] = useState('');
-  const [deliverySubCounty, setDeliverySubCounty] = useState('');
-  const [deliveryEstate, setDeliveryEstate] = useState('');
-  const [deliveryDirections, setDeliveryDirections] = useState('');
-  const [orderConfirmed, setOrderConfirmed] = useState(false);
-  const [customerName, setCustomerName] = useState(initialCustomerName);
-  const [customerPhone, setCustomerPhone] = useState(initialCustomerPhone);
-  const [paymentPhone, setPaymentPhone] = useState(initialCustomerPhone);
-  const [customerEmail, setCustomerEmail] = useState(initialCustomerEmail);
-  const [deliveryAddress, setDeliveryAddress] = useState(initialCustomerAddress);
-  const [pickupStation, setPickupStation] = useState('');
+  const [deliveryCounty, setDeliveryCounty] = useState(() => initialDraft.deliveryCounty || '');
+  const [deliverySubCounty, setDeliverySubCounty] = useState(() => initialDraft.deliverySubCounty || '');
+  const [deliveryEstate, setDeliveryEstate] = useState(() => initialDraft.deliveryEstate || '');
+  const [deliveryDirections, setDeliveryDirections] = useState(() => initialDraft.deliveryDirections || '');
+  const [orderConfirmed, setOrderConfirmed] = useState(() => Boolean(initialDraft.orderConfirmed));
+  const [customerName, setCustomerName] = useState(() => initialDraft.customerName || initialCustomerName);
+  const [customerPhone, setCustomerPhone] = useState(() => initialDraft.customerPhone || initialCustomerPhone);
+  const [paymentPhone, setPaymentPhone] = useState(() => initialDraft.paymentPhone || initialCustomerPhone);
+  const [customerEmail, setCustomerEmail] = useState(() => initialDraft.customerEmail || initialCustomerEmail);
+  const [deliveryAddress, setDeliveryAddress] = useState(() => initialDraft.deliveryAddress || initialCustomerAddress);
+  const [pickupStation, setPickupStation] = useState(() => initialDraft.pickupStation || '');
   const [deliveryPreferenceLoading, setDeliveryPreferenceLoading] = useState(false);
   const [pickupStationEditor, setPickupStationEditor] = useState(false);
   const [homeAddressEditor, setHomeAddressEditor] = useState(false);
@@ -524,7 +600,7 @@ export function StorefrontFlow({
   const [voucherOpen, setVoucherOpen] = useState(false);
   const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
 
-  const [voucherCode, setVoucherCode] = useState('');
+  const [voucherCode, setVoucherCode] = useState(() => initialDraft.voucherCode || '');
   const [voucherMessage, setVoucherMessage] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [shopCoupons, setShopCoupons] = useState<any[]>([]);
@@ -542,6 +618,17 @@ export function StorefrontFlow({
   const [reportMessage, setReportMessage] = useState('');
 
   const [activeOrderNumber, setActiveOrderNumber] = useState('');
+  const [paystackReturnBanner, setPaystackReturnBanner] = useState<{ status: string; orderNumber: string } | null>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const payment = String(params.get('payment') || '').trim().toLowerCase();
+      const order = String(params.get('order') || '').trim();
+      return (payment === 'processing' || payment === 'pending') && order ? { status: payment, orderNumber: order } : null;
+    } catch {
+      return null;
+    }
+  });
+  const [showMpesaSwitchRetry, setShowMpesaSwitchRetry] = useState(false);
   const [newsletterEnabled, setNewsletterEnabled] = useState(false);
   const [isShopFollowed, setIsShopFollowed] = useState(false);
   const [buyerFeatureMessage, setBuyerFeatureMessage] = useState('');
@@ -576,18 +663,93 @@ export function StorefrontFlow({
   };
 
   useEffect(() => {
+    const nextScope = getCheckoutScopeKey(slug);
+    const prevScope = draftScopeRef.current;
+    if (nextScope === prevScope) return;
+    const resolvedDraft = readCheckoutDraft(nextScope);
+    draftScopeRef.current = nextScope;
+    if (resolvedDraft.paymentMethod && paymentMethod === 'mpesa') setPaymentMethod(resolvedDraft.paymentMethod);
+    if (resolvedDraft.paymentPhone && !paymentPhone) setPaymentPhone(resolvedDraft.paymentPhone);
+    if (resolvedDraft.deliveryMethod && !deliveryCounty && !pickupStation && !deliveryAddress) {
+      setDeliveryMethod(resolvedDraft.deliveryMethod);
+    }
+    if (resolvedDraft.deliveryCounty && !deliveryCounty) setDeliveryCounty(resolvedDraft.deliveryCounty);
+    if (resolvedDraft.deliverySubCounty && !deliverySubCounty) setDeliverySubCounty(resolvedDraft.deliverySubCounty);
+    if (resolvedDraft.deliveryEstate && !deliveryEstate) setDeliveryEstate(resolvedDraft.deliveryEstate);
+    if (resolvedDraft.deliveryAddress && !deliveryAddress) setDeliveryAddress(resolvedDraft.deliveryAddress);
+    if (resolvedDraft.deliveryDirections && !deliveryDirections) setDeliveryDirections(resolvedDraft.deliveryDirections);
+    if (resolvedDraft.pickupStation && !pickupStation) setPickupStation(resolvedDraft.pickupStation);
+    if (resolvedDraft.customerName && !customerName) setCustomerName(resolvedDraft.customerName);
+    if (resolvedDraft.customerPhone && !customerPhone) setCustomerPhone(resolvedDraft.customerPhone);
+    if (resolvedDraft.customerEmail && !customerEmail) setCustomerEmail(resolvedDraft.customerEmail);
+    if (resolvedDraft.voucherCode && !voucherCode) setVoucherCode(resolvedDraft.voucherCode);
+    if (resolvedDraft.orderConfirmed) setOrderConfirmed(true);
+    try {
+      if (prevScope.startsWith('host:')) {
+        sessionStorage.removeItem(`dasnet-checkout-draft-${prevScope}`);
+        localStorage.removeItem(`dasnet-checkout-draft-${prevScope}`);
+      }
+    } catch {}
+  }, [slug]);
+
+  useEffect(() => {
+    const targetScope = getCheckoutScopeKey(slug);
+    if (draftScopeRef.current !== targetScope) return;
+    writeCheckoutDraft(targetScope, {
+      paymentMethod,
+      paymentPhone,
+      deliveryMethod,
+      deliveryCounty,
+      deliverySubCounty,
+      deliveryEstate,
+      deliveryAddress,
+      deliveryDirections,
+      pickupStation,
+      customerName,
+      customerPhone,
+      customerEmail,
+      voucherCode,
+      orderConfirmed,
+    });
+  }, [
+    slug,
+    paymentMethod,
+    paymentPhone,
+    deliveryMethod,
+    deliveryCounty,
+    deliverySubCounty,
+    deliveryEstate,
+    deliveryAddress,
+    deliveryDirections,
+    pickupStation,
+    customerName,
+    customerPhone,
+    customerEmail,
+    voucherCode,
+    orderConfirmed,
+  ]);
+
+  useEffect(() => {
     let live = true;
+    if (!slug) {
+      setDeliveryPreferenceLoading(false);
+      return () => {
+        live = false;
+      };
+    }
     const cacheKey = `dasnet-delivery-pref-${slug}`;
     try {
       const saved = JSON.parse(localStorage.getItem(cacheKey) || 'null');
       if (saved && typeof saved === 'object') {
-        setDeliveryMethod(saved.deliveryMethod === 'home' ? 'home' : 'pickup');
-        if (saved.deliveryCounty) setDeliveryCounty(saved.deliveryCounty);
-        if (saved.deliverySubCounty) setDeliverySubCounty(saved.deliverySubCounty);
-        if (saved.deliveryEstate) setDeliveryEstate(saved.deliveryEstate);
-        if (saved.deliveryAddress) setDeliveryAddress(saved.deliveryAddress);
-        if (saved.deliveryDirections) setDeliveryDirections(saved.deliveryDirections);
-        if (saved.pickupStation) setPickupStation(saved.pickupStation);
+        if (!deliveryCounty && !deliveryAddress && !pickupStation) {
+          setDeliveryMethod(saved.deliveryMethod === 'home' ? 'home' : 'pickup');
+        }
+        if (saved.deliveryCounty && !deliveryCounty) setDeliveryCounty(saved.deliveryCounty);
+        if (saved.deliverySubCounty && !deliverySubCounty) setDeliverySubCounty(saved.deliverySubCounty);
+        if (saved.deliveryEstate && !deliveryEstate) setDeliveryEstate(saved.deliveryEstate);
+        if (saved.deliveryAddress && !deliveryAddress) setDeliveryAddress(saved.deliveryAddress);
+        if (saved.deliveryDirections && !deliveryDirections) setDeliveryDirections(saved.deliveryDirections);
+        if (saved.pickupStation && !pickupStation) setPickupStation(saved.pickupStation);
       }
     } catch {}
     if (!initialCustomerPhone) {
@@ -608,13 +770,13 @@ export function StorefrontFlow({
       .then((data) => {
         if (!live || !data.preference) return;
         const p = data.preference;
-        setDeliveryMethod(p.deliveryMethod === 'home' ? 'home' : 'pickup');
-        setDeliveryCounty(p.deliveryCounty || '');
-        setDeliverySubCounty(p.deliverySubCounty || '');
-        setDeliveryEstate(p.deliveryEstate || '');
-        setDeliveryAddress(p.deliveryAddress || initialCustomerAddress);
-        setDeliveryDirections(p.deliveryDirections || '');
-        setPickupStation(p.pickupStation || '');
+        setDeliveryMethod((current) => (deliveryCounty || deliveryAddress || pickupStation ? current : p.deliveryMethod === 'home' ? 'home' : 'pickup'));
+        setDeliveryCounty((current) => current || p.deliveryCounty || '');
+        setDeliverySubCounty((current) => current || p.deliverySubCounty || '');
+        setDeliveryEstate((current) => current || p.deliveryEstate || '');
+        setDeliveryAddress((current) => current || p.deliveryAddress || initialCustomerAddress);
+        setDeliveryDirections((current) => current || p.deliveryDirections || '');
+        setPickupStation((current) => current || p.pickupStation || '');
         try {
           localStorage.setItem(cacheKey, JSON.stringify(p));
         } catch {}
@@ -639,7 +801,7 @@ export function StorefrontFlow({
 
   useEffect(() => {
     let live = true;
-    if (!initialCustomerPhone) return;
+    if (!initialCustomerPhone || !slug) return;
     fetch('/api/buyer?action=buyer-account-data&slug=' + encodeURIComponent(slug), {
       credentials: 'same-origin',
       cache: 'no-store',
@@ -667,13 +829,19 @@ export function StorefrontFlow({
     };
   }, [slug, initialCustomerPhone]);
 
+  const previousSubtotalRef = useRef<number | null>(null);
   useEffect(() => {
-    setAppliedCoupon(null);
-    if (voucherCode) setVoucherMessage('Your cart changed. Reapply the coupon.');
-  }, [subtotal]);
+    const prev = previousSubtotalRef.current;
+    previousSubtotalRef.current = subtotal;
+    if (prev !== null && prev > 0 && subtotal !== prev) {
+      setAppliedCoupon(null);
+      if (voucherCode) setVoucherMessage('Your cart changed. Reapply the coupon.');
+    }
+  }, [subtotal, voucherCode]);
 
   useEffect(() => {
     let live = true;
+    if (!slug) return;
     fetch('/api/buyer?action=coupons-public&slug=' + encodeURIComponent(slug), {
       credentials: 'same-origin',
       cache: 'no-store',
@@ -689,15 +857,17 @@ export function StorefrontFlow({
   }, [slug]);
 
   useEffect(() => {
-    setCustomerName(initialCustomerName);
-    setCustomerPhone(initialCustomerPhone);
-    setPaymentPhone(initialCustomerPhone);
-    setCustomerEmail(initialCustomerEmail);
+    if (initialCustomerName) setCustomerName((current) => current || initialCustomerName);
+    if (initialCustomerPhone) {
+      setCustomerPhone((current) => current || initialCustomerPhone);
+      setPaymentPhone((current) => current || initialCustomerPhone);
+    }
+    if (initialCustomerEmail) setCustomerEmail((current) => current || initialCustomerEmail);
     setProfileName(initialCustomerName);
     setProfileEmail(initialCustomerEmail);
     setProfileAddress(initialCustomerAddress);
     setProfilePhoneAlt(initialCustomerAlternativePhone);
-    if (initialCustomerAddress && !deliveryAddress) setDeliveryAddress(initialCustomerAddress);
+    if (initialCustomerAddress) setDeliveryAddress((current) => current || initialCustomerAddress);
   }, [initialCustomerName, initialCustomerPhone, initialCustomerEmail, initialCustomerAddress, initialCustomerAlternativePhone]);
 
   useEffect(() => {
@@ -735,7 +905,12 @@ export function StorefrontFlow({
           customerName: order.customerName,
           customerPhone: order.customerPhone,
           customerEmail: order.customerEmail || '',
-          paymentMethod: order.paymentMethod === 'delivery' ? 'delivery' : 'mpesa',
+          paymentMethod:
+            order.paymentMethod === 'delivery'
+              ? 'delivery'
+              : order.paymentMethod === 'card' || order.paymentMethod === 'paystack'
+              ? 'card'
+              : 'mpesa',
           deliveryMethod: order.deliveryMethod === 'pickup' ? 'pickup' : 'home',
           deliveryAddress: order.deliveryAddress || '',
           pickupStation: order.pickupStation || '',
@@ -848,7 +1023,11 @@ export function StorefrontFlow({
   }, [slug, initialCustomerPhone, view]);
 
   useEffect(() => {
-    if (activeOrder?.orderId) setRetryPaymentPhone(activeOrder.customerPhone || initialCustomerPhone);
+    if (activeOrder?.orderId) {
+      setRetryPaymentPhone(activeOrder.customerPhone || initialCustomerPhone);
+      setShowMpesaSwitchRetry(false);
+      setRetryMessage('');
+    }
   }, [activeOrder?.orderId, initialCustomerPhone]);
 
   useEffect(() => {
@@ -857,6 +1036,8 @@ export function StorefrontFlow({
     let requestInFlight = false;
     let attempts = 0;
     let finished = false;
+    const isCardOrder = activeOrder.paymentMethod === 'card';
+    const providerLabel = isCardOrder ? 'Paystack' : 'Safaricom';
     const checkPayment = async () => {
       if (!live || requestInFlight || finished) return;
       requestInFlight = true;
@@ -881,30 +1062,34 @@ export function StorefrontFlow({
             ),
           );
           if (status === 'succeeded') {
-            setPaymentPollMessage('Payment confirmed by Safaricom.');
+            setPaymentPollMessage(`Payment confirmed by ${providerLabel}.`);
             onOrderCreated?.(activeOrder.chatToken || '', activeOrder.orderNumber);
             onNavigate('checkout/complete');
           } else {
             setPaymentPollMessage(
               data.message ||
                 (status === 'cancelled'
-                  ? 'Safaricom confirmed that the payment was cancelled.'
-                  : 'Safaricom confirmed that the payment was not successful. You can retry when ready.'),
+                  ? `${providerLabel} confirmed that the payment was cancelled.`
+                  : `${providerLabel} confirmed that the payment was not successful. You can retry when ready.`),
             );
           }
           return;
         }
         if (data.providerResponded) {
           setPaymentProviderResponded(true);
-          setPaymentPollMessage('Safaricom has processed the request. Verifying the M-PESA receipt…');
+          setPaymentPollMessage(
+            isCardOrder
+              ? 'Paystack has processed the card charge. Verifying your payment receipt…'
+              : 'Safaricom has processed the request. Verifying the M-PESA receipt…',
+          );
         } else if (attempts >= 20) {
           finished = true;
           setPaymentProviderResponded(false);
           setPaymentPollMessage(
-            'We have not received a final result from Safaricom yet. Your order remains unpaid. Leave this page and check the order again shortly; do not submit another payment until its status is updated.',
+            `We have not received a final result from ${providerLabel} yet. Leave this page and check the order again shortly; do not submit another payment until its status is updated.`,
           );
         } else {
-          setPaymentPollMessage(data.message || 'Waiting for Safaricom payment confirmation…');
+          setPaymentPollMessage(data.message || `Waiting for ${providerLabel} payment confirmation…`);
         }
       } catch {
         if (live) setPaymentPollMessage('Connection interrupted. Retrying the payment check automatically…');
@@ -922,7 +1107,7 @@ export function StorefrontFlow({
       live = false;
       window.clearInterval(timer);
     };
-  }, [view, slug, activeOrder?.orderId, activeOrder?.orderNumber]);
+  }, [view, slug, activeOrder?.orderId, activeOrder?.orderNumber, activeOrder?.paymentMethod]);
 
   useEffect(() => {
     const status = String(activeOrder?.paymentStatus || '');
@@ -934,6 +1119,31 @@ export function StorefrontFlow({
     }
     if (status) lastPaymentStatus.current = status;
   }, [activeOrder?.paymentStatus]);
+
+  async function retryActiveOrderWithCard() {
+    if (!activeOrder?.orderId || retryingOrder) return;
+    setRetryingOrder(true);
+    setRetryMessage('');
+    try {
+      const r = await fetch('/api/payments?action=customer-payment-retry', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, orderId: activeOrder.orderId, paymentMethod: 'card' }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw Error(d.error || 'Could not start card payment.');
+      if (d.authorizationUrl) {
+        window.location.assign(d.authorizationUrl);
+        return;
+      }
+      setRetryMessage(d.message || 'Check your order status shortly before retrying.');
+    } catch (e: any) {
+      setRetryMessage(e.message || 'Could not start card payment.');
+    } finally {
+      setRetryingOrder(false);
+    }
+  }
 
   async function retryActiveOrderPayment() {
     if (!activeOrder?.orderId || retryingOrder) return;
@@ -949,12 +1159,14 @@ export function StorefrontFlow({
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug, orderId: activeOrder.orderId, paymentPhone: cleaned }),
+        body: JSON.stringify({ slug, orderId: activeOrder.orderId, paymentMethod: 'mpesa', paymentPhone: cleaned }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw Error(d.error || 'Could not retry payment');
       setOrders((current) =>
-        current.map((order) => (order.orderId === activeOrder.orderId ? { ...order, paymentStatus: 'pending' } : order)),
+        current.map((order) =>
+          order.orderId === activeOrder.orderId ? { ...order, paymentMethod: 'mpesa', paymentStatus: 'pending' } : order,
+        ),
       );
       setRetryMessage('M-PESA prompt sent. Enter your PIN to complete payment.');
     } catch (e: any) {
@@ -1010,6 +1222,10 @@ export function StorefrontFlow({
       setCheckoutError('Enter a valid Kenyan M-PESA phone number to receive the payment prompt.');
       return;
     }
+    if (paymentMethod === 'card' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim())) {
+      setCheckoutError('Enter a valid email address for your card payment receipt before continuing.');
+      return;
+    }
     if (deliveryMethod === 'home' && (!deliveryCounty || !deliverySubCounty || !deliveryEstate.trim() || !deliveryAddress.trim())) {
       setCheckoutError('Complete your county, sub-county, estate/area and physical delivery address.');
       return;
@@ -1043,6 +1259,9 @@ export function StorefrontFlow({
       checkoutIdempotency.current = { fingerprint, key };
     }
     try {
+      sessionStorage.setItem(`dasnet-checkout-idem-${getCheckoutScopeKey(slug)}`, JSON.stringify(checkoutIdempotency.current));
+    } catch {}
+    try {
       const response = await fetch('/api/buyer?action=order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1070,9 +1289,6 @@ export function StorefrontFlow({
         throw new Error(
           data.error || 'We could not create your order or start payment. Please review your details and try again.',
         );
-      }
-      if (paymentMethod === 'card' && !data.accessCode) {
-        throw new Error('Paystack did not return a secure in-page checkout token. Your order has not been sent for card entry; contact the shop before retrying.');
       }
       const createdAt = new Date().toISOString();
       const order: BuyerOrder = {
@@ -1102,36 +1318,29 @@ export function StorefrontFlow({
       const updatedOrders = [order, ...orders.filter((entry) => entry.orderNumber !== order.orderNumber)];
       setOrders(updatedOrders);
       setActiveOrderNumber(order.orderNumber);
-      checkoutIdempotency.current = null;
-      onCartChange({});
       if (paymentMethod === 'card') {
-        setPaymentPollMessage('Your order is ready. Complete the secure card form to finish payment.');
-        try {
-          await loadPaystackInline();
-          const PaystackPopup = window.PaystackPop;
-          if (!PaystackPopup) throw new Error('Paystack secure checkout is unavailable in this browser.');
-          const popup = new PaystackPopup();
-          popup.resumeTransaction(String(data.accessCode), {
-            onSuccess: () => {
-              setPaymentPollMessage('Paystack received your payment response. Verifying it securely…');
-              onNavigate('checkout/processing');
-            },
-            onCancel: () => {
-              setPaymentPollMessage('Card payment was cancelled. Your order is saved and will remain unpaid until you complete payment.');
-              onNavigate('orders');
-            },
-            onError: (error) => {
-              setCheckoutError(error?.message || 'Paystack could not open the secure card form. Your order is saved and unpaid.');
-              onNavigate('orders');
-            },
-          });
-        } catch (error) {
-          setCheckoutError(error instanceof Error ? error.message : 'Could not open Paystack secure checkout.');
-          setPaymentPollMessage('Your order is saved and unpaid. You can return to it and retry card payment.');
-          onNavigate('orders');
+        if (data.authorizationUrl) {
+          window.location.assign(data.authorizationUrl);
+          return;
         }
-        return;
+        checkoutIdempotency.current = null;
+        clearCheckoutDraft(getCheckoutScopeKey(slug));
+        onCartChange({});
+        if (String(data.paymentStatus || '').toLowerCase() === 'succeeded') {
+          onOrderCreated?.(order.chatToken || '', order.orderNumber);
+          onNavigate('checkout/complete');
+          return;
+        }
+        if (String(data.paymentStatus || '').toLowerCase() === 'pending') {
+          setPaymentPollMessage(data.message || 'Paystack processed this payment; confirming your receipt.');
+          onNavigate('checkout/processing');
+          return;
+        }
+        throw new Error('Paystack did not return a secure checkout URL. Check your orders or contact the shop before retrying.');
       }
+      checkoutIdempotency.current = null;
+      clearCheckoutDraft(getCheckoutScopeKey(slug));
+      onCartChange({});
       if (isCash) {
         setPaymentPollMessage(
           deliveryMethod === 'pickup'
@@ -1248,8 +1457,75 @@ export function StorefrontFlow({
     );
   }
 
+  function renderOfflineBanner() {
+    if (isOnline && !storeError) return null;
+    return (
+      <div className="sf-alert" role="status" style={{ marginBottom: 14, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+        <span>
+          {!isOnline
+            ? 'You are offline. Your cart items and checkout details remain saved on this device.'
+            : 'Connection was interrupted while refreshing store data. Your cart remains saved.'}
+        </span>
+        {onRetryConnection && (
+          <button type="button" className="sf-btn sf-btn-secondary" style={{ minHeight: 34, padding: '0 12px', fontSize: 12.5 }} onClick={onRetryConnection}>
+            Retry connection
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  function renderRestoringCartState(currentStep: string) {
+    const stepLabel =
+      currentStep === 'checkout/delivery'
+        ? 'Delivery details'
+        : currentStep === 'checkout/payment'
+        ? 'Payment'
+        : currentStep === 'checkout/review'
+        ? 'Review your order'
+        : `Your cart (${rawCartCount} ${rawCartCount === 1 ? 'item' : 'items'})`;
+    return (
+      <section className="sf-flow sf-flow-compact">
+        <FlowHeading
+          title={stepLabel}
+          subtitle="Your cart items are saved on this device."
+          onBack={() => onNavigate('store')}
+          backLabel="Back to shop"
+        />
+        <div className="sf-state-box">
+          <span className="sf-state-icon">
+            <ShoppingBag size={26} />
+          </span>
+          <h2>
+            {!isOnline || storeError
+              ? `Waiting to reconnect (${rawCartCount} saved ${rawCartCount === 1 ? 'item' : 'items'})`
+              : `Restoring your cart (${rawCartCount} ${rawCartCount === 1 ? 'item' : 'items'})…`}
+          </h2>
+          <p>
+            {!isOnline || storeError
+              ? 'We kept your cart safely stored on this device. Reconnect to reload item prices and continue checkout.'
+              : 'Loading your saved items for checkout…'}
+          </p>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+            {onRetryConnection && (!isOnline || storeError || !productsLoading) && (
+              <button type="button" className="sf-btn sf-btn-primary" onClick={onRetryConnection}>
+                Retry connection
+              </button>
+            )}
+            <button type="button" className="sf-btn sf-btn-secondary" onClick={() => onNavigate('store')}>
+              Back to shop
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   function renderCart() {
     const itemCount = lines.reduce((count, line) => count + line.quantity, 0);
+    if (!lines.length && rawCartCount > 0) {
+      return renderRestoringCartState('cart');
+    }
     return (
       <section className="sf-flow">
         <FlowHeading
@@ -1258,6 +1534,7 @@ export function StorefrontFlow({
           onBack={() => onNavigate('store')}
           backLabel="Continue shopping"
         />
+        {renderOfflineBanner()}
         {lines.length ? (
           <>
           <div className="sf-two-col">
@@ -1474,6 +1751,7 @@ export function StorefrontFlow({
           onBack={() => onNavigate('cart')}
           backLabel="Back to cart"
         />
+        {renderOfflineBanner()}
 
         <div className="sf-choice-grid" role="tablist" aria-label="Delivery method">
           <button
@@ -1836,6 +2114,7 @@ export function StorefrontFlow({
           onBack={() => onNavigate('checkout/delivery')}
           backLabel="Delivery details"
         />
+        {renderOfflineBanner()}
 
         <div className="sf-two-col">
           <div className="sf-checkout-stack">
@@ -1916,7 +2195,21 @@ export function StorefrontFlow({
                   </button>
                 </div>
               ) : paymentMethod === 'card' ? (
-                <div className="sf-alert"><ShieldCheck size={16} style={{ flexShrink: 0, marginTop: 2 }} /><span>Paystack’s secure card form opens over this order page. Card details are entered directly with Paystack, and your order is confirmed as paid only after Paystack verifies the transaction.</span></div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div className="sf-alert"><ShieldCheck size={16} style={{ flexShrink: 0, marginTop: 2 }} /><span>You will be redirected to Paystack's secure checkout to pay by card in KES. Your order is confirmed as paid only after Paystack verifies the transaction.</span></div>
+                  <label className="sf-field">
+                    Email address for card receipt
+                    <input
+                      type="email"
+                      autoComplete="email"
+                      value={customerEmail}
+                      onChange={(e) => setCustomerEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      required
+                    />
+                    <small>Required by Paystack for card payment receipts.</small>
+                  </label>
+                </div>
               ) : (
                 <div className="sf-alert">
                   <ShieldCheck size={16} style={{ flexShrink: 0, marginTop: 2 }} />
@@ -2085,6 +2378,7 @@ export function StorefrontFlow({
           onBack={() => onNavigate('checkout/payment')}
           backLabel="Payment"
         />
+        {renderOfflineBanner()}
 
         <div className="sf-two-col">
           <div className="sf-checkout-stack">
@@ -2146,7 +2440,7 @@ export function StorefrontFlow({
                 <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--sf-muted)' }}>
                   {paymentMethod === 'delivery'
                     ? 'Cash due upon ' + (deliveryMethod === 'pickup' ? 'collection.' : 'delivery.')
-                    : paymentMethod === 'card' ? 'Paystack’s secure card form will open over this order page. Your card details are entered directly with Paystack.' : `Prompt to ${paymentPhone || customerPhone}`}
+                    : paymentMethod === 'card' ? 'You will be redirected to Paystack’s secure card checkout.' : `Prompt to ${paymentPhone || customerPhone}`}
                 </p>
               </div>
             </div>
@@ -2243,7 +2537,7 @@ export function StorefrontFlow({
               : orderConfirmed
               ? paymentMethod === 'delivery'
                 ? 'Place cash order'
-                : paymentMethod === 'card' ? 'Open secure card form' : 'Pay with M-PESA'
+                : paymentMethod === 'card' ? 'Continue to card payment' : 'Pay with M-PESA'
               : 'Confirm order'}{' '}
             <ArrowRight size={17} />
           </button>
@@ -2267,6 +2561,8 @@ export function StorefrontFlow({
     const paymentTerminal = ['cancelled', 'failed', 'reversed'].includes(paymentState);
     const paymentSucceeded = paymentState === 'succeeded';
     const paymentWaiting = !paymentTerminal && !paymentSucceeded;
+    const isCardOrder = activeOrder.paymentMethod === 'card';
+    const providerLabel = isCardOrder ? 'Paystack' : 'Safaricom';
 
     return (
       <section className="sf-status-shell">
@@ -2278,24 +2574,24 @@ export function StorefrontFlow({
           {paymentSucceeded
             ? 'Your payment is confirmed'
             : paymentState === 'cancelled'
-            ? 'You cancelled the M-PESA prompt'
+            ? isCardOrder ? 'Card payment cancelled' : 'You cancelled the M-PESA prompt'
             : paymentState === 'failed'
-            ? 'M-PESA payment failed'
+            ? isCardOrder ? 'Card payment failed' : 'M-PESA payment failed'
             : paymentState === 'reversed'
             ? 'Payment reversed'
-            : 'Confirming your M-PESA payment'}
+            : isCardOrder ? 'Confirming your card payment' : 'Confirming your M-PESA payment'}
         </h1>
         <p style={{ margin: 0, color: 'var(--sf-muted)' }}>
           {paymentSucceeded
             ? activeOrder.receipt
-              ? 'Safaricom confirmed your payment. Receipt: ' + activeOrder.receipt
-              : 'Safaricom confirmed your payment.'
+              ? `${providerLabel} confirmed your payment. Receipt: ` + activeOrder.receipt
+              : `${providerLabel} confirmed your payment.`
             : paymentTerminal
             ? paymentState === 'cancelled'
-              ? 'Safaricom confirmed that you cancelled the prompt. No payment was collected. You can safely request a new prompt when ready.'
-              : 'Safaricom confirmed that this payment did not complete. No payment was collected. You can retry when ready.'
+              ? `${providerLabel} confirmed that you cancelled the payment. No payment was collected. You can safely retry when ready.`
+              : `${providerLabel} confirmed that this payment did not complete. No payment was collected. You can retry when ready.`
             : paymentProviderResponded
-            ? 'Safaricom has responded. We are verifying the M-PESA receipt before confirming your order.'
+            ? `${providerLabel} has responded. We are verifying the payment receipt before confirming your order.`
             : 'Keep this page open while we wait for the payment confirmation.'}
         </p>
 
@@ -2309,8 +2605,8 @@ export function StorefrontFlow({
             <strong>{formatKes(activeOrder.total)}</strong>
           </div>
           <div>
-            <small>PAYMENT PHONE</small>
-            <strong className="sf-mono">{paymentPhone || activeOrder.customerPhone}</strong>
+            <small>{isCardOrder ? 'EMAIL' : 'PAYMENT PHONE'}</small>
+            <strong className="sf-mono">{isCardOrder ? activeOrder.customerEmail || customerEmail || '—' : paymentPhone || activeOrder.customerPhone}</strong>
           </div>
         </div>
 
@@ -2319,7 +2615,7 @@ export function StorefrontFlow({
           role="status"
         >
           {paymentSucceeded
-            ? 'Payment confirmed by Safaricom.'
+            ? `Payment confirmed by ${providerLabel}.`
             : paymentTerminal
             ? paymentPollMessage || 'Payment request ended.'
             : paymentPollMessage}
@@ -2386,10 +2682,10 @@ export function StorefrontFlow({
             <ShieldCheck size={17} style={{ flexShrink: 0, marginTop: 2 }} />
             <span>
               {activeOrder.paymentStatus === 'succeeded'
-                ? `Payment confirmed${activeOrder.receipt ? ` · M-PESA receipt ${activeOrder.receipt}` : ''}.`
+                ? `Payment confirmed${activeOrder.receipt ? ` · Receipt ${activeOrder.receipt}` : ''}.`
                 : activeOrder.paymentStatus === 'failed' || activeOrder.paymentStatus === 'cancelled'
-                ? 'M-PESA payment was not completed. This order is not paid.'
-                : 'Your order has been created. Payment is pending Safaricom confirmation; do not retry unless the payment prompt has failed or expired.'}
+                ? `${activeOrder.paymentMethod === 'card' ? 'Card' : 'M-PESA'} payment was not completed. This order is not paid.`
+                : `Your order has been created. Payment is pending ${activeOrder.paymentMethod === 'card' ? 'Paystack' : 'Safaricom'} confirmation; do not retry unless the payment has failed or expired.`}
             </span>
           </div>
         </div>
@@ -2425,6 +2721,8 @@ export function StorefrontFlow({
                   ? 'Payment failed.'
                   : activeOrder.paymentStatus === 'cancelled'
                   ? 'Payment cancelled.'
+                  : activeOrder.paymentMethod === 'card'
+                  ? 'Awaiting Paystack confirmation.'
                   : 'Awaiting M-PESA confirmation.'}
               </p>
             </div>
@@ -2525,6 +2823,32 @@ export function StorefrontFlow({
           backLabel="My account"
         />
 
+        {paystackReturnBanner && (
+          <div className="sf-alert success" style={{ marginBottom: 16 }} role="status">
+            <ShieldCheck size={17} style={{ flexShrink: 0, marginTop: 2 }} />
+            <div style={{ flex: 1 }}>
+              <strong>
+                {paystackReturnBanner.status === 'processing'
+                  ? `Card payment submitted for #${paystackReturnBanner.orderNumber}`
+                  : `Card payment pending for #${paystackReturnBanner.orderNumber}`}
+              </strong>
+              <div>
+                {paystackReturnBanner.status === 'processing'
+                  ? 'Paystack verified your card session. Your order status will update to Paid as soon as confirmation finishes.'
+                  : 'Your card payment has not completed yet. Open order details to resume or check status.'}
+              </div>
+            </div>
+            <button
+              type="button"
+              className="sf-btn sf-btn-ghost"
+              style={{ minHeight: 32, padding: '0 8px' }}
+              onClick={() => setPaystackReturnBanner(null)}
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
         {ordersLoading && (
           <p style={{ fontSize: 13, color: 'var(--sf-muted)', marginBottom: 12 }}>Refreshing your order history…</p>
         )}
@@ -2578,6 +2902,8 @@ export function StorefrontFlow({
                   ? 'Payment cancelled'
                   : status.payment === 'succeeded'
                   ? 'Paid'
+                  : status.payment === 'pending' && order.paymentMethod === 'card'
+                  ? 'Awaiting card confirmation'
                   : 'Order placed';
               const statusClass =
                 status.delivery === 'delivered' || status.payment === 'succeeded'
@@ -2884,7 +3210,9 @@ export function StorefrontFlow({
             {(cancelled || failed) && (
               <p className="sf-alert error" style={{ marginTop: 16 }} role="status">
                 {cancelled
-                  ? 'M-PESA prompt cancelled. No payment was collected.'
+                  ? activeOrder.paymentMethod === 'card'
+                    ? 'Card payment cancelled. No payment was collected.'
+                    : 'M-PESA prompt cancelled. No payment was collected.'
                   : 'The payment was not completed. No payment was collected.'}{' '}
                 You can retry when ready.
               </p>
@@ -3076,35 +3404,82 @@ export function StorefrontFlow({
                           : 'Finish paying for this order'}
                       </strong>
                       <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--sf-muted)' }}>
-                        {paymentState === 'pending'
+                        {activeOrder.paymentMethod === 'card'
+                          ? paymentState === 'pending'
+                            ? 'Continue on Paystack to complete your card payment, or check if your transaction already cleared.'
+                            : 'No card payment was collected. Open secure Paystack checkout when ready.'
+                          : paymentState === 'pending'
                           ? 'Check the previous M-PESA request first. Do not send another prompt while Safaricom is still processing it.'
                           : 'No payment was collected. You can request a fresh M-PESA prompt when ready.'}
                       </p>
                     </div>
-                    <label className="sf-field">
-                      M-PESA number
-                      <input
-                        type="tel"
-                        inputMode="tel"
-                        autoComplete="tel"
-                        value={retryPaymentPhone}
-                        onChange={(e) => setRetryPaymentPhone(e.target.value)}
-                        placeholder="07XX XXX XXX or 2547XXXXXXXX"
-                        maxLength={16}
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      className="sf-btn sf-btn-accent"
-                      onClick={retryActiveOrderPayment}
-                      disabled={retryingOrder}
-                    >
-                      {retryingOrder
-                        ? 'Checking M-PESA…'
-                        : paymentState === 'pending'
-                        ? 'Check payment / retry if failed'
-                        : 'Retry M-PESA payment'}
-                    </button>
+                    {activeOrder.paymentMethod === 'card' && !showMpesaSwitchRetry ? (
+                      <>
+                        <button
+                          type="button"
+                          className="sf-btn sf-btn-accent"
+                          onClick={retryActiveOrderWithCard}
+                          disabled={retryingOrder}
+                        >
+                          {retryingOrder
+                            ? 'Opening Paystack…'
+                            : paymentState === 'pending'
+                            ? 'Continue / check card payment'
+                            : 'Retry card payment'}
+                        </button>
+                        <button
+                          type="button"
+                          className="sf-btn sf-btn-ghost"
+                          style={{ fontSize: 12.5 }}
+                          onClick={() => {
+                            setRetryMessage('');
+                            setShowMpesaSwitchRetry(true);
+                          }}
+                        >
+                          Pay with M-PESA instead
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <label className="sf-field">
+                          M-PESA number
+                          <input
+                            type="tel"
+                            inputMode="tel"
+                            autoComplete="tel"
+                            value={retryPaymentPhone}
+                            onChange={(e) => setRetryPaymentPhone(e.target.value)}
+                            placeholder="07XX XXX XXX or 2547XXXXXXXX"
+                            maxLength={16}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          className="sf-btn sf-btn-accent"
+                          onClick={retryActiveOrderPayment}
+                          disabled={retryingOrder}
+                        >
+                          {retryingOrder
+                            ? 'Checking M-PESA…'
+                            : paymentState === 'pending'
+                            ? 'Check payment / retry if failed'
+                            : 'Retry M-PESA payment'}
+                        </button>
+                        {activeOrder.paymentMethod === 'card' && (
+                          <button
+                            type="button"
+                            className="sf-btn sf-btn-ghost"
+                            style={{ fontSize: 12.5 }}
+                            onClick={() => {
+                              setRetryMessage('');
+                              setShowMpesaSwitchRetry(false);
+                            }}
+                          >
+                            Back to card payment
+                          </button>
+                        )}
+                      </>
+                    )}
                     {retryMessage && (
                       <small className="sf-alert" role="status">
                         {retryMessage}
@@ -4536,14 +4911,20 @@ export function StorefrontFlow({
       : view === 'checkout/delivery'
       ? lines.length
         ? renderCheckoutDelivery()
+        : rawCartCount > 0
+        ? renderRestoringCartState(view)
         : renderCart()
       : view === 'checkout/payment'
       ? lines.length
         ? renderCheckoutPayment()
+        : rawCartCount > 0
+        ? renderRestoringCartState(view)
         : renderCart()
       : view === 'checkout/review'
       ? lines.length
         ? renderReview()
+        : rawCartCount > 0
+        ? renderRestoringCartState(view)
         : renderCart()
       : view === 'checkout/processing'
       ? renderPaymentProcessing()
