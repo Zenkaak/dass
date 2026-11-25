@@ -1743,22 +1743,22 @@
 @media(prefers-reduced-motion:reduce){.market-hero-gallery-track{animation:none}}
 
 
-/* Keep seller navigation interactive above order/product detail sheets. */
-.seller-rail{z-index:100!important}
-.seller-topbar{z-index:101!important}
-.seller-mobile-bottom{z-index:102!important}
+/* Keep seller navigation interactive above order/product detail sheets (legacy UI only). */
+.seller-app:not([data-seller-ui="v2"]) .seller-rail{z-index:100!important}
+.seller-app:not([data-seller-ui="v2"]) .seller-topbar{z-index:101!important}
+.seller-app:not([data-seller-ui="v2"]) .seller-mobile-bottom{z-index:102!important}
 /* Featured products advance one card every seven seconds; no continuous marquee. */
 .market-hero-gallery-track{animation:none!important;transition:transform .65s cubic-bezier(.22,.75,.25,1);will-change:transform}
 .market-hero-gallery-window:hover .market-hero-gallery-track{animation:none!important}
 @media(prefers-reduced-motion:reduce){.market-hero-gallery-track{transition:none!important}}
 
 
-/* Keep seller navigation above detail content on desktop and mobile. */
+/* Keep seller navigation above detail content on desktop and mobile (legacy UI only). */
 .seller-app{isolation:isolate}
-.seller-rail{position:sticky!important;top:0;z-index:300!important;align-self:start}
-.seller-topbar{z-index:301!important}
-.seller-mobile-bottom{z-index:302!important}
-@media(max-width:850px){.seller-rail{position:relative!important;z-index:300!important}.seller-mobile-bottom{z-index:302!important}}
+.seller-app:not([data-seller-ui="v2"]) .seller-rail{position:sticky!important;top:0;z-index:300!important;align-self:start}
+.seller-app:not([data-seller-ui="v2"]) .seller-topbar{z-index:301!important}
+.seller-app:not([data-seller-ui="v2"]) .seller-mobile-bottom{z-index:302!important}
+@media(max-width:850px){.seller-app:not([data-seller-ui="v2"]) .seller-rail{position:relative!important;z-index:300!important}.seller-app:not([data-seller-ui="v2"]) .seller-mobile-bottom{z-index:302!important}}
 /* The merchant category rail remains available while a product detail route is open. */
 .market-product-detail-layout .market-sidebar{display:flex;flex-direction:column}
 .market-product-detail-main-shell{min-width:0;padding:18px}
@@ -1850,28 +1850,28 @@
 }
 
 
-/* Mobile seller workspace: keep the drawer out of document flow so the dashboard opens at the top. */
+/* Mobile seller workspace (legacy UI only): keep the drawer out of document flow so the dashboard opens at the top. */
 @media(max-width:850px){
-  .seller-app{display:block!important;position:relative;min-height:100dvh;overflow-x:clip}
-  .seller-rail{position:fixed!important;top:0!important;left:0!important;bottom:0!important;width:min(290px,84vw)!important;height:100dvh!important;min-height:0!important;margin:0!important;transform:translateX(-105%)!important;transition:transform .24s ease!important;z-index:300!important;overflow-y:auto!important;box-shadow:18px 0 55px #0008}
-  .seller-app.mobile-menu-open .seller-rail{transform:translateX(0)!important}
-  .seller-mobile-scrim{position:fixed!important;inset:0!important;z-index:299!important}
-  .seller-workarea{display:block!important;width:100%;min-width:0;min-height:100dvh;margin:0!important;padding:0!important}
-  .seller-topbar{position:sticky!important;top:0!important;z-index:301!important;height:62px!important}
-  .seller-content{display:block!important;width:100%;max-width:none!important;min-height:0!important;margin:0!important;padding:12px 12px calc(94px + env(safe-area-inset-bottom))!important}
-  .seller-content>.seller-loading{min-height:180px}
-  .seller-welcome-strip{margin:0 0 12px!important}
-  .seller-mobile-bottom{position:fixed!important;display:flex!important;left:0!important;right:0!important;bottom:0!important;height:calc(64px + env(safe-area-inset-bottom))!important;padding:0 0 env(safe-area-inset-bottom)!important;z-index:302!important;pointer-events:auto!important;isolation:isolate}
-  .seller-mobile-bottom button{min-width:0;min-height:54px;touch-action:manipulation;pointer-events:auto!important}
-  .seller-detail-overlay{z-index:250!important}
+  .seller-app:not([data-seller-ui="v2"]){display:block!important;position:relative;min-height:100dvh;overflow-x:clip}
+  .seller-app:not([data-seller-ui="v2"]) .seller-rail{position:fixed!important;top:0!important;left:0!important;bottom:0!important;width:min(290px,84vw)!important;height:100dvh!important;min-height:0!important;margin:0!important;transform:translateX(-105%)!important;transition:transform .24s ease!important;z-index:300!important;overflow-y:auto!important;box-shadow:18px 0 55px #0008}
+  .seller-app:not([data-seller-ui="v2"]).mobile-menu-open .seller-rail{transform:translateX(0)!important}
+  .seller-app:not([data-seller-ui="v2"]) .seller-mobile-scrim{position:fixed!important;inset:0!important;z-index:299!important}
+  .seller-app:not([data-seller-ui="v2"]) .seller-workarea{display:block!important;width:100%;min-width:0;min-height:100dvh;margin:0!important;padding:0!important}
+  .seller-app:not([data-seller-ui="v2"]) .seller-topbar{position:sticky!important;top:0!important;z-index:301!important;height:62px!important}
+  .seller-app:not([data-seller-ui="v2"]) .seller-content{display:block!important;width:100%;max-width:none!important;min-height:0!important;margin:0!important;padding:12px 12px calc(94px + env(safe-area-inset-bottom))!important}
+  .seller-app:not([data-seller-ui="v2"]) .seller-content>.seller-loading{min-height:180px}
+  .seller-app:not([data-seller-ui="v2"]) .seller-welcome-strip{margin:0 0 12px!important}
+  .seller-app:not([data-seller-ui="v2"]) .seller-mobile-bottom{position:fixed!important;display:flex!important;left:0!important;right:0!important;bottom:0!important;height:calc(64px + env(safe-area-inset-bottom))!important;padding:0 0 env(safe-area-inset-bottom)!important;z-index:302!important;pointer-events:auto!important;isolation:isolate}
+  .seller-app:not([data-seller-ui="v2"]) .seller-mobile-bottom button{min-width:0;min-height:54px;touch-action:manipulation;pointer-events:auto!important}
+  .seller-app:not([data-seller-ui="v2"]) .seller-detail-overlay{z-index:250!important}
 }
 @media(max-width:560px){
-  .seller-topbar{padding:0 11px!important}
-  .seller-topbar-title{min-width:0}
-  .seller-topbar-title>div{min-width:0}
-  .seller-topbar h1{font-size:14px!important}
-  .seller-top-actions{gap:7px!important}
-  .seller-content{padding-left:10px!important;padding-right:10px!important}
+  .seller-app:not([data-seller-ui="v2"]) .seller-topbar{padding:0 11px!important}
+  .seller-app:not([data-seller-ui="v2"]) .seller-topbar-title{min-width:0}
+  .seller-app:not([data-seller-ui="v2"]) .seller-topbar-title>div{min-width:0}
+  .seller-app:not([data-seller-ui="v2"]) .seller-topbar h1{font-size:14px!important}
+  .seller-app:not([data-seller-ui="v2"]) .seller-top-actions{gap:7px!important}
+  .seller-app:not([data-seller-ui="v2"]) .seller-content{padding-left:10px!important;padding-right:10px!important}
 }
 
 /* Featured carousel: one complete product card per frame; the cards, not images inside a card, advance. */
@@ -3409,55 +3409,55 @@ html,body,#root{
 @media(max-width:600px){.disputes-list-toolbar{align-items:flex-start;flex-direction:column}.disputes-new-report-button{width:100%}.dispute-create-page{padding:15px}.dispute-create-heading strong{font-size:17px}.dispute-file-picker>span{flex-wrap:wrap}.dispute-file-picker>span small{margin-left:0;width:100%}.dispute-create-actions{flex-direction:column;align-items:stretch}.dispute-create-actions>button{width:100%}}
 
 
-/* Approved seller notification refresh: readable type and complete previews. */
-.seller-notification-panel { background:#fff !important; border:1px solid #e4eaf0 !important; border-radius:13px !important; box-shadow:0 6px 20px rgba(27,43,65,.055) !important; }
-.seller-notification-panel .seller-panel-head h2 { color:#26384b !important; font-size:15px !important; font-weight:800 !important; }
-.seller-notification-panel .seller-panel-head p { color:#778697 !important; font-size:11px !important; line-height:1.45 !important; }
-.seller-notification-panel .seller-notice-row {
+/* Legacy seller notification overrides (scoped away from v2 UI). */
+.seller-app:not([data-seller-ui="v2"]) .seller-notification-panel { background:#fff !important; border:1px solid #e4eaf0 !important; border-radius:13px !important; box-shadow:0 6px 20px rgba(27,43,65,.055) !important; }
+.seller-app:not([data-seller-ui="v2"]) .seller-notification-panel .seller-panel-head h2 { color:#26384b !important; font-size:15px !important; font-weight:800 !important; }
+.seller-app:not([data-seller-ui="v2"]) .seller-notification-panel .seller-panel-head p { color:#778697 !important; font-size:11px !important; line-height:1.45 !important; }
+.seller-app:not([data-seller-ui="v2"]) .seller-notification-panel .seller-notice-row {
   grid-template-columns:34px minmax(0,1fr) auto 16px !important;
   gap:10px !important;
   min-height:66px !important;
   padding:10px 2px !important;
   border-bottom:1px solid #edf1f5 !important;
 }
-.seller-notification-panel .seller-notice-row > span:first-child {
+.seller-app:not([data-seller-ui="v2"]) .seller-notification-panel .seller-notice-row > span:first-child {
   width:32px !important; height:32px !important; border-radius:9px !important;
   background:#e9f5ef !important; color:#188052 !important;
 }
-.seller-notification-panel .seller-notice-row > span:first-child.stock {
+.seller-app:not([data-seller-ui="v2"]) .seller-notification-panel .seller-notice-row > span:first-child.stock {
   background:#fff3e3 !important; color:#bd741c !important;
 }
-.seller-notification-panel .seller-notice-copy {
+.seller-app:not([data-seller-ui="v2"]) .seller-notification-panel .seller-notice-copy {
   min-width:0 !important; display:grid !important; gap:4px !important;
 }
-.seller-notification-panel .seller-notice-copy strong {
+.seller-app:not([data-seller-ui="v2"]) .seller-notification-panel .seller-notice-copy strong {
   color:#26384b !important; font-size:12px !important; font-weight:750 !important;
   line-height:1.35 !important; white-space:normal !important;
   overflow:visible !important; text-overflow:clip !important;
 }
-.seller-notification-panel .seller-notice-copy small {
+.seller-app:not([data-seller-ui="v2"]) .seller-notification-panel .seller-notice-copy small {
   color:#68798b !important; font-size:11px !important; line-height:1.45 !important;
   white-space:normal !important; overflow:visible !important; text-overflow:clip !important;
   display:-webkit-box !important; -webkit-box-orient:vertical !important;
   -webkit-line-clamp:2 !important; overflow:hidden !important;
 }
-.seller-notification-panel .seller-notice-row time {
+.seller-app:not([data-seller-ui="v2"]) .seller-notification-panel .seller-notice-row time {
   color:#8492a1 !important; font-size:10px !important; white-space:nowrap !important;
 }
-.seller-notification-panel .seller-notice-arrow { color:#8090a0 !important; opacity:.8 !important; }
-.seller-notification-panel .seller-notice-button:hover { background:#f7fafc !important; }
+.seller-app:not([data-seller-ui="v2"]) .seller-notification-panel .seller-notice-arrow { color:#8090a0 !important; opacity:.8 !important; }
+.seller-app:not([data-seller-ui="v2"]) .seller-notification-panel .seller-notice-button:hover { background:#f7fafc !important; }
 @media(max-width:560px) {
-  .seller-notification-panel .seller-notice-row { grid-template-columns:30px minmax(0,1fr) 14px !important; gap:8px !important; }
-  .seller-notification-panel .seller-notice-row time { display:none !important; }
-  .seller-notification-panel .seller-notice-row > span:first-child { width:29px !important; height:29px !important; }
-  .seller-notification-panel .seller-notice-copy strong { font-size:11px !important; }
-  .seller-notification-panel .seller-notice-copy small { font-size:10px !important; }
+  .seller-app:not([data-seller-ui="v2"]) .seller-notification-panel .seller-notice-row { grid-template-columns:30px minmax(0,1fr) 14px !important; gap:8px !important; }
+  .seller-app:not([data-seller-ui="v2"]) .seller-notification-panel .seller-notice-row time { display:none !important; }
+  .seller-app:not([data-seller-ui="v2"]) .seller-notification-panel .seller-notice-row > span:first-child { width:29px !important; height:29px !important; }
+  .seller-app:not([data-seller-ui="v2"]) .seller-notification-panel .seller-notice-copy strong { font-size:11px !important; }
+  .seller-app:not([data-seller-ui="v2"]) .seller-notification-panel .seller-notice-copy small { font-size:10px !important; }
 }
 
 
-/* Seller notifications: use a dedicated second line for timestamps so they can
+/* Seller notifications (legacy UI only): use a dedicated second line for timestamps so they can
    never compete with or overlap the title and message at any viewport width. */
-.seller-app .seller-notice-row.seller-notice-button {
+.seller-app:not([data-seller-ui="v2"]) .seller-notice-row.seller-notice-button {
   display:grid !important;
   grid-template-columns:30px minmax(0,1fr) 14px !important;
   grid-template-rows:auto auto !important;
@@ -3469,7 +3469,7 @@ html,body,#root{
   padding:9px 10px !important;
   white-space:normal !important;
 }
-.seller-app .seller-notice-row.seller-notice-button > span:first-child {
+.seller-app:not([data-seller-ui="v2"]) .seller-notice-row.seller-notice-button > span:first-child {
   grid-column:1 !important;
   grid-row:1 / span 2 !important;
   align-self:start !important;
@@ -3477,7 +3477,7 @@ html,body,#root{
   height:28px !important;
   flex:none !important;
 }
-.seller-app .seller-notice-row.seller-notice-button .seller-notice-copy {
+.seller-app:not([data-seller-ui="v2"]) .seller-notice-row.seller-notice-button .seller-notice-copy {
   grid-column:2 !important;
   grid-row:1 !important;
   display:grid !important;
@@ -3486,7 +3486,7 @@ html,body,#root{
   gap:2px !important;
   overflow:hidden !important;
 }
-.seller-app .seller-notice-row.seller-notice-button .seller-notice-copy strong {
+.seller-app:not([data-seller-ui="v2"]) .seller-notice-row.seller-notice-button .seller-notice-copy strong {
   display:block !important;
   min-width:0 !important;
   margin:0 !important;
@@ -3499,7 +3499,7 @@ html,body,#root{
   overflow:hidden !important;
   text-overflow:clip !important;
 }
-.seller-app .seller-notice-row.seller-notice-button .seller-notice-copy small {
+.seller-app:not([data-seller-ui="v2"]) .seller-notice-row.seller-notice-button .seller-notice-copy small {
   display:-webkit-box !important;
   min-width:0 !important;
   margin:0 !important;
@@ -3513,7 +3513,7 @@ html,body,#root{
   overflow:hidden !important;
   text-overflow:clip !important;
 }
-.seller-app .seller-notice-row.seller-notice-button time {
+.seller-app:not([data-seller-ui="v2"]) .seller-notice-row.seller-notice-button time {
   grid-column:2 !important;
   grid-row:2 !important;
   display:block !important;
@@ -3529,7 +3529,7 @@ html,body,#root{
   white-space:normal !important;
   overflow-wrap:anywhere !important;
 }
-.seller-app .seller-notice-row.seller-notice-button .seller-notice-arrow {
+.seller-app:not([data-seller-ui="v2"]) .seller-notice-row.seller-notice-button .seller-notice-arrow {
   grid-column:3 !important;
   grid-row:1 !important;
   align-self:center !important;
@@ -3538,28 +3538,28 @@ html,body,#root{
   height:13px !important;
   flex:none !important;
 }
-.seller-app .seller-notification-panel .seller-panel-head h2 { font-size:13px !important; line-height:1.3 !important; }
-.seller-app .seller-notification-panel .seller-panel-head p { font-size:10px !important; line-height:1.4 !important; }
+.seller-app:not([data-seller-ui="v2"]) .seller-notification-panel .seller-panel-head h2 { font-size:13px !important; line-height:1.3 !important; }
+.seller-app:not([data-seller-ui="v2"]) .seller-notification-panel .seller-panel-head p { font-size:10px !important; line-height:1.4 !important; }
 @media(max-width:560px) {
-  .seller-app .seller-notice-row.seller-notice-button {
+  .seller-app:not([data-seller-ui="v2"]) .seller-notice-row.seller-notice-button {
     grid-template-columns:28px minmax(0,1fr) 13px !important;
     column-gap:7px !important;
     padding:8px 7px !important;
   }
-  .seller-app .seller-notice-row.seller-notice-button > span:first-child {
+  .seller-app:not([data-seller-ui="v2"]) .seller-notice-row.seller-notice-button > span:first-child {
     width:26px !important;
     height:26px !important;
   }
-  .seller-app .seller-notice-row.seller-notice-button .seller-notice-copy strong { font-size:10.5px !important; }
-  .seller-app .seller-notice-row.seller-notice-button .seller-notice-copy small { font-size:9.5px !important; }
-  .seller-app .seller-notice-row.seller-notice-button time { font-size:8.5px !important; }
+  .seller-app:not([data-seller-ui="v2"]) .seller-notice-row.seller-notice-button .seller-notice-copy strong { font-size:10.5px !important; }
+  .seller-app:not([data-seller-ui="v2"]) .seller-notice-row.seller-notice-button .seller-notice-copy small { font-size:9.5px !important; }
+  .seller-app:not([data-seller-ui="v2"]) .seller-notice-row.seller-notice-button time { font-size:8.5px !important; }
 }
 
 
 /* Keep seller WhatsApp action clear of the fixed five-item mobile navigation. */
-.seller-whatsapp-float{position:fixed!important;right:18px!important;bottom:22px!important;width:54px!important;height:54px!important;border-radius:50%!important;display:flex!important;align-items:center!important;justify-content:center!important;background:#20b968!important;color:#fff!important;z-index:24!important;box-shadow:0 8px 24px #0005!important}
+.seller-app:not([data-seller-ui="v2"]) .seller-whatsapp-float{position:fixed!important;right:18px!important;bottom:22px!important;width:54px!important;height:54px!important;border-radius:50%!important;display:flex!important;align-items:center!important;justify-content:center!important;background:#20b968!important;color:#fff!important;z-index:24!important;box-shadow:0 8px 24px #0005!important}
 @media(max-width:850px){
- .seller-whatsapp-float{right:14px!important;bottom:calc(66px + env(safe-area-inset-bottom) + 14px)!important;width:46px!important;height:46px!important;z-index:24!important}
+ .seller-app:not([data-seller-ui="v2"]) .seller-whatsapp-float{right:14px!important;bottom:calc(66px + env(safe-area-inset-bottom) + 14px)!important;width:46px!important;height:46px!important;z-index:24!important}
 }
 
 /* Reference checkout journey: delivery selection, pickup station and review panels. */
