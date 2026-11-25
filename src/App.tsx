@@ -577,8 +577,8 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
       <button type="button" className="sf-icon-btn sf-menu-trigger" aria-label="Browse shop categories" onClick={()=>{if(window.innerWidth>760)setDesktopSidebarOpen(v=>!v);else setMobileSidebarOpen(true)}}>
        <Menu size={22}/>
       </button>
-      <a className="sf-brand" href={buyerPath('store')} onClick={e=>{e.preventDefault();navigateBuyerPage('store')}}>
-       <strong className="sf-brand-name">{shop?.name||'OUR STORE'}</strong>
+      <a className="sf-brand" href={buyerPath('store')} aria-label={shop?.name||'Store home'} title={shop?.name||'Store'} onClick={e=>{e.preventDefault();navigateBuyerPage('store')}}>
+       <strong className="sf-brand-name">{(()=>{const words=String(shop?.name||'').trim().split(/\s+/).filter(Boolean);if(!words.length)return 'STORE';return words[0].toLowerCase()==='the'&&words.length>1?words[1]:words[0];})()}</strong>
        <span className={'sf-brand-badge'+(shop?.logoUrl?' has-logo':'')} aria-hidden="true">
         {shop?.logoUrl?<img src={shop.logoUrl} alt=""/>:<Star size={12} fill="#ffffff" strokeWidth={2}/>}
        </span>
