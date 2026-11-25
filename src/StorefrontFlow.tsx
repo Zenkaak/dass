@@ -1108,7 +1108,9 @@ export function StorefrontFlow({
         setPaymentPollMessage('Your order is ready. Complete the secure card form to finish payment.');
         try {
           await loadPaystackInline();
-          const popup = new window.PaystackPop!();
+          const PaystackPopup = window.PaystackPop;
+          if (!PaystackPopup) throw new Error('Paystack secure checkout is unavailable in this browser.');
+          const popup = new PaystackPopup();
           popup.resumeTransaction(String(data.accessCode), {
             onSuccess: () => {
               setPaymentPollMessage('Paystack received your payment response. Verifying it securely…');
@@ -1914,7 +1916,7 @@ export function StorefrontFlow({
                   </button>
                 </div>
               ) : paymentMethod === 'card' ? (
-                <div className="sf-alert"><ShieldCheck size={16} style={{ flexShrink: 0, marginTop: 2 }} /><span>You will be redirected to Paystack's secure checkout to pay by card in KES. Your order is confirmed as paid only after Paystack verifies the transaction.</span></div>
+                <div className="sf-alert"><ShieldCheck size={16} style={{ flexShrink: 0, marginTop: 2 }} /><span>Paystack’s secure card form opens over this order page. Card details are entered directly with Paystack, and your order is confirmed as paid only after Paystack verifies the transaction.</span></div>
               ) : (
                 <div className="sf-alert">
                   <ShieldCheck size={16} style={{ flexShrink: 0, marginTop: 2 }} />
