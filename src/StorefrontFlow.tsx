@@ -7,6 +7,7 @@ import { CardNetworkLogos, CardProviderIcon, CashProviderIcon, MpesaProviderIcon
 import PaystackPop from '@paystack/inline-js';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
   Bell,
@@ -14,6 +15,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  CreditCard,
   Flag,
   Heart,
   Mail,
@@ -21,6 +23,7 @@ import {
   MessageCircle,
   Package,
   Phone,
+  RefreshCw,
   Search,
   ShieldCheck,
   ShoppingBag,
@@ -603,6 +606,9 @@ export function StorefrontFlow({
   const [submitting, setSubmitting] = useState(false);
   const [paymentPollMessage, setPaymentPollMessage] = useState('Waiting for payment confirmation…');
   const [paymentProviderResponded, setPaymentProviderResponded] = useState(false);
+  const [pollTimedOut, setPollTimedOut] = useState(false);
+  const [checkingPollNow, setCheckingPollNow] = useState(false);
+  const [manualPollTick, setManualPollTick] = useState(0);
   const [checkoutError, setCheckoutError] = useState('');
 
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>(() =>
@@ -1045,6 +1051,7 @@ export function StorefrontFlow({
     const checkPayment = async () => {
       if (!live || requestInFlight || finished) return;
       requestInFlight = true;
+      setCheckingPollNow(true);
       attempts++;
       try {
         const response = await fetch(
@@ -1060,6 +1067,7 @@ export function StorefrontFlow({
         const status = String(data.paymentStatus || 'pending').toLowerCase();
         if (status === 'succeeded' || status === 'failed' || status === 'cancelled' || status === 'reversed') {
           finished = true;
+          setPollTimedOut(false);
           setOrders((current) =>
             current.map((order) =>
               order.orderId === activeOrder.orderId ? { ...order, paymentStatus: status, receipt: data.receipt || null } : order,
@@ -1080,6 +1088,7 @@ export function StorefrontFlow({
           return;
         }
         if (data.providerResponded) {
+          setPollTimedOut(false);
           setPaymentProviderResponded(true);
           setPaymentPollMessage(
             isCardOrder
@@ -1087,22 +1096,24 @@ export function StorefrontFlow({
               : 'Safaricom has processed the request. Verifying the M-PESA receipt…',
           );
         } else if (attempts >= 20) {
-          // Do not stop status polling after two minutes: a delayed provider
-          // callback or reconciliation can still settle this payment. Keep the
-          // buyer informed and continue checking while this page is active.
+          finished = true;
+          setPollTimedOut(true);
           setPaymentProviderResponded(false);
           setPaymentPollMessage(
-            `This payment is taking longer than expected. We are still checking with ${providerLabel}; do not submit another payment until its status is updated.`,
+            `We have not received a final result from ${providerLabel} yet. Check again shortly before submitting another payment.`,
           );
         } else {
+          setPollTimedOut(false);
           setPaymentPollMessage(data.message || `Waiting for ${providerLabel} payment confirmation…`);
         }
       } catch {
         if (live) setPaymentPollMessage('Connection interrupted. Retrying the payment check automatically…');
       } finally {
         requestInFlight = false;
+        if (live) setCheckingPollNow(false);
       }
     };
+    setPollTimedOut(false);
     setPaymentProviderResponded(false);
     setPaymentPollMessage('Waiting for payment confirmation…');
     void checkPayment();
@@ -1113,7 +1124,7 @@ export function StorefrontFlow({
       live = false;
       window.clearInterval(timer);
     };
-  }, [view, slug, activeOrder?.orderId, activeOrder?.orderNumber, activeOrder?.paymentMethod]);
+  }, [view, slug, activeOrder?.orderId, activeOrder?.orderNumber, activeOrder?.paymentMethod, manualPollTick]);
 
   useEffect(() => {
     const status = String(activeOrder?.paymentStatus || '');
@@ -1224,6 +1235,7 @@ export function StorefrontFlow({
           order.orderId === activeOrder.orderId ? { ...order, paymentMethod: 'mpesa', paymentStatus: 'pending' } : order,
         ),
       );
+      setManualPollTick((tick) => tick + 1);
       setRetryMessage('M-PESA prompt sent. Enter your PIN to complete payment.');
     } catch (e: any) {
       setRetryMessage(e.message || 'Could not retry payment');
@@ -2988,9 +3000,14 @@ export function StorefrontFlow({
       return (
         <>
           <CheckoutTopBar title="Payment status" onBack={() => onNavigate('cart')} />
-          <section className="sf-flow">
-            <div className="sf-state-box">
-              <p>Loading…</p>
+          <section className="sf-flow sf-flow-compact sf-poll-flow">
+            <div className="sf-panel sf-poll-hero">
+              <div className="sf-poll-ring-wrap">
+                <div className="sf-processing-ring" aria-hidden="true" />
+              </div>
+              <span className="sf-kicker">LOADING PAYMENT</span>
+              <h1>Checking order details</h1>
+              <p className="sf-poll-lead">Fetching your latest payment status from {shopName}…</p>
             </div>
           </section>
         </>
@@ -3002,86 +3019,283 @@ export function StorefrontFlow({
     const paymentWaiting = !paymentTerminal && !paymentSucceeded;
     const isCardOrder = activeOrder.paymentMethod === 'card';
     const providerLabel = isCardOrder ? 'Paystack' : 'Safaricom';
+    const targetAccount = isCardOrder
+      ? activeOrder.customerEmail || customerEmail || '—'
+      : paymentPhone || activeOrder.customerPhone || '—';
+    const itemCount = activeOrder.lines.reduce((sum, line) => sum + line.quantity, 0);
+
+    const step2State = paymentSucceeded || paymentProviderResponded ? 'done' : paymentTerminal ? 'error' : 'active';
+    const step3State = paymentSucceeded ? 'done' : paymentTerminal ? 'error' : paymentProviderResponded ? 'active' : 'pending';
 
     return (
       <>
-        <CheckoutTopBar title="Payment status" onBack={() => onNavigate('orders')} />
-        <section className="sf-status-shell">
-          {paymentWaiting && <div className="sf-processing-ring" aria-hidden="true" />}
-          <span className="sf-kicker">
-            {paymentSucceeded ? 'PAYMENT CONFIRMED' : paymentTerminal ? 'PAYMENT NOT COMPLETED' : 'SECURE PAYMENT CHECK'}
-          </span>
-          <h1>
-            {paymentSucceeded
-              ? 'Your payment is confirmed'
-              : paymentState === 'cancelled'
-              ? isCardOrder ? 'Card payment cancelled' : 'You cancelled the M-PESA prompt'
-              : paymentState === 'failed'
-              ? isCardOrder ? 'Card payment failed' : 'M-PESA payment failed'
-              : paymentState === 'reversed'
-              ? 'Payment reversed'
-              : isCardOrder ? 'Confirming your card payment' : 'Confirming your M-PESA payment'}
-          </h1>
-          <p style={{ margin: 0, color: 'var(--sf-muted)' }}>
-            {paymentSucceeded
-              ? activeOrder.receipt
-                ? `${providerLabel} confirmed your payment. Receipt: ` + activeOrder.receipt
-                : `${providerLabel} confirmed your payment.`
-              : paymentTerminal
-              ? paymentState === 'cancelled'
-                ? `${providerLabel} confirmed that you cancelled the payment. No payment was collected. You can safely retry when ready.`
-                : `${providerLabel} confirmed that this payment did not complete. No payment was collected. You can retry when ready.`
-              : paymentProviderResponded
-              ? `${providerLabel} has responded. We are verifying the payment receipt before confirming your order.`
-              : 'Keep this page open while we wait for the payment confirmation.'}
-          </p>
+        <CheckoutTopBar title="Payment confirmation" onBack={() => onNavigate('orders')} />
+        <section className="sf-flow sf-flow-compact sf-poll-flow">
+          <article className={`sf-panel sf-poll-hero ${paymentSucceeded ? 'is-success' : paymentTerminal ? 'is-error' : 'is-waiting'}`}>
+            <div className="sf-poll-top-row">
+              {isCardOrder ? <CardProviderIcon compact /> : <MpesaProviderIcon compact />}
+              <span className={`sf-poll-state-label ${paymentSucceeded ? 'is-success' : paymentTerminal ? 'is-error' : 'is-waiting'}`}>
+                {paymentSucceeded
+                  ? 'Confirmed'
+                  : paymentTerminal
+                  ? paymentState === 'cancelled'
+                    ? 'Cancelled'
+                    : paymentState === 'reversed'
+                    ? 'Reversed'
+                    : 'Not completed'
+                  : pollTimedOut
+                  ? 'Awaiting confirmation'
+                  : 'Verifying'}
+              </span>
+            </div>
 
-          <div className="sf-panel sf-kv-grid">
-            <div>
-              <small>ORDER NUMBER</small>
+            <div className="sf-poll-headline-row">
+              <div className="sf-poll-visual" aria-hidden="true">
+                {paymentSucceeded ? (
+                  <span className="sf-poll-badge is-success">
+                    <Check size={24} />
+                  </span>
+                ) : paymentTerminal ? (
+                  <span className="sf-poll-badge is-error">
+                    <AlertCircle size={24} />
+                  </span>
+                ) : (
+                  <div className="sf-processing-ring" />
+                )}
+              </div>
+              <div className="sf-poll-heading-copy">
+                <span className="sf-kicker">
+                  {paymentSucceeded
+                    ? 'PAYMENT CONFIRMED'
+                    : paymentTerminal
+                    ? 'PAYMENT NOT COMPLETED'
+                    : isCardOrder
+                    ? 'PAYSTACK VERIFICATION'
+                    : 'M-PESA STK PUSH'}
+                </span>
+                <h1>
+                  {paymentSucceeded
+                    ? 'Your payment is confirmed'
+                    : paymentState === 'cancelled'
+                    ? isCardOrder
+                      ? 'Card payment cancelled'
+                      : 'You cancelled the M-PESA prompt'
+                    : paymentState === 'failed'
+                    ? isCardOrder
+                      ? 'Card payment failed'
+                      : 'M-PESA payment failed'
+                    : paymentState === 'reversed'
+                    ? 'Payment reversed'
+                    : paymentProviderResponded
+                    ? isCardOrder
+                      ? 'Verifying card receipt'
+                      : 'Verifying M-PESA receipt'
+                    : isCardOrder
+                    ? 'Confirming your card payment'
+                    : 'Enter your M-PESA PIN on your phone'}
+                </h1>
+                <p className="sf-poll-lead">
+                  {paymentSucceeded
+                    ? activeOrder.receipt
+                      ? `${providerLabel} verified your payment · Receipt ${activeOrder.receipt}.`
+                      : `${providerLabel} verified your payment.`
+                    : paymentTerminal
+                    ? `${providerLabel} confirmed that no funds were collected for this attempt. You can safely retry below.`
+                    : paymentProviderResponded
+                    ? `${providerLabel} responded. We are verifying your receipt before confirming the order.`
+                    : isCardOrder
+                    ? 'Keep this page open while Paystack confirms your authorization.'
+                    : `Check the prompt sent to ${targetAccount} and approve the ${formatKes(activeOrder.total)} charge.`}
+                </p>
+              </div>
+            </div>
+
+            <ol className="sf-poll-steps" aria-label="Payment progress">
+              <li className="is-done">
+                <span className="sf-poll-step-dot" aria-hidden="true">
+                  <Check size={13} />
+                </span>
+                <div>
+                  <strong>Order created</strong>
+                  <small className="sf-mono">{activeOrder.orderNumber}</small>
+                </div>
+              </li>
+              <li className={`is-${step2State}`}>
+                <span className="sf-poll-step-dot" aria-hidden="true">
+                  {step2State === 'done' ? <Check size={13} /> : step2State === 'error' ? '!' : '2'}
+                </span>
+                <div>
+                  <strong>{isCardOrder ? 'Card approval' : 'M-PESA PIN'}</strong>
+                  <small>
+                    {step2State === 'done'
+                      ? 'Authorized'
+                      : step2State === 'error'
+                      ? 'Not approved'
+                      : isCardOrder
+                      ? 'Authorizing'
+                      : 'Waiting on phone'}
+                  </small>
+                </div>
+              </li>
+              <li className={`is-${step3State}`}>
+                <span className="sf-poll-step-dot" aria-hidden="true">
+                  {step3State === 'done' ? <Check size={13} /> : step3State === 'error' ? '!' : '3'}
+                </span>
+                <div>
+                  <strong>Receipt verified</strong>
+                  <small>
+                    {step3State === 'done'
+                      ? activeOrder.receipt || 'Confirmed'
+                      : step3State === 'error'
+                      ? 'Stopped'
+                      : step3State === 'active'
+                      ? 'Finalizing'
+                      : 'Pending'}
+                  </small>
+                </div>
+              </li>
+            </ol>
+
+            <div className={`sf-poll-live-row ${paymentSucceeded ? 'is-success' : paymentTerminal ? 'is-error' : ''}`} role="status">
+              <span>
+                {paymentSucceeded
+                  ? `Payment confirmed by ${providerLabel}.`
+                  : paymentTerminal
+                  ? paymentPollMessage || 'Payment attempt ended.'
+                  : paymentPollMessage}
+              </span>
+              {paymentWaiting && (
+                <button
+                  type="button"
+                  className="sf-poll-refresh-btn"
+                  disabled={checkingPollNow}
+                  onClick={() => setManualPollTick((tick) => tick + 1)}
+                >
+                  <RefreshCw size={14} className={checkingPollNow ? 'is-spinning' : ''} />
+                  <span>{checkingPollNow ? 'Checking…' : 'Check now'}</span>
+                </button>
+              )}
+            </div>
+          </article>
+
+          <article className="sf-panel sf-poll-summary">
+            <div className="sf-poll-summary-head">
+              <span className="sf-kicker">ORDER DETAILS</span>
               <strong className="sf-mono">{activeOrder.orderNumber}</strong>
             </div>
-            <div>
-              <small>AMOUNT</small>
-              <strong>{formatKes(activeOrder.total)}</strong>
+            <div className="sf-poll-summary-rows">
+              <div>
+                <span>Shop</span>
+                <strong>{shopName}</strong>
+              </div>
+              <div>
+                <span>Payment method</span>
+                <strong>{isCardOrder ? 'Bank Card (Paystack)' : 'M-PESA STK Push'}</strong>
+              </div>
+              <div>
+                <span>{isCardOrder ? 'Receipt email' : 'M-PESA number'}</span>
+                <strong className="sf-mono">{targetAccount}</strong>
+              </div>
+              <div>
+                <span>Items</span>
+                <strong className="sf-num">
+                  {itemCount} {itemCount === 1 ? 'item' : 'items'}
+                </strong>
+              </div>
+              <div className="is-total">
+                <span>Total amount</span>
+                <strong className="sf-num">{formatKes(activeOrder.total)}</strong>
+              </div>
             </div>
-            <div>
-              <small>{isCardOrder ? 'EMAIL' : 'PAYMENT PHONE'}</small>
-              <strong className="sf-mono">{isCardOrder ? activeOrder.customerEmail || customerEmail || '—' : paymentPhone || activeOrder.customerPhone}</strong>
-            </div>
-          </div>
+          </article>
 
-          <p
-            className={`sf-alert ${paymentSucceeded ? 'success' : paymentTerminal ? 'error' : ''}`}
-            role="status"
-          >
-            {paymentSucceeded
-              ? `Payment confirmed by ${providerLabel}.`
-              : paymentTerminal
-              ? paymentPollMessage || 'Payment request ended.'
-              : paymentPollMessage}
-          </p>
-
-          {paymentWaiting && (
-            <p className="sf-summary-note">
-              <ShieldCheck size={16} />
-              <span>
-                {isCardOrder
-                  ? 'Your order will only be marked paid after Paystack’s payment confirmation is verified. Do not submit another card charge while this check is running.'
-                  : 'Your order will only be marked paid after Safaricom’s payment receipt is verified. Do not send another payment prompt while this check is running.'}
-              </span>
-            </p>
+          {paymentTerminal ? (
+            <article className="sf-panel sf-poll-retry-card">
+              <div className="sf-poll-retry-head">
+                <strong>Try payment again</strong>
+                <span>{isCardOrder ? 'Re-open secure Paystack card checkout.' : 'Confirm your M-PESA number and resend the STK prompt.'}</span>
+              </div>
+              {!isCardOrder && (
+                <label className="sf-field">
+                  M-PESA phone number
+                  <input
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder="07XX XXX XXX or 2547XXXXXXXX"
+                    value={retryPaymentPhone}
+                    onChange={(event) => setRetryPaymentPhone(event.target.value)}
+                    maxLength={16}
+                  />
+                </label>
+              )}
+              {retryMessage && (
+                <p className="sf-alert" role="status">
+                  {retryMessage}
+                </p>
+              )}
+              {cardFallbackUrl && (
+                <a className="sf-btn sf-btn-secondary" href={cardFallbackUrl} rel="noopener noreferrer">
+                  Open Paystack card page <ArrowRight size={15} />
+                </a>
+              )}
+              <div className="sf-poll-actions">
+                <button
+                  type="button"
+                  className="sf-btn sf-btn-accent"
+                  disabled={retryingOrder}
+                  onClick={() => (isCardOrder ? void retryActiveOrderWithCard() : void retryActiveOrderPayment())}
+                >
+                  {isCardOrder ? <CreditCard size={16} /> : <Phone size={16} />}
+                  <span>
+                    {retryingOrder
+                      ? 'Sending request…'
+                      : isCardOrder
+                      ? 'Retry card payment'
+                      : 'Resend M-PESA prompt'}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="sf-btn sf-btn-secondary"
+                  onClick={() => openOrder(activeOrder, 'order-detail')}
+                >
+                  View order &amp; switch method
+                </button>
+              </div>
+            </article>
+          ) : (
+            <>
+              {paymentWaiting && (
+                <p className="sf-summary-note sf-poll-guard">
+                  <ShieldCheck size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+                  <span>
+                    {isCardOrder
+                      ? 'Your order only marks paid after Paystack confirms the charge. Do not submit another card charge while checking.'
+                      : 'Your order only marks paid after Safaricom verifies your M-PESA receipt. Do not send a duplicate prompt while waiting.'}
+                  </span>
+                </p>
+              )}
+              <div className="sf-poll-actions">
+                <button
+                  type="button"
+                  className="sf-btn sf-btn-primary"
+                  onClick={() => openOrder(activeOrder, 'order-detail')}
+                >
+                  View order details <ArrowRight size={16} />
+                </button>
+                {paymentSucceeded ? (
+                  <button type="button" className="sf-btn sf-btn-secondary" onClick={() => onNavigate('store')}>
+                    Continue shopping
+                  </button>
+                ) : (
+                  <button type="button" className="sf-btn sf-btn-secondary" onClick={() => onNavigate('orders')}>
+                    My orders
+                  </button>
+                )}
+              </div>
+            </>
           )}
-
-          <div>
-            <button
-              type="button"
-              className="sf-btn sf-btn-primary"
-              onClick={() => openOrder(activeOrder, 'order-detail')}
-            >
-              {paymentTerminal ? 'View order and retry' : 'View order status'}
-            </button>
-          </div>
         </section>
       </>
     );

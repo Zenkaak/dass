@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { unzipSync } from 'fflate';
-import { Activity, ArrowRight, ArrowUpRight, Baby, Bell, Briefcase, Building2, Car, Check, ChevronLeft, ChevronRight, CircleAlert, CreditCard, Download, Dumbbell, FileText, Flag, Gamepad2, Globe, Heart, HelpCircle, Home, Laptop, LayoutDashboard, LogOut, MapPin, Menu, MessageCircle, Package, PawPrint, Plus, RefreshCw, Refrigerator, Search, Send, Settings, ShieldCheck, Shirt, ShoppingBag, ShoppingCart, Smartphone, Sofa, Sparkles, Sprout, Star, Store, TicketPercent, Tv, UserCheck, UserRound, Wallet, WalletCards, Wrench, X } from 'lucide-react';
+import { Activity, ArrowRight, ArrowUpDown, ArrowUpRight, Baby, Bell, Briefcase, Building2, Car, Check, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, CreditCard, Download, Dumbbell, FileText, Flag, Gamepad2, Globe, Heart, HelpCircle, Home, Laptop, LayoutDashboard, LogOut, MapPin, Menu, MessageCircle, Package, PawPrint, Plus, RefreshCw, Refrigerator, Search, Send, Settings, ShieldCheck, Shirt, ShoppingBag, ShoppingCart, SlidersHorizontal, Smartphone, Sofa, Sparkles, Sprout, Star, Store, TicketPercent, Tv, UserCheck, UserRound, Wallet, WalletCards, Wrench, X } from 'lucide-react';
 import { storefrontCategories } from './storefrontCatalog';
 import { marketplaceFaqs } from './marketplaceFaqs';
 import { AuthPage } from './AuthPage';
@@ -102,7 +102,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
   }catch{}
  },[]);
  const previousPaymentStatus=useRef<string|null>(null);const [chatToken,setChatToken]=useState(''),[chatOrderId,setChatOrderId]=useState(''),[chatOrderNumber,setChatOrderNumber]=useState(''),[chatOrder,setChatOrder]=useState<any>(null),[chatMessages,setChatMessages]=useState<any[]>([]),[chatAttachments,setChatAttachments]=useState<any[]>([]),[chatDraft,setChatDraft]=useState(''),[chatSending,setChatSending]=useState(false),[paymentCelebration,setPaymentCelebration]=useState(false),[chatError,setChatError]=useState('');
- const [filter,setFilter]=useState('All products'),[search,setSearch]=useState(''),[sortOrder,setSortOrder]=useState('recommended'),[products,setProducts]=useState<LiveProduct[]>(()=>cachedStorefront?.products||[]);
+ const [filter,setFilter]=useState('All products'),[search,setSearch]=useState(''),[sortOrder,setSortOrder]=useState('recommended'),[priceBand,setPriceBand]=useState<'all'|'under-1000'|'1000-5000'|'5000-15000'|'15000-plus'>('all'),[inStockOnly,setInStockOnly]=useState(false),[collectionSheet,setCollectionSheet]=useState<null|'sort'|'filter'>(null),[products,setProducts]=useState<LiveProduct[]>(()=>cachedStorefront?.products||[]);
  const [catalogueOffset,setCatalogueOffset]=useState(cachedStorefront?.products.length||0),[catalogueTotal,setCatalogueTotal]=useState(cachedStorefront?.totalProducts||0),[catalogueHasMore,setCatalogueHasMore]=useState(true),[loadingMore,setLoadingMore]=useState(false);const catalogueSentinelRef=useRef<HTMLDivElement|null>(null);const [shop,setShop]=useState<{name:string;description:string;logoUrl?:string;whatsappNumber?:string;contactPhone?:string;contactEmail?:string;termsAndConditions?:string;privacyPolicy?:string;returnPolicy?:string;deliveryPolicy?:string;deliveryHomeFee?:number;deliveryPickupFee?:number;cashOnDeliveryEnabled?:boolean;cashOnPickupEnabled?:boolean;faqs?:Array<{question:string;answer:string}>;theme?:string}|null>(()=>cachedStorefront?.shop||null),[loading,setLoading]=useState(!cachedStorefront),[error,setError]=useState(''),[notFound,setNotFound]=useState(false),[cart,setCart]=useState<Record<string,number>>({}),[cartHydrating,setCartHydrating]=useState(false),[selectedProduct,setSelectedProduct]=useState<LiveProduct|null>(null),[mobileSidebarOpen,setMobileSidebarOpen]=useState(false),[desktopSidebarOpen,setDesktopSidebarOpen]=useState(false),[buyerMobileNavOpen,setBuyerMobileNavOpen]=useState(false);
  const cartRef=useRef<Record<string,number>>({});
  const guestPendingCartRef=useRef<Record<string,number>>({});
@@ -267,7 +267,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
  const isHostScoped=isHostScopedDomain();
  const storeBasePath=isHostScoped?'':`/${slug}`;
  const buyerPath=(page:string)=>page==='store'?(storeBasePath||'/'):`${storeBasePath}/${page}`||`/${page}`;
- function navigateBuyerPage(page:string){if(page==='reports'||page==='report-shop')page='my-reports';if(['recently-viewed','followed-shops','notification-settings','public-profile','newsletter'].includes(page))page='account';if((['account','profile','orders','order-detail','order-tracking','inbox','wishlist','recently-viewed','address-book','address-book/edit','vouchers','reviews','notifications','my-reports','followed-shops','newsletter','notification-settings','public-profile','account-management','close-account'].includes(page)||page.startsWith('orders/')||page.startsWith('my-reports/'))&&!buyerCustomer){updateBuyerReturnPage(page);page='buyer-login'}if((page==='checkout/delivery'||page==='checkout/payment'||page==='checkout/review')&&!buyerCustomer){updateBuyerReturnPage(page);page='buyer-login'}if(page==='store'){setFilter('All products');setSearch('');setExpandedCategory('');setSelectedProduct(null)}setBuyerPage(page);if(page!=='product-detail')setSelectedProduct(null);setMobileSidebarOpen(false);setDesktopSidebarOpen(false);setBuyerMobileNavOpen(false);setBuyerNotificationsOpen(false);const nextPath=buyerPath(page);if(window.location.pathname!==nextPath)window.history.pushState({buyerPage:page},'',nextPath);if((page==='cart'||page.startsWith('checkout/'))&&buyerCustomerRef.current?.phone&&buyerAuthCheckedRef.current&&slugRef.current&&cartSyncPendingCountRef.current===0){void hydrateServerCart(slugRef.current);}window.scrollTo({top:0,behavior:'instant' as ScrollBehavior})}
+ function navigateBuyerPage(page:string){if(page==='reports'||page==='report-shop')page='my-reports';if(['recently-viewed','followed-shops','notification-settings','public-profile','newsletter'].includes(page))page='account';if((['account','profile','orders','order-detail','order-tracking','inbox','wishlist','recently-viewed','address-book','address-book/edit','vouchers','reviews','notifications','my-reports','followed-shops','newsletter','notification-settings','public-profile','account-management','close-account'].includes(page)||page.startsWith('orders/')||page.startsWith('my-reports/'))&&!buyerCustomer){updateBuyerReturnPage(page);page='buyer-login'}if((page==='checkout/delivery'||page==='checkout/payment'||page==='checkout/review')&&!buyerCustomer){updateBuyerReturnPage(page);page='buyer-login'}if(page==='store'){setFilter('All products');setSearch('');setPriceBand('all');setInStockOnly(false);setExpandedCategory('');setSelectedProduct(null)}setCollectionSheet(null);setBuyerPage(page);if(page!=='product-detail')setSelectedProduct(null);setMobileSidebarOpen(false);setDesktopSidebarOpen(false);setBuyerMobileNavOpen(false);setBuyerNotificationsOpen(false);const nextPath=buyerPath(page);if(window.location.pathname!==nextPath)window.history.pushState({buyerPage:page},'',nextPath);if((page==='cart'||page.startsWith('checkout/'))&&buyerCustomerRef.current?.phone&&buyerAuthCheckedRef.current&&slugRef.current&&cartSyncPendingCountRef.current===0){void hydrateServerCart(slugRef.current);}window.scrollTo({top:0,behavior:'instant' as ScrollBehavior})}
  function selectStoreCategory(category:string){const parent=storefrontCategories.find(c=>c.name===category||c.subcategories.includes(category));const filterValue=category.startsWith('All ')?(parent?.name||category):category;setFilter(filterValue);setSearch('');setSelectedProduct(null);setProducts([]);setCatalogueOffset(0);setCatalogueHasMore(false);setLoadingMore(false);setLoading(true);setBuyerPage('store');setMobileSidebarOpen(false);setDesktopSidebarOpen(false);const nextPath=buyerPath('store');if(window.location.pathname!==nextPath)window.history.replaceState({buyerPage:'store'},'',nextPath)}
  function openProduct(product:LiveProduct){setSelectedProduct(product);setBuyerPage('product-detail');setMobileSidebarOpen(false);const parent=storefrontCategories.find(c=>c.name===product.category||c.subcategories.includes(product.category));const route=(parent?categorySlug(parent.name):'products')+'/'+(parent&&product.category!==parent.name?categorySlug(product.category).replace(/-/g,''):'products')+'/'+encodeURIComponent(product.sku||product.id);window.history.pushState({productSku:product.sku||product.id},'',(storeBasePath||'')+'/'+route);window.scrollTo({top:0,left:0,behavior:'instant' as ScrollBehavior})}
  function closeProduct(){const route=categoryRoute(selectedProduct?.category||'');if(selectedProduct?.category)setFilter(selectedProduct.category);setBuyerPage('store');setSelectedProduct(null);window.history.pushState({},'',route?(storeBasePath+'/'+route):buyerPath('store'))}
@@ -377,10 +377,11 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
  const visible=products.filter(p=>{const haystack=[p.name,p.description,p.category,p.parentCategory,p.sku].filter(Boolean).join(' ').toLocaleLowerCase();return categoryMatches(p.category,normalizedFilter,p.parentCategory)&&haystack.includes(search.trim().toLocaleLowerCase())});
  const sortedVisible=[...visible].sort((a,b)=>sortOrder==='price-low'?a.price-b.price:sortOrder==='price-high'?b.price-a.price:sortOrder==='name'?a.name.localeCompare(b.name):0);const mixedProducts=sortedVisible;
  const collectionKey=buyerPage.startsWith('collection/')?buyerPage.slice('collection/'.length):'';
- const collectionTitle=collectionKey==='featured-products'?'Featured products':collectionKey==='top-picks'?'Top picks':'All products';
+ const collectionTitle=collectionKey==='featured-products'?'Featured Products':collectionKey==='top-picks'?'Top Picks':'All Products';
  const collectionBase=collectionKey==='featured-products'?(products.some(p=>p.spotlight)?products.filter(p=>p.spotlight):products.filter(p=>Boolean(p.images?.[0]||p.imageUrl)).slice(0,5)):collectionKey==='top-picks'?[...products].sort((a,b)=>(b.ratingAverage||0)-(a.ratingAverage||0)||(b.ratingCount||0)-(a.ratingCount||0)):products;
- const collectionVisible=collectionBase.filter(p=>{const selected=filter.trim().toLocaleLowerCase();const queryMatch=[p.name,p.description,p.category,p.parentCategory,p.sku].filter(Boolean).join(' ').toLocaleLowerCase().includes(search.trim().toLocaleLowerCase());return categoryMatches(p.category,selected,p.parentCategory)&&queryMatch;});
- const collectionSorted=[...collectionVisible].sort((a,b)=>sortOrder==='price-low'?a.price-b.price:sortOrder==='price-high'?b.price-a.price:sortOrder==='name'?a.name.localeCompare(b.name):0);
+ const matchesPriceBand=(price:number)=>{if(priceBand==='under-1000')return price<1000;if(priceBand==='1000-5000')return price>=1000&&price<=5000;if(priceBand==='5000-15000')return price>5000&&price<=15000;if(priceBand==='15000-plus')return price>15000;return true;};
+ const collectionVisible=collectionBase.filter(p=>{const selected=filter.trim().toLocaleLowerCase();const queryMatch=[p.name,p.description,p.category,p.parentCategory,p.sku].filter(Boolean).join(' ').toLocaleLowerCase().includes(search.trim().toLocaleLowerCase());const stockMatch=!inStockOnly||p.stockQuantity!==0;return categoryMatches(p.category,selected,p.parentCategory)&&queryMatch&&stockMatch&&matchesPriceBand(Number(p.price||0));});
+ const collectionSorted=[...collectionVisible].sort((a,b)=>sortOrder==='price-low'?a.price-b.price:sortOrder==='price-high'?b.price-a.price:sortOrder==='rating'?(b.ratingAverage||0)-(a.ratingAverage||0)||(b.ratingCount||0)-(a.ratingCount||0):sortOrder==='name'?a.name.localeCompare(b.name):0);
  const storePreviewProducts=(()=>{const groups=new Map<string,typeof products>();for(const product of products){const key=String(product.category||'Other').trim()||'Other';if(!groups.has(key))groups.set(key,[]);groups.get(key)!.push(product)}const buckets=[...groups.values()];const mixed:typeof products=[];for(let index=0;buckets.some(bucket=>bucket.length>index);index++){for(const bucket of buckets){if(bucket[index])mixed.push(bucket[index])}}return mixed})();
  const [homeHeroIndex,setHomeHeroIndex]=useState(0),[heroPaused,setHeroPaused]=useState(false);const heroTouchStartX=useRef<number|null>(null);
  const spotlightProducts=products.filter(p=>Boolean((p as any).spotlight)).slice(0,5);const homeHeroProducts=(spotlightProducts.length?spotlightProducts:products.filter(p=>Boolean(p.images?.[0]||p.imageUrl))).slice(0,5);
@@ -482,7 +483,56 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
   );
  };
 
- const renderSkeletonGrid=(count=8)=>(
+  const renderCollectionCard=(p:LiveProduct,eager=false)=>{
+   const outOfStock=p.stockQuantity===0||(p.stockQuantity!==null&&(cart[p.id]||0)>=p.stockQuantity);
+   const qtyInCart=cart[p.id]||0;
+   const saved=wishlistIds.includes(p.id);
+   const cardBadge=p.stockQuantity===0?'Out of stock':p.stockQuantity!==null&&p.stockQuantity<=5?`Only ${p.stockQuantity} left`:p.spotlight?'Featured':'';
+   return (
+    <article className="sf-collection-card" key={p.id}>
+     <button type="button" className={'sf-card-fav sf-collection-fav'+(saved?' active':'')} aria-label="Toggle wishlist" aria-pressed={saved} onClick={()=>toggleWishlist(p.id)}>
+      <Heart size={16} fill={saved?'currentColor':'none'}/>
+     </button>
+     <button type="button" className="sf-collection-card-open" onClick={()=>openProduct(p)}>
+      <span className="sf-collection-card-media">
+       <img src={p.images?.[0]||p.imageUrl||fallbackProductImage(p.name)} alt={p.name} loading={eager?'eager':'lazy'} decoding="async" onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src=fallbackProductImage(p.name)}}/>
+       {cardBadge&&<span className={'sf-collection-media-tag'+(p.stockQuantity===0?' is-out':'')}>{cardBadge}</span>}
+      </span>
+      <div className="sf-collection-card-body">
+       <span className="sf-collection-card-title">{p.name}</span>
+       {(p.ratingCount??0)>0&&(
+        <span className="sf-collection-card-rating">
+         <Star size={12} fill="currentColor"/>
+         <strong>{Number(p.ratingAverage||0).toFixed(1)}</strong>
+         <span>({p.ratingCount})</span>
+        </span>
+       )}
+       <strong className="sf-collection-card-price sf-num">KES {p.price.toLocaleString('en-KE')}</strong>
+      </div>
+     </button>
+     <div className="sf-collection-card-foot">
+      <div className="sf-collection-card-meta">
+       <span className="sf-collection-card-store">{p.category||shop?.name||'Store'}</span>
+       <small className={p.stockQuantity===0?'is-out':''}>
+        {p.stockQuantity===0?'Out of stock':p.stockQuantity===null?'In stock':`${p.stockQuantity} available`}
+       </small>
+      </div>
+      <button
+       type="button"
+       className={'sf-collection-add-btn'+(qtyInCart>0?' in-cart':'')}
+       disabled={outOfStock}
+       aria-label={outOfStock?`${p.name} is out of stock`:qtyInCart>0?`Add another ${p.name} (${qtyInCart} in cart)`:`Add ${p.name} to cart`}
+       onClick={()=>addSingleToCart(p.id,p.stockQuantity)}
+      >
+       <Plus size={18} strokeWidth={2.4}/>
+       {qtyInCart>0&&<span className="sf-collection-add-count sf-num">{qtyInCart}</span>}
+      </button>
+     </div>
+    </article>
+   );
+  };
+
+  const renderSkeletonGrid=(count=8)=>(
   <div className="sf-product-grid" aria-busy="true" aria-label="Loading products">
    {Array.from({length:count}).map((_,index)=>(
     <article className="sf-skeleton-card" key={index} aria-hidden="true">
@@ -535,9 +585,9 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
       </a>
      </div>
      {!compact&&(
-      <form className="sf-search-form" onSubmit={e=>{e.preventDefault();setFilter('All products');navigateBuyerPage('store');window.setTimeout(()=>document.getElementById('market-products-grid')?.scrollIntoView({behavior:'smooth',block:'start'}),80)}}>
+      <form className={'sf-search-form'+(buyerPage.startsWith('collection/')?' is-pill-search':'')} onSubmit={e=>{e.preventDefault();if(!buyerPage.startsWith('collection/')){setFilter('All products');navigateBuyerPage('store');window.setTimeout(()=>document.getElementById('market-products-grid')?.scrollIntoView({behavior:'smooth',block:'start'}),80);}}}>
        <Search size={18}/>
-       <input aria-label="Search products" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search products, categories and SKUs"/>
+       <input aria-label="Search products" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search products, categories and brands"/>
        {search.trim()&&(
         <button type="button" className="sf-search-clear" aria-label="Clear search" onClick={()=>setSearch('')}>
          <X size={16}/>
@@ -998,60 +1048,180 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
     <>
      {renderShopDrawer()}
      {renderStoreHeader()}
-     <div className="sf-container" style={{paddingTop:28,paddingBottom:48}}>
-      <div className="sf-flow-head">
-       <button type="button" className="sf-back-btn" onClick={()=>navigateBuyerPage('store')}>← Back to shop</button>
-       <span className="sf-kicker">{shop?.name||'Store collection'}</span>
-       <h1>{collectionTitle}</h1>
-       <p className="sf-flow-sub">{collectionKey==='featured-products'?'Explore products highlighted by this shop.':collectionKey==='top-picks'?'Discover highly rated products from this shop.':'Browse the complete product catalogue.'}</p>
-      </div>
-      <div className="sf-toolbar">
-       <div className="sf-toolbar-controls">
-        <select className="sf-select" aria-label="Filter collection by category" value={filter} onChange={e=>setFilter(e.target.value)}>
-         <option value="All products">All categories</option>
-         {storefrontCategories.map(category=>(
-          <optgroup key={category.name} label={category.name}>
-           <option value={category.name}>{category.name}</option>
-           {category.subcategories.map(child=><option key={child} value={child}>{child}</option>)}
-          </optgroup>
-         ))}
-        </select>
-        <select className="sf-select" aria-label="Sort collection" value={sortOrder} onChange={e=>setSortOrder(e.target.value)}>
-         <option value="recommended">Recommended</option>
-         <option value="price-low">Price: Low to High</option>
-         <option value="price-high">Price: High to Low</option>
-         <option value="name">Name: A to Z</option>
-        </select>
+     <div className="sf-collection-page">
+      <div className="sf-collection-breadcrumb-bar">
+       <div className="sf-collection-container sf-collection-breadcrumb-inner">
+        <nav className="sf-collection-breadcrumb" aria-label="Breadcrumb">
+         <button type="button" onClick={()=>navigateBuyerPage('store')}>Home</button>
+         <ChevronRight size={14} aria-hidden="true"/>
+         <span aria-current="page">{collectionTitle}</span>
+        </nav>
+        <span className="sf-collection-count-desktop sf-num">
+         {totalCollectionCount>collectionSorted.length?`${collectionSorted.length} of ${totalCollectionCount.toLocaleString('en-KE')} products`:`${collectionSorted.length.toLocaleString('en-KE')} ${collectionSorted.length===1?'product':'products'}`}
+        </span>
        </div>
-       <p className="sf-result-count">{totalCollectionCount>collectionSorted.length?`${collectionSorted.length} of ${totalCollectionCount.toLocaleString('en-KE')}`:`${collectionSorted.length.toLocaleString('en-KE')} products`}</p>
       </div>
-      {loading&&collectionSorted.length===0?(
-       renderSkeletonGrid(8)
-      ):collectionSorted.length===0?(
-       <div className="sf-state-box">
-        <h2>{collectionKey==='featured-products'?'No featured products yet':'No products found'}</h2>
-        <p>{collectionKey==='featured-products'?'This shop has not highlighted any products yet. Browse all products instead.':'Try another search or browse the full collection.'}</p>
-        <button type="button" className="sf-btn sf-btn-primary" onClick={()=>{setSearch('');navigateBuyerPage('collection/all-products')}}>Browse all products</button>
-       </div>
-      ):(
-       <>
-        <div className="sf-product-grid">{collectionSorted.map(p=>renderProductCard(p))}</div>
-        {catalogueHasMore&&collectionKey!=='featured-products'&&(
-         <div className="sf-load-more" ref={catalogueSentinelRef} aria-live="polite">
-          <button type="button" className="sf-btn sf-btn-secondary" disabled={loadingMore} onClick={()=>void loadMoreProducts()}>
-           {loadingMore?'Loading more products…':`Load more products (${collectionSorted.length} of ${totalCollectionCount.toLocaleString('en-KE')})`}
-          </button>
-         </div>
+
+      <div className="sf-collection-chips-bar">
+       <div className="sf-collection-container sf-collection-chips">
+        <button
+         type="button"
+         className={'sf-filter-chip'+(inStockOnly?' is-active':'')}
+         aria-pressed={inStockOnly}
+         onClick={()=>setInStockOnly(v=>!v)}
+        >
+         <Package size={14}/>
+         <span>In Stock</span>
+        </button>
+
+        <div className={'sf-filter-chip-select'+(filter!=='All products'?' is-active':'')}>
+         <select aria-label="Filter collection by category" value={filter} onChange={e=>setFilter(e.target.value)}>
+          <option value="All products">Category</option>
+          {storefrontCategories.map(category=>(
+           <optgroup key={category.name} label={category.name}>
+            <option value={category.name}>{category.name}</option>
+            {category.subcategories.map(child=><option key={child} value={child}>{child}</option>)}
+           </optgroup>
+          ))}
+         </select>
+         <ChevronDown size={14} aria-hidden="true"/>
+        </div>
+
+        <div className={'sf-filter-chip-select'+(priceBand!=='all'?' is-active':'')}>
+         <select aria-label="Filter collection by price" value={priceBand} onChange={e=>setPriceBand(e.target.value as any)}>
+          <option value="all">Price</option>
+          <option value="under-1000">Under KES 1,000</option>
+          <option value="1000-5000">KES 1,000 – 5,000</option>
+          <option value="5000-15000">KES 5,000 – 15,000</option>
+          <option value="15000-plus">KES 15,000+</option>
+         </select>
+         <ChevronDown size={14} aria-hidden="true"/>
+        </div>
+
+        <div className={'sf-filter-chip-select sf-collection-desktop-sort'+(sortOrder!=='recommended'?' is-active':'')}>
+         <select aria-label="Sort collection" value={sortOrder} onChange={e=>setSortOrder(e.target.value)}>
+          <option value="recommended">Sort: Recommended</option>
+          <option value="price-low">Price: Low to High</option>
+          <option value="price-high">Price: High to Low</option>
+          <option value="rating">Top Rated</option>
+          <option value="name">Name: A to Z</option>
+         </select>
+         <ChevronDown size={14} aria-hidden="true"/>
+        </div>
+
+        {(filter!=='All products'||priceBand!=='all'||inStockOnly||search.trim()!==''||sortOrder!=='recommended')&&(
+         <button
+          type="button"
+          className="sf-filter-chip sf-filter-reset"
+          onClick={()=>{setFilter('All products');setPriceBand('all');setInStockOnly(false);setSearch('');setSortOrder('recommended');}}
+         >
+          <X size={13}/>
+          <span>Clear</span>
+         </button>
         )}
+       </div>
+      </div>
+
+      <div className="sf-collection-container sf-collection-body">
+       {loading&&collectionSorted.length===0?(
+        renderSkeletonGrid(8)
+       ):collectionSorted.length===0?(
+        <div className="sf-state-box">
+         <h2>{collectionKey==='featured-products'?'No featured products yet':'No matching products'}</h2>
+         <p>{collectionKey==='featured-products'?'This shop has not highlighted any products yet. Browse all products instead.':'Try clearing a filter or searching another keyword.'}</p>
+         <button type="button" className="sf-btn sf-btn-primary" onClick={()=>{setSearch('');setFilter('All products');setPriceBand('all');setInStockOnly(false);setSortOrder('recommended');navigateBuyerPage('collection/all-products')}}>Reset &amp; browse all</button>
+        </div>
+       ):(
+        <>
+         <div className="sf-collection-grid">{collectionSorted.map((p,idx)=>renderCollectionCard(p,idx<8))}</div>
+         {catalogueHasMore&&collectionKey!=='featured-products'&&(
+          <div className="sf-load-more" ref={catalogueSentinelRef} aria-live="polite">
+           <button type="button" className="sf-btn sf-btn-secondary" disabled={loadingMore} onClick={()=>void loadMoreProducts()}>
+            {loadingMore?'Loading more products…':`Load more products (${collectionSorted.length} of ${totalCollectionCount.toLocaleString('en-KE')})`}
+           </button>
+          </div>
+         )}
+        </>
+       )}
+      </div>
+
+      <div className="sf-collection-floating-bar" role="region" aria-label="Sort and filter products">
+       <button type="button" onClick={()=>setCollectionSheet('sort')}>
+        <span>Sort by</span>
+        <ArrowUpDown size={15}/>
+       </button>
+       <span className="sf-collection-floating-sep" aria-hidden="true"/>
+       <button type="button" onClick={()=>setCollectionSheet('filter')}>
+        <span>Filter{(filter!=='All products'||priceBand!=='all'||inStockOnly)?` (${(filter!=='All products'?1:0)+(priceBand!=='all'?1:0)+(inStockOnly?1:0)})`:''}</span>
+        <SlidersHorizontal size={15}/>
+       </button>
+      </div>
+
+      {collectionSheet&&(
+       <>
+        <button type="button" className="sf-scrim" aria-label="Close options" onClick={()=>setCollectionSheet(null)}/>
+        <section className="sf-collection-sheet" role="dialog" aria-modal="true" aria-label={collectionSheet==='sort'?'Sort products':'Filter products'}>
+         <div className="sf-collection-sheet-head">
+          <strong>{collectionSheet==='sort'?'Sort products':'Filter products'}</strong>
+          <button type="button" className="sf-icon-btn" aria-label="Close" onClick={()=>setCollectionSheet(null)}><X size={16}/></button>
+         </div>
+         {collectionSheet==='sort'?(
+          <div className="sf-collection-sheet-list">
+           {[['recommended','Recommended'],['price-low','Price: Low to High'],['price-high','Price: High to Low'],['rating','Top Rated'],['name','Name: A to Z']].map(([val,label])=>(
+            <button
+             type="button"
+             key={val}
+             className={'sf-collection-sheet-option'+(sortOrder===val?' is-active':'')}
+             onClick={()=>{setSortOrder(val);setCollectionSheet(null);}}
+            >
+             <span>{label}</span>
+             {sortOrder===val&&<Check size={16}/>}
+            </button>
+           ))}
+          </div>
+         ):(
+          <div className="sf-collection-sheet-filters">
+           <label className="sf-collection-toggle-row">
+            <span>In stock only</span>
+            <input type="checkbox" checked={inStockOnly} onChange={e=>setInStockOnly(e.target.checked)}/>
+           </label>
+           <div className="sf-collection-filter-group">
+            <span>Price range</span>
+            <div className="sf-collection-price-grid">
+             {[['all','All prices'],['under-1000','Under 1,000'],['1000-5000','1,000 – 5,000'],['5000-15000','5,000 – 15,000'],['15000-plus','15,000+']].map(([val,label])=>(
+              <button
+               type="button"
+               key={val}
+               className={'sf-filter-chip'+(priceBand===val?' is-active':'')}
+               onClick={()=>setPriceBand(val as any)}
+              >
+               {label}
+              </button>
+             ))}
+            </div>
+           </div>
+           <label className="sf-collection-filter-group">
+            <span>Category</span>
+            <select className="sf-select" style={{maxWidth:'none',width:'100%'}} value={filter} onChange={e=>setFilter(e.target.value)}>
+             <option value="All products">All categories</option>
+             {storefrontCategories.map(category=>(
+              <optgroup key={category.name} label={category.name}>
+               <option value={category.name}>{category.name}</option>
+               {category.subcategories.map(child=><option key={child} value={child}>{child}</option>)}
+              </optgroup>
+             ))}
+            </select>
+           </label>
+           <div className="sf-collection-sheet-actions">
+            <button type="button" className="sf-btn sf-btn-secondary" onClick={()=>{setFilter('All products');setPriceBand('all');setInStockOnly(false);}}>Reset</button>
+            <button type="button" className="sf-btn sf-btn-accent" onClick={()=>setCollectionSheet(null)}>Show {collectionSorted.length} products</button>
+           </div>
+          </div>
+         )}
+        </section>
        </>
       )}
      </div>
-     {totalCartUnits>0&&(
-      <div className="sf-mobile-cartbar">
-       <div className="sf-mobile-cartbar-meta"><strong>{totalCartUnits} item{totalCartUnits===1?'':'s'}</strong><small>KES {total.toLocaleString('en-KE')}</small></div>
-       <button type="button" className="sf-btn sf-btn-accent" style={{minHeight:36,padding:'0 14px',fontSize:13}} onClick={()=>navigateBuyerPage('cart')}>Go to cart <ArrowRight size={15}/></button>
-      </div>
-     )}
      {renderFooter()}
     </>
    ):buyerPage==='product-detail'?(
