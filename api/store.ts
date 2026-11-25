@@ -556,7 +556,11 @@ export default async function handler(req:any,res:any){
    return send(res,200,{ok:true,found:jobs.length,processed,failed,inventoryChecked,inventoryReleased,inventoryHeld});
   }
   const me=await seller(sql,req);
-  if(!me)return send(res,401,{error:'Sign in to manage your shop.'});
+  // Buyer storefront chat and verified-review routes enforce their own
+  // buyer-session or scoped order-token checks in their handlers. Do not
+  // reject them at the seller-workspace authentication gate.
+  const buyerAccessibleActions=['customer-chat-threads','customer-chat','chat-attachment','product-reviews'];
+  if(!me&&!buyerAccessibleActions.includes(action))return send(res,401,{error:'Sign in to manage your shop.'});
   if(req.method==='POST'&&action==='products-test-seed'){
    if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission to generate test products.'});
    const categories=[
