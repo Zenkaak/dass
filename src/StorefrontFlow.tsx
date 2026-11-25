@@ -1087,10 +1087,12 @@ export function StorefrontFlow({
               : 'Safaricom has processed the request. Verifying the M-PESA receipt…',
           );
         } else if (attempts >= 20) {
-          finished = true;
+          // Do not stop status polling after two minutes: a delayed provider
+          // callback or reconciliation can still settle this payment. Keep the
+          // buyer informed and continue checking while this page is active.
           setPaymentProviderResponded(false);
           setPaymentPollMessage(
-            `We have not received a final result from ${providerLabel} yet. Leave this page and check the order again shortly; do not submit another payment until its status is updated.`,
+            `This payment is taking longer than expected. We are still checking with ${providerLabel}; do not submit another payment until its status is updated.`,
           );
         } else {
           setPaymentPollMessage(data.message || `Waiting for ${providerLabel} payment confirmation…`);
