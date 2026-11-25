@@ -706,7 +706,7 @@ export default async function handler(req:any,res:any){
    const cfg=configs[0]||{},key=env('DASNET_CREDENTIALS_ENCRYPTION_KEY');
    const method=String(cfg.default_payout_method||cfg.payout_method||'till')==='paybill'?'paybill':'till';let payment:any=null;
    if(requestedMethod==='paystack'||requestedMethod==='card'){
-    if(String(me?.slug||'').toLowerCase()!=='kingsley'){
+    if(slug!=='kingsley'){
      const kyc=await sql`SELECT status,phone_verified_at FROM public.tenant_card_kyc WHERE tenant_id=${tenantId} LIMIT 1`;
      if(kyc[0]?.status!=='approved'||!kyc[0]?.phone_verified_at)return send(res,403,{error:'This shop has not completed card KYC. Choose M-PESA instead.'});
     }
