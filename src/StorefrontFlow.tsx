@@ -219,6 +219,41 @@ const accountSectionCopy: Record<string, { title: string; description: string }>
   'public-profile': { title: 'My profile', description: 'Your buyer profile details.' },
 };
 
+declare global {
+  interface Window {
+    PaystackPop?: new () => {
+      resumeTransaction: (
+        accessCode: string,
+        callbacks?: {
+          onSuccess?: (transaction: { reference?: string; status?: string }) => void;
+          onCancel?: () => void;
+          onError?: (error: { message?: string }) => void;
+          onLoad?: () => void;
+        },
+      ) => unknown;
+    };
+    __dasmarketPaystackInlineLoading?: Promise<void>;
+  }
+}
+
+async function loadPaystackInline() {
+  if (window.PaystackPop) return;
+  if (!window.__dasmarketPaystackInlineLoading) {
+    window.__dasmarketPaystackInlineLoading = new Promise<void>((resolve, reject) => {
+      const existing = document.querySelector<HTMLScriptElement>('script[data-paystack-inline="v2"]');
+      const script = existing || document.createElement('script');
+      script.src = 'https://js.paystack.co/v2/inline.js';
+      script.async = true;
+      script.dataset.paystackInline = 'v2';
+      script.onload = () => window.PaystackPop ? resolve() : reject(new Error('Paystack secure checkout could not be loaded.'));
+      script.onerror = () => reject(new Error('Paystack secure checkout could not be loaded. Check your connection and try again.'));
+      if (!existing) document.head.appendChild(script);
+    });
+  }
+  await window.__dasmarketPaystackInlineLoading;
+  if (!window.PaystackPop) throw new Error('Paystack secure checkout is unavailable in this browser.');
+}
+
 function formatKes(amount: number) {
   return `KES ${Math.max(0, Math.round(amount)).toLocaleString('en-KE')}`;
 }
@@ -1036,10 +1071,8 @@ export function StorefrontFlow({
           data.error || 'We could not create your order or start payment. Please review your details and try again.',
         );
       }
-      if (paymentMethod === 'card') {
-        if (!data.authorizationUrl) throw new Error('Paystack did not return a secure checkout URL. Contact the shop before retrying.');
-        window.location.assign(data.authorizationUrl);
-        return;
+      if (paymentMethod === 'card' && !data.accessCode) {
+        throw new Error('Paystack did not return a secure in-page checkout token. Your order has not been sent for card entry; contact the shop before retrying.');
       }
       const createdAt = new Date().toISOString();
       const order: BuyerOrder = {
@@ -1071,6 +1104,32 @@ export function StorefrontFlow({
       setActiveOrderNumber(order.orderNumber);
       checkoutIdempotency.current = null;
       onCartChange({});
+      if (paymentMethod === 'card') {
+        setPaymentPollMessage('Your order is ready. Complete the secure card form to finish payment.');
+        try {
+          await loadPaystackInline();
+          const popup = new window.PaystackPop!();
+          popup.resumeTransaction(String(data.accessCode), {
+            onSuccess: () => {
+              setPaymentPollMessage('Paystack received your payment response. Verifying it securely…');
+              onNavigate('checkout/processing');
+            },
+            onCancel: () => {
+              setPaymentPollMessage('Card payment was cancelled. Your order is saved and will remain unpaid until you complete payment.');
+              onNavigate('orders');
+            },
+            onError: (error) => {
+              setCheckoutError(error?.message || 'Paystack could not open the secure card form. Your order is saved and unpaid.');
+              onNavigate('orders');
+            },
+          });
+        } catch (error) {
+          setCheckoutError(error instanceof Error ? error.message : 'Could not open Paystack secure checkout.');
+          setPaymentPollMessage('Your order is saved and unpaid. You can return to it and retry card payment.');
+          onNavigate('orders');
+        }
+        return;
+      }
       if (isCash) {
         setPaymentPollMessage(
           deliveryMethod === 'pickup'
@@ -2085,7 +2144,7 @@ export function StorefrontFlow({
                 <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--sf-muted)' }}>
                   {paymentMethod === 'delivery'
                     ? 'Cash due upon ' + (deliveryMethod === 'pickup' ? 'collection.' : 'delivery.')
-                    : paymentMethod === 'card' ? 'You will be redirected to Paystack’s secure card checkout.' : `Prompt to ${paymentPhone || customerPhone}`}
+                    : paymentMethod === 'card' ? 'Paystack’s secure card form will open over this order page. Your card details are entered directly with Paystack.' : `Prompt to ${paymentPhone || customerPhone}`}
                 </p>
               </div>
             </div>
@@ -2182,7 +2241,7 @@ export function StorefrontFlow({
               : orderConfirmed
               ? paymentMethod === 'delivery'
                 ? 'Place cash order'
-                : paymentMethod === 'card' ? 'Continue to card payment' : 'Pay with M-PESA'
+                : paymentMethod === 'card' ? 'Open secure card form' : 'Pay with M-PESA'
               : 'Confirm order'}{' '}
             <ArrowRight size={17} />
           </button>
