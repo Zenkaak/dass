@@ -421,8 +421,26 @@
   border-color: var(--sf-line-strong);
 }
 
-.sf-search-form svg {
+.sf-search-submit {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
   color: var(--sf-ink-2);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.sf-search-submit:hover {
+  background: var(--sf-stone-2);
+  color: var(--sf-ink);
+}
+
+.sf-search-form svg {
+  color: inherit;
   flex-shrink: 0;
 }
 
@@ -435,6 +453,11 @@
   font-size: 14px;
   color: var(--sf-ink);
   outline: none;
+}
+
+.sf-search-form input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .sf-search-form input::placeholder {
@@ -451,6 +474,7 @@
   display: grid;
   place-items: center;
   flex-shrink: 0;
+  cursor: pointer;
 }
 
 .sf-search-clear:hover {
