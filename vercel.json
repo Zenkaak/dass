@@ -25,6 +25,10 @@
     {
       "path": "/api/email-cron",
       "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/payment-email-cron",
+      "schedule": "*/10 * * * *"
     }
   ],
   "headers": [
