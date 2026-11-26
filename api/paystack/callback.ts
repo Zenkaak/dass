@@ -52,6 +52,71 @@ export default async function handler(req:any,res:any){
   const verified=Boolean(response.ok&&result?.status&&tx?.status==='success'&&referenceMatched&&amountMatched&&currencyMatched);
   const isSubscription=['seller_subscription','seller_lifetime_license'].includes(String(p.provider_result?.source||''));
 
+  let settledOnCallback=verified&&String(p.status)==='succeeded';
+  if(verified&&!settledOnCallback){
+   if(isSubscription){
+    const source=String(p.provider_result?.source||'');
+    const planId=String(p.provider_result?.planId||''),intervalDays=Number(p.provider_result?.intervalDays),lifetime=source==='seller_lifetime_license';
+    if(/^[0-9a-f-]{36}$/i.test(planId)&&(lifetime?intervalDays===36500:[30,90,180,365].includes(intervalDays))){
+     const settlement=await sql`WITH payment_mark AS (
+      UPDATE public.payments SET status='succeeded',provider_receipt=${String(tx.id||reference)},verified_at=now(),provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paystack:{reference,channel:tx.channel||null,paidAt:tx.paid_at||null},callbackSettlement:true})}::jsonb,updated_at=now()
+      WHERE id=${p.id} AND tenant_id=${p.tenant_id} AND status IN ('initiated','pending') RETURNING id,tenant_id
+     ), current_subscription AS (
+      SELECT s.id FROM public.subscriptions s WHERE s.tenant_id=${p.tenant_id}
+        AND EXISTS(SELECT 1 FROM payment_mark) ORDER BY s.created_at DESC LIMIT 1
+     ), updated_subscription AS (
+      UPDATE public.subscriptions s SET plan_id=${planId},status='active',trial_ends_at=NULL,current_period_start=now(),
+        current_period_end=CASE WHEN ${lifetime} THEN '9999-12-31 23:59:59+00'::timestamptz ELSE now()+make_interval(days=>${intervalDays}) END,
+        provider_payment_id=pm.id,updated_at=now()
+      FROM current_subscription cs,payment_mark pm WHERE s.id=cs.id RETURNING s.id
+     ), inserted_subscription AS (
+      INSERT INTO public.subscriptions(tenant_id,plan_id,status,trial_ends_at,current_period_start,current_period_end,provider_payment_id)
+      SELECT pm.tenant_id,${planId},'active',NULL,now(),
+        CASE WHEN ${lifetime} THEN '9999-12-31 23:59:59+00'::timestamptz ELSE now()+make_interval(days=>${intervalDays}) END,pm.id
+      FROM payment_mark pm WHERE NOT EXISTS(SELECT 1 FROM current_subscription) RETURNING id
+     ), tenant_activation AS (
+      UPDATE public.tenants SET status='active',updated_at=now()
+      WHERE id=${p.tenant_id} AND status IN ('trial','past_due')
+        AND EXISTS(SELECT 1 FROM payment_mark) RETURNING id
+     )
+     SELECT (SELECT COUNT(*) FROM payment_mark)::int AS payment_count`;
+     if(Number(settlement[0]?.payment_count||0)>0){
+      settledOnCallback=true;
+     }else{
+      const recheck=await sql`SELECT status FROM public.payments WHERE id=${p.id} LIMIT 1`;
+      if(String(recheck[0]?.status||'')==='succeeded')settledOnCallback=true;
+     }
+    }
+   }else if(p.order_id){
+    await sql`SELECT public.consume_inventory_reservations(${p.id})`;
+    const settlement=await sql`WITH wanted AS (
+      SELECT product_id,SUM(quantity)::integer AS quantity FROM public.order_items WHERE tenant_id=${p.tenant_id} AND order_id=${p.order_id} AND product_id IS NOT NULL GROUP BY product_id
+     ), payment_mark AS (
+      UPDATE public.payments SET status='succeeded',provider_receipt=${String(tx.id||reference)},verified_at=now(),provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paystack:{reference,channel:tx.channel||null,paidAt:tx.paid_at||null},callbackSettlement:true})}::jsonb,updated_at=now()
+      WHERE id=${p.id} AND tenant_id=${p.tenant_id} AND status IN ('initiated','pending') RETURNING id,tenant_id,order_id
+     ), stock_update AS (
+      UPDATE public.products pr SET stock_quantity=CASE WHEN pr.stock_quantity IS NULL THEN NULL ELSE pr.stock_quantity-w.quantity END,updated_at=now()
+      FROM wanted w,payment_mark pm WHERE pr.id=w.product_id AND pr.tenant_id=${p.tenant_id} AND (pr.stock_quantity IS NULL OR pr.stock_quantity>=w.quantity)
+      AND NOT EXISTS(SELECT 1 FROM public.inventory_reservations ir WHERE ir.payment_id=pm.id) RETURNING pr.id
+     ), inventory_finalize AS (
+      UPDATE public.payments p2 SET provider_result=p2.provider_result||jsonb_build_object(
+       'inventoryApplied',(EXISTS(SELECT 1 FROM public.inventory_reservations ir WHERE ir.payment_id=p2.id AND ir.status='consumed') OR ((SELECT COUNT(*) FROM stock_update)=(SELECT COUNT(*) FROM wanted) AND NOT EXISTS(SELECT 1 FROM public.inventory_reservations ir WHERE ir.payment_id=p2.id))),
+       'inventoryIssue',CASE WHEN EXISTS(SELECT 1 FROM public.inventory_reservations ir WHERE ir.payment_id=p2.id) AND NOT EXISTS(SELECT 1 FROM public.inventory_reservations ir WHERE ir.payment_id=p2.id AND ir.status='consumed') THEN 'Payment confirmed after stock reservation was released. Seller review required.' WHEN (SELECT COUNT(*) FROM stock_update)=(SELECT COUNT(*) FROM wanted) THEN NULL ELSE 'Payment confirmed, but stock changed during checkout. Seller review required.' END
+      ),updated_at=now() FROM payment_mark pm WHERE p2.id=pm.id RETURNING p2.id,p2.tenant_id,p2.order_id
+     ), queued AS (
+      INSERT INTO public.payment_reconciliation_jobs(payment_id,tenant_id,order_id,status)
+      SELECT id,tenant_id,order_id,'pending' FROM inventory_finalize ON CONFLICT(payment_id) DO NOTHING RETURNING id
+     ) SELECT (SELECT COUNT(*) FROM payment_mark)::int AS payment_count,(SELECT COUNT(*) FROM wanted)::int AS wanted_count,(SELECT COUNT(*) FROM stock_update)::int AS stock_count`;
+    if(Number(settlement[0]?.payment_count||0)>0){
+     settledOnCallback=true;
+     if(Number(settlement[0]?.stock_count||0)!==Number(settlement[0]?.wanted_count||0))console.error('Callback-verified Paystack payment requires inventory review',{paymentId:p.id,orderId:p.order_id});
+    }else{
+     const recheck=await sql`SELECT status FROM public.payments WHERE id=${p.id} LIMIT 1`;
+     if(String(recheck[0]?.status||'')==='succeeded')settledOnCallback=true;
+    }
+   }
+  }
+
   if(!verified){
    const failureReason=!response.ok
     ?(response.status===401||response.status===403?'verify_unauthorized':'verify_http_error')
@@ -111,7 +176,7 @@ export default async function handler(req:any,res:any){
   const verifiedCustomHosts=[...verifiedStoreHosts,...verifiedAdminHosts];
   const candidateOrigin=p.provider_result?.returnOrigin||sanitizeRequestHostOrigin(req);
   const returnTarget=resolveSafeReturnOrigin(candidateOrigin,isSubscription?'dasmarket.co.ke':host,verifiedCustomHosts);
-  const paymentParam=verified?'processing':analysis.terminalStatus==='cancelled'?'cancelled':analysis.isTerminal?'failed':'pending';
+  const paymentParam=verified?(settledOnCallback?'succeeded':'processing'):analysis.terminalStatus==='cancelled'?'cancelled':analysis.isTerminal?'failed':'pending';
   const reasonParam=(!verified&&(analysis.isTerminal||analysis.reasonCode==='provider_unauthorized'))?'&reason='+encodeURIComponent(analysis.reasonCode):'';
   const orderPathPrefix=returnTarget.isHostScoped?'':'/'+encodeURIComponent(slug);
   const destination=isSubscription

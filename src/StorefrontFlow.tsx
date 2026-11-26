@@ -113,6 +113,14 @@ function safeHttpsUrl(value: unknown): string | null {
   }
 }
 
+function shouldUsePaystackRedirectCheckout(): boolean {
+  if (typeof window === 'undefined') return false;
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent || '' : '';
+  const isMobileUa = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(ua);
+  const isCoarsePointer = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches;
+  return isMobileUa || (isCoarsePointer && window.innerWidth <= 900);
+}
+
 function describePaystackPopupFailure(popupStatus: PaystackTransactionStatus | null | undefined): string | null {
   if (!popupStatus) return null;
   const errMessages = Array.isArray(popupStatus.errors)
@@ -701,7 +709,14 @@ export function StorefrontFlow({
       const payment = String(params.get('payment') || '').trim().toLowerCase();
       const order = String(params.get('order') || '').trim();
       const reason = String(params.get('reason') || '').trim().toLowerCase();
-      if ((payment === 'processing' || payment === 'pending' || payment === 'failed' || payment === 'cancelled') && order) {
+      if (
+        (payment === 'succeeded' ||
+          payment === 'processing' ||
+          payment === 'pending' ||
+          payment === 'failed' ||
+          payment === 'cancelled') &&
+        order
+      ) {
         return { status: payment, orderNumber: order, reason };
       }
       return null;
@@ -709,6 +724,8 @@ export function StorefrontFlow({
       return null;
     }
   });
+  const paystackCartClearedRef = useRef<string>('');
+  const paystackVerifiedRef = useRef<string>('');
   const [showMpesaSwitchRetry, setShowMpesaSwitchRetry] = useState(false);
   const [newsletterEnabled, setNewsletterEnabled] = useState(false);
   const [isShopFollowed, setIsShopFollowed] = useState(false);
@@ -1222,6 +1239,42 @@ export function StorefrontFlow({
     if (status) lastPaymentStatus.current = status;
   }, [activeOrder?.paymentStatus]);
 
+  useEffect(() => {
+    if (!paystackReturnBanner?.orderNumber) return;
+    const matchedOrder = orders.find((entry) => entry.orderNumber === paystackReturnBanner.orderNumber);
+    const isConfirmed =
+      paystackReturnBanner.status === 'succeeded' ||
+      String(matchedOrder?.paymentStatus || '').toLowerCase() === 'succeeded';
+    if (isConfirmed) {
+      checkoutIdempotency.current = null;
+      clearCheckoutDraft(getCheckoutScopeKey(slug));
+      setCheckoutReturnToSummary(false);
+      if (
+        !cartLoading &&
+        Object.keys(cart).length > 0 &&
+        paystackCartClearedRef.current !== paystackReturnBanner.orderNumber
+      ) {
+        paystackCartClearedRef.current = paystackReturnBanner.orderNumber;
+        onCartChange({});
+      }
+      return;
+    }
+    if (
+      (paystackReturnBanner.status === 'processing' || paystackReturnBanner.status === 'pending') &&
+      matchedOrder?.orderId &&
+      paystackVerifiedRef.current !== matchedOrder.orderId
+    ) {
+      paystackVerifiedRef.current = matchedOrder.orderId;
+      void verifyCardAttemptAfterClose(matchedOrder.orderId).then((res) => {
+        if (res.status === 'succeeded') {
+          setPaystackReturnBanner((prev) => (prev ? { ...prev, status: 'succeeded' } : prev));
+        } else if (res.status === 'failed' || res.status === 'cancelled') {
+          setPaystackReturnBanner((prev) => (prev ? { ...prev, status: res.status || 'failed' } : prev));
+        }
+      });
+    }
+  }, [paystackReturnBanner, orders, slug, cartLoading, cart]);
+
   async function verifyCardAttemptAfterClose(orderId: string): Promise<{
     handled: boolean;
     status?: string;
@@ -1283,13 +1336,14 @@ export function StorefrontFlow({
     }
   }
 
-  async function retryActiveOrderWithCard() {
+  async function retryActiveOrderWithCard(options?: { forceRedirect?: boolean }) {
     if (!activeOrder?.orderId || retryingOrder) return;
     const targetOrderId = activeOrder.orderId;
     setRetryingOrder(true);
     setRetryMessage('');
     setCardFallbackUrl(null);
     let inlinePopupOpened = false;
+    let redirectingToPaystack = false;
     try {
       const r = await fetch('/api/payments?action=customer-payment-retry', {
         method: 'POST',
@@ -1302,6 +1356,12 @@ export function StorefrontFlow({
         throw Error('Your buyer session expired (401 Unauthorized). Please sign in again to retry card payment.');
       }
       if (!r.ok) throw Error(d.error || 'Could not start card payment.');
+      const hostedUrl = safeHttpsUrl(d.authorizationUrl);
+      if ((options?.forceRedirect || shouldUsePaystackRedirectCheckout()) && hostedUrl) {
+        redirectingToPaystack = true;
+        window.location.assign(hostedUrl);
+        return;
+      }
       if (d.accessCode) {
         let settled = false;
         const loadGuard = window.setTimeout(() => {
@@ -1333,9 +1393,8 @@ export function StorefrontFlow({
             settled = true;
             window.clearTimeout(loadGuard);
             setRetryingOrder(false);
-            const fallback = safeHttpsUrl(popupStatus?.checkoutUrl) || safeHttpsUrl(d.authorizationUrl);
+            const fallback = safeHttpsUrl(popupStatus?.checkoutUrl) || hostedUrl;
             const inlineDetail = describePaystackPopupFailure(popupStatus);
-            setCardFallbackUrl(fallback);
             setRetryMessage(inlineDetail || 'Checking card payment status…');
             void (async () => {
               const verified = await verifyCardAttemptAfterClose(targetOrderId);
@@ -1344,6 +1403,11 @@ export function StorefrontFlow({
                 setRetryMessage('');
                 onNavigate('checkout/complete');
                 return;
+              }
+              if (verified.status === 'failed' || verified.status === 'cancelled' || verified.status === 'reversed') {
+                setCardFallbackUrl(null);
+              } else {
+                setCardFallbackUrl(fallback);
               }
               setRetryMessage(
                 verified.message ||
@@ -1356,9 +1420,8 @@ export function StorefrontFlow({
             settled = true;
             window.clearTimeout(loadGuard);
             setRetryingOrder(false);
-            const fallback = safeHttpsUrl(popupStatus?.checkoutUrl) || safeHttpsUrl(d.authorizationUrl);
+            const fallback = safeHttpsUrl(popupStatus?.checkoutUrl) || hostedUrl;
             const inlineDetail = describePaystackPopupFailure(popupStatus);
-            setCardFallbackUrl(fallback);
             setRetryMessage(inlineDetail || errMsg || 'Checking card payment status…');
             void (async () => {
               const verified = await verifyCardAttemptAfterClose(targetOrderId);
@@ -1367,6 +1430,11 @@ export function StorefrontFlow({
                 setRetryMessage('');
                 onNavigate('checkout/complete');
                 return;
+              }
+              if (verified.status === 'failed' || verified.status === 'cancelled' || verified.status === 'reversed') {
+                setCardFallbackUrl(null);
+              } else {
+                setCardFallbackUrl(fallback);
               }
               setRetryMessage(
                 verified.message ||
@@ -1380,9 +1448,8 @@ export function StorefrontFlow({
         if (inlinePopupOpened) return;
         window.clearTimeout(loadGuard);
       }
-      const fallbackUrl = safeHttpsUrl(d.authorizationUrl);
-      if (fallbackUrl) {
-        setCardFallbackUrl(fallbackUrl);
+      if (hostedUrl) {
+        setCardFallbackUrl(hostedUrl);
         setRetryMessage('Could not open card fields inline in this browser. Open Paystack below to complete card payment.');
         return;
       }
@@ -1390,7 +1457,7 @@ export function StorefrontFlow({
     } catch (e: any) {
       setRetryMessage(e.message || 'Could not start card payment.');
     } finally {
-      if (!inlinePopupOpened) setRetryingOrder(false);
+      if (!inlinePopupOpened && !redirectingToPaystack) setRetryingOrder(false);
     }
   }
 
@@ -1492,7 +1559,7 @@ export function StorefrontFlow({
     }
   }
 
-  async function placeOrder() {
+  async function placeOrder(options?: { forceRedirect?: boolean }) {
     if (!lines.length || submitting) return;
     const isCash = paymentMethod === 'delivery';
     if (paymentMethod === 'mpesa' && !/^\+?254[17]\d{8}$|^0[17]\d{8}$/.test(paymentPhone.trim().replace(/[\s().-]/g, ''))) {
@@ -1515,6 +1582,7 @@ export function StorefrontFlow({
     setCheckoutError('');
     setCardFallbackUrl(null);
     let inlinePopupOpened = false;
+    let redirectingToPaystack = false;
     const fingerprint = JSON.stringify({
       slug,
       items: lines
@@ -1611,6 +1679,12 @@ export function StorefrontFlow({
           onNavigate('checkout/complete');
           return;
         }
+        const hostedUrl = safeHttpsUrl(data.authorizationUrl);
+        if ((options?.forceRedirect || shouldUsePaystackRedirectCheckout()) && hostedUrl) {
+          redirectingToPaystack = true;
+          window.location.assign(hostedUrl);
+          return;
+        }
         if (data.accessCode) {
           let settled = false;
           const loadGuard = window.setTimeout(() => {
@@ -1639,9 +1713,8 @@ export function StorefrontFlow({
               settled = true;
               window.clearTimeout(loadGuard);
               setSubmitting(false);
-              const fallback = safeHttpsUrl(popupStatus?.checkoutUrl) || safeHttpsUrl(data.authorizationUrl);
+              const fallback = safeHttpsUrl(popupStatus?.checkoutUrl) || hostedUrl;
               const inlineDetail = describePaystackPopupFailure(popupStatus);
-              setCardFallbackUrl(fallback);
               setCheckoutError(inlineDetail || 'Checking card payment status…');
               void (async () => {
                 const verified = await verifyCardAttemptAfterClose(order.orderId!);
@@ -1656,10 +1729,15 @@ export function StorefrontFlow({
                   onNavigate('checkout/complete');
                   return;
                 }
+                if (verified.status === 'failed' || verified.status === 'cancelled' || verified.status === 'reversed') {
+                  setCardFallbackUrl(null);
+                } else {
+                  setCardFallbackUrl(fallback);
+                }
                 setCheckoutError(
                   verified.message ||
                     inlineDetail ||
-                    'Card form closed before payment was completed. Click Pay with card to reopen the card fields, or finish later from My orders.',
+                    'Card form closed before payment was completed. Click Confirm & pay to retry, or finish later from My orders.',
                 );
               })();
             },
@@ -1667,9 +1745,8 @@ export function StorefrontFlow({
               settled = true;
               window.clearTimeout(loadGuard);
               setSubmitting(false);
-              const fallback = safeHttpsUrl(popupStatus?.checkoutUrl) || safeHttpsUrl(data.authorizationUrl);
+              const fallback = safeHttpsUrl(popupStatus?.checkoutUrl) || hostedUrl;
               const inlineDetail = describePaystackPopupFailure(popupStatus);
-              setCardFallbackUrl(fallback);
               setCheckoutError(inlineDetail || errMsg || 'Checking card payment status…');
               void (async () => {
                 const verified = await verifyCardAttemptAfterClose(order.orderId!);
@@ -1684,6 +1761,11 @@ export function StorefrontFlow({
                   onNavigate('checkout/complete');
                   return;
                 }
+                if (verified.status === 'failed' || verified.status === 'cancelled' || verified.status === 'reversed') {
+                  setCardFallbackUrl(null);
+                } else {
+                  setCardFallbackUrl(fallback);
+                }
                 setCheckoutError(
                   verified.message ||
                     inlineDetail ||
@@ -1696,9 +1778,8 @@ export function StorefrontFlow({
           if (inlinePopupOpened) return;
           window.clearTimeout(loadGuard);
         }
-        const fallbackUrl = safeHttpsUrl(data.authorizationUrl);
-        if (fallbackUrl) {
-          setCardFallbackUrl(fallbackUrl);
+        if (hostedUrl) {
+          setCardFallbackUrl(hostedUrl);
           setCheckoutError(
             'Could not open card fields inline in this browser. Use the secure Paystack link below to complete payment.',
           );
@@ -1733,7 +1814,7 @@ export function StorefrontFlow({
     } catch (error) {
       setCheckoutError(error instanceof Error ? error.message : 'Checkout failed. Please try again.');
     } finally {
-      if (!inlinePopupOpened) setSubmitting(false);
+      if (!inlinePopupOpened && !redirectingToPaystack) setSubmitting(false);
     }
   }
 
@@ -3185,7 +3266,7 @@ export function StorefrontFlow({
                 type="button"
                 className="sf-btn sf-btn-accent sf-review-desktop-confirm"
                 disabled={!canSubmit}
-                onClick={placeOrder}
+                onClick={() => void placeOrder()}
               >
                 {confirmLabel}
               </button>
@@ -3209,13 +3290,25 @@ export function StorefrontFlow({
               </a>
             </div>
           )}
+          {!cardFallbackUrl && checkoutError && paymentMethod === 'card' && !shouldUsePaystackRedirectCheckout() && (
+            <div style={{ marginTop: 10 }}>
+              <button
+                type="button"
+                className="sf-btn sf-btn-secondary"
+                disabled={!canSubmit}
+                onClick={() => void placeOrder({ forceRedirect: true })}
+              >
+                Pay on Paystack hosted page <ArrowRight size={15} />
+              </button>
+            </div>
+          )}
 
           <div className="sf-checkout-footer-bar sf-checkout-footer-mobile-only">
             <button
               type="button"
               className="sf-btn sf-btn-accent sf-checkout-main-cta"
               disabled={!canSubmit}
-              onClick={placeOrder}
+              onClick={() => void placeOrder()}
             >
               {confirmLabel}
             </button>
@@ -3510,6 +3603,16 @@ export function StorefrontFlow({
                       : 'Resend M-PESA prompt'}
                   </span>
                 </button>
+                {isCardOrder && !cardFallbackUrl && !shouldUsePaystackRedirectCheckout() && (
+                  <button
+                    type="button"
+                    className="sf-btn sf-btn-secondary"
+                    disabled={retryingOrder}
+                    onClick={() => void retryActiveOrderWithCard({ forceRedirect: true })}
+                  >
+                    Pay on Paystack hosted page <ArrowRight size={15} />
+                  </button>
+                )}
                 <button
                   type="button"
                   className="sf-btn sf-btn-secondary"
@@ -3741,15 +3844,23 @@ export function StorefrontFlow({
         />
 
         {paystackReturnBanner && (() => {
-          const isSuccess = paystackReturnBanner.status === 'processing';
-          const isFailure = paystackReturnBanner.status === 'failed' || paystackReturnBanner.status === 'cancelled';
+          const matchedOrder = orders.find((entry) => entry.orderNumber === paystackReturnBanner.orderNumber);
+          const effectiveStatus =
+            String(matchedOrder?.paymentStatus || '').toLowerCase() === 'succeeded'
+              ? 'succeeded'
+              : paystackReturnBanner.status;
+          const isSucceeded = effectiveStatus === 'succeeded';
+          const isSuccess = isSucceeded || effectiveStatus === 'processing';
+          const isFailure = effectiveStatus === 'failed' || effectiveStatus === 'cancelled';
           const reasonCode = paystackReturnBanner.reason;
           const failureTitle =
-            paystackReturnBanner.status === 'cancelled'
+            effectiveStatus === 'cancelled'
               ? `Card payment cancelled for #${paystackReturnBanner.orderNumber}`
-              : paystackReturnBanner.status === 'failed'
+              : effectiveStatus === 'failed'
               ? `Card payment could not be completed for #${paystackReturnBanner.orderNumber}`
-              : isSuccess
+              : isSucceeded
+              ? `Card payment confirmed for #${paystackReturnBanner.orderNumber}`
+              : effectiveStatus === 'processing'
               ? `Card payment submitted for #${paystackReturnBanner.orderNumber}`
               : `Card payment pending for #${paystackReturnBanner.orderNumber}`;
           const failureBody =
@@ -3763,14 +3874,17 @@ export function StorefrontFlow({
               ? 'Your card issuer declined this payment. Try another card or pay with M-PESA.'
               : reasonCode === 'abandoned'
               ? 'The card checkout session was closed before 3-D Secure verification finished. Open order details to retry.'
-              : paystackReturnBanner.status === 'cancelled'
+              : effectiveStatus === 'cancelled'
               ? 'Card checkout was cancelled and no payment was collected. Open order details to retry.'
-              : paystackReturnBanner.status === 'failed'
+              : effectiveStatus === 'failed'
               ? 'The card transaction failed and no payment was collected. Open order details to see details and retry.'
-              : isSuccess
+              : isSucceeded
+              ? matchedOrder?.receipt
+                ? `Paystack verified your card payment · Receipt ${matchedOrder.receipt}.`
+                : 'Paystack verified your card payment and your order is now paid.'
+              : effectiveStatus === 'processing'
               ? 'Paystack verified your card session. Your order status will update to Paid as soon as confirmation finishes.'
               : 'Your card payment has not completed yet. Open order details to resume or check status.';
-          const matchedOrder = orders.find((entry) => entry.orderNumber === paystackReturnBanner.orderNumber);
           return (
             <div
               className={`sf-alert ${isSuccess ? 'success' : isFailure ? 'error' : 'warn'}`}
@@ -4377,7 +4491,7 @@ export function StorefrontFlow({
                         <button
                           type="button"
                           className="sf-btn sf-btn-accent"
-                          onClick={retryActiveOrderWithCard}
+                          onClick={() => void retryActiveOrderWithCard()}
                           disabled={retryingOrder}
                         >
                           {retryingOrder
@@ -4386,6 +4500,16 @@ export function StorefrontFlow({
                             ? 'Enter card details / check payment'
                             : 'Enter card details'}
                         </button>
+                        {!cardFallbackUrl && !shouldUsePaystackRedirectCheckout() && (
+                          <button
+                            type="button"
+                            className="sf-btn sf-btn-secondary"
+                            onClick={() => void retryActiveOrderWithCard({ forceRedirect: true })}
+                            disabled={retryingOrder}
+                          >
+                            Pay on Paystack hosted page <ArrowRight size={15} />
+                          </button>
+                        )}
                         <button
                           type="button"
                           className="sf-btn sf-btn-ghost"
