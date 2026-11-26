@@ -1,41 +1,42 @@
 /* ==========================================================================
-   DASNET Platform Control (Admin Dashboard) — Enterprise SaaS Design System
-   Scoped under .mambu-shell for zero storefront / seller dashboard bleed
+   DASNET Platform Control (Admin Dashboard) — Classic Light Workspace
+   Scoped under .mambu-shell for zero bleed into storefront or seller CSS
    ========================================================================== */
 
 .mambu-shell {
-  --ma-bg: #f8fafc;
+  --ma-bg: #f4f7fb;
   --ma-surface: #ffffff;
-  --ma-surface-2: #f1f5f9;
-  --ma-rail: #0f172a;
-  --ma-rail-hover: #1e293b;
-  --ma-rail-border: rgba(255, 255, 255, 0.08);
-  --ma-border: #e2e8f0;
-  --ma-border-strong: #cbd5e1;
-  --ma-ink: #0f172a;
-  --ma-ink-2: #334155;
-  --ma-muted: #64748b;
-  --ma-accent: #b45309;
-  --ma-accent-hover: #92400e;
-  --ma-accent-bright: #f59e0b;
-  --ma-accent-soft: #fffbeb;
-  --ma-accent-line: #fde68a;
-  --ma-primary: #0f172a;
-  --ma-primary-hover: #1e293b;
+  --ma-surface-2: #edf3fa;
+  --ma-rail: #ffffff;
+  --ma-rail-hover: #edf5ff;
+  --ma-rail-border: #e1e8f0;
+  --ma-border: #dce5ef;
+  --ma-border-strong: #c8d5e5;
+  --ma-ink: #172b45;
+  --ma-ink-2: #344966;
+  --ma-muted: #667b94;
+  --ma-accent: #1266c3;
+  --ma-accent-hover: #0d4cae;
+  --ma-accent-bright: #2587ff;
+  --ma-accent-soft: #edf5ff;
+  --ma-accent-line: #bfd8fa;
+  --ma-primary: #1767d8;
+  --ma-primary-hover: #0d4cae;
+  --ma-navy: #091525;
   --ma-success: #15803d;
-  --ma-success-bg: #f0fdf4;
-  --ma-success-line: #bbf7d0;
-  --ma-warn: #b45309;
-  --ma-warn-bg: #fffbeb;
-  --ma-warn-line: #fde68a;
-  --ma-danger: #b91c1c;
+  --ma-success-bg: #eaf8ef;
+  --ma-success-line: #c6ebd3;
+  --ma-warn: #98600a;
+  --ma-warn-bg: #fff4e5;
+  --ma-warn-line: #f0d7b5;
+  --ma-danger: #b42318;
   --ma-danger-bg: #fef2f2;
   --ma-danger-line: #fecaca;
-  --ma-info: #1d4ed8;
-  --ma-info-bg: #eff6ff;
-  --ma-info-line: #bfdbfe;
-  --ma-font-display: 'Plus Jakarta Sans', 'Manrope', system-ui, sans-serif;
-  --ma-font-body: 'DM Sans', 'Plus Jakarta Sans', system-ui, sans-serif;
+  --ma-info: #1266c3;
+  --ma-info-bg: #edf5ff;
+  --ma-info-line: #bfd8fa;
+  --ma-font-display: 'Manrope', 'Plus Jakarta Sans', system-ui, sans-serif;
+  --ma-font-body: 'DM Sans', system-ui, sans-serif;
   --ma-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
   min-height: 100vh;
@@ -44,7 +45,7 @@
   display: grid;
   grid-template-columns: 256px minmax(0, 1fr);
   font-family: var(--ma-font-body);
-  font-size: 14px;
+  font-size: 13.5px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -63,7 +64,6 @@
   font-family: var(--ma-font-display);
   color: var(--ma-ink);
   letter-spacing: -0.02em;
-  text-wrap: balance;
 }
 
 .mambu-shell :focus-visible {
@@ -86,36 +86,37 @@
   top: 0;
   height: 100vh;
   background: var(--ma-rail);
-  color: #e2e8f0;
+  color: var(--ma-ink-2);
   display: flex;
   flex-direction: column;
   padding: 0 12px 14px;
   overflow-y: auto;
   z-index: 40;
-  border-right: 1px solid #0b1220;
+  border-right: 1px solid var(--ma-rail-border);
+  box-shadow: 2px 0 16px rgba(21, 34, 56, 0.04);
 }
 
 .mambu-brand {
-  height: 58px;
-  margin: 0 -12px 10px;
-  padding: 0 16px;
+  height: 68px;
+  margin: 0 -12px 12px;
+  padding: 0 18px;
   border-bottom: 1px solid var(--ma-rail-border);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 11px;
   text-decoration: none;
-  color: #ffffff;
+  color: var(--ma-ink);
   flex-shrink: 0;
 }
 
 .mambu-brand > span {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: var(--ma-accent-bright);
-  color: #0f172a;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #48b5ff, #1768e8);
+  color: #ffffff;
   font-family: var(--ma-font-display);
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 800;
   display: grid;
   place-items: center;
@@ -129,17 +130,17 @@
 
 .mambu-brand b {
   font-family: var(--ma-font-display);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: #ffffff;
+  color: var(--ma-ink);
 }
 
 .mambu-brand small {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: #94a3b8;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--ma-muted);
 }
 
 .mambu-nav-group {
@@ -147,32 +148,33 @@
 }
 
 .mambu-side-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: #94a3b8;
-  padding: 2px 10px 5px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8494a8;
+  padding: 4px 10px 6px;
 }
 
 .mambu-sidebar nav {
   display: grid;
-  gap: 1px;
+  gap: 3px;
 }
 
 .mambu-sidebar nav button {
   width: 100%;
-  min-height: 34px;
-  padding: 0 10px;
+  min-height: 37px;
+  padding: 0 11px;
   border: 0;
-  border-radius: 7px;
+  border-radius: 8px;
   background: transparent;
-  color: #cbd5e1;
+  color: #53677f;
   font-family: var(--ma-font-body);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
   text-align: left;
   cursor: pointer;
   white-space: nowrap;
@@ -180,29 +182,29 @@
 }
 
 .mambu-sidebar nav button svg {
-  color: #94a3b8;
+  color: #71839a;
   flex-shrink: 0;
   transition: color 0.15s ease;
 }
 
 .mambu-sidebar nav button:hover {
   background: var(--ma-rail-hover);
-  color: #ffffff;
+  color: var(--ma-accent);
 }
 
 .mambu-sidebar nav button:hover svg {
-  color: #ffffff;
+  color: var(--ma-accent);
 }
 
 .mambu-sidebar nav button.active {
-  background: var(--ma-rail-hover);
+  background: linear-gradient(100deg, #1767d8, #0d4cae);
   color: #ffffff;
   font-weight: 600;
-  box-shadow: none;
+  box-shadow: 0 4px 12px rgba(23, 103, 216, 0.22);
 }
 
 .mambu-sidebar nav button.active svg {
-  color: var(--ma-accent-bright);
+  color: #ffffff;
 }
 
 .mambu-sidebar nav button span {
@@ -216,16 +218,21 @@
   font-style: normal;
   font-family: var(--ma-font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   min-width: 20px;
   height: 19px;
   padding: 0 6px;
-  border-radius: 6px;
-  background: var(--ma-accent-bright);
-  color: #0f172a;
+  border-radius: 999px;
+  background: #e64c5c;
+  color: #ffffff;
   display: inline-grid;
   place-items: center;
+}
+
+.mambu-sidebar nav button.active em {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
 }
 
 .mambu-sidebar-bottom {
@@ -240,15 +247,15 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--ma-rail-border);
-  color: #cbd5e1;
+  padding: 10px 11px;
+  border-radius: 9px;
+  background: #f4f8ff;
+  border: 1px solid var(--ma-border);
+  color: var(--ma-ink-2);
 }
 
 .mambu-secure svg {
-  color: var(--ma-accent-bright);
+  color: var(--ma-accent);
   flex-shrink: 0;
 }
 
@@ -259,25 +266,25 @@
 }
 
 .mambu-secure b {
-  font-size: 12px;
-  font-weight: 600;
-  color: #ffffff;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ma-ink);
 }
 
 .mambu-secure small {
-  font-size: 11px;
-  color: #94a3b8;
+  font-size: 10.5px;
+  color: var(--ma-muted);
 }
 
 .mambu-sidebar-bottom > a {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 38px;
+  min-height: 36px;
   padding: 0 10px;
   border-radius: 8px;
-  color: #cbd5e1;
-  font-size: 13px;
+  color: #53677f;
+  font-size: 12.5px;
   font-weight: 500;
   text-decoration: none;
   transition: background-color 0.15s ease, color 0.15s ease;
@@ -285,13 +292,13 @@
 
 .mambu-sidebar-bottom > a:hover {
   background: var(--ma-rail-hover);
-  color: #ffffff;
+  color: var(--ma-accent);
 }
 
 .mambu-sidebar-bottom > small {
   font-family: var(--ma-font-mono);
-  font-size: 11px;
-  color: #64748b;
+  font-size: 10px;
+  color: #8494a8;
   padding: 0 10px;
 }
 
@@ -303,10 +310,11 @@
 }
 
 .mambu-topbar {
-  height: 64px;
+  height: 68px;
   background: var(--ma-surface);
-  border-bottom: 1px solid var(--ma-border);
-  padding: 0 28px;
+  border-bottom: 1px solid var(--ma-rail-border);
+  box-shadow: 0 2px 8px rgba(23, 54, 91, 0.03);
+  padding: 0 26px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -323,18 +331,24 @@
   min-width: 0;
 }
 
-.mambu-topbar-crumb {
-  display: block;
-  font-size: 11.5px;
-  color: var(--ma-muted);
-  white-space: nowrap;
+.mambu-topbar-left > div {
+  min-width: 0;
 }
 
 .mambu-topbar h1 {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
-  margin: 0;
+  margin: 0 0 2px;
   line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mambu-topbar p {
+  margin: 0;
+  font-size: 11px;
+  color: var(--ma-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -342,11 +356,11 @@
 
 .mambu-mobile-menu {
   display: none;
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 8px;
   border: 1px solid var(--ma-border);
-  background: var(--ma-surface);
+  background: var(--ma-bg);
   color: var(--ma-ink);
   place-items: center;
   cursor: pointer;
@@ -355,7 +369,7 @@
 .mambu-top-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-shrink: 0;
 }
 
@@ -363,14 +377,14 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  min-height: 40px;
-  padding: 0 14px;
+  min-height: 36px;
+  padding: 0 13px;
   border-radius: 8px;
-  border: 1px solid var(--ma-border-strong);
+  border: 1px solid var(--ma-border);
   background: var(--ma-surface);
   color: var(--ma-ink-2);
   font-family: var(--ma-font-body);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -379,8 +393,8 @@
 
 .mambu-top-actions > button:hover:not(:disabled) {
   background: var(--ma-surface-2);
-  border-color: var(--ma-muted);
-  color: var(--ma-ink);
+  border-color: var(--ma-border-strong);
+  color: var(--ma-accent);
 }
 
 .mambu-top-actions > button:disabled {
@@ -394,11 +408,11 @@
 
 .mambu-notification-trigger {
   position: relative;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
   border: 1px solid var(--ma-border);
-  background: var(--ma-surface);
+  background: var(--ma-bg);
   color: var(--ma-ink-2);
   display: inline-grid;
   place-items: center;
@@ -407,22 +421,22 @@
 
 .mambu-notification-trigger:hover {
   background: var(--ma-surface-2);
-  color: var(--ma-ink);
+  color: var(--ma-accent);
 }
 
 .mambu-notification-trigger em {
   position: absolute;
   top: -5px;
   right: -5px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
   border-radius: 999px;
-  background: var(--ma-accent);
+  background: #e64c5c;
   color: #ffffff;
   font-style: normal;
   font-family: var(--ma-font-mono);
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 700;
   display: grid;
   place-items: center;
@@ -435,9 +449,9 @@
   width: 340px;
   max-width: calc(100vw - 32px);
   background: var(--ma-surface);
-  border: 1px solid var(--ma-border-strong);
+  border: 1px solid var(--ma-border);
   border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 12px 32px rgba(23, 54, 91, 0.14);
   padding: 12px;
   display: grid;
   gap: 6px;
@@ -458,7 +472,7 @@
 }
 
 .mambu-notification-popover-head small {
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--ma-muted);
 }
 
@@ -477,7 +491,7 @@
 
 .mambu-notification-popover > button:hover {
   background: var(--ma-surface-2);
-  border-color: var(--ma-border-strong);
+  border-color: var(--ma-accent-line);
 }
 
 .mambu-notification-popover > button span {
@@ -487,19 +501,19 @@
 }
 
 .mambu-notification-popover > button b {
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--ma-ink);
   text-transform: capitalize;
 }
 
 .mambu-notification-popover > button small,
 .mambu-notification-popover > button time {
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--ma-muted);
 }
 
 .mambu-notification-popover > p {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--ma-muted);
   text-align: center;
   padding: 12px;
@@ -509,11 +523,11 @@
 /* ---------- Workspace Content Container ---------- */
 .mambu-content {
   width: 100%;
-  max-width: 1440px;
+  max-width: 1520px;
   margin: 0 auto;
-  padding: 24px 28px 48px;
+  padding: 22px 26px 44px;
   display: grid;
-  gap: 18px;
+  gap: 16px;
 }
 
 .mambu-alert,
@@ -523,8 +537,8 @@
   align-items: flex-start;
   gap: 10px;
   padding: 12px 15px;
-  border-radius: 8px;
-  font-size: 13px;
+  border-radius: 9px;
+  font-size: 12.5px;
   line-height: 1.5;
   margin: 0;
 }
@@ -544,35 +558,35 @@
 .mambu-warning {
   background: var(--ma-warn-bg);
   border: 1px solid var(--ma-warn-line);
-  color: var(--ma-accent-hover);
+  color: var(--ma-warn);
 }
 
 .mambu-loading,
 .mambu-empty {
-  padding: 36px 24px;
+  padding: 34px 22px;
   border: 1px solid var(--ma-border);
-  border-radius: 12px;
+  border-radius: 10px;
   background: var(--ma-surface);
   color: var(--ma-muted);
   text-align: center;
-  font-size: 13.5px;
+  font-size: 13px;
 }
 
 .mambu-empty-inline {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 16px;
+  padding: 14px;
   border-radius: 8px;
-  background: var(--ma-bg);
-  border: 1px solid var(--ma-border);
+  background: var(--ma-success-bg);
+  border: 1px solid var(--ma-success-line);
   color: var(--ma-success);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
 }
 
 .mambu-muted {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--ma-muted);
   margin: 0;
   line-height: 1.5;
@@ -588,22 +602,22 @@
 }
 
 .mambu-section-intro h2 {
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 700;
-  margin: 0 0 4px;
+  margin: 0 0 3px;
 }
 
 .mambu-section-intro p {
-  font-size: 13.5px;
+  font-size: 12.5px;
   color: var(--ma-muted);
   margin: 0;
 }
 
 .mambu-kicker {
   display: inline-block;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   color: var(--ma-accent);
   margin-bottom: 4px;
 }
@@ -613,6 +627,7 @@
   border: 1px solid var(--ma-border);
   border-radius: 10px;
   background: var(--ma-surface);
+  box-shadow: 0 3px 10px rgba(23, 54, 91, 0.03);
   display: flex;
   align-items: baseline;
   gap: 8px;
@@ -621,12 +636,12 @@
 .mambu-complaints-total strong {
   font-family: var(--ma-font-display);
   font-variant-numeric: tabular-nums;
-  font-size: 22px;
+  font-size: 21px;
   color: var(--ma-ink);
 }
 
 .mambu-complaints-total span {
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--ma-muted);
 }
 
@@ -636,53 +651,55 @@
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 20px 24px;
-  background: var(--ma-surface);
-  border: 1px solid var(--ma-border);
-  border-radius: 12px;
+  padding: 18px 22px;
+  background: linear-gradient(110deg, #ffffff, #f0f6ff);
+  border: 1px solid #dce7f4;
+  border-radius: 10px;
+  box-shadow: 0 5px 18px rgba(28, 62, 100, 0.04);
 }
 
 .mambu-welcome small {
   display: block;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   color: var(--ma-accent);
   margin-bottom: 4px;
 }
 
 .mambu-welcome h2 {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   margin: 0 0 4px;
 }
 
 .mambu-welcome p {
-  font-size: 13.5px;
+  font-size: 12.5px;
   color: var(--ma-muted);
   margin: 0;
 }
 
 .mambu-welcome-mark {
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
-  background: var(--ma-surface-2);
-  border: 1px solid var(--ma-border);
-  color: var(--ma-ink);
+  width: 48px;
+  height: 48px;
+  border-radius: 11px;
+  background: #eaf3ff;
+  border: 1px solid #cfe2fc;
+  color: var(--ma-primary);
   display: grid;
   place-items: center;
   flex-shrink: 0;
 }
 
 .mambu-global-lookup {
-  background: var(--ma-primary);
-  border: 1px solid #1e293b;
+  background: linear-gradient(135deg, #0d1d33, #112642);
+  border: 1px solid rgba(108, 151, 211, 0.26);
   color: #ffffff;
-  border-radius: 12px;
-  padding: 22px 24px;
+  border-radius: 11px;
+  padding: 20px 22px;
   display: grid;
-  gap: 16px;
+  gap: 14px;
+  box-shadow: 0 8px 24px rgba(13, 29, 51, 0.14);
 }
 
 .mambu-global-lookup-head {
@@ -694,28 +711,28 @@
 
 .mambu-global-lookup-head span {
   display: block;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--ma-accent-bright);
+  letter-spacing: 0.08em;
+  color: #72b5ff;
   margin-bottom: 4px;
 }
 
 .mambu-global-lookup-head h2 {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: #ffffff;
-  margin: 0 0 4px;
+  margin: 0 0 3px;
 }
 
 .mambu-global-lookup-head p {
-  font-size: 13.5px;
-  color: #cbd5e1;
+  font-size: 12.5px;
+  color: #b7c9e0;
   margin: 0;
 }
 
 .mambu-global-lookup-head svg {
-  color: #94a3b8;
+  color: #72b5ff;
   flex-shrink: 0;
 }
 
@@ -727,41 +744,41 @@
 
 .mambu-global-lookup-form select,
 .mambu-global-lookup-form input {
-  min-height: 42px;
+  min-height: 40px;
   padding: 8px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(132, 164, 209, 0.28);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.08);
   color: #ffffff;
   font-family: var(--ma-font-body);
-  font-size: 13.5px;
+  font-size: 13px;
 }
 
 .mambu-global-lookup-form select option {
-  background: #0f172a;
+  background: #0d1d33;
   color: #ffffff;
 }
 
 .mambu-global-lookup-form input::placeholder {
-  color: #94a3b8;
+  color: #96abc5;
 }
 
 .mambu-global-lookup-form button {
-  min-height: 42px;
-  padding: 8px 18px;
-  border: 0;
+  min-height: 40px;
+  padding: 8px 17px;
+  border: 1px solid #2379ee;
   border-radius: 8px;
-  background: var(--ma-accent-bright);
-  color: #0f172a;
+  background: linear-gradient(135deg, #2587ff, #1765dc);
+  color: #ffffff;
   font-family: var(--ma-font-body);
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .mambu-global-lookup-form button:hover:not(:disabled) {
-  background: #fbbf24;
+  filter: brightness(1.06);
 }
 
 .mambu-global-results {
@@ -774,9 +791,9 @@
   grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 12px;
   align-items: center;
-  padding: 10px 14px;
+  padding: 10px 13px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(132, 164, 209, 0.2);
   background: rgba(255, 255, 255, 0.06);
   color: #ffffff;
   text-align: left;
@@ -794,13 +811,13 @@
 }
 
 .mambu-global-results > button b {
-  font-size: 13.5px;
+  font-size: 13px;
   color: #ffffff;
 }
 
 .mambu-global-results > button small {
-  font-size: 12px;
-  color: #cbd5e1;
+  font-size: 11.5px;
+  color: #c2d4ea;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -808,18 +825,18 @@
 
 .mambu-global-results > button em {
   font-style: normal;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
   padding: 3px 8px;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.14);
   color: #f8fafc;
   text-transform: capitalize;
 }
 
 .mambu-lookup-empty {
-  font-size: 13px;
-  color: #cbd5e1;
+  font-size: 12.5px;
+  color: #c2d4ea;
   margin: 0;
 }
 
@@ -827,27 +844,29 @@
 .mambu-stat-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
+  gap: 12px;
 }
 
 .mambu-stat-grid article,
 .mambu-stat-grid .mambu-stat-card {
   width: 100%;
   background: var(--ma-surface);
-  border: 1px solid var(--ma-border);
-  border-radius: 12px;
-  padding: 18px 20px;
+  border: 1px solid #e0e8f0;
+  border-radius: 10px;
+  padding: 16px 18px;
+  box-shadow: 0 3px 12px rgba(23, 54, 91, 0.035);
   display: grid;
   gap: 6px;
   text-align: left;
   font: inherit;
   cursor: pointer;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+.mambu-stat-grid article:hover,
 .mambu-stat-grid .mambu-stat-card:hover {
-  border-color: var(--ma-border-strong);
-  background: #fcfcfd;
+  border-color: var(--ma-accent-line);
+  box-shadow: 0 6px 18px rgba(18, 102, 195, 0.08);
 }
 
 .mambu-stat-grid article span,
@@ -855,16 +874,20 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-size: 12.5px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
   color: var(--ma-muted);
+}
+
+.mambu-stat-grid article span svg {
+  color: var(--ma-accent);
 }
 
 .mambu-stat-grid article strong,
 .mambu-stat-grid .mambu-stat-card strong {
   font-family: var(--ma-font-display);
   font-variant-numeric: tabular-nums;
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 700;
   letter-spacing: -0.025em;
   color: var(--ma-ink);
@@ -873,24 +896,25 @@
 
 .mambu-stat-grid article small,
 .mambu-stat-grid .mambu-stat-card small {
-  font-size: 12px;
-  color: var(--ma-muted);
+  font-size: 11.5px;
+  color: #7c8ea4;
 }
 
 /* ---------- Dashboard Overview Panels ---------- */
 .mambu-panel-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 14px;
 }
 
 .mambu-panel {
   background: var(--ma-surface);
-  border: 1px solid var(--ma-border);
-  border-radius: 12px;
-  padding: 20px;
+  border: 1px solid #e0e8f0;
+  border-radius: 10px;
+  padding: 18px;
+  box-shadow: 0 3px 12px rgba(23, 54, 91, 0.035);
   display: grid;
-  gap: 12px;
+  gap: 11px;
   align-content: start;
 }
 
@@ -902,15 +926,19 @@
 }
 
 .mambu-panel-head h3 {
-  font-size: 15.5px;
+  font-size: 15px;
   font-weight: 700;
   margin: 0 0 2px;
 }
 
 .mambu-panel-head p {
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--ma-muted);
   margin: 0;
+}
+
+.mambu-panel-head svg {
+  color: var(--ma-accent);
 }
 
 .mambu-panel-head button {
@@ -920,8 +948,8 @@
   border: 0;
   background: transparent;
   color: var(--ma-accent);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12.5px;
+  font-weight: 700;
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 6px;
@@ -938,9 +966,9 @@
   gap: 11px;
   align-items: center;
   padding: 10px 12px;
-  border: 1px solid var(--ma-border);
+  border: 1px solid #e7edf4;
   border-radius: 8px;
-  background: var(--ma-bg);
+  background: #f9fbfe;
   text-align: left;
   cursor: pointer;
   transition: background-color 0.15s ease, border-color 0.15s ease;
@@ -948,7 +976,7 @@
 
 .mambu-complaint-mini:hover {
   background: var(--ma-surface-2);
-  border-color: var(--ma-border-strong);
+  border-color: var(--ma-accent-line);
 }
 
 .mambu-mini-icon {
@@ -957,7 +985,7 @@
   border-radius: 8px;
   background: var(--ma-warn-bg);
   border: 1px solid var(--ma-warn-line);
-  color: var(--ma-accent);
+  color: var(--ma-warn);
   display: grid;
   place-items: center;
 }
@@ -969,13 +997,13 @@
 }
 
 .mambu-complaint-mini b {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--ma-ink);
   text-transform: capitalize;
 }
 
 .mambu-complaint-mini small {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--ma-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -984,10 +1012,10 @@
 
 .mambu-complaint-mini em {
   font-style: normal;
-  font-size: 11.5px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   padding: 3px 8px;
-  border-radius: 6px;
+  border-radius: 999px;
   background: var(--ma-warn-bg);
   border: 1px solid var(--ma-warn-line);
   color: var(--ma-warn);
@@ -1000,9 +1028,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--ma-border);
-  font-size: 13px;
+  padding: 9px 0;
+  border-bottom: 1px solid #edf1f5;
+  font-size: 12.5px;
 }
 
 .mambu-snapshot:last-child {
@@ -1016,7 +1044,7 @@
 
 .mambu-snapshot b {
   font-family: var(--ma-font-mono);
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--ma-ink);
 }
 
@@ -1034,10 +1062,10 @@
   align-items: center;
   gap: 10px;
   padding: 0 14px;
-  min-height: 44px;
+  min-height: 42px;
   background: var(--ma-surface);
-  border: 1px solid var(--ma-border-strong);
-  border-radius: 10px;
+  border: 1px solid var(--ma-border);
+  border-radius: 9px;
 }
 
 .mambu-search svg {
@@ -1052,7 +1080,7 @@
   outline: none;
   background: transparent;
   font-family: var(--ma-font-body);
-  font-size: 13.5px;
+  font-size: 13px;
   color: var(--ma-ink);
 }
 
@@ -1060,15 +1088,15 @@
   display: inline-grid;
   gap: 5px;
   max-width: 340px;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--ma-ink-2);
 }
 
 .mambu-shop-filter select {
-  min-height: 40px;
-  padding: 8px 12px;
-  border: 1px solid var(--ma-border-strong);
+  min-height: 38px;
+  padding: 7px 11px;
+  border: 1px solid var(--ma-border);
   border-radius: 8px;
   background: var(--ma-surface);
   color: var(--ma-ink);
@@ -1084,7 +1112,7 @@
 .mambu-count-row button {
   padding: 12px 14px;
   border: 1px solid var(--ma-border);
-  border-radius: 10px;
+  border-radius: 9px;
   background: var(--ma-surface);
   text-align: left;
   display: grid;
@@ -1094,13 +1122,13 @@
 }
 
 .mambu-count-row button:hover {
-  border-color: var(--ma-border-strong);
-  background: var(--ma-surface-2);
+  border-color: var(--ma-accent-line);
+  background: var(--ma-accent-soft);
 }
 
 .mambu-count-row button.active {
   border-color: var(--ma-primary);
-  background: var(--ma-primary);
+  background: linear-gradient(135deg, #2587ff, #1765dc);
   color: #ffffff;
 }
 
@@ -1111,28 +1139,28 @@
 }
 
 .mambu-count-row button span {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--ma-muted);
   text-transform: capitalize;
 }
 
 .mambu-count-row button.active span {
-  color: #cbd5e1;
+  color: #e4efff;
 }
 
-/* Status rectangular tags (zero pill inflation) */
+/* Status pills matching DASNET seller badge styling */
 .mambu-status {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 3px 8px;
-  border-radius: 6px;
+  padding: 4px 9px;
+  border-radius: 999px;
   border: 1px solid var(--ma-border);
-  background: var(--ma-surface-2);
+  background: #f1f5f9;
   color: var(--ma-ink-2);
   font-style: normal;
-  font-size: 11.5px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: capitalize;
   white-space: nowrap;
 }
@@ -1152,7 +1180,8 @@
 .mambu-status.pending,
 .mambu-status.trial,
 .mambu-status.more_information_required,
-.mambu-status.waiting_on_customer {
+.mambu-status.waiting_on_customer,
+.mambu-status.escalated {
   background: var(--ma-warn-bg);
   border-color: var(--ma-warn-line);
   color: var(--ma-warn);
@@ -1170,7 +1199,10 @@
 .mambu-status.banned,
 .mambu-status.rejected,
 .mambu-status.cancelled,
-.mambu-status.failed {
+.mambu-status.failed,
+.mambu-status.past_due,
+.mambu-status.closed,
+.mambu-status.refunded {
   background: var(--ma-danger-bg);
   border-color: var(--ma-danger-line);
   color: var(--ma-danger);
@@ -1186,11 +1218,11 @@
   min-height: 36px;
   padding: 7px 14px;
   border-radius: 8px;
-  border: 1px solid var(--ma-border-strong);
+  border: 1px solid var(--ma-border);
   background: var(--ma-surface);
-  color: var(--ma-ink);
+  color: var(--ma-ink-2);
   font-family: var(--ma-font-body);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -1199,18 +1231,20 @@
 
 .mambu-action:hover:not(:disabled) {
   background: var(--ma-surface-2);
+  color: var(--ma-accent);
 }
 
 .mambu-action.good,
 .mambu-save {
-  background: var(--ma-primary);
-  border-color: var(--ma-primary);
+  background: linear-gradient(135deg, #2587ff, #1765dc);
+  border-color: #2379ee;
   color: #ffffff;
 }
 
 .mambu-action.good:hover:not(:disabled),
 .mambu-save:hover:not(:disabled) {
-  background: var(--ma-primary-hover);
+  filter: brightness(1.05);
+  color: #ffffff;
 }
 
 .mambu-action.danger {
@@ -1232,8 +1266,9 @@
 /* ---------- Data Tables ---------- */
 .mambu-table-wrap {
   background: var(--ma-surface);
-  border: 1px solid var(--ma-border);
-  border-radius: 12px;
+  border: 1px solid #e0e8f0;
+  border-radius: 10px;
+  box-shadow: 0 3px 12px rgba(23, 54, 91, 0.035);
   overflow-x: auto;
 }
 
@@ -1245,12 +1280,12 @@
 }
 
 .mambu-table-wrap th {
-  padding: 11px 16px;
-  background: var(--ma-bg);
-  border-bottom: 1px solid var(--ma-border);
+  padding: 11px 15px;
+  background: #f8fafd;
+  border-bottom: 1px solid #e7edf4;
   text-align: left;
-  font-size: 11.5px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   color: var(--ma-muted);
   white-space: nowrap;
 }
@@ -1262,9 +1297,9 @@
 }
 
 .mambu-table-wrap td {
-  padding: 11px 16px;
-  border-bottom: 1px solid var(--ma-border);
-  font-size: 13px;
+  padding: 11px 15px;
+  border-bottom: 1px solid #edf1f5;
+  font-size: 12.5px;
   color: var(--ma-ink-2);
   vertical-align: middle;
 }
@@ -1282,8 +1317,8 @@
 
 .mambu-table-wrap td small {
   display: block;
-  font-size: 12px;
-  color: var(--ma-muted);
+  font-size: 11.5px;
+  color: #8494a8;
   margin-top: 2px;
 }
 
@@ -1292,31 +1327,32 @@
 }
 
 .mambu-click-row:hover td {
-  background: var(--ma-bg);
+  background: #f5f9ff;
 }
 
 /* ---------- Complaints Card Grid ---------- */
 .mambu-complaint-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
-  gap: 14px;
+  gap: 13px;
 }
 
 .mambu-complaint-card {
   background: var(--ma-surface);
-  border: 1px solid var(--ma-border);
-  border-radius: 12px;
-  padding: 18px;
+  border: 1px solid #e0e8f0;
+  border-radius: 10px;
+  padding: 17px;
+  box-shadow: 0 3px 12px rgba(23, 54, 91, 0.035);
   display: grid;
   gap: 12px;
   text-align: left;
   cursor: pointer;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .mambu-complaint-card:hover {
-  border-color: var(--ma-border-strong);
-  background: #fcfcfd;
+  border-color: var(--ma-accent-line);
+  box-shadow: 0 6px 18px rgba(18, 102, 195, 0.08);
 }
 
 .mambu-complaint-card-top {
@@ -1332,7 +1368,7 @@
   border-radius: 8px;
   background: var(--ma-warn-bg);
   border: 1px solid var(--ma-warn-line);
-  color: var(--ma-accent);
+  color: var(--ma-warn);
   display: grid;
   place-items: center;
 }
@@ -1340,19 +1376,19 @@
 .mambu-complaint-card-title strong {
   display: block;
   font-family: var(--ma-font-display);
-  font-size: 15px;
+  font-size: 14.5px;
   color: var(--ma-ink);
   text-transform: capitalize;
 }
 
 .mambu-complaint-card-title small {
   font-family: var(--ma-font-mono);
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--ma-muted);
 }
 
 .mambu-complaint-card > p {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--ma-ink-2);
   margin: 0;
   display: -webkit-box;
@@ -1366,7 +1402,7 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   padding-top: 10px;
-  border-top: 1px solid var(--ma-border);
+  border-top: 1px solid #edf1f5;
 }
 
 .mambu-complaint-card-meta span {
@@ -1376,7 +1412,7 @@
 }
 
 .mambu-complaint-card-meta b {
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--ma-ink);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1384,7 +1420,7 @@
 }
 
 .mambu-complaint-card-meta small {
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--ma-muted);
 }
 
@@ -1393,7 +1429,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--ma-muted);
 }
 
@@ -1402,21 +1438,22 @@
   align-items: center;
   gap: 4px;
   color: var(--ma-accent);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* ---------- Card KYC Queue ---------- */
 .mambu-kyc-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: 14px;
+  gap: 13px;
 }
 
 .mambu-kyc-card {
   background: var(--ma-surface);
-  border: 1px solid var(--ma-border);
-  border-radius: 12px;
-  padding: 18px 20px;
+  border: 1px solid #e0e8f0;
+  border-radius: 10px;
+  padding: 17px 19px;
+  box-shadow: 0 3px 12px rgba(23, 54, 91, 0.035);
   display: grid;
   gap: 12px;
 }
@@ -1431,13 +1468,13 @@
 .mambu-kyc-head strong {
   display: block;
   font-family: var(--ma-font-display);
-  font-size: 15.5px;
+  font-size: 15px;
   color: var(--ma-ink);
 }
 
 .mambu-kyc-head small {
   font-family: var(--ma-font-mono);
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--ma-muted);
 }
 
@@ -1447,8 +1484,8 @@
   gap: 10px 14px;
   padding: 12px;
   border-radius: 8px;
-  background: var(--ma-bg);
-  border: 1px solid var(--ma-border);
+  background: #f8fafd;
+  border: 1px solid #e7edf4;
 }
 
 .mambu-kyc-meta div {
@@ -1457,13 +1494,13 @@
 }
 
 .mambu-kyc-meta span {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 10.5px;
+  font-weight: 700;
   color: var(--ma-muted);
 }
 
 .mambu-kyc-meta b {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--ma-ink);
 }
 
@@ -1480,18 +1517,18 @@
   gap: 5px;
   min-height: 34px;
   padding: 0 12px;
-  border: 1px solid var(--ma-border-strong);
+  border: 1px solid var(--ma-border);
   border-radius: 7px;
-  background: var(--ma-surface);
+  background: #f8fafd;
   color: var(--ma-ink-2);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   text-decoration: none;
 }
 
 .mambu-kyc-links a:hover {
   background: var(--ma-surface-2);
-  color: var(--ma-ink);
+  color: var(--ma-accent);
 }
 
 /* ---------- Payment Credentials & Method Switcher ---------- */
@@ -1503,70 +1540,71 @@
 }
 
 .mambu-method-switch button {
-  padding: 14px 16px;
-  border: 1px solid var(--ma-border-strong);
+  padding: 13px 16px;
+  border: 1px solid var(--ma-border);
   border-radius: 10px;
   background: var(--ma-surface);
   color: var(--ma-ink);
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
 }
 
 .mambu-method-switch button small {
   margin-left: auto;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 500;
   color: var(--ma-muted);
 }
 
 .mambu-method-switch button.active {
-  border-color: var(--ma-primary);
-  background: var(--ma-primary);
+  border-color: #2379ee;
+  background: linear-gradient(135deg, #2587ff, #1765dc);
   color: #ffffff;
 }
 
 .mambu-method-switch button.active small {
-  color: #cbd5e1;
+  color: #e4efff;
 }
 
 .mambu-payment-card {
   background: var(--ma-surface);
-  border: 1px solid var(--ma-border);
-  border-radius: 12px;
-  padding: 22px 24px;
+  border: 1px solid #e0e8f0;
+  border-radius: 10px;
+  padding: 20px 22px;
+  box-shadow: 0 3px 12px rgba(23, 54, 91, 0.035);
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
+  grid-template-columns: 46px minmax(0, 1fr);
   gap: 18px;
   align-items: start;
 }
 
 .mambu-payment-icon {
-  width: 48px;
-  height: 48px;
+  width: 46px;
+  height: 46px;
   border-radius: 10px;
-  background: var(--ma-surface-2);
-  border: 1px solid var(--ma-border);
-  color: var(--ma-ink);
+  background: var(--ma-accent-soft);
+  border: 1px solid var(--ma-accent-line);
+  color: var(--ma-accent);
   display: grid;
   place-items: center;
 }
 
 .mambu-payment-body {
   display: grid;
-  gap: 14px;
+  gap: 13px;
 }
 
 .mambu-payment-body h3 {
-  font-size: 16.5px;
+  font-size: 16px;
   margin: 0;
 }
 
 .mambu-payment-explainer {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--ma-muted);
   margin: 0;
 }
@@ -1574,15 +1612,15 @@
 .mambu-payment-details {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px 22px;
-  padding: 12px 14px;
-  border: 1px solid var(--ma-border);
+  gap: 10px 20px;
+  padding: 11px 14px;
+  border: 1px solid #e7edf4;
   border-radius: 8px;
-  background: var(--ma-bg);
+  background: #f8fafd;
 }
 
 .mambu-payment-details span {
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--ma-muted);
   display: inline-flex;
   align-items: center;
@@ -1597,7 +1635,7 @@
 .mambu-daraja-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 13px;
 }
 
 .mambu-daraja-form label,
@@ -1605,9 +1643,9 @@
 .mambu-edit-field {
   display: grid;
   gap: 6px;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--ma-ink-2);
+  color: #53677f;
 }
 
 .mambu-daraja-form input,
@@ -1621,14 +1659,14 @@
 .mambu-case-card select,
 .mambu-case-card textarea {
   width: 100%;
-  min-height: 40px;
-  padding: 8px 12px;
-  border: 1px solid var(--ma-border-strong);
+  min-height: 39px;
+  padding: 8px 11px;
+  border: 1px solid var(--ma-border);
   border-radius: 8px;
   background: var(--ma-surface);
   color: var(--ma-ink);
   font-family: var(--ma-font-body);
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 400;
 }
 
@@ -1641,14 +1679,15 @@
 .mambu-subscription-destination-panel,
 .mambu-plan-settings {
   background: var(--ma-surface);
-  border: 1px solid var(--ma-border);
-  border-radius: 12px;
-  padding: 20px 22px;
+  border: 1px solid #e0e8f0;
+  border-radius: 10px;
+  padding: 19px 21px;
+  box-shadow: 0 3px 12px rgba(23, 54, 91, 0.035);
 }
 
 .mambu-subscription-destination-panel form {
   display: grid;
-  gap: 14px;
+  gap: 13px;
 }
 
 .mambu-subscription-destination-panel .mambu-save {
@@ -1669,12 +1708,12 @@
 }
 
 .mambu-plan-settings form b {
-  font-size: 14px;
+  font-size: 13.5px;
   color: var(--ma-ink);
 }
 
 .mambu-plan-settings form small {
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--ma-muted);
 }
 
@@ -1682,18 +1721,18 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 600;
 }
 
 .mambu-plan-settings label input {
-  width: 82px;
+  width: 80px;
   min-height: 38px;
   padding: 6px 10px;
-  border: 1px solid var(--ma-border-strong);
+  border: 1px solid var(--ma-border);
   border-radius: 8px;
   font-family: var(--ma-font-mono);
-  font-size: 14px;
+  font-size: 13.5px;
 }
 
 .mambu-plan-commission {
@@ -1701,35 +1740,36 @@
   gap: 2px;
   padding: 8px 14px;
   border-radius: 8px;
-  background: var(--ma-bg);
-  border: 1px solid var(--ma-border);
+  background: #f8fafd;
+  border: 1px solid #e7edf4;
 }
 
 .mambu-plan-commission strong {
   font-family: var(--ma-font-display);
-  font-size: 18px;
+  font-size: 17px;
   color: var(--ma-success);
 }
 
 .mambu-plan-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 14px;
+  gap: 13px;
 }
 
 .mambu-plan-card {
   background: var(--ma-surface);
-  border: 1px solid var(--ma-border);
-  border-radius: 12px;
-  padding: 20px;
+  border: 1px solid #e0e8f0;
+  border-radius: 10px;
+  padding: 19px;
+  box-shadow: 0 3px 12px rgba(23, 54, 91, 0.035);
   display: grid;
-  gap: 12px;
+  gap: 11px;
   align-content: start;
 }
 
 .mambu-plan-card.featured {
   border-color: var(--ma-accent-line);
-  background: #fffdf7;
+  background: #f8fbff;
 }
 
 .mambu-plan-card-top {
@@ -1741,22 +1781,22 @@
 
 .mambu-plan-card-top em {
   font-style: normal;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   padding: 3px 8px;
-  border-radius: 6px;
+  border-radius: 999px;
   background: var(--ma-accent-soft);
   border: 1px solid var(--ma-accent-line);
   color: var(--ma-accent);
 }
 
 .mambu-plan-card h3 {
-  font-size: 16.5px;
+  font-size: 16px;
   margin: 0;
 }
 
 .mambu-plan-card p {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--ma-muted);
   margin: 0;
 }
@@ -1764,12 +1804,12 @@
 .mambu-plan-card > strong {
   font-family: var(--ma-font-display);
   font-variant-numeric: tabular-nums;
-  font-size: 24px;
+  font-size: 23px;
   color: var(--ma-ink);
 }
 
 .mambu-plan-card > strong small {
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
   color: var(--ma-muted);
 }
@@ -1778,9 +1818,9 @@
   display: grid;
   gap: 4px;
   padding: 10px 0;
-  border-top: 1px solid var(--ma-border);
-  border-bottom: 1px solid var(--ma-border);
-  font-size: 12.5px;
+  border-top: 1px solid #edf1f5;
+  border-bottom: 1px solid #edf1f5;
+  font-size: 12px;
   color: var(--ma-ink-2);
 }
 
@@ -1792,7 +1832,7 @@
 .mambu-plan-editor {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.56);
+  background: rgba(23, 43, 69, 0.45);
   display: grid;
   place-items: center;
   padding: 20px;
@@ -1806,10 +1846,11 @@
   overflow-y: auto;
   background: var(--ma-surface);
   border: 1px solid var(--ma-border);
-  border-radius: 14px;
-  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(23, 54, 91, 0.18);
+  padding: 22px;
   display: grid;
-  gap: 16px;
+  gap: 15px;
 }
 
 .mambu-plan-editor-head {
@@ -1820,12 +1861,12 @@
 }
 
 .mambu-plan-editor-head h3 {
-  font-size: 17px;
+  font-size: 16.5px;
   margin: 0 0 3px;
 }
 
 .mambu-plan-editor-head p {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--ma-muted);
   margin: 0;
 }
@@ -1833,7 +1874,7 @@
 .mambu-plan-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 13px;
 }
 
 .mambu-plan-description {
@@ -1850,7 +1891,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
 }
 
@@ -1858,7 +1899,7 @@
 .mambu-drawer-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.48);
+  background: rgba(23, 43, 69, 0.42);
   display: flex;
   justify-content: flex-end;
   z-index: 100;
@@ -1872,13 +1913,13 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: -8px 0 32px rgba(15, 23, 42, 0.14);
+  box-shadow: -8px 0 32px rgba(23, 54, 91, 0.15);
 }
 
 .mambu-drawer > header {
   background: var(--ma-surface);
   border-bottom: 1px solid var(--ma-border);
-  padding: 18px 24px;
+  padding: 17px 22px;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -1887,27 +1928,27 @@
 
 .mambu-drawer > header small {
   display: block;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
   color: var(--ma-accent);
   margin-bottom: 3px;
 }
 
 .mambu-drawer > header h2 {
-  font-size: 18px;
+  font-size: 17.5px;
   margin: 0;
 }
 
 .mambu-drawer > header p {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--ma-muted);
   margin: 2px 0 0;
 }
 
 .mambu-drawer > header button {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border: 1px solid var(--ma-border);
   border-radius: 8px;
   background: var(--ma-surface);
@@ -1920,9 +1961,9 @@
 .mambu-drawer-body {
   flex: 1;
   overflow-y: auto;
-  padding: 20px 24px 36px;
+  padding: 18px 22px 34px;
   display: grid;
-  gap: 16px;
+  gap: 15px;
   align-content: start;
 }
 
@@ -1939,9 +1980,9 @@
 .mambu-case-card,
 .mambu-record-drawer section {
   background: var(--ma-surface);
-  border: 1px solid var(--ma-border);
-  border-radius: 12px;
-  padding: 18px 20px;
+  border: 1px solid #e0e8f0;
+  border-radius: 10px;
+  padding: 17px 19px;
   display: grid;
   gap: 12px;
   align-content: start;
@@ -1949,14 +1990,14 @@
 
 .mambu-case-card h4,
 .mambu-record-drawer section h4 {
-  font-size: 14.5px;
+  font-size: 14px;
   margin: 0;
   padding-bottom: 8px;
-  border-bottom: 1px solid var(--ma-border);
+  border-bottom: 1px solid #edf1f5;
 }
 
 .mambu-case-card h5 {
-  font-size: 12.5px;
+  font-size: 12px;
   margin: 4px 0 0;
   color: var(--ma-muted);
 }
@@ -1966,12 +2007,12 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--ma-muted);
 }
 
 .mambu-report-text {
-  font-size: 13.5px;
+  font-size: 13px;
   line-height: 1.6;
   color: var(--ma-ink-2);
   margin: 0;
@@ -1987,14 +2028,14 @@
 .mambu-case-facts span {
   padding: 10px 12px;
   border-radius: 8px;
-  background: var(--ma-bg);
-  border: 1px solid var(--ma-border);
+  background: #f8fafd;
+  border: 1px solid #e7edf4;
   display: grid;
   gap: 2px;
 }
 
 .mambu-case-facts small {
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 700;
   color: var(--ma-muted);
   letter-spacing: 0.04em;
@@ -2002,7 +2043,7 @@
 
 .mambu-case-facts b {
   font-family: var(--ma-font-mono);
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--ma-ink);
 }
 
@@ -2011,7 +2052,7 @@
   display: grid;
   grid-template-columns: 140px minmax(0, 1fr);
   gap: 8px 14px;
-  font-size: 13px;
+  font-size: 12.5px;
 }
 
 .mambu-case-kv span,
@@ -2036,21 +2077,22 @@
   align-items: center;
   min-height: 34px;
   padding: 0 12px;
-  border: 1px solid var(--ma-border-strong);
+  border: 1px solid var(--ma-border);
   border-radius: 7px;
-  background: var(--ma-surface);
+  background: #f8fafd;
   color: var(--ma-ink);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   text-decoration: none;
 }
 
 .mambu-complaint-links a:hover {
   background: var(--ma-surface-2);
+  color: var(--ma-accent);
 }
 
 .mambu-case-destination {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--ma-ink-2);
   margin: 0;
 }
@@ -2069,9 +2111,9 @@
   gap: 8px;
   padding: 10px 12px;
   border-radius: 8px;
-  background: var(--ma-bg);
-  border: 1px solid var(--ma-border);
-  font-size: 12.5px;
+  background: #f8fafd;
+  border: 1px solid #e7edf4;
+  font-size: 12px;
 }
 
 .mambu-detail-line span {
@@ -2089,8 +2131,8 @@
   gap: 10px;
   padding: 10px 12px;
   border-radius: 8px;
-  background: var(--ma-bg);
-  border: 1px solid var(--ma-border);
+  background: #f8fafd;
+  border: 1px solid #e7edf4;
 }
 
 .mambu-attachment span {
@@ -2099,12 +2141,12 @@
 }
 
 .mambu-attachment b {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--ma-ink);
 }
 
 .mambu-attachment small {
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--ma-muted);
 }
 
@@ -2116,7 +2158,7 @@
 }
 
 .mambu-case-chat-heading p {
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--ma-muted);
   margin: 2px 0 0;
 }
@@ -2139,14 +2181,14 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px;
+  padding: 13px;
   border-radius: 8px;
-  background: var(--ma-bg);
-  border: 1px solid var(--ma-border);
+  background: #f8fafd;
+  border: 1px solid #e7edf4;
 }
 
 .mambu-ban-panel p {
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--ma-muted);
   margin: 2px 0 0;
 }
@@ -2155,7 +2197,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
 }
 
@@ -2175,12 +2217,12 @@
 
 .mambu-drawer-body pre {
   margin: 0;
-  padding: 14px;
+  padding: 13px;
   border-radius: 8px;
-  background: var(--ma-primary);
+  background: var(--ma-navy);
   color: #e2e8f0;
   font-family: var(--ma-font-mono);
-  font-size: 12px;
+  font-size: 11.5px;
   overflow-x: auto;
 }
 
@@ -2196,7 +2238,7 @@
   gap: 8px;
   padding: 10px 12px;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 12.5px;
 }
 
 .mambu-shell .disputes-alert.error {
@@ -2215,7 +2257,7 @@
   border: 1px solid var(--ma-border);
   border-radius: 10px;
   padding: 14px;
-  background: var(--ma-bg);
+  background: #f8fafd;
   display: grid;
   gap: 12px;
 }
@@ -2229,11 +2271,11 @@
 
 .mambu-shell .dispute-chat-head strong {
   display: block;
-  font-size: 13.5px;
+  font-size: 13px;
 }
 
 .mambu-shell .dispute-chat-head small {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--ma-muted);
 }
 
@@ -2248,13 +2290,13 @@
   padding: 10px 12px;
   border-radius: 8px;
   background: var(--ma-surface);
-  border: 1px solid var(--ma-border);
+  border: 1px solid #e7edf4;
   display: grid;
   gap: 4px;
 }
 
 .mambu-shell .dispute-message.admin {
-  background: #fffdf7;
+  background: #f0f6ff;
   border-color: var(--ma-accent-line);
 }
 
@@ -2263,16 +2305,16 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  font-size: 12px;
+  font-size: 11.5px;
 }
 
 .mambu-shell .dispute-message p {
-  font-size: 13px;
+  font-size: 12.5px;
   margin: 0;
 }
 
 .mambu-shell .dispute-message time {
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--ma-muted);
 }
 
@@ -2283,9 +2325,9 @@
 
 .mambu-shell .dispute-compose textarea {
   width: 100%;
-  min-height: 74px;
+  min-height: 72px;
   padding: 10px 12px;
-  border: 1px solid var(--ma-border-strong);
+  border: 1px solid var(--ma-border);
   border-radius: 8px;
   background: var(--ma-surface);
   font: inherit;
@@ -2303,7 +2345,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--ma-ink-2);
   cursor: pointer;
@@ -2319,17 +2361,17 @@
   gap: 6px;
   min-height: 36px;
   padding: 0 14px;
-  border: 0;
+  border: 1px solid #2379ee;
   border-radius: 8px;
-  background: var(--ma-primary);
+  background: linear-gradient(135deg, #2587ff, #1765dc);
   color: #ffffff;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
 }
 
 .mambu-shell .dispute-verdict {
-  padding: 14px 16px;
+  padding: 13px 15px;
   border-radius: 8px;
   border: 1px solid var(--ma-success-line);
   background: var(--ma-success-bg);
@@ -2402,7 +2444,7 @@
   }
 
   .mambu-content {
-    padding: 18px 16px 36px;
+    padding: 16px 14px 34px;
   }
 
   .mambu-global-lookup-form,

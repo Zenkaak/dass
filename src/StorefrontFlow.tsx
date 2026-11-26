@@ -4,7 +4,7 @@ import { marketplaceFaqs } from './marketplaceFaqs';
 import { DisputesPanel } from './DisputesPanel';
 import { fallbackProductImage } from './StorefrontProductDetail';
 import { CardNetworkLogos, CardProviderIcon, CashProviderIcon, MpesaProviderIcon } from './PaymentProviderIcons';
-import PaystackPop from '@paystack/inline-js';
+import PaystackPop, { type PaystackPopupTransaction, type PaystackTransactionStatus } from '@paystack/inline-js';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   AlertCircle,
@@ -94,6 +94,7 @@ type BuyerOrder = {
   chatToken: string;
   paymentStatus: string;
   paymentIssue?: string | null;
+  paymentFailureReason?: string | null;
   receipt?: string | null;
   orderStatus?: string | null;
   discount?: number;
@@ -112,24 +113,59 @@ function safeHttpsUrl(value: unknown): string | null {
   }
 }
 
+function describePaystackPopupFailure(popupStatus: PaystackTransactionStatus | null | undefined): string | null {
+  if (!popupStatus) return null;
+  const errMessages = Array.isArray(popupStatus.errors)
+    ? popupStatus.errors
+        .map((entry) => (typeof entry === 'string' ? entry : entry?.message || ''))
+        .map((msg) => msg.trim())
+        .filter(Boolean)
+    : [];
+  if (errMessages.length > 0) {
+    return Array.from(new Set(errMessages)).join(' · ');
+  }
+  const response = popupStatus.response;
+  if (typeof response === 'string' && response.trim()) {
+    return response.trim();
+  }
+  if (response && typeof response === 'object') {
+    const detail = String(response.gateway_response || response.message || '').trim();
+    if (detail && !/^(pending|success|successful)$/i.test(detail)) {
+      return detail;
+    }
+  }
+  if (popupStatus.status === 'auth') {
+    return 'Card verification (3-D Secure) did not complete. Re-open the card form or use the Paystack checkout page below to approve the 3-D Secure prompt.';
+  }
+  return null;
+}
+
 function launchPaystackCardModal(options: {
   accessCode: string;
   onLoad?: () => void;
   onSuccess: () => void;
-  onCancel: () => void;
-  onError: (message?: string) => void;
+  onCancel: (status?: PaystackTransactionStatus | null) => void;
+  onError: (message?: string, status?: PaystackTransactionStatus | null) => void;
 }): boolean {
+  let popupTx: PaystackPopupTransaction | null = null;
+  const readStatus = (): PaystackTransactionStatus | null => {
+    try {
+      return popupTx?.getStatus?.() || null;
+    } catch {
+      return null;
+    }
+  };
   try {
     const popup = new PaystackPop();
-    popup.resumeTransaction(options.accessCode, {
+    popupTx = popup.resumeTransaction(options.accessCode, {
       onLoad: () => options.onLoad?.(),
       onSuccess: () => options.onSuccess(),
-      onCancel: () => options.onCancel(),
-      onError: (err) => options.onError(err?.message),
+      onCancel: () => options.onCancel(readStatus()),
+      onError: (err) => options.onError(err?.message, readStatus()),
     });
     return true;
   } catch (err) {
-    options.onError(err instanceof Error ? err.message : undefined);
+    options.onError(err instanceof Error ? err.message : undefined, readStatus());
     return false;
   }
 }
@@ -605,6 +641,7 @@ export function StorefrontFlow({
   const [paymentModalError, setPaymentModalError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [paymentPollMessage, setPaymentPollMessage] = useState('Waiting for payment confirmation…');
+  const [paymentPollAuthError, setPaymentPollAuthError] = useState(false);
   const [paymentProviderResponded, setPaymentProviderResponded] = useState(false);
   const [pollTimedOut, setPollTimedOut] = useState(false);
   const [checkingPollNow, setCheckingPollNow] = useState(false);
@@ -654,12 +691,20 @@ export function StorefrontFlow({
   const [reportMessage, setReportMessage] = useState('');
 
   const [activeOrderNumber, setActiveOrderNumber] = useState('');
-  const [paystackReturnBanner, setPaystackReturnBanner] = useState<{ status: string; orderNumber: string } | null>(() => {
+  const [paystackReturnBanner, setPaystackReturnBanner] = useState<{
+    status: string;
+    orderNumber: string;
+    reason: string;
+  } | null>(() => {
     try {
       const params = new URLSearchParams(window.location.search);
       const payment = String(params.get('payment') || '').trim().toLowerCase();
       const order = String(params.get('order') || '').trim();
-      return (payment === 'processing' || payment === 'pending') && order ? { status: payment, orderNumber: order } : null;
+      const reason = String(params.get('reason') || '').trim().toLowerCase();
+      if ((payment === 'processing' || payment === 'pending' || payment === 'failed' || payment === 'cancelled') && order) {
+        return { status: payment, orderNumber: order, reason };
+      }
+      return null;
     } catch {
       return null;
     }
@@ -720,8 +765,16 @@ export function StorefrontFlow({
     if (resolvedDraft.customerEmail && !customerEmail) setCustomerEmail(resolvedDraft.customerEmail);
     if (resolvedDraft.voucherCode && !voucherCode) setVoucherCode(resolvedDraft.voucherCode);
     try {
+      const nextIdemRaw = sessionStorage.getItem(`dasnet-checkout-idem-${nextScope}`);
+      const nextIdem = nextIdemRaw ? JSON.parse(nextIdemRaw) : null;
+      if (nextIdem && typeof nextIdem.fingerprint === 'string' && typeof nextIdem.key === 'string') {
+        if (!checkoutIdempotency.current) checkoutIdempotency.current = nextIdem;
+      } else if (checkoutIdempotency.current) {
+        sessionStorage.setItem(`dasnet-checkout-idem-${nextScope}`, JSON.stringify(checkoutIdempotency.current));
+      }
       if (prevScope.startsWith('host:')) {
         sessionStorage.removeItem(`dasnet-checkout-draft-${prevScope}`);
+        sessionStorage.removeItem(`dasnet-checkout-idem-${prevScope}`);
         localStorage.removeItem(`dasnet-checkout-draft-${prevScope}`);
       }
     } catch {}
@@ -945,6 +998,7 @@ export function StorefrontFlow({
           chatToken: '',
           paymentStatus: order.paymentStatus || 'unpaid',
           paymentIssue: order.paymentIssue || null,
+          paymentFailureReason: order.paymentFailureReason || null,
           receipt: order.receipt || null,
           orderStatus: order.orderStatus || null,
           deliveryStatus: order.deliveryStatus || null,
@@ -1062,15 +1116,36 @@ export function StorefrontFlow({
           { credentials: 'same-origin', cache: 'no-store' },
         );
         const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw Error(data.error || 'Could not check payment status.');
         if (!live) return;
+        if (response.status === 401) {
+          finished = true;
+          setPollTimedOut(false);
+          setPaymentPollAuthError(true);
+          setPaymentPollMessage(
+            'Your buyer session could not be verified (401 Unauthorized). Sign in again to confirm your payment.',
+          );
+          return;
+        }
+        setPaymentPollAuthError(false);
+        if (!response.ok) {
+          setPaymentPollMessage(data.error || 'Could not check payment status right now. Retrying…');
+          return;
+        }
         const status = String(data.paymentStatus || 'pending').toLowerCase();
         if (status === 'succeeded' || status === 'failed' || status === 'cancelled' || status === 'reversed') {
           finished = true;
           setPollTimedOut(false);
+          const failureText = data.failureReason || data.message || null;
           setOrders((current) =>
             current.map((order) =>
-              order.orderId === activeOrder.orderId ? { ...order, paymentStatus: status, receipt: data.receipt || null } : order,
+              order.orderId === activeOrder.orderId
+                ? {
+                    ...order,
+                    paymentStatus: status,
+                    receipt: data.receipt || null,
+                    paymentFailureReason: status === 'succeeded' ? null : failureText,
+                  }
+                : order,
             ),
           );
           if (status === 'succeeded') {
@@ -1079,12 +1154,21 @@ export function StorefrontFlow({
             onNavigate('checkout/complete');
           } else {
             setPaymentPollMessage(
-              data.message ||
+              failureText ||
                 (status === 'cancelled'
                   ? `${providerLabel} confirmed that the payment was cancelled.`
                   : `${providerLabel} confirmed that the payment was not successful. You can retry when ready.`),
             );
           }
+          return;
+        }
+        if (data.providerAuthError) {
+          finished = true;
+          setPollTimedOut(false);
+          setPaymentPollMessage(
+            data.message ||
+              `${providerLabel} rejected verification credentials (401 Unauthorized). Contact the seller before retrying.`,
+          );
           return;
         }
         if (data.providerResponded) {
@@ -1114,6 +1198,7 @@ export function StorefrontFlow({
       }
     };
     setPollTimedOut(false);
+    setPaymentPollAuthError(false);
     setPaymentProviderResponded(false);
     setPaymentPollMessage('Waiting for payment confirmation…');
     void checkPayment();
@@ -1137,6 +1222,67 @@ export function StorefrontFlow({
     if (status) lastPaymentStatus.current = status;
   }, [activeOrder?.paymentStatus]);
 
+  async function verifyCardAttemptAfterClose(orderId: string): Promise<{
+    handled: boolean;
+    status?: string;
+    message?: string;
+    authRequired?: boolean;
+  }> {
+    try {
+      const response = await fetch(
+        '/api/buyer?action=customer-payment-status&slug=' +
+          encodeURIComponent(slug) +
+          '&orderId=' +
+          encodeURIComponent(orderId),
+        { credentials: 'same-origin', cache: 'no-store' },
+      );
+      if (response.status === 401) {
+        return {
+          handled: true,
+          authRequired: true,
+          message: 'Your buyer session expired (401 Unauthorized). Sign in again to check or resume your card payment.',
+        };
+      }
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) return { handled: false };
+      const status = String(data.paymentStatus || '').toLowerCase();
+      if (status === 'succeeded') {
+        setOrders((current) =>
+          current.map((entry) =>
+            entry.orderId === orderId
+              ? { ...entry, paymentStatus: 'succeeded', receipt: data.receipt || entry.receipt, paymentFailureReason: null }
+              : entry,
+          ),
+        );
+        return { handled: true, status, message: data.message || 'Payment confirmed by Paystack.' };
+      }
+      if (status === 'failed' || status === 'cancelled' || status === 'reversed') {
+        const reasonText =
+          data.failureReason ||
+          data.message ||
+          (status === 'cancelled'
+            ? 'Card payment or 3-D Secure verification was cancelled before completion.'
+            : 'Card authorization failed. Please review your card details and try again.');
+        setOrders((current) =>
+          current.map((entry) =>
+            entry.orderId === orderId ? { ...entry, paymentStatus: status, paymentFailureReason: reasonText } : entry,
+          ),
+        );
+        return { handled: true, status, message: reasonText };
+      }
+      if (data.providerAuthError) {
+        return {
+          handled: true,
+          status: 'error',
+          message: data.message || 'Paystack rejected merchant API credentials (401 Unauthorized). Please contact the seller.',
+        };
+      }
+      return { handled: false, status };
+    } catch {
+      return { handled: false };
+    }
+  }
+
   async function retryActiveOrderWithCard() {
     if (!activeOrder?.orderId || retryingOrder) return;
     const targetOrderId = activeOrder.orderId;
@@ -1152,6 +1298,9 @@ export function StorefrontFlow({
         body: JSON.stringify({ slug, orderId: targetOrderId, paymentMethod: 'card' }),
       });
       const d = await r.json().catch(() => ({}));
+      if (r.status === 401) {
+        throw Error('Your buyer session expired (401 Unauthorized). Please sign in again to retry card payment.');
+      }
       if (!r.ok) throw Error(d.error || 'Could not start card payment.');
       if (d.accessCode) {
         let settled = false;
@@ -1172,27 +1321,60 @@ export function StorefrontFlow({
             setCardFallbackUrl(null);
             setOrders((current) =>
               current.map((order) =>
-                order.orderId === targetOrderId ? { ...order, paymentMethod: 'card', paymentStatus: 'pending' } : order,
+                order.orderId === targetOrderId
+                  ? { ...order, paymentMethod: 'card', paymentStatus: 'pending', paymentFailureReason: null }
+                  : order,
               ),
             );
             setPaymentPollMessage('Paystack received your card payment. Confirming your receipt…');
             onNavigate('checkout/processing');
           },
-          onCancel: () => {
+          onCancel: (popupStatus) => {
             settled = true;
             window.clearTimeout(loadGuard);
             setRetryingOrder(false);
-            setCardFallbackUrl(safeHttpsUrl(d.authorizationUrl));
-            setRetryMessage('Card form closed before completing payment. Click below to reopen the card fields.');
+            const fallback = safeHttpsUrl(popupStatus?.checkoutUrl) || safeHttpsUrl(d.authorizationUrl);
+            const inlineDetail = describePaystackPopupFailure(popupStatus);
+            setCardFallbackUrl(fallback);
+            setRetryMessage(inlineDetail || 'Checking card payment status…');
+            void (async () => {
+              const verified = await verifyCardAttemptAfterClose(targetOrderId);
+              if (verified.status === 'succeeded') {
+                setCardFallbackUrl(null);
+                setRetryMessage('');
+                onNavigate('checkout/complete');
+                return;
+              }
+              setRetryMessage(
+                verified.message ||
+                  inlineDetail ||
+                  'Card verification closed before completing payment. Click below to retry or open Paystack directly.',
+              );
+            })();
           },
-          onError: (errMsg) => {
+          onError: (errMsg, popupStatus) => {
             settled = true;
             window.clearTimeout(loadGuard);
             setRetryingOrder(false);
-            setCardFallbackUrl(safeHttpsUrl(d.authorizationUrl));
-            setRetryMessage(
-              errMsg || 'Could not load Paystack card fields here. Use the Paystack checkout link below or try again.',
-            );
+            const fallback = safeHttpsUrl(popupStatus?.checkoutUrl) || safeHttpsUrl(d.authorizationUrl);
+            const inlineDetail = describePaystackPopupFailure(popupStatus);
+            setCardFallbackUrl(fallback);
+            setRetryMessage(inlineDetail || errMsg || 'Checking card payment status…');
+            void (async () => {
+              const verified = await verifyCardAttemptAfterClose(targetOrderId);
+              if (verified.status === 'succeeded') {
+                setCardFallbackUrl(null);
+                setRetryMessage('');
+                onNavigate('checkout/complete');
+                return;
+              }
+              setRetryMessage(
+                verified.message ||
+                  inlineDetail ||
+                  errMsg ||
+                  'Could not complete Paystack card payment here. Use the Paystack checkout link below or try again.',
+              );
+            })();
           },
         });
         if (inlinePopupOpened) return;
@@ -1229,10 +1411,15 @@ export function StorefrontFlow({
         body: JSON.stringify({ slug, orderId: activeOrder.orderId, paymentMethod: 'mpesa', paymentPhone: cleaned }),
       });
       const d = await r.json().catch(() => ({}));
+      if (r.status === 401) {
+        throw Error('Your buyer session expired (401 Unauthorized). Please sign in again to retry payment.');
+      }
       if (!r.ok) throw Error(d.error || 'Could not retry payment');
       setOrders((current) =>
         current.map((order) =>
-          order.orderId === activeOrder.orderId ? { ...order, paymentMethod: 'mpesa', paymentStatus: 'pending' } : order,
+          order.orderId === activeOrder.orderId
+            ? { ...order, paymentMethod: 'mpesa', paymentStatus: 'pending', paymentFailureReason: null }
+            : order,
         ),
       );
       setManualPollTick((tick) => tick + 1);
@@ -1356,6 +1543,7 @@ export function StorefrontFlow({
     try {
       const response = await fetch('/api/buyer?action=order', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           slug,
@@ -1377,6 +1565,9 @@ export function StorefrontFlow({
         }),
       });
       const data = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        throw new Error('Your buyer session expired (401 Unauthorized). Please sign in again and retry checkout.');
+      }
       if (!response.ok || !data.orderNumber || !data.orderId) {
         throw new Error(
           data.error || 'We could not create your order or start payment. Please review your details and try again.',
@@ -1444,23 +1635,62 @@ export function StorefrontFlow({
               setPaymentPollMessage('Paystack received your card payment. Confirming your receipt…');
               onNavigate('checkout/processing');
             },
-            onCancel: () => {
+            onCancel: (popupStatus) => {
               settled = true;
               window.clearTimeout(loadGuard);
               setSubmitting(false);
-              setCardFallbackUrl(safeHttpsUrl(data.authorizationUrl));
-              setCheckoutError(
-                'Card form closed before payment was completed. Click Pay with card to reopen the card fields, or finish later from My orders.',
-              );
+              const fallback = safeHttpsUrl(popupStatus?.checkoutUrl) || safeHttpsUrl(data.authorizationUrl);
+              const inlineDetail = describePaystackPopupFailure(popupStatus);
+              setCardFallbackUrl(fallback);
+              setCheckoutError(inlineDetail || 'Checking card payment status…');
+              void (async () => {
+                const verified = await verifyCardAttemptAfterClose(order.orderId!);
+                if (verified.status === 'succeeded') {
+                  checkoutIdempotency.current = null;
+                  clearCheckoutDraft(getCheckoutScopeKey(slug));
+                  setCheckoutReturnToSummary(false);
+                  onCartChange({});
+                  setCardFallbackUrl(null);
+                  setCheckoutError('');
+                  onOrderCreated?.(order.chatToken || '', order.orderNumber);
+                  onNavigate('checkout/complete');
+                  return;
+                }
+                setCheckoutError(
+                  verified.message ||
+                    inlineDetail ||
+                    'Card form closed before payment was completed. Click Pay with card to reopen the card fields, or finish later from My orders.',
+                );
+              })();
             },
-            onError: (errMsg) => {
+            onError: (errMsg, popupStatus) => {
               settled = true;
               window.clearTimeout(loadGuard);
               setSubmitting(false);
-              setCardFallbackUrl(safeHttpsUrl(data.authorizationUrl));
-              setCheckoutError(
-                errMsg || 'Could not load Paystack card fields here. Use the Paystack checkout link below or try again.',
-              );
+              const fallback = safeHttpsUrl(popupStatus?.checkoutUrl) || safeHttpsUrl(data.authorizationUrl);
+              const inlineDetail = describePaystackPopupFailure(popupStatus);
+              setCardFallbackUrl(fallback);
+              setCheckoutError(inlineDetail || errMsg || 'Checking card payment status…');
+              void (async () => {
+                const verified = await verifyCardAttemptAfterClose(order.orderId!);
+                if (verified.status === 'succeeded') {
+                  checkoutIdempotency.current = null;
+                  clearCheckoutDraft(getCheckoutScopeKey(slug));
+                  setCheckoutReturnToSummary(false);
+                  onCartChange({});
+                  setCardFallbackUrl(null);
+                  setCheckoutError('');
+                  onOrderCreated?.(order.chatToken || '', order.orderNumber);
+                  onNavigate('checkout/complete');
+                  return;
+                }
+                setCheckoutError(
+                  verified.message ||
+                    inlineDetail ||
+                    errMsg ||
+                    'Could not load Paystack card fields here. Use the Paystack checkout link below or try again.',
+                );
+              })();
             },
           });
           if (inlinePopupOpened) return;
@@ -3016,13 +3246,16 @@ export function StorefrontFlow({
     const paymentState = String(activeOrder.paymentStatus || 'pending').toLowerCase();
     const paymentTerminal = ['cancelled', 'failed', 'reversed'].includes(paymentState);
     const paymentSucceeded = paymentState === 'succeeded';
-    const paymentWaiting = !paymentTerminal && !paymentSucceeded;
+    const paymentWaiting = !paymentTerminal && !paymentSucceeded && !paymentPollAuthError;
     const isCardOrder = activeOrder.paymentMethod === 'card';
     const providerLabel = isCardOrder ? 'Paystack' : 'Safaricom';
     const targetAccount = isCardOrder
       ? activeOrder.customerEmail || customerEmail || '—'
       : paymentPhone || activeOrder.customerPhone || '—';
     const itemCount = activeOrder.lines.reduce((sum, line) => sum + line.quantity, 0);
+    const failureMessage =
+      activeOrder.paymentFailureReason ||
+      (paymentTerminal && paymentPollMessage !== 'Waiting for payment confirmation…' ? paymentPollMessage : '');
 
     const step2State = paymentSucceeded || paymentProviderResponded ? 'done' : paymentTerminal ? 'error' : 'active';
     const step3State = paymentSucceeded ? 'done' : paymentTerminal ? 'error' : paymentProviderResponded ? 'active' : 'pending';
@@ -3031,12 +3264,14 @@ export function StorefrontFlow({
       <>
         <CheckoutTopBar title="Payment confirmation" onBack={() => onNavigate('orders')} />
         <section className="sf-flow sf-flow-compact sf-poll-flow">
-          <article className={`sf-panel sf-poll-hero ${paymentSucceeded ? 'is-success' : paymentTerminal ? 'is-error' : 'is-waiting'}`}>
+          <article className={`sf-panel sf-poll-hero ${paymentSucceeded ? 'is-success' : paymentTerminal || paymentPollAuthError ? 'is-error' : 'is-waiting'}`}>
             <div className="sf-poll-top-row">
               {isCardOrder ? <CardProviderIcon compact /> : <MpesaProviderIcon compact />}
-              <span className={`sf-poll-state-label ${paymentSucceeded ? 'is-success' : paymentTerminal ? 'is-error' : 'is-waiting'}`}>
+              <span className={`sf-poll-state-label ${paymentSucceeded ? 'is-success' : paymentTerminal || paymentPollAuthError ? 'is-error' : 'is-waiting'}`}>
                 {paymentSucceeded
                   ? 'Confirmed'
+                  : paymentPollAuthError
+                  ? 'Sign in required'
                   : paymentTerminal
                   ? paymentState === 'cancelled'
                     ? 'Cancelled'
@@ -3055,7 +3290,7 @@ export function StorefrontFlow({
                   <span className="sf-poll-badge is-success">
                     <Check size={24} />
                   </span>
-                ) : paymentTerminal ? (
+                ) : paymentTerminal || paymentPollAuthError ? (
                   <span className="sf-poll-badge is-error">
                     <AlertCircle size={24} />
                   </span>
@@ -3067,6 +3302,8 @@ export function StorefrontFlow({
                 <span className="sf-kicker">
                   {paymentSucceeded
                     ? 'PAYMENT CONFIRMED'
+                    : paymentPollAuthError
+                    ? 'SESSION VERIFICATION REQUIRED'
                     : paymentTerminal
                     ? 'PAYMENT NOT COMPLETED'
                     : isCardOrder
@@ -3076,6 +3313,8 @@ export function StorefrontFlow({
                 <h1>
                   {paymentSucceeded
                     ? 'Your payment is confirmed'
+                    : paymentPollAuthError
+                    ? 'Sign in to check this payment'
                     : paymentState === 'cancelled'
                     ? isCardOrder
                       ? 'Card payment cancelled'
@@ -3099,8 +3338,11 @@ export function StorefrontFlow({
                     ? activeOrder.receipt
                       ? `${providerLabel} verified your payment · Receipt ${activeOrder.receipt}.`
                       : `${providerLabel} verified your payment.`
+                    : paymentPollAuthError
+                    ? 'Your browser session expired or opened on a different host (401 Unauthorized). Sign in again to load your verified payment status.'
                     : paymentTerminal
-                    ? `${providerLabel} confirmed that no funds were collected for this attempt. You can safely retry below.`
+                    ? failureMessage ||
+                      `${providerLabel} confirmed that no funds were collected for this attempt. You can safely retry below.`
                     : paymentProviderResponded
                     ? `${providerLabel} responded. We are verifying your receipt before confirming the order.`
                     : isCardOrder
@@ -3156,24 +3398,37 @@ export function StorefrontFlow({
               </li>
             </ol>
 
-            <div className={`sf-poll-live-row ${paymentSucceeded ? 'is-success' : paymentTerminal ? 'is-error' : ''}`} role="status">
+            <div className={`sf-poll-live-row ${paymentSucceeded ? 'is-success' : paymentTerminal || paymentPollAuthError ? 'is-error' : ''}`} role="status">
               <span>
                 {paymentSucceeded
                   ? `Payment confirmed by ${providerLabel}.`
+                  : paymentPollAuthError
+                  ? paymentPollMessage
                   : paymentTerminal
-                  ? paymentPollMessage || 'Payment attempt ended.'
+                  ? failureMessage || 'Payment attempt ended.'
                   : paymentPollMessage}
               </span>
-              {paymentWaiting && (
+              {paymentPollAuthError ? (
                 <button
                   type="button"
                   className="sf-poll-refresh-btn"
-                  disabled={checkingPollNow}
-                  onClick={() => setManualPollTick((tick) => tick + 1)}
+                  onClick={() => onNavigate('buyer-login')}
                 >
-                  <RefreshCw size={14} className={checkingPollNow ? 'is-spinning' : ''} />
-                  <span>{checkingPollNow ? 'Checking…' : 'Check now'}</span>
+                  <span>Sign in again</span>
+                  <ArrowRight size={14} />
                 </button>
+              ) : (
+                paymentWaiting && (
+                  <button
+                    type="button"
+                    className="sf-poll-refresh-btn"
+                    disabled={checkingPollNow}
+                    onClick={() => setManualPollTick((tick) => tick + 1)}
+                  >
+                    <RefreshCw size={14} className={checkingPollNow ? 'is-spinning' : ''} />
+                    <span>{checkingPollNow ? 'Checking…' : 'Check now'}</span>
+                  </button>
+                )
               )}
             </div>
           </article>
@@ -3485,31 +3740,73 @@ export function StorefrontFlow({
           backLabel="My account"
         />
 
-        {paystackReturnBanner && (
-          <div className="sf-alert success" style={{ marginBottom: 16 }} role="status">
-            <ShieldCheck size={17} style={{ flexShrink: 0, marginTop: 2 }} />
-            <div style={{ flex: 1 }}>
-              <strong>
-                {paystackReturnBanner.status === 'processing'
-                  ? `Card payment submitted for #${paystackReturnBanner.orderNumber}`
-                  : `Card payment pending for #${paystackReturnBanner.orderNumber}`}
-              </strong>
-              <div>
-                {paystackReturnBanner.status === 'processing'
-                  ? 'Paystack verified your card session. Your order status will update to Paid as soon as confirmation finishes.'
-                  : 'Your card payment has not completed yet. Open order details to resume or check status.'}
-              </div>
-            </div>
-            <button
-              type="button"
-              className="sf-btn sf-btn-ghost"
-              style={{ minHeight: 32, padding: '0 8px' }}
-              onClick={() => setPaystackReturnBanner(null)}
+        {paystackReturnBanner && (() => {
+          const isSuccess = paystackReturnBanner.status === 'processing';
+          const isFailure = paystackReturnBanner.status === 'failed' || paystackReturnBanner.status === 'cancelled';
+          const reasonCode = paystackReturnBanner.reason;
+          const failureTitle =
+            paystackReturnBanner.status === 'cancelled'
+              ? `Card payment cancelled for #${paystackReturnBanner.orderNumber}`
+              : paystackReturnBanner.status === 'failed'
+              ? `Card payment could not be completed for #${paystackReturnBanner.orderNumber}`
+              : isSuccess
+              ? `Card payment submitted for #${paystackReturnBanner.orderNumber}`
+              : `Card payment pending for #${paystackReturnBanner.orderNumber}`;
+          const failureBody =
+            reasonCode === '3ds_authentication_failed'
+              ? '3-D Secure card authentication did not complete or was declined by your bank. Open order details to retry card payment or switch to M-PESA.'
+              : reasonCode === 'cardholder_unauthorized'
+              ? 'Your bank reported the cardholder authorization check as unsuccessful. Verify your card or bank 3-D Secure settings and try again.'
+              : reasonCode === 'provider_unauthorized'
+              ? 'Paystack authorization failed while verifying this payment (401 Unauthorized). Contact the seller or support before retrying.'
+              : reasonCode === 'declined'
+              ? 'Your card issuer declined this payment. Try another card or pay with M-PESA.'
+              : reasonCode === 'abandoned'
+              ? 'The card checkout session was closed before 3-D Secure verification finished. Open order details to retry.'
+              : paystackReturnBanner.status === 'cancelled'
+              ? 'Card checkout was cancelled and no payment was collected. Open order details to retry.'
+              : paystackReturnBanner.status === 'failed'
+              ? 'The card transaction failed and no payment was collected. Open order details to see details and retry.'
+              : isSuccess
+              ? 'Paystack verified your card session. Your order status will update to Paid as soon as confirmation finishes.'
+              : 'Your card payment has not completed yet. Open order details to resume or check status.';
+          const matchedOrder = orders.find((entry) => entry.orderNumber === paystackReturnBanner.orderNumber);
+          return (
+            <div
+              className={`sf-alert ${isSuccess ? 'success' : isFailure ? 'error' : 'warn'}`}
+              style={{ marginBottom: 16 }}
+              role="status"
             >
-              Dismiss
-            </button>
-          </div>
-        )}
+              {isFailure ? (
+                <AlertCircle size={17} style={{ flexShrink: 0, marginTop: 2 }} />
+              ) : (
+                <ShieldCheck size={17} style={{ flexShrink: 0, marginTop: 2 }} />
+              )}
+              <div style={{ flex: 1 }}>
+                <strong>{failureTitle}</strong>
+                <div>{matchedOrder?.paymentFailureReason || failureBody}</div>
+              </div>
+              {matchedOrder && (
+                <button
+                  type="button"
+                  className="sf-btn sf-btn-ghost"
+                  style={{ minHeight: 32, padding: '0 8px' }}
+                  onClick={() => openOrder(matchedOrder, 'order-detail')}
+                >
+                  View order
+                </button>
+              )}
+              <button
+                type="button"
+                className="sf-btn sf-btn-ghost"
+                style={{ minHeight: 32, padding: '0 8px' }}
+                onClick={() => setPaystackReturnBanner(null)}
+              >
+                Dismiss
+              </button>
+            </div>
+          );
+        })()}
 
         {ordersLoading && (
           <p style={{ fontSize: 13, color: 'var(--sf-muted)', marginBottom: 12 }}>Refreshing your order history…</p>
@@ -3871,7 +4168,9 @@ export function StorefrontFlow({
 
             {(cancelled || failed) && (
               <p className="sf-alert error" style={{ marginTop: 16 }} role="status">
-                {cancelled
+                {activeOrder.paymentFailureReason
+                  ? activeOrder.paymentFailureReason
+                  : cancelled
                   ? activeOrder.paymentMethod === 'card'
                     ? 'Card payment cancelled. No payment was collected.'
                     : 'M-PESA prompt cancelled. No payment was collected.'
@@ -4028,10 +4327,8 @@ export function StorefrontFlow({
                     <>
                       Receipt: <strong className="sf-mono">{activeOrder.receipt}</strong>
                     </>
-                  ) : cancelled ? (
-                    'No payment collected'
-                  ) : failed ? (
-                    'Payment was not completed'
+                  ) : cancelled || failed ? (
+                    activeOrder.paymentFailureReason || (cancelled ? 'No payment collected' : 'Payment was not completed')
                   ) : (
                     'Payment reference will appear when confirmed'
                   )}

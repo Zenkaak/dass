@@ -40,7 +40,7 @@ export default async function handler(req:any,res:any){
   const customHost=Boolean(host&&host!=='dasmarket.co.ke'&&host!=='www.dasmarket.co.ke'&&!host.endsWith('.dasmarket.co.ke')&&!host.endsWith('.vercel.app')&&!host.endsWith('.run.app')&&!host.endsWith('.googleusercontent.com')&&!host.endsWith('.aistudio.google.com')&&host!=='localhost'&&host!=='127.0.0.1');
   if(customHost){
    sql=db();
-   const mapped=await sql`SELECT t.slug FROM public.domains d JOIN public.tenants t ON t.id=d.tenant_id WHERE lower(d.hostname)=${host} AND d.verified_at IS NOT NULL AND COALESCE(d.status,'active')='active' AND t.status IN ('trial','active') LIMIT 1`;
+   const mapped=await sql`SELECT t.slug FROM public.domains d JOIN public.tenants t ON t.id=d.tenant_id WHERE lower(d.hostname)=${host} AND (d.verified_at IS NOT NULL OR d.verification_data->>'storefrontVerified'='true') AND COALESCE(d.status,'pending') IN ('active','pending') AND t.status IN ('trial','active') LIMIT 1`;
    const mappedSlug=String(mapped[0]?.slug||'');
    if(!mappedSlug|| (slug&&slug!==mappedSlug)){res.setHeader('Cache-Control','no-store');return send(res,404,{error:'This domain is not connected to this shop.'});}
    slug=mappedSlug;res.setHeader('Cache-Control','private, no-store, max-age=0');

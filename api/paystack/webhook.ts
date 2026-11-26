@@ -1,6 +1,11 @@
 import crypto from 'node:crypto';
 import { getDb, hasDatabaseConfig } from '../../server/db.js';
-import { getCentralPaystackCredentials, getSellerPaystackCredentials } from '../../server/paystack.js';
+import {
+  extractPaystackFailureReason,
+  getCentralPaystackCredentials,
+  getSellerPaystackCredentials,
+  logPaymentCallbackFailure,
+} from '../../server/paystack.js';
 
 export const config = { api: { bodyParser: false } };
 const send=(res:any,status:number,body:any)=>res.status(status).json(body);
@@ -36,49 +41,167 @@ async function verifySignature(raw:Buffer,req:any,credentials:any){
 async function verifyTransaction(reference:string,secret:string){
  const response=await fetch('https://api.paystack.co/transaction/verify/'+encodeURIComponent(reference),{headers:{Authorization:'Bearer '+secret,Accept:'application/json'},signal:AbortSignal.timeout(12000)});
  const payload:any=await response.json().catch(()=>({}));
- return {ok:response.ok&&Boolean(payload?.status),data:payload?.data};
+ return {ok:response.ok&&Boolean(payload?.status),httpStatus:response.status,payload,data:payload?.data};
 }
 export default async function handler(req:any,res:any){
  res.setHeader('Cache-Control','no-store');
  if(req.method!=='POST')return send(res,405,{error:'Method not allowed'});
- if(!hasDatabaseConfig())return send(res,503,{error:'Payment service unavailable'});
- let raw:Buffer;
- try{raw=await rawBody(req);}catch{return send(res,400,{error:'Invalid webhook body'});}
- if(raw.length>1024*1024)return send(res,413,{error:'Webhook payload too large'});
- let event:any;
- try{event=JSON.parse(raw.toString('utf8'));}catch{return send(res,400,{error:'Invalid JSON'});}
- const eventType=String(event?.event||'unknown'),data=event.data||{},reference=String(data.reference||'').trim();
- const requestId=String(req.headers['x-vercel-id']||'').slice(0,120)||null;
- console.info('Paystack webhook received',{event:eventType,reference:reference||null,transactionStatus:String(data.status||'unknown'),gatewayResponse:String(data.gateway_response||'').slice(0,180)||null,requestId});
- if(eventType!=='charge.success'){
-  if(eventType==='charge.failed'&&reference){try{const sql=getDb();const rows=await sql`SELECT id,tenant_id,status,payment_route FROM public.payments WHERE provider='paystack' AND provider_reference=${reference} LIMIT 1`;
-   if(rows.length){const payment=rows[0],credentials=payment.payment_route==='own_paystack'?await getSellerPaystackCredentials(String(payment.tenant_id)):await getCentralPaystackCredentials();if(!await verifySignature(raw,req,credentials)){console.error('Paystack failed-event signature rejected',{reference,requestId,paymentRoute:String(payment.payment_route||'')});return send(res,401,{error:'Invalid Paystack signature'});}const diagnostic={event:eventType,transactionStatus:String(data.status||'failed'),gatewayResponse:String(data.gateway_response||'').slice(0,180)||null,message:String(data.message||'').slice(0,180)||null,authorization:{brand:data.authorization?.brand||null,bank:data.authorization?.bank||null,last4:data.authorization?.last4||null,countryCode:data.authorization?.country_code||null},requestId};
-    await sql`UPDATE public.payments SET status=CASE WHEN status IN ('initiated','pending') THEN 'failed' ELSE status END,provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paystackFailure:diagnostic})}::jsonb,updated_at=now() WHERE id=${payment.id} AND tenant_id=${payment.tenant_id}`;
-    console.warn('Paystack charge.failed recorded',{paymentId:String(payment.id),tenantId:String(payment.tenant_id),previousStatus:String(payment.status),...diagnostic});
-   }else console.warn('Paystack charge.failed reference not found',{reference,requestId});
-  }catch(error:any){console.error('Paystack failed-event recording failed',{reference,requestId,error:String(error?.message||error).slice(0,240)});return send(res,500,{error:'Failed payment event could not be recorded'});}}
-  return res.status(200).json({received:true,ignored:true,event:eventType});
+ if(!hasDatabaseConfig()){
+  logPaymentCallbackFailure({provider:'paystack',stage:'webhook',httpStatus:503,reason:'database_unavailable'});
+  return send(res,503,{error:'Payment service unavailable'});
  }
- if(!reference)return send(res,400,{error:'Missing transaction reference'});
+ let raw:Buffer;
+ try{raw=await rawBody(req);}catch(err:any){
+  logPaymentCallbackFailure({provider:'paystack',stage:'webhook',httpStatus:400,reason:'invalid_webhook_body',error:err,severity:'warn'});
+  return send(res,400,{error:'Invalid webhook body'});
+ }
+ if(raw.length>1024*1024){
+  logPaymentCallbackFailure({provider:'paystack',stage:'webhook',httpStatus:413,reason:'payload_too_large',severity:'warn',extra:{bytes:raw.length}});
+  return send(res,413,{error:'Webhook payload too large'});
+ }
+ let event:any;
+ try{event=JSON.parse(raw.toString('utf8'));}catch(err:any){
+  logPaymentCallbackFailure({provider:'paystack',stage:'webhook',httpStatus:400,reason:'invalid_json',error:err,severity:'warn'});
+  return send(res,400,{error:'Invalid JSON'});
+ }
+ const eventName=String(event?.event||'').trim();
+ if(eventName!=='charge.success'&&eventName!=='charge.failed')return res.status(200).json({received:true,ignored:true});
+ const data=event.data||{},reference=String(data.reference||'').trim();
+ if(!reference){
+  logPaymentCallbackFailure({provider:'paystack',stage:'webhook',httpStatus:400,reason:'missing_reference',severity:'warn',extra:{eventName}});
+  return send(res,400,{error:'Missing transaction reference'});
+ }
  try{
   const sql=getDb();
   const existing=await sql`SELECT p.id,p.tenant_id,p.order_id,p.amount_minor,p.currency,p.status,p.payment_route,p.provider_result,o.order_number FROM public.payments p LEFT JOIN public.orders o ON o.id=p.order_id AND o.tenant_id=p.tenant_id WHERE p.provider='paystack' AND p.provider_reference=${reference} LIMIT 1`;
-  if(!existing.length){console.warn('Paystack success webhook reference not found',{reference,requestId});return res.status(200).json({received:true,unmatched:true});}
+  if(!existing.length){
+   logPaymentCallbackFailure({provider:'paystack',stage:'webhook',reference,httpStatus:200,reason:'payment_reference_unmatched',severity:'warn',extra:{eventName}});
+   return res.status(200).json({received:true,unmatched:true});
+  }
   const payment=existing[0];
-  const credentials=payment.payment_route==='own_paystack'?await getSellerPaystackCredentials(String(payment.tenant_id)):await getCentralPaystackCredentials();
-  if(!await verifySignature(raw,req,credentials)){console.error('Paystack webhook signature rejected',{reference,requestId,environment:credentials.environment,paymentRoute:String(payment.payment_route||'')});return send(res,401,{error:'Invalid Paystack signature'});}
+  let credentials;
+  try{
+   credentials=payment.payment_route==='own_paystack'?await getSellerPaystackCredentials(String(payment.tenant_id)):await getCentralPaystackCredentials();
+  }catch(credError:any){
+   logPaymentCallbackFailure({provider:'paystack',stage:'webhook',reference,paymentId:String(payment.id),orderId:payment.order_id?String(payment.order_id):null,orderNumber:payment.order_number?String(payment.order_number):null,tenantId:String(payment.tenant_id),paymentRoute:String(payment.payment_route||''),httpStatus:500,reason:'credential_load_failed',error:credError,extra:{eventName}});
+   return send(res,500,{error:'Webhook credentials unavailable'});
+  }
+  if(!await verifySignature(raw,req,credentials)){
+   logPaymentCallbackFailure({provider:'paystack',stage:'webhook',reference,paymentId:String(payment.id),orderId:payment.order_id?String(payment.order_id):null,orderNumber:payment.order_number?String(payment.order_number):null,tenantId:String(payment.tenant_id),paymentRoute:String(payment.payment_route||''),environment:credentials.environment,httpStatus:401,reason:'invalid_webhook_signature',extra:{eventName,hasModernSig:Boolean(req.headers['paystack-signature']),hasLegacySig:Boolean(req.headers['x-paystack-signature'])}});
+   return send(res,401,{error:'Invalid Paystack signature'});
+  }
   if(payment.status==='succeeded')return res.status(200).json({received:true,duplicate:true});
   const verification=await verifyTransaction(reference,credentials.secretKey),tx=verification.data;
-  const matches=verification.ok&&tx?.status==='success'&&String(tx.reference)===reference&&String(tx.currency||'').toUpperCase()==='KES'&&String(payment.currency||'').trim().toUpperCase()==='KES'&&Number(tx.amount)===Number(payment.amount_minor);
+  const analysis=extractPaystackFailureReason(verification.payload,verification.httpStatus);
+  if(eventName==='charge.failed'){
+   if(verification.ok&&analysis.isTerminal&&analysis.terminalStatus){
+    logPaymentCallbackFailure({
+     provider:'paystack',
+     stage:'webhook',
+     reference,
+     paymentId:String(payment.id),
+     orderId:payment.order_id?String(payment.order_id):null,
+     orderNumber:payment.order_number?String(payment.order_number):null,
+     tenantId:String(payment.tenant_id),
+     paymentRoute:String(payment.payment_route||''),
+     environment:credentials.environment,
+     httpStatus:verification.httpStatus,
+     paystackStatus:Boolean(verification.payload?.status),
+     txStatus:analysis.txStatus,
+     gatewayResponse:analysis.gatewayResponse||null,
+     apiMessage:analysis.apiMessage||null,
+     authChannel:analysis.authChannel||null,
+     authHistory:analysis.authHistory,
+     amountExpected:Number(payment.amount_minor),
+     amountReceived:Number.isFinite(Number(tx?.amount))?Number(tx.amount):null,
+     currency:String(tx?.currency||payment.currency||''),
+     reason:analysis.reasonCode,
+     severity:'warn',
+     extra:{eventName}
+    });
+    const failureMeta={
+     paystackVerifyStatus:analysis.txStatus,
+     paystackFailure:{
+      txStatus:analysis.txStatus,
+      gatewayResponse:analysis.gatewayResponse||null,
+      reasonCode:analysis.reasonCode,
+      failureReason:analysis.userMessage,
+      failedAt:new Date().toISOString(),
+      source:'webhook'
+     }
+    };
+    const updated=await sql`UPDATE public.payments SET status=${analysis.terminalStatus},provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify(failureMeta)}::jsonb,updated_at=now() WHERE id=${payment.id} AND tenant_id=${payment.tenant_id} AND status IN ('initiated','pending') RETURNING id`;
+    const isSub=['seller_subscription','seller_lifetime_license'].includes(String(payment.provider_result?.source||''));
+    if(!isSub&&updated.length){
+     await sql`SELECT public.release_inventory_reservations(${payment.id})`;
+    }
+    return res.status(200).json({received:true,verified:true,recordedStatus:analysis.terminalStatus});
+   }
+   logPaymentCallbackFailure({
+    provider:'paystack',
+    stage:'webhook',
+    reference,
+    paymentId:String(payment.id),
+    orderId:payment.order_id?String(payment.order_id):null,
+    orderNumber:payment.order_number?String(payment.order_number):null,
+    tenantId:String(payment.tenant_id),
+    paymentRoute:String(payment.payment_route||''),
+    environment:credentials.environment,
+    httpStatus:verification.httpStatus,
+    paystackStatus:Boolean(verification.payload?.status),
+    txStatus:analysis.txStatus,
+    gatewayResponse:analysis.gatewayResponse||null,
+    apiMessage:analysis.apiMessage||null,
+    reason:'charge_failed_webhook_unverified',
+    severity:'error',
+    extra:{eventName}
+   });
+   return res.status(200).json({received:true,verified:false,reviewRequired:true});
+  }
+
+  const referenceMatched=String(tx?.reference||'')===reference;
+  const currencyMatched=String(tx?.currency||'').toUpperCase()==='KES'&&String(payment.currency||'').trim().toUpperCase()==='KES';
+  const amountMatched=Number(tx?.amount)===Number(payment.amount_minor);
+  const matches=verification.ok&&tx?.status==='success'&&referenceMatched&&currencyMatched&&amountMatched;
   if(!matches){
-   console.warn('Paystack success webhook failed server verification',{reference,requestId,httpVerified:verification.ok,transactionStatus:String(tx?.status||'unknown'),gatewayResponse:String(tx?.gateway_response||'').slice(0,180)||null,amountMatches:Number(tx?.amount)===Number(payment.amount_minor),currency:String(tx?.currency||''),expectedCurrency:String(payment.currency||''),paymentId:String(payment.id),paymentStatus:String(payment.status)});
-   await sql`UPDATE public.payments SET provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paystackVerification:'mismatch_or_pending',reference})}::jsonb,updated_at=now() WHERE id=${payment.id} AND tenant_id=${payment.tenant_id} AND status IN ('initiated','pending')`;
+   const mismatchReason=!verification.ok
+    ?(verification.httpStatus===401||verification.httpStatus===403?'verify_unauthorized':'verify_failed')
+    :tx?.status==='success'
+    ?(!referenceMatched?'reference_mismatch':!amountMatched?'amount_mismatch':'currency_mismatch')
+    :analysis.reasonCode;
+   logPaymentCallbackFailure({
+    provider:'paystack',
+    stage:'webhook',
+    reference,
+    paymentId:String(payment.id),
+    orderId:payment.order_id?String(payment.order_id):null,
+    orderNumber:payment.order_number?String(payment.order_number):null,
+    tenantId:String(payment.tenant_id),
+    paymentRoute:String(payment.payment_route||''),
+    environment:credentials.environment,
+    httpStatus:verification.httpStatus,
+    paystackStatus:Boolean(verification.payload?.status),
+    txStatus:analysis.txStatus,
+    gatewayResponse:analysis.gatewayResponse||null,
+    apiMessage:analysis.apiMessage||null,
+    authChannel:analysis.authChannel||null,
+    authHistory:analysis.authHistory,
+    amountExpected:Number(payment.amount_minor),
+    amountReceived:Number.isFinite(Number(tx?.amount))?Number(tx.amount):null,
+    currency:String(tx?.currency||payment.currency||''),
+    reason:mismatchReason,
+    extra:{eventName}
+   });
+   await sql`UPDATE public.payments SET provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paystackVerification:'mismatch_or_pending',reference,paystackFailureReason:mismatchReason})}::jsonb,updated_at=now() WHERE id=${payment.id} AND tenant_id=${payment.tenant_id} AND status IN ('initiated','pending')`;
    return res.status(200).json({received:true,verified:false,reviewRequired:true});
   }
   const source=String(payment.provider_result?.source||'');
   if(['seller_subscription','seller_lifetime_license'].includes(source)){
    const planId=String(payment.provider_result?.planId||''),intervalDays=Number(payment.provider_result?.intervalDays),lifetime=source==='seller_lifetime_license';
-   if(!/^[0-9a-f-]{36}$/i.test(planId)||(lifetime?intervalDays!==36500:![30,90,180,365].includes(intervalDays)))return res.status(200).json({received:true,verified:true,reviewRequired:true,reason:'subscription_metadata_invalid'});
+   if(!/^[0-9a-f-]{36}$/i.test(planId)||(lifetime?intervalDays!==36500:![30,90,180,365].includes(intervalDays))){
+    logPaymentCallbackFailure({provider:'paystack',stage:'webhook',reference,paymentId:String(payment.id),tenantId:String(payment.tenant_id),reason:'subscription_metadata_invalid',extra:{source,planId,intervalDays}});
+    return res.status(200).json({received:true,verified:true,reviewRequired:true,reason:'subscription_metadata_invalid'});
+   }
    const settlement=await sql`WITH payment_mark AS (
     UPDATE public.payments SET status='succeeded',provider_receipt=${String(tx.id||reference)},verified_at=now(),provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paystack:{reference,channel:tx.channel||null,paidAt:tx.paid_at||null}})}::jsonb,updated_at=now()
     WHERE id=${payment.id} AND tenant_id=${payment.tenant_id} AND status IN ('initiated','pending') RETURNING id,tenant_id
@@ -106,7 +229,10 @@ export default async function handler(req:any,res:any){
    if(Number(settlement[0]?.subscription_count||0)!==1)throw new Error('Subscription settlement did not produce exactly one active subscription.');
    return res.status(200).json({received:true,verified:true,subscriptionActivated:true});
   }
-  if(!payment.order_id)return res.status(200).json({received:true,verified:true,reviewRequired:true,reason:'payment_order_missing'});
+  if(!payment.order_id){
+   logPaymentCallbackFailure({provider:'paystack',stage:'webhook',reference,paymentId:String(payment.id),tenantId:String(payment.tenant_id),reason:'payment_order_missing'});
+   return res.status(200).json({received:true,verified:true,reviewRequired:true,reason:'payment_order_missing'});
+  }
   await sql`SELECT public.consume_inventory_reservations(${payment.id})`;
   const settlement=await sql`WITH wanted AS (
     SELECT product_id,SUM(quantity)::integer AS quantity FROM public.order_items WHERE tenant_id=${payment.tenant_id} AND order_id=${payment.order_id} AND product_id IS NOT NULL GROUP BY product_id
@@ -128,10 +254,9 @@ export default async function handler(req:any,res:any){
    ) SELECT (SELECT COUNT(*) FROM payment_mark)::int AS payment_count,(SELECT COUNT(*) FROM queued)::int AS queued_count,(SELECT COUNT(*) FROM wanted)::int AS wanted_count,(SELECT COUNT(*) FROM stock_update)::int AS stock_count`;
   if(Number(settlement[0]?.payment_count||0)===0)return res.status(200).json({received:true,duplicate:true});
   if(Number(settlement[0]?.stock_count||0)!==Number(settlement[0]?.wanted_count||0))console.error('Verified Paystack payment requires inventory review',{paymentId:payment.id,orderId:payment.order_id});
-  console.info('Paystack payment webhook settled',{reference,requestId,paymentId:String(payment.id),orderId:String(payment.order_id),reconciliationQueued:Number(settlement[0]?.queued_count||0)>0});
   return res.status(200).json({received:true,verified:true,reconciliationQueued:Number(settlement[0]?.queued_count||0)>0});
  }catch(error:any){
-  console.error('Paystack webhook processing failed',{reference,requestId,errorName:String(error?.name||'Error'),error:String(error?.message||error).slice(0,240)});
+  logPaymentCallbackFailure({provider:'paystack',stage:'webhook',reference,httpStatus:500,reason:'webhook_exception',error});
   return send(res,500,{error:'Webhook processing failed'});
  }
 }
