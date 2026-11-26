@@ -28,7 +28,7 @@
     },
     {
       "path": "/api/payment-email-cron",
-      "schedule": "*/10 * * * *"
+      "schedule": "0 2 * * *"
     }
   ],
   "headers": [
