@@ -27,7 +27,7 @@
       "schedule": "0 1 * * *"
     },
     {
-      "path": "/api/payment-email-cron",
+      "path": "/api/store?action=payment-email-cron",
       "schedule": "0 2 * * *"
     }
   ],
