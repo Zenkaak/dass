@@ -47,20 +47,31 @@ export default async function handler(req:any,res:any){
  if(raw.length>1024*1024)return send(res,413,{error:'Webhook payload too large'});
  let event:any;
  try{event=JSON.parse(raw.toString('utf8'));}catch{return send(res,400,{error:'Invalid JSON'});}
- if(event?.event!=='charge.success')return res.status(200).json({received:true,ignored:true});
- const data=event.data||{},reference=String(data.reference||'').trim();
+ const eventType=String(event?.event||'unknown'),data=event.data||{},reference=String(data.reference||'').trim();
+ const requestId=String(req.headers['x-vercel-id']||'').slice(0,120)||null;
+ console.info('Paystack webhook received',{event:eventType,reference:reference||null,transactionStatus:String(data.status||'unknown'),gatewayResponse:String(data.gateway_response||'').slice(0,180)||null,requestId});
+ if(eventType!=='charge.success'){
+  if(eventType==='charge.failed'&&reference){try{const sql=getDb();const rows=await sql`SELECT id,tenant_id,status FROM public.payments WHERE provider='paystack' AND provider_reference=${reference} LIMIT 1`;
+   if(rows.length){const payment=rows[0],diagnostic={event:eventType,transactionStatus:String(data.status||'failed'),gatewayResponse:String(data.gateway_response||'').slice(0,180)||null,message:String(data.message||'').slice(0,180)||null,authorization:{brand:data.authorization?.brand||null,bank:data.authorization?.bank||null,last4:data.authorization?.last4||null,countryCode:data.authorization?.country_code||null},requestId};
+    await sql`UPDATE public.payments SET status=CASE WHEN status IN ('initiated','pending') THEN 'failed' ELSE status END,provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paystackFailure:diagnostic})}::jsonb,updated_at=now() WHERE id=${payment.id} AND tenant_id=${payment.tenant_id}`;
+    console.warn('Paystack charge.failed recorded',{paymentId:String(payment.id),tenantId:String(payment.tenant_id),previousStatus:String(payment.status),...diagnostic});
+   }else console.warn('Paystack charge.failed reference not found',{reference,requestId});
+  }catch(error:any){console.error('Paystack failed-event recording failed',{reference,requestId,error:String(error?.message||error).slice(0,240)});return send(res,500,{error:'Failed payment event could not be recorded'});}}
+  return res.status(200).json({received:true,ignored:true,event:eventType});
+ }
  if(!reference)return send(res,400,{error:'Missing transaction reference'});
  try{
   const sql=getDb();
   const existing=await sql`SELECT p.id,p.tenant_id,p.order_id,p.amount_minor,p.currency,p.status,p.payment_route,p.provider_result,o.order_number FROM public.payments p LEFT JOIN public.orders o ON o.id=p.order_id AND o.tenant_id=p.tenant_id WHERE p.provider='paystack' AND p.provider_reference=${reference} LIMIT 1`;
-  if(!existing.length)return res.status(200).json({received:true,unmatched:true});
+  if(!existing.length){console.warn('Paystack success webhook reference not found',{reference,requestId});return res.status(200).json({received:true,unmatched:true});}
   const payment=existing[0];
   const credentials=payment.payment_route==='own_paystack'?await getSellerPaystackCredentials(String(payment.tenant_id)):await getCentralPaystackCredentials();
-  if(!await verifySignature(raw,req,credentials))return send(res,401,{error:'Invalid Paystack signature'});
+  if(!await verifySignature(raw,req,credentials)){console.error('Paystack webhook signature rejected',{reference,requestId,environment:credentials.environment,paymentRoute:String(payment.payment_route||'')});return send(res,401,{error:'Invalid Paystack signature'});}
   if(payment.status==='succeeded')return res.status(200).json({received:true,duplicate:true});
   const verification=await verifyTransaction(reference,credentials.secretKey),tx=verification.data;
   const matches=verification.ok&&tx?.status==='success'&&String(tx.reference)===reference&&String(tx.currency||'').toUpperCase()==='KES'&&String(payment.currency||'').trim().toUpperCase()==='KES'&&Number(tx.amount)===Number(payment.amount_minor);
   if(!matches){
+   console.warn('Paystack success webhook failed server verification',{reference,requestId,httpVerified:verification.ok,transactionStatus:String(tx?.status||'unknown'),gatewayResponse:String(tx?.gateway_response||'').slice(0,180)||null,amountMatches:Number(tx?.amount)===Number(payment.amount_minor),currency:String(tx?.currency||''),expectedCurrency:String(payment.currency||''),paymentId:String(payment.id),paymentStatus:String(payment.status)});
    await sql`UPDATE public.payments SET provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paystackVerification:'mismatch_or_pending',reference})}::jsonb,updated_at=now() WHERE id=${payment.id} AND tenant_id=${payment.tenant_id} AND status IN ('initiated','pending')`;
    return res.status(200).json({received:true,verified:false,reviewRequired:true});
   }
@@ -117,9 +128,10 @@ export default async function handler(req:any,res:any){
    ) SELECT (SELECT COUNT(*) FROM payment_mark)::int AS payment_count,(SELECT COUNT(*) FROM queued)::int AS queued_count,(SELECT COUNT(*) FROM wanted)::int AS wanted_count,(SELECT COUNT(*) FROM stock_update)::int AS stock_count`;
   if(Number(settlement[0]?.payment_count||0)===0)return res.status(200).json({received:true,duplicate:true});
   if(Number(settlement[0]?.stock_count||0)!==Number(settlement[0]?.wanted_count||0))console.error('Verified Paystack payment requires inventory review',{paymentId:payment.id,orderId:payment.order_id});
+  console.info('Paystack payment webhook settled',{reference,requestId,paymentId:String(payment.id),orderId:String(payment.order_id),reconciliationQueued:Number(settlement[0]?.queued_count||0)>0});
   return res.status(200).json({received:true,verified:true,reconciliationQueued:Number(settlement[0]?.queued_count||0)>0});
  }catch(error:any){
-  console.error('Paystack webhook processing failed',String(error?.message||error).slice(0,180));
+  console.error('Paystack webhook processing failed',{reference,requestId,errorName:String(error?.name||'Error'),error:String(error?.message||error).slice(0,240)});
   return send(res,500,{error:'Webhook processing failed'});
  }
 }
