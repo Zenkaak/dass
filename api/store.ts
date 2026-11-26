@@ -565,16 +565,23 @@ export default async function handler(req:any,res:any){
      const meta=p.provider_result||{},planId=String(meta.planId||''),intervalDays=Number(meta.intervalDays);
      const lifetime=p.provider_result?.source==='seller_lifetime_license';
      if(!/^[0-9a-f-]{36}$/i.test(planId)||(lifetime?intervalDays!==36500:![30,90,180,365].includes(intervalDays)))return send(res,200,{ResultCode:0,ResultDesc:'Payment received; subscription details require admin review'});
-     await sql`UPDATE public.payments SET status='succeeded',provider_receipt=${receipt},provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({callback:cb,callbackResultCode:resultCode})}::jsonb,verified_at=now(),updated_at=now() WHERE id=${p.id} AND status IN ('initiated','pending')`;
-     const existing=await sql`SELECT id FROM public.subscriptions WHERE tenant_id=${p.tenant_id} ORDER BY created_at DESC LIMIT 1`;
-     if(existing.length){
-      if(lifetime)await sql`UPDATE public.subscriptions SET plan_id=${planId},status='active',trial_ends_at=NULL,current_period_start=now(),current_period_end='9999-12-31 23:59:59+00'::timestamptz,provider_payment_id=${p.id},updated_at=now() WHERE id=${existing[0].id}`;
-      else await sql`UPDATE public.subscriptions SET plan_id=${planId},status='active',trial_ends_at=NULL,current_period_start=now(),current_period_end=now()+make_interval(days=>${intervalDays}),provider_payment_id=${p.id},updated_at=now() WHERE id=${existing[0].id}`;
-     }else{
-      if(lifetime)await sql`INSERT INTO public.subscriptions(tenant_id,plan_id,status,trial_ends_at,current_period_start,current_period_end,provider_payment_id) VALUES(${p.tenant_id},${planId},'active',NULL,now(),'9999-12-31 23:59:59+00'::timestamptz,${p.id})`;
-      else await sql`INSERT INTO public.subscriptions(tenant_id,plan_id,status,trial_ends_at,current_period_start,current_period_end,provider_payment_id) VALUES(${p.tenant_id},${planId},'active',NULL,now(),now()+make_interval(days=>${intervalDays}),${p.id})`;
-     }
-     await sql`UPDATE public.tenants SET status='active',updated_at=now() WHERE id=${p.tenant_id} AND status IN ('trial','past_due')`;
+     const activation=await sql`WITH payment_mark AS (
+      UPDATE public.payments SET status='succeeded',provider_receipt=${receipt},provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({callback:cb,callbackResultCode:resultCode})}::jsonb,verified_at=now(),updated_at=now()
+      WHERE id=${p.id} AND status IN ('initiated','pending') RETURNING id,tenant_id
+     ), current_subscription AS (
+      SELECT s.id FROM public.subscriptions s WHERE s.tenant_id=${p.tenant_id} AND EXISTS(SELECT 1 FROM payment_mark) ORDER BY s.created_at DESC LIMIT 1
+     ), updated_subscription AS (
+      UPDATE public.subscriptions s SET plan_id=${planId},status='active',trial_ends_at=NULL,current_period_start=now(),current_period_end=CASE WHEN ${lifetime} THEN '9999-12-31 23:59:59+00'::timestamptz ELSE now()+make_interval(days=>${intervalDays}) END,provider_payment_id=pm.id,updated_at=now()
+      FROM current_subscription cs,payment_mark pm WHERE s.id=cs.id RETURNING s.id
+     ), inserted_subscription AS (
+      INSERT INTO public.subscriptions(tenant_id,plan_id,status,trial_ends_at,current_period_start,current_period_end,provider_payment_id)
+      SELECT pm.tenant_id,${planId},'active',NULL,now(),CASE WHEN ${lifetime} THEN '9999-12-31 23:59:59+00'::timestamptz ELSE now()+make_interval(days=>${intervalDays}) END,pm.id
+      FROM payment_mark pm WHERE NOT EXISTS(SELECT 1 FROM current_subscription) RETURNING id
+     ), tenant_activation AS (
+      UPDATE public.tenants SET status='active',updated_at=now() WHERE id=${p.tenant_id} AND status IN ('trial','past_due') AND EXISTS(SELECT 1 FROM payment_mark) RETURNING id
+     ) SELECT (SELECT COUNT(*) FROM payment_mark)::int AS payment_count,((SELECT COUNT(*) FROM updated_subscription)+(SELECT COUNT(*) FROM inserted_subscription))::int AS subscription_count`;
+     if(Number(activation[0]?.payment_count||0)===0)return send(res,200,{ResultCode:0,ResultDesc:'Already processed'});
+     if(Number(activation[0]?.subscription_count||0)!==1)throw new Error('Subscription settlement did not produce exactly one active subscription.');
      try{const [owner,plan]=await Promise.all([sql`SELECT COALESCE(NULLIF(t.billing_email,''),u.email) AS email,t.name AS shop_name FROM public.tenants t JOIN public.users u ON u.id=t.created_by WHERE t.id=${p.tenant_id} LIMIT 1`,sql`SELECT name FROM public.subscription_plans WHERE id=${planId} LIMIT 1`]);if(owner[0]?.email){const planName=String(plan[0]?.name||(lifetime?'Lifetime platform licence':'Subscription')),mail=brandedEmail('DASMARKET',lifetime?'Lifetime licence activated':'Subscription activated','Your DASMARKET payment has been verified and your shop access is active.',{'Shop':String(owner[0].shop_name||''),'Plan':planName,'Amount paid':(Number(p.amount_minor||0)/100).toLocaleString('en-KE',{style:'currency',currency:'KES'}),'M-PESA receipt':receipt,'Access':lifetime?'Lifetime':'Until '+new Date(Date.now()+intervalDays*86400000).toLocaleDateString('en-KE')});await sendTransactionalEmail({to:String(owner[0].email),subject:'DASMARKET '+(lifetime?'lifetime licence':'subscription')+' activated',...mail,idempotencyKey:'platform-billing-success-'+p.id});}}catch(emailError:any){console.error('Subscription activation email failed',String(emailError?.message||emailError).slice(0,200));}
      return send(res,200,{ResultCode:0,ResultDesc:'Subscription payment verified and activated'});
     }
