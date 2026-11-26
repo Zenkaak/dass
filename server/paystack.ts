@@ -115,8 +115,9 @@ export function extractPaystackFailureReason(verifyJson:any,httpStatus?:number):
   };
  }
 
- const is3dsFailure=/3[\s-]?d\s*secure|3ds|\bacs\b|\botp\b|challenge|authentication\s*(failed|cancelled|aborted|unsuccessful|timeout)|not\s*authenticated/i.test(combined);
- const isUnauthorizedCardholder=/unauthori[sz]ed|not\s*permitted|do\s*not\s*honou?r|invalid\s*card|authentication\s*required|issuer.*reject/i.test(combined);
+ const explicit3dsCardholderDecline=/card\s*holder.{0,60}not\s*authori[sz]ed|not\s*authori[sz]ed.{0,80}3[\s-]?d\s*secure/i.test(combined);
+ const is3dsFailure=explicit3dsCardholderDecline||/3[\s-]?d\s*secure|3ds|\bacs\b|\botp\b|challenge|authentication\s*(failed|cancelled|aborted|unsuccessful|timeout)|not\s*authenticated/i.test(combined);
+ const isUnauthorizedCardholder=/unauthori[sz]ed|not\s*authori[sz]ed|not\s*permitted|do\s*not\s*honou?r|invalid\s*card|authentication\s*required|issuer.*reject/i.test(combined);
  const isTerminal=['failed','abandoned','reversed'].includes(txStatus);
 
  if(txStatus==='reversed'){
@@ -130,6 +131,20 @@ export function extractPaystackFailureReason(verifyJson:any,httpStatus?:number):
    authHistory,
    reasonCode:'reversed',
    userMessage:gatewayResponse?`Card payment was reversed (${gatewayResponse}).`:'Paystack confirmed that this card payment was reversed.'
+  };
+ }
+
+ if(explicit3dsCardholderDecline){
+  return {
+   isTerminal:true,
+   terminalStatus:'failed',
+   txStatus:txStatus||'failed',
+   gatewayResponse,
+   apiMessage,
+   authChannel,
+   authHistory,
+   reasonCode:'3ds_authentication_failed',
+   userMessage:'Your bank did not approve the cardholder 3-D Secure authentication. Try another card or contact your bank to enable or approve 3-D Secure payments.'
   };
  }
 
