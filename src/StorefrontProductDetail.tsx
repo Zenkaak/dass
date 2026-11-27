@@ -278,6 +278,8 @@ export function StorefrontProductDetail({
                     <img
                       src={src}
                       alt={`${product.name} view ${i + 1}`}
+                      loading="lazy"
+                      decoding="async"
                       onError={(e) => {
                         e.currentTarget.onerror = null;
                         e.currentTarget.src = fallbackProductImage(product.name);
