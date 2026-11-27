@@ -73,7 +73,7 @@ export default async function handler(req:any,res:any){
    res.setHeader('Content-Type','application/manifest+json; charset=utf-8');
    if(kind==='seller'){
     const start=host.startsWith('adm.')?'/':'/auth';
-    return res.status(200).json({...base,id:start,name:'DASMARKET Seller Dashboard',short_name:'DAS Seller',description:'Manage your shop, products and orders.',start_url:start,scope:start});
+    return res.status(200).json({...base,id:start,name:'DASMARKET Seller Dashboard',short_name:'DAS Seller',description:'Manage your shop, products and orders.',start_url:start,scope:'/'});
    }
    if(kind!=='store'){
     return res.status(200).json({...base,id:'/',name:'DASMARKET Kenya',short_name:'DASMARKET',description:'Create and manage your online shop with DASMARKET.',start_url:'/',scope:'/'});
