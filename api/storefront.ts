@@ -119,7 +119,7 @@ export default async function handler(req:any,res:any){
       AND (${requestedProductKey}='' OR p.sku=${requestedProductKey} OR p.id::text=${requestedProductKey})
   ), product_page_base AS (
     SELECT p.id,p.name,p.description,p.product_type,p.price_minor,p.currency,p.stock_quantity,p.is_active,p.images,p.metadata,p.sku,p.created_at
-    FROM filtered_products p ORDER BY p.created_at DESC,p.id DESC LIMIT ${requestedLimit} OFFSET ${requestedOffset}
+    FROM filtered_products p ORDER BY CASE WHEN lower(COALESCE(p.metadata->>'parent_category',''))='phones & tablets' THEN CASE WHEN lower(COALESCE(p.metadata->>'category',''))='mobile phones' OR lower(COALESCE(p.metadata->>'category_key','')) IN ('android-phones','ios-phones','smartphones','cell-phones-d') THEN 0 WHEN lower(COALESCE(p.metadata->>'category',''))='tablets & pads' THEN 1 WHEN lower(COALESCE(p.metadata->>'category',''))='smart watches & trackers' THEN 2 ELSE 3 END ELSE 0 END, p.created_at DESC,p.id DESC LIMIT ${requestedLimit} OFFSET ${requestedOffset}
   ), review_stats AS (
     SELECT r.product_id,AVG(r.rating)::numeric(3,2) AS rating_average,COUNT(*)::int AS rating_count
     FROM public.product_reviews r
