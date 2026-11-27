@@ -28,10 +28,10 @@ export function usePWAInstall() {
     };
 
     const handleAppInstalled = () => {
-      // Only hide the install control when standalone mode confirms the app is running.
+      // The browser's appinstalled event is the authoritative install confirmation.
       setDeferredPrompt(null);
       setPromptReady(false);
-      setIsInstalled(checkStandalone());
+      setIsInstalled(true);
     };
 
     const mql = window.matchMedia('(display-mode: standalone)');
@@ -56,8 +56,8 @@ export function usePWAInstall() {
       if (outcome === 'accepted') {
         // Acceptance only means the browser accepted the prompt. Wait for
         // appinstalled / standalone mode before hiding the install control.
-        setDeferredPrompt(null);
-        setPromptReady(false);
+        // Keep the install control visible until appinstalled confirms success.
+        // Some Android browsers accept the prompt but never complete installation.
       }
       return outcome;
     } catch {
