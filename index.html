@@ -19,7 +19,7 @@
         var reserved = ['', 'login','signup','reset-password','dashboard','platform-admin','create-online-store','ecommerce-platform','sell-online-with-mpesa','custom-domain-online-store','online-store-management'];
         var seller = host.startsWith('adm.') || first === 'dashboard';
         var storefront = !seller && (tenantSub || !platform || (first && reserved.indexOf(first) === -1));
-        var href = seller ? '/api/manifest?type=seller' : storefront ? '/api/manifest?type=store' : '/api/manifest?type=platform';
+        var storeSlug = first && reserved.indexOf(first) === -1 ? '&slug=' + encodeURIComponent(first) : '';\n        var href = seller ? '/api/manifest?type=seller' : storefront ? '/api/manifest?type=store' + storeSlug : '/api/manifest?type=platform';
         var link = document.createElement('link');
         link.rel = 'manifest';
         link.href = href;
