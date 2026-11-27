@@ -92,7 +92,7 @@ export default async function handler(req:any,res:any){
    const actualSlug=String(row?.slug||storeSlug||'').trim();
    const start=custom||tenantSub||!actualSlug?'/':'/'+encodeURIComponent(actualSlug);
    const theme=/^#[0-9a-f]{6}$/i.test(String(row?.theme||''))?String(row.theme):'#ea580c';
-   return res.status(200).json({...base,id:start,name,short_name:name.slice(0,12).trim()||'Shop',description:String(row?.description||'Browse products, place orders and shop online.').slice(0,200),theme_color:theme,start_url:start,scope:start});
+   return res.status(200).json({...base,id:start,name,short_name:name||'Shop',description:String(row?.description||'Browse products, place orders and shop online.').slice(0,200),theme_color:theme,start_url:start,scope:start});
   }
   const customHost=Boolean(host&&host!=='dasmarket.co.ke'&&host!=='www.dasmarket.co.ke'&&!host.endsWith('.dasmarket.co.ke')&&!host.endsWith('.vercel.app')&&!host.endsWith('.run.app')&&!host.endsWith('.googleusercontent.com')&&!host.endsWith('.aistudio.google.com')&&host!=='localhost'&&host!=='127.0.0.1');
   if(customHost){
