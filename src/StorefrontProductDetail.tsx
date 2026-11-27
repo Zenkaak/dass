@@ -19,6 +19,9 @@ export type LiveProduct = {
   imageUrl?: string;
   ratingAverage?: number;
   ratingCount?: number;
+  catalogRating?: number;
+  catalogRatingCount?: number;
+  condition?: string;
 };
 
 export function fallbackProductImage(label: string) {
@@ -301,11 +304,21 @@ export function StorefrontProductDetail({
               </div>
               <h1>{product.name}</h1>
               <div className="sf-pdp-submeta">
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <Stars value={summary.average} />
-                  <strong>{summary.average ? summary.average.toFixed(1) : 'New'}</strong>
-                  <span>({summary.count} verified ratings)</span>
-                </span>
+                {summary.count > 0 ? (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <Stars value={summary.average} />
+                    <strong>{summary.average.toFixed(1)}</strong>
+                    <span>({summary.count} verified buyer ratings)</span>
+                  </span>
+                ) : product.catalogRating && product.catalogRating > 0 ? (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <Stars value={product.catalogRating} />
+                    <strong>{product.catalogRating.toFixed(1)}</strong>
+                    <span>Catalogue source rating{product.catalogRatingCount ? ` · ${product.catalogRatingCount} source reviews` : ''}</span>
+                  </span>
+                ) : (
+                  <span>No ratings yet</span>
+                )}
                 <span aria-hidden="true">·</span>
                 <span className="sf-mono">SKU {product.sku || product.id.slice(0, 8).toUpperCase()}</span>
               </div>
@@ -396,7 +409,7 @@ export function StorefrontProductDetail({
               <div className="sf-specs-grid">
                 <div>
                   <span>Condition</span>
-                  <strong>{(product as any).condition || 'Not specified'}</strong>
+                  <strong>{product.condition || 'Not specified'}</strong>
                 </div>
                 <div>
                   <span>Category</span>
