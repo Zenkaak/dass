@@ -324,7 +324,6 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
          <strong>{promoPhoneRaw}</strong>
         </a>
        )}
-       <PWAInstallButton variant="storefront" label="Install App" appName={shop?.name||'this store'} showFallback />
        <button type="button" className="sf-announcement-right" onClick={()=>navigateBuyerPage('collection/all-products')}>
         <span>Shop Now</span> <ArrowRight size={13}/>
        </button>
@@ -428,7 +427,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
      <button type="button" onClick={()=>{navigateBuyerPage('collection/top-picks');setMobileSidebarOpen(false);setDesktopSidebarOpen(false)}}><span><Star size={16}/> Top picks</span></button>
      <button type="button" onClick={()=>{navigateBuyerPage('collection/featured-products');setMobileSidebarOpen(false);setDesktopSidebarOpen(false)}}><span><TicketPercent size={16}/> Featured products</span></button>
      <button type="button" onClick={()=>{navigateBuyerPage('faqs');setMobileSidebarOpen(false);setDesktopSidebarOpen(false)}}><span><HelpCircle size={16}/> Shopping help</span></button>
-     <PWAInstallButton variant="drawer" label={`Install ${shop?.name||'Store'} App`} appName={shop?.name||'this store'} showFallback />
+     <PWAInstallButton variant="drawer" label="Install app" appName={shop?.name||"this store"} showFallback />
     </nav>
     <div className="sf-drawer-section-label">Categories</div>
     <div className="sf-drawer-links">
@@ -472,7 +471,6 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
      <a className="sf-btn sf-btn-secondary" href={`https://wa.me/${shop?.whatsappNumber?shop.whatsappNumber.replace(/\D/g,''):'254758884861'}?text=Hello%2C%20I%20need%20help%20with%20a%20storefront.`} target="_blank" rel="noopener noreferrer">
       <MessageCircle size={15}/> WhatsApp Support
      </a>
-     <PWAInstallButton variant="footer" label="Install Store App" appName={shop?.name||'this store'} showFallback />
     </div>
     <div className="sf-footer-col">
      <b>Shop</b>
@@ -920,7 +918,8 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
      {renderFooter()}
     </>
    )}
-   {buyerPage!=='cart'&&!isCheckoutFlowRoute&&shop?.whatsappNumber&&shop.whatsappNumber.replace(/\D/g,'').length>=10&&(
+   {!isBuyerAccountRoute&&!isCheckoutFlowRoute&&buyerPage!=='buyer-login'&&buyerPage!=='buyer-signup'&&<PWAInstallButton variant="floating" label="Install app" appName={shop?.name||'this store'} showFallback />}
+    {buyerPage!=='cart'&&!isCheckoutFlowRoute&&shop?.whatsappNumber&&shop.whatsappNumber.replace(/\D/g,'').length>=10&&(
     <a className={'sf-whatsapp-float'+((totalCartUnits>0||buyerPage==='product-detail')?' has-bottom-bar':'')} href={`https://wa.me/${shop.whatsappNumber.replace(/\D/g,'')}?text=Hello%2C%20I%20need%20help%20with%20this%20storefront.`} target="_blank" rel="noopener noreferrer" aria-label={`Contact ${shop?.name||'this shop'} on WhatsApp`}>
      <MessageCircle size={18}/><span>Help</span>
     </a>
