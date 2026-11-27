@@ -19,14 +19,17 @@ function getStorageConfig(){
 
 function storageUrl(key:string,method:'PUT'|'GET'){
  const cfg=getStorageConfig();
- const now=new Date(),amz=now.toISOString().slice(0,19).replace(/[-:T]/g,'')+'Z',day=amz.slice(0,8),scope=day+'/'+cfg.region+'/s3/aws4_request',path='/'+cfg.bucket+'/'+key.split('/').map(awsEncode).join('/');
- const params:any={'X-Amz-Algorithm':'AWS4-HMAC-SHA256','X-Amz-Credential':cfg.access+'/'+scope,'X-Amz-Date':amz,'X-Amz-Expires':'300','X-Amz-SignedHeaders':'host'};
+ const bucketTime=method==='GET'?Math.floor(Date.now()/600000)*600000:Date.now();
+ const now=new Date(bucketTime),amz=now.toISOString().slice(0,19).replace(/[-:T]/g,'')+'Z',day=amz.slice(0,8),scope=day+'/'+cfg.region+'/s3/aws4_request',path='/'+cfg.bucket+'/'+key.split('/').map(awsEncode).join('/');
+ const params:any={'X-Amz-Algorithm':'AWS4-HMAC-SHA256','X-Amz-Credential':cfg.access+'/'+scope,'X-Amz-Date':amz,'X-Amz-Expires':method==='GET'?'3600':'300','X-Amz-SignedHeaders':'host'};
  const canonicalQuery=Object.keys(params).sort().map(k=>awsEncode(k)+'='+awsEncode(params[k])).join('&');
  const canonical=[method,path,canonicalQuery,'host:'+cfg.host+'\n','host','UNSIGNED-PAYLOAD'].join('\n');
  const toSign=['AWS4-HMAC-SHA256',amz,scope,crypto.createHash('sha256').update(canonical).digest('hex')].join('\n');
  const kDate=hmac('AWS4'+cfg.secret,day),kRegion=hmac(kDate,cfg.region),kService=hmac(kRegion,'s3'),kSigning=hmac(kService,'aws4_request'),signature=hmac(kSigning,toSign,'hex');
  return cfg.endpointClean+path+'?'+canonicalQuery+'&X-Amz-Signature='+signature;
 }
+
+const storefrontCache=new Map<string,{expires:number;payload:any}>();
 
 let cashColumnsPromise:Promise<void>|null=null;
 function ensureCashColumns(sql:any){
@@ -75,6 +78,14 @@ export default async function handler(req:any,res:any){
   const requestedProductKey=String(req.query?.productKey||'').trim().slice(0,120);
   const requestedIds=String(req.query?.ids||'').split(',').map((id:string)=>id.trim()).filter((id:string)=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)).slice(0,50);
   const searchPattern=requestedSearch?('%'+requestedSearch+'%'):'';
+  const cacheKey=!customHost&&!requestedIds.length?`${slug}|${requestedLimit}|${requestedOffset}|${requestedCategory}|${requestedSearch}|${requestedProductKey}`:'';
+  if(cacheKey){
+   const cached=storefrontCache.get(cacheKey);
+   if(cached&&cached.expires>Date.now()){
+    res.setHeader('Cache-Control','public, max-age=15, s-maxage=30, stale-while-revalidate=120');
+    return send(res,200,cached.payload);
+   }
+  }
 
   await ensureCashColumns(sql);
 
@@ -120,6 +131,7 @@ export default async function handler(req:any,res:any){
     SELECT r.product_id,AVG(r.rating)::numeric(3,2) AS rating_average,COUNT(*)::int AS rating_count
     FROM public.product_reviews r
     JOIN product_page_base p ON p.id=r.product_id
+    JOIN target_tenant t ON t.id=r.tenant_id
     WHERE r.status='published'
     GROUP BY r.product_id
   ), product_page AS (
@@ -139,8 +151,13 @@ export default async function handler(req:any,res:any){
 
   if(!rows.length){res.setHeader('Cache-Control','no-store');return send(res,404,{error:'Shop not found'});}
   const row=rows[0];
-  res.setHeader('Cache-Control',customHost?'private, no-store, max-age=0':'public, max-age=0, s-maxage=30, stale-while-revalidate=120');
-  return send(res,200,{shop:{name:row.shop_name,slug:row.slug,description:row.description||'',logoUrl:typeof row.logo_url==='string'&&row.logo_url.startsWith('data:')&&row.logo_url.length>65536?'':row.logo_url||'',whatsappNumber:row.contact_phone||row.whatsapp_number||'',contactPhone:row.contact_phone||row.whatsapp_number||'',contactEmail:row.contact_email||'',termsAndConditions:row.terms_and_conditions||'',privacyPolicy:row.privacy_policy||'',returnPolicy:row.return_policy||'',deliveryPolicy:row.delivery_policy||'',deliveryHomeFee:Number(row.delivery_home_fee_minor||0)/100,deliveryPickupFee:Number(row.delivery_pickup_fee_minor||0)/100,cashOnDeliveryEnabled:!!row.cash_on_delivery_enabled,cashOnPickupEnabled:!!row.cash_on_pickup_enabled,faqs:Array.isArray(row.storefront_faqs)?row.storefront_faqs:[],theme:/^#[0-9a-f]{6}$/i.test(String(row.storefront_theme||''))?row.storefront_theme:'#e47a13'},products:(row.products||[]).map((p:any)=>productOut(p,false)),totalProducts:Number(row.product_total||0),nextOffset:requestedOffset+(row.products||[]).length,hasMore:requestedOffset+(row.products||[]).length<Number(row.product_total||0)});
+  const payload={shop:{name:row.shop_name,slug:row.slug,description:row.description||'',logoUrl:typeof row.logo_url==='string'&&row.logo_url.startsWith('data:')&&row.logo_url.length>65536?'':row.logo_url||'',whatsappNumber:row.contact_phone||row.whatsapp_number||'',contactPhone:row.contact_phone||row.whatsapp_number||'',contactEmail:row.contact_email||'',termsAndConditions:row.terms_and_conditions||'',privacyPolicy:row.privacy_policy||'',returnPolicy:row.return_policy||'',deliveryPolicy:row.delivery_policy||'',deliveryHomeFee:Number(row.delivery_home_fee_minor||0)/100,deliveryPickupFee:Number(row.delivery_pickup_fee_minor||0)/100,cashOnDeliveryEnabled:!!row.cash_on_delivery_enabled,cashOnPickupEnabled:!!row.cash_on_pickup_enabled,faqs:Array.isArray(row.storefront_faqs)?row.storefront_faqs:[],theme:/^#[0-9a-f]{6}$/i.test(String(row.storefront_theme||''))?row.storefront_theme:'#e47a13'},products:(row.products||[]).map((p:any)=>productOut(p,false)),totalProducts:Number(row.product_total||0),nextOffset:requestedOffset+(row.products||[]).length,hasMore:requestedOffset+(row.products||[]).length<Number(row.product_total||0)};
+  if(cacheKey){
+   if(storefrontCache.size>=120){const first=storefrontCache.keys().next().value;if(first)storefrontCache.delete(first);}
+   storefrontCache.set(cacheKey,{expires:Date.now()+20000,payload});
+  }
+  res.setHeader('Cache-Control',customHost?'private, no-store, max-age=0':'public, max-age=15, s-maxage=30, stale-while-revalidate=120');
+  return send(res,200,payload);
  }catch(error:any){
   console.error('storefront API error',error);
   res.setHeader('Cache-Control','no-store');

@@ -4,6 +4,7 @@ import { storefrontCategories } from './storefrontCatalog';
 import { marketplaceFaqs } from './marketplaceFaqs';
 import { StorefrontProductDetail, fallbackProductImage, type LiveProduct } from './StorefrontProductDetail';
 import { StorefrontHeroCarousel } from './StorefrontHeroCarousel';
+import { StorefrontQuickView } from './StorefrontQuickView';
 import './storefront-redesign.css';
 
 
@@ -87,7 +88,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
  },[]);
  const previousPaymentStatus=useRef<string|null>(null);const [chatToken,setChatToken]=useState(''),[chatOrderId,setChatOrderId]=useState(''),[chatOrderNumber,setChatOrderNumber]=useState(''),[chatOrder,setChatOrder]=useState<any>(null),[chatMessages,setChatMessages]=useState<any[]>([]),[chatAttachments,setChatAttachments]=useState<any[]>([]),[chatDraft,setChatDraft]=useState(''),[chatSending,setChatSending]=useState(false),[paymentCelebration,setPaymentCelebration]=useState(false),[chatError,setChatError]=useState('');
  const [filter,setFilter]=useState('All products'),[search,setSearch]=useState(''),[sortOrder,setSortOrder]=useState('recommended'),[priceBand,setPriceBand]=useState<'all'|'under-1000'|'1000-5000'|'5000-15000'|'15000-plus'>('all'),[inStockOnly,setInStockOnly]=useState(false),[collectionSheet,setCollectionSheet]=useState<null|'sort'|'filter'>(null),[products,setProducts]=useState<LiveProduct[]>(()=>cachedStorefront?.products||[]);
- const [catalogueOffset,setCatalogueOffset]=useState(cachedStorefront?.products.length||0),[catalogueTotal,setCatalogueTotal]=useState(cachedStorefront?.totalProducts||0),[catalogueHasMore,setCatalogueHasMore]=useState(true),[loadingMore,setLoadingMore]=useState(false);const catalogueSentinelRef=useRef<HTMLDivElement|null>(null);const [shop,setShop]=useState<{name:string;description:string;logoUrl?:string;whatsappNumber?:string;contactPhone?:string;contactEmail?:string;termsAndConditions?:string;privacyPolicy?:string;returnPolicy?:string;deliveryPolicy?:string;deliveryHomeFee?:number;deliveryPickupFee?:number;cashOnDeliveryEnabled?:boolean;cashOnPickupEnabled?:boolean;faqs?:Array<{question:string;answer:string}>;theme?:string}|null>(()=>cachedStorefront?.shop||null),[loading,setLoading]=useState(!cachedStorefront),[error,setError]=useState(''),[notFound,setNotFound]=useState(false),[cart,setCart]=useState<Record<string,number>>({}),[cartHydrating,setCartHydrating]=useState(false),[selectedProduct,setSelectedProduct]=useState<LiveProduct|null>(null),[mobileSidebarOpen,setMobileSidebarOpen]=useState(false),[desktopSidebarOpen,setDesktopSidebarOpen]=useState(false),[buyerMobileNavOpen,setBuyerMobileNavOpen]=useState(false);
+ const [catalogueOffset,setCatalogueOffset]=useState(cachedStorefront?.products.length||0),[catalogueTotal,setCatalogueTotal]=useState(cachedStorefront?.totalProducts||0),[catalogueHasMore,setCatalogueHasMore]=useState(true),[loadingMore,setLoadingMore]=useState(false);const catalogueSentinelRef=useRef<HTMLDivElement|null>(null);const [shop,setShop]=useState<{name:string;description:string;logoUrl?:string;whatsappNumber?:string;contactPhone?:string;contactEmail?:string;termsAndConditions?:string;privacyPolicy?:string;returnPolicy?:string;deliveryPolicy?:string;deliveryHomeFee?:number;deliveryPickupFee?:number;cashOnDeliveryEnabled?:boolean;cashOnPickupEnabled?:boolean;faqs?:Array<{question:string;answer:string}>;theme?:string}|null>(()=>cachedStorefront?.shop||null),[loading,setLoading]=useState(!cachedStorefront),[error,setError]=useState(''),[notFound,setNotFound]=useState(false),[cart,setCart]=useState<Record<string,number>>({}),[cartHydrating,setCartHydrating]=useState(false),[selectedProduct,setSelectedProduct]=useState<LiveProduct|null>(null),[quickViewProduct,setQuickViewProduct]=useState<LiveProduct|null>(null),[mobileSidebarOpen,setMobileSidebarOpen]=useState(false),[desktopSidebarOpen,setDesktopSidebarOpen]=useState(false),[buyerMobileNavOpen,setBuyerMobileNavOpen]=useState(false);
  const cartRef=useRef<Record<string,number>>({});
  const guestPendingCartRef=useRef<Record<string,number>>({});
  const cartHydratedForUserRef=useRef<string>('');
@@ -251,9 +252,9 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
  const isHostScoped=isHostScopedDomain();
  const storeBasePath=isHostScoped?'':`/${slug}`;
  const buyerPath=(page:string)=>page==='store'?(storeBasePath||'/'):`${storeBasePath}/${page}`||`/${page}`;
- function navigateBuyerPage(page:string,preserveFilters=false){if(page==='reports'||page==='report-shop')page='my-reports';if(['recently-viewed','followed-shops','notification-settings','public-profile','newsletter'].includes(page))page='account';if((['account','profile','orders','order-detail','order-tracking','inbox','wishlist','recently-viewed','address-book','address-book/edit','vouchers','reviews','notifications','my-reports','followed-shops','newsletter','notification-settings','public-profile','account-management','close-account'].includes(page)||page.startsWith('orders/')||page.startsWith('my-reports/'))&&!buyerCustomer){updateBuyerReturnPage(page);page='buyer-login'}if((page==='checkout/delivery'||page==='checkout/payment'||page==='checkout/review')&&!buyerCustomer){updateBuyerReturnPage(page);page='buyer-login'}if(page==='store'&&!preserveFilters){setFilter('All products');setSearch('');setPriceBand('all');setInStockOnly(false);setExpandedCategory('');setSelectedProduct(null)}setCollectionSheet(null);setBuyerPage(page);if(page!=='product-detail')setSelectedProduct(null);setMobileSidebarOpen(false);setDesktopSidebarOpen(false);setBuyerMobileNavOpen(false);setBuyerNotificationsOpen(false);const nextPath=buyerPath(page);if(window.location.pathname!==nextPath)window.history.pushState({buyerPage:page},'',nextPath);if((page==='cart'||page.startsWith('checkout/'))&&buyerCustomerRef.current?.phone&&buyerAuthCheckedRef.current&&slugRef.current&&cartSyncPendingCountRef.current===0){void hydrateServerCart(slugRef.current);}window.scrollTo({top:0,behavior:'instant' as ScrollBehavior})}
- function selectStoreCategory(category:string){const parent=storefrontCategories.find(c=>c.name===category||c.subcategories.includes(category));const filterValue=category.startsWith('All ')?(parent?.name||category):category;setFilter(filterValue);setSearch('');setSelectedProduct(null);setCatalogueOffset(0);setCatalogueHasMore(false);setLoadingMore(false);setLoading(true);setBuyerPage('store');setMobileSidebarOpen(false);setDesktopSidebarOpen(false);const nextPath=buyerPath('store');if(window.location.pathname!==nextPath)window.history.replaceState({buyerPage:'store'},'',nextPath)}
- function openProduct(product:LiveProduct){setSelectedProduct(product);setBuyerPage('product-detail');setMobileSidebarOpen(false);const parent=storefrontCategories.find(c=>c.name===product.category||c.subcategories.includes(product.category));const route=(parent?categorySlug(parent.name):'products')+'/'+(parent&&product.category!==parent.name?categorySlug(product.category).replace(/-/g,''):'products')+'/'+encodeURIComponent(product.sku||product.id);window.history.pushState({productSku:product.sku||product.id},'',(storeBasePath||'')+'/'+route);window.scrollTo({top:0,left:0,behavior:'instant' as ScrollBehavior})}
+ function navigateBuyerPage(page:string,preserveFilters=false){setQuickViewProduct(null);if(page==='reports'||page==='report-shop')page='my-reports';if(['recently-viewed','followed-shops','notification-settings','public-profile','newsletter'].includes(page))page='account';if((['account','profile','orders','order-detail','order-tracking','inbox','wishlist','recently-viewed','address-book','address-book/edit','vouchers','reviews','notifications','my-reports','followed-shops','newsletter','notification-settings','public-profile','account-management','close-account'].includes(page)||page.startsWith('orders/')||page.startsWith('my-reports/'))&&!buyerCustomer){updateBuyerReturnPage(page);page='buyer-login'}if((page==='checkout/delivery'||page==='checkout/payment'||page==='checkout/review')&&!buyerCustomer){updateBuyerReturnPage(page);page='buyer-login'}if(page==='store'&&!preserveFilters){setFilter('All products');setSearch('');setPriceBand('all');setInStockOnly(false);setExpandedCategory('');setSelectedProduct(null)}setCollectionSheet(null);setBuyerPage(page);if(page!=='product-detail')setSelectedProduct(null);setMobileSidebarOpen(false);setDesktopSidebarOpen(false);setBuyerMobileNavOpen(false);setBuyerNotificationsOpen(false);const nextPath=buyerPath(page);if(window.location.pathname!==nextPath)window.history.pushState({buyerPage:page},'',nextPath);if((page==='cart'||page.startsWith('checkout/'))&&buyerCustomerRef.current?.phone&&buyerAuthCheckedRef.current&&slugRef.current&&cartSyncPendingCountRef.current===0){void hydrateServerCart(slugRef.current);}window.scrollTo({top:0,behavior:'instant' as ScrollBehavior})}
+ function selectStoreCategory(category:string){setQuickViewProduct(null);const parent=storefrontCategories.find(c=>c.name===category||c.subcategories.includes(category));const filterValue=category.startsWith('All ')?(parent?.name||category):category;setFilter(filterValue);setSearch('');setSelectedProduct(null);setCatalogueOffset(0);setCatalogueHasMore(false);setLoadingMore(false);setBuyerPage('store');setMobileSidebarOpen(false);setDesktopSidebarOpen(false);const nextPath=buyerPath('store');if(window.location.pathname!==nextPath)window.history.replaceState({buyerPage:'store'},'',nextPath)}
+ function openProduct(product:LiveProduct){setQuickViewProduct(null);setSelectedProduct(product);setBuyerPage('product-detail');setMobileSidebarOpen(false);const parent=storefrontCategories.find(c=>c.name===product.category||c.subcategories.includes(product.category));const route=(parent?categorySlug(parent.name):'products')+'/'+(parent&&product.category!==parent.name?categorySlug(product.category).replace(/-/g,''):'products')+'/'+encodeURIComponent(product.sku||product.id);window.history.pushState({productSku:product.sku||product.id},'',(storeBasePath||'')+'/'+route);window.scrollTo({top:0,left:0,behavior:'instant' as ScrollBehavior})}
  function closeProduct(){const route=categoryRoute(selectedProduct?.category||'');if(selectedProduct?.category)setFilter(selectedProduct.category);setBuyerPage('store');setSelectedProduct(null);window.history.pushState({},'',route?(storeBasePath+'/'+route):buyerPath('store'))}
  // Migrate temporary host-scoped storefront preferences when custom-domain storefront resolves its slug.
  useEffect(()=>{
@@ -327,23 +328,27 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
  // Avoid a document-wide MutationObserver: scanning every link/button after every
  // React DOM mutation becomes expensive on stores with large catalogues.
  useEffect(()=>{
+  let rafId=0;
   const checkOverlap=()=>{
+   rafId=0;
    const floating=document.querySelector<HTMLElement>('.sf-whatsapp-float');
    if(!floating)return;
    const a=floating.getBoundingClientRect(),pad=5;
-   const overlaps=Array.from(document.querySelectorAll<HTMLElement>('button,a,[role="tab"]')).some(el=>{
-    if(el===floating||floating.contains(el)||el.closest('.sf-whatsapp-float'))return false;
-    const style=window.getComputedStyle(el);
-    if(style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0||el.getAttribute('aria-hidden')==='true')return false;
+   const targets=document.querySelectorAll<HTMLElement>('.sf-mobile-cartbar,.sf-collection-floating-bar,.sf-checkout-footer-bar,.sf-footer a,.sf-footer button');
+   const overlaps=Array.from(targets).some(el=>{
+    if(el===floating||floating.contains(el)||el.getAttribute('aria-hidden')==='true')return false;
     const b=el.getBoundingClientRect();
-    return b.width>0&&b.height>0&&a.left<b.right+pad&&a.right>b.left-pad&&a.top<b.bottom+pad&&a.bottom>b.top-pad;
+    if(b.width<=0||b.height<=0||a.left>=b.right+pad||a.right<=b.left-pad||a.top>=b.bottom+pad||a.bottom<=b.top-pad)return false;
+    const style=window.getComputedStyle(el);
+    return style.display!=='none'&&style.visibility!=='hidden'&&Number(style.opacity)!==0;
    });
    floating.classList.toggle('is-obscured',overlaps);
   };
-  window.requestAnimationFrame(checkOverlap);
-  window.addEventListener('resize',checkOverlap);
-  window.addEventListener('scroll',checkOverlap,true);
-  return()=>{window.removeEventListener('resize',checkOverlap);window.removeEventListener('scroll',checkOverlap,true)};
+  const scheduleCheck=()=>{if(!rafId)rafId=window.requestAnimationFrame(checkOverlap);};
+  scheduleCheck();
+  window.addEventListener('resize',scheduleCheck,{passive:true});
+  window.addEventListener('scroll',scheduleCheck,{passive:true});
+  return()=>{if(rafId)window.cancelAnimationFrame(rafId);window.removeEventListener('resize',scheduleCheck);window.removeEventListener('scroll',scheduleCheck)};
  },[buyerPage,shop?.whatsappNumber]);
  // Customer conversations belong in the customer workspace, not on the public storefront.
  useEffect(()=>{if(!chatToken&&!chatOrderId)return;let live=true;const query=chatToken?'token='+encodeURIComponent(chatToken):'orderId='+encodeURIComponent(chatOrderId)+'&slug='+encodeURIComponent(slug);const refresh=()=>fetch('/api/buyer?action=customer-chat&'+query,{credentials:'same-origin',cache:'no-store'}).then(async r=>{const d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Could not load conversation');if(live){setChatMessages(d.messages||[]);setChatAttachments(d.attachments||[]);setChatOrder(d.order||null)}}).catch(e=>{if(live)setChatError(e.message)});refresh();const timer=window.setInterval(refresh,5000);return()=>{live=false;window.clearInterval(timer)}},[chatToken,chatOrderId,slug]);
@@ -353,11 +358,11 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
 
  async function uploadCustomerAttachment(file?:File){if(!file||(!chatToken&&!chatOrderId))return;if(file.size>10485760){setChatError('Each attachment must be 10 MB or smaller.');return;}setChatError('');try{const sign=await fetch('/api/buyer?action=chat-attachment',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(chatToken?{token:chatToken,mode:'upload',fileName:file.name,contentType:file.type,size:file.size}:{orderId:chatOrderId,slug,mode:'upload',fileName:file.name,contentType:file.type,size:file.size})});const sd=await readApiResponse(sign);if(!sign.ok)throw Error(sd.error||'Could not prepare upload');await uploadToObjectStorage(sd.uploadUrl,file,'Chat attachment');const done=await fetch('/api/buyer?action=chat-attachment',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(chatToken?{token:chatToken,mode:'complete',attachmentId:sd.attachmentId}:{orderId:chatOrderId,slug,mode:'complete',attachmentId:sd.attachmentId})});const dd=await readApiResponse(done);if(!done.ok)throw Error(dd.error||'Could not confirm upload');setChatAttachments(a=>[...a,dd.attachment]);}catch(e:any){setChatError(e.message)}}
  async function downloadCustomerAttachment(id:string){try{const r=await fetch('/api/buyer?action=chat-attachment',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(chatToken?{token:chatToken,mode:'download',attachmentId:id}:{orderId:chatOrderId,slug,mode:'download',attachmentId:id})});const d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Download unavailable');window.open(d.url,'_blank','noopener,noreferrer')}catch(e:any){setChatError(e.message)}}
- useEffect(()=>{const t=window.setTimeout(()=>{void import('./StorefrontFlow');void import('./BuyerAuthPage');},60);return()=>window.clearTimeout(t);},[]);
- useEffect(()=>{let live=true;const runFetch=()=>{setNotFound(false);if(!cachedStorefront||filter!=='All products'||search.trim())setLoading(true);const params=new URLSearchParams({limit:'60',offset:'0'});if(filter.trim()&&filter.trim().toLocaleLowerCase()!=='all products')params.set('category',categoryApiFilter(filter.trim()));if(search.trim())params.set('search',search.trim());const base=slug?'/api/storefront?slug='+encodeURIComponent(slug)+'&':'/api/storefront?';fetch(base+params.toString()).then(async r=>{const d=await readApiResponse(r);if(!r.ok){if(r.status===400||r.status===404){setNotFound(true);setCatalogueHasMore(false);setCatalogueTotal(0);setProducts([]);setShop(null)}throw Error(d.error||'Shop unavailable')}if(!live)return;const nextProducts:LiveProduct[]=Array.isArray(d.products)?d.products:[];const resolvedSlug=String(d.shop?.slug||slug||'').trim();setShop(d.shop);if(!slug&&resolvedSlug)setSlug(resolvedSlug);setProducts((current:LiveProduct[])=>{const incomingIds=new Set(nextProducts.map((p:LiveProduct)=>p.id));const preservedCartProducts=current.filter((p:LiveProduct)=>cartRef.current[p.id]>0&&!incomingIds.has(p.id));return [...nextProducts,...preservedCartProducts];});setCatalogueOffset(Number(d.nextOffset||nextProducts.length));setCatalogueTotal(Number(d.totalProducts??nextProducts.length));setCatalogueHasMore(Boolean(d.hasMore));const requestedProduct=new URLSearchParams(window.location.search).get('product');if(requestedProduct){const match=nextProducts.find((product:any)=>product.id===requestedProduct||product.sku===requestedProduct||product.slug===requestedProduct);if(match){setSelectedProduct(match);setBuyerPage('product-detail')}}setError('');if(resolvedSlug&&filter.trim().toLocaleLowerCase()==='all products'&&!search.trim()){try{localStorage.setItem('dasnet-storefront-cache-'+resolvedSlug,JSON.stringify({shop:d.shop,products:nextProducts.slice(0,60),totalProducts:Number(d.totalProducts??nextProducts.length),cachedAt:Date.now()}))}catch{}}}).catch(e=>{if(live)setError(e.message)}).finally(()=>{if(live)setLoading(false)})};if(!search.trim()){runFetch();return()=>{live=false};}const timer=window.setTimeout(runFetch,180);return()=>{live=false;window.clearTimeout(timer)}},[slug,filter,search,reconnectTick,cachedStorefront]);
+ useEffect(()=>{const w=window as any;let timer=0;let idle=0;const warm=()=>{void import('./StorefrontFlow');void import('./BuyerAuthPage');};if(typeof w.requestIdleCallback==='function'){idle=w.requestIdleCallback(warm,{timeout:2500});}else{timer=window.setTimeout(warm,1800);}return()=>{if(idle&&typeof w.cancelIdleCallback==='function')w.cancelIdleCallback(idle);if(timer)window.clearTimeout(timer);};},[]);
+ useEffect(()=>{let live=true;const runFetch=()=>{setNotFound(false);if(!cachedStorefront&&!products.length)setLoading(true);const params=new URLSearchParams({limit:'24',offset:'0'});if(filter.trim()&&filter.trim().toLocaleLowerCase()!=='all products')params.set('category',categoryApiFilter(filter.trim()));if(search.trim())params.set('search',search.trim());const base=slug?'/api/storefront?slug='+encodeURIComponent(slug)+'&':'/api/storefront?';fetch(base+params.toString()).then(async r=>{const d=await readApiResponse(r);if(!r.ok){if(r.status===400||r.status===404){setNotFound(true);setCatalogueHasMore(false);setCatalogueTotal(0);setProducts([]);setShop(null)}throw Error(d.error||'Shop unavailable')}if(!live)return;const nextProducts:LiveProduct[]=Array.isArray(d.products)?d.products:[];const resolvedSlug=String(d.shop?.slug||slug||'').trim();setShop(d.shop);if(!slug&&resolvedSlug)setSlug(resolvedSlug);setProducts((current:LiveProduct[])=>{const incomingIds=new Set(nextProducts.map((p:LiveProduct)=>p.id));const preservedCartProducts=current.filter((p:LiveProduct)=>cartRef.current[p.id]>0&&!incomingIds.has(p.id));return [...nextProducts,...preservedCartProducts];});setCatalogueOffset(Number(d.nextOffset||nextProducts.length));setCatalogueTotal(Number(d.totalProducts??nextProducts.length));setCatalogueHasMore(Boolean(d.hasMore));const requestedProduct=new URLSearchParams(window.location.search).get('product');if(requestedProduct){const match=nextProducts.find((product:any)=>product.id===requestedProduct||product.sku===requestedProduct||product.slug===requestedProduct);if(match){setSelectedProduct(match);setBuyerPage('product-detail')}}setError('');if(resolvedSlug&&filter.trim().toLocaleLowerCase()==='all products'&&!search.trim()){try{localStorage.setItem('dasnet-storefront-cache-'+resolvedSlug,JSON.stringify({shop:d.shop,products:nextProducts.slice(0,24),totalProducts:Number(d.totalProducts??nextProducts.length),cachedAt:Date.now()}))}catch{}}}).catch(e=>{if(live)setError(e.message)}).finally(()=>{if(live)setLoading(false)})};if(!search.trim()){runFetch();return()=>{live=false};}const timer=window.setTimeout(runFetch,180);return()=>{live=false;window.clearTimeout(timer)}},[slug,filter,search,reconnectTick,cachedStorefront]);
   // Contact details refresh with the storefront request; avoid polling the full catalogue.
   useEffect(()=>{let live=true;const refresh=async()=>{if(!buyerCustomer||!slug){if(live)setBuyerNotifications([]);return}try{if(localStorage.getItem('dasnet-buyer-notifications-'+slug)==='false'){if(live)setBuyerNotifications([]);return}const r=await fetch('/api/buyer?action=buyer-notifications&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'});if(!r.ok)return;const d=await r.json();if(live)setBuyerNotifications(Array.isArray(d.notifications)?d.notifications:[])}catch{}};refresh();const timer=window.setInterval(refresh,15000);return()=>{live=false;window.clearInterval(timer)}},[slug,buyerCustomer?.id]);
-    async function loadMoreProducts(){if(loadingMore||!catalogueHasMore)return;setLoadingMore(true);try{const base=slug?'/api/storefront?slug='+encodeURIComponent(slug)+'&':'/api/storefront?';const params=new URLSearchParams({limit:'60',offset:String(catalogueOffset)});if(filter.trim()&&filter.trim().toLocaleLowerCase()!=='all products')params.set('category',categoryApiFilter(filter.trim()));if(search.trim())params.set('search',search.trim());const response=await fetch(base+params.toString());const data=await readApiResponse(response);if(!response.ok){const failure:any=new Error(data.error||'Could not load more products');failure.status=response.status;if(response.status===400||response.status===404)setCatalogueHasMore(false);throw failure;}const incoming=Array.isArray(data.products)?data.products:[];setProducts((current:LiveProduct[])=>{const known=new Set(current.map((p:LiveProduct)=>p.id));return [...current,...incoming.filter((p:LiveProduct)=>!known.has(p.id))]});setCatalogueOffset(Number(data.nextOffset||catalogueOffset+incoming.length));if(data.totalProducts!==undefined)setCatalogueTotal(Number(data.totalProducts));setCatalogueHasMore(Boolean(data.hasMore));}catch(error:any){if(error?.status===404||error?.status===400){setNotFound(true);setCatalogueHasMore(false);setProducts([]);setShop(null)}setError(error.message||'Could not load more products')}finally{setLoadingMore(false)}}
+    async function loadMoreProducts(){if(loadingMore||!catalogueHasMore)return;setLoadingMore(true);try{const base=slug?'/api/storefront?slug='+encodeURIComponent(slug)+'&':'/api/storefront?';const params=new URLSearchParams({limit:'40',offset:String(catalogueOffset)});if(filter.trim()&&filter.trim().toLocaleLowerCase()!=='all products')params.set('category',categoryApiFilter(filter.trim()));if(search.trim())params.set('search',search.trim());const response=await fetch(base+params.toString());const data=await readApiResponse(response);if(!response.ok){const failure:any=new Error(data.error||'Could not load more products');failure.status=response.status;if(response.status===400||response.status===404)setCatalogueHasMore(false);throw failure;}const incoming=Array.isArray(data.products)?data.products:[];setProducts((current:LiveProduct[])=>{const known=new Set(current.map((p:LiveProduct)=>p.id));return [...current,...incoming.filter((p:LiveProduct)=>!known.has(p.id))]});setCatalogueOffset(Number(data.nextOffset||catalogueOffset+incoming.length));if(data.totalProducts!==undefined)setCatalogueTotal(Number(data.totalProducts));setCatalogueHasMore(Boolean(data.hasMore));}catch(error:any){if(error?.status===404||error?.status===400){setNotFound(true);setCatalogueHasMore(false);setProducts([]);setShop(null)}setError(error.message||'Could not load more products')}finally{setLoadingMore(false)}}
  useEffect(()=>{const node=catalogueSentinelRef.current;const isCollection=buyerPage.startsWith('collection/')&&buyerPage!=='collection/featured-products';if(!node||!catalogueHasMore||loadingMore||(buyerPage!=='store'&&!isCollection))return;const observer=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting))void loadMoreProducts()},{rootMargin:'900px 0px'});observer.observe(node);return()=>observer.disconnect()},[catalogueHasMore,loadingMore,loading,catalogueOffset,buyerPage]);
  const normalizedFilter=filter.trim().toLocaleLowerCase();
  const normalizedSearch=search.trim().toLocaleLowerCase();
@@ -446,11 +451,12 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
     <button type="button" className={'sf-card-fav'+(saved?' active':'')} aria-label="Toggle wishlist" aria-pressed={saved} onClick={()=>toggleWishlist(p.id)}>
      <Heart size={16} fill={saved?'currentColor':'none'}/>
     </button>
-    <button type="button" className="sf-card-open" onClick={()=>openProduct(p)}>
-     <span className="sf-card-media">
-      <img src={p.images?.[0]||p.imageUrl||fallbackProductImage(p.name)} alt={p.name} loading={eager?'eager':'lazy'} decoding="async" onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src=fallbackProductImage(p.name)}}/>
-      {tag&&<span className="sf-card-tag">{tag}</span>}
-     </span>
+    <button type="button" className="sf-card-media sf-card-thumb-btn" aria-label={`Quick view ${p.name}`} onClick={()=>setQuickViewProduct(p)}>
+     <img src={p.images?.[0]||p.imageUrl||fallbackProductImage(p.name)} alt={p.name} loading={eager?'eager':'lazy'} decoding="async" fetchPriority={eager?'high':undefined} onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src=fallbackProductImage(p.name)}}/>
+     {tag&&<span className="sf-card-tag">{tag}</span>}
+     <span className="sf-thumb-qv" aria-hidden="true">Quick view</span>
+    </button>
+    <button type="button" className="sf-card-open sf-card-body-btn" onClick={()=>openProduct(p)}>
      <div className="sf-card-body">
       <span className="sf-card-cat">{p.category||'Shop'}</span>
       <span className="sf-card-title">{p.name}</span>
@@ -480,11 +486,12 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
      <button type="button" className={'sf-card-fav sf-collection-fav'+(saved?' active':'')} aria-label="Toggle wishlist" aria-pressed={saved} onClick={()=>toggleWishlist(p.id)}>
       <Heart size={16} fill={saved?'currentColor':'none'}/>
      </button>
-     <button type="button" className="sf-collection-card-open" onClick={()=>openProduct(p)}>
-      <span className="sf-collection-card-media">
-       <img src={p.images?.[0]||p.imageUrl||fallbackProductImage(p.name)} alt={p.name} loading={eager?'eager':'lazy'} decoding="async" onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src=fallbackProductImage(p.name)}}/>
-       {cardBadge&&<span className={'sf-collection-media-tag'+(p.stockQuantity===0?' is-out':'')}>{cardBadge}</span>}
-      </span>
+     <button type="button" className="sf-collection-card-media sf-card-thumb-btn" aria-label={`Quick view ${p.name}`} onClick={()=>setQuickViewProduct(p)}>
+      <img src={p.images?.[0]||p.imageUrl||fallbackProductImage(p.name)} alt={p.name} loading={eager?'eager':'lazy'} decoding="async" fetchPriority={eager?'high':undefined} onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src=fallbackProductImage(p.name)}}/>
+      {cardBadge&&<span className={'sf-collection-media-tag'+(p.stockQuantity===0?' is-out':'')}>{cardBadge}</span>}
+      <span className="sf-thumb-qv" aria-hidden="true">Quick view</span>
+     </button>
+     <button type="button" className="sf-collection-card-open sf-card-body-btn" onClick={()=>openProduct(p)}>
       <div className="sf-collection-card-body">
        <span className="sf-collection-card-title">{p.name}</span>
        {(p.ratingCount??0)>0&&(
@@ -922,7 +929,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
         </div>
        ):(
         <>
-         <div className="sf-product-grid">{homeCatalogueList.map((p:LiveProduct,idx:number)=>renderProductCard(p,undefined,idx<8))}</div>
+         <div className="sf-product-grid">{homeCatalogueList.map((p:LiveProduct,idx:number)=>renderProductCard(p,undefined,idx<4))}</div>
          {catalogueHasMore&&(
           <div className="sf-load-more" ref={catalogueSentinelRef} aria-live="polite">
            <button type="button" className="sf-btn sf-btn-secondary" disabled={loadingMore} onClick={()=>void loadMoreProducts()}>
@@ -1057,7 +1064,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
         </div>
        ):(
         <>
-         <div className="sf-collection-grid">{collectionSorted.map((p:LiveProduct,idx:number)=>renderCollectionCard(p,idx<8))}</div>
+         <div className="sf-collection-grid">{collectionSorted.map((p:LiveProduct,idx:number)=>renderCollectionCard(p,idx<4))}</div>
          {catalogueHasMore&&collectionKey!=='featured-products'&&(
           <div className="sf-load-more" ref={catalogueSentinelRef} aria-live="polite">
            <button type="button" className="sf-btn sf-btn-secondary" disabled={loadingMore} onClick={()=>void loadMoreProducts()}>
@@ -1213,6 +1220,19 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
      <MessageCircle size={18}/><span>Help</span>
     </a>
    )}
+   <StorefrontQuickView
+    product={quickViewProduct}
+    shopName={shop?.name||'This shop'}
+    cartQuantity={quickViewProduct?(cart[quickViewProduct.id]||0):0}
+    saved={quickViewProduct?wishlistIds.includes(quickViewProduct.id):false}
+    onClose={()=>setQuickViewProduct(null)}
+    onAdd={(quantity)=>{
+     if(!quickViewProduct)return;
+     updateCart(c=>({...c,[quickViewProduct.id]:Math.min(99,quickViewProduct.stockQuantity??99,(c[quickViewProduct.id]||0)+quantity)}));
+    }}
+    onToggleSaved={()=>{if(quickViewProduct)toggleWishlist(quickViewProduct.id);}}
+    onOpenFullDetails={(product)=>openProduct(product)}
+   />
   </main>
  );
 }
@@ -1233,8 +1253,6 @@ export default function App() {
   const isPlatformHost=hostname==='dasmarket.co.ke'||hostname==='www.dasmarket.co.ke'||hostname==='app.dasmarket.co.ke'||hostname==='mambu.dasmarket.co.ke'||hostname.endsWith('.vercel.app')||hostname.endsWith('.run.app')||hostname.endsWith('.googleusercontent.com')||hostname.endsWith('.aistudio.google.com')||hostname==='localhost'||hostname==='127.0.0.1';
   const isCustomDomain=!isPlatformHost&&!tenantSubdomain;
   const isAdminCustomHost=hostname.startsWith('adm.')&&isCustomDomain;
-  // Warm the storefront UI chunks while the shop data request is in flight.
-  useEffect(()=>{if(tenantSubdomain){import('./StorefrontFlow').catch(()=>{});import('./BuyerAuthPage').catch(()=>{});}},[tenantSubdomain]);
   if (hostname === 'mambu.dasmarket.co.ke') {
     if (path === 'login') return <Deferred><AuthPage initial="login" /></Deferred>;
     if (path === 'reset-password') return <Deferred><AuthPage initial="reset" /></Deferred>;

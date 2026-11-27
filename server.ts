@@ -1,4 +1,5 @@
 import express from 'express';
+import compression from 'compression';
 import fs from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
@@ -58,6 +59,7 @@ async function startServer() {
 
   const app = express();
   app.set('trust proxy', true);
+  app.use(compression({ threshold: 1024 }));
   app.use('/api/paystack/webhook', express.raw({ type: 'application/json', limit: '1mb' }));
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true }));
