@@ -293,3 +293,12 @@
     justify-content: center;
   }
 }
+
+
+.dm-pwa-install-status {
+  display: block;
+  margin-top: 7px;
+  max-width: 320px;
+  color: #b45309;
+  font: 500 12px/1.4 'DM Sans', system-ui, sans-serif;
+}
