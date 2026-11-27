@@ -8,37 +8,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-512x512.png'],
-      manifest: {
-        id: '/',
-        name: 'DASMARKET Kenya',
-        short_name: 'DASMARKET',
-        description: 'Browse verified Kenyan shops, order online, and manage your store with DASMARKET.',
-        theme_color: '#0f52ba',
-        background_color: '#f8fafc',
-        display: 'standalone',
-        start_url: '/',
-        scope: '/',
-        icons: [
-          {
-            src: '/pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any',
-          },
-          {
-            src: '/pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any',
-          },
-          {
-            src: '/pwa-maskable-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable',
-          },
-        ],
-      },
+      manifest: false,
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
