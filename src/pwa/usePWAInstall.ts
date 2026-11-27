@@ -53,9 +53,10 @@ export function usePWAInstall() {
       await deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') {
+        // Acceptance only means the browser accepted the prompt. Wait for
+        // appinstalled / standalone mode before hiding the install control.
         setDeferredPrompt(null);
         setPromptReady(false);
-        setIsInstalled(true);
       }
       return outcome;
     } catch {
