@@ -3103,7 +3103,9 @@ export function StorefrontFlow({
         : paymentMethod === 'card'
         ? 'Loading card fields…'
         : 'Requesting M-PESA…'
-      : 'Confirm order';
+      : paymentMethod === 'delivery'
+      ? 'Place order'
+      : `Pay ${formatKes(total)}`;
 
     return (
       <>
@@ -4656,6 +4658,17 @@ export function StorefrontFlow({
                             ? 'Check payment / retry if failed'
                             : 'Retry M-PESA payment'}
                         </button>
+                        {activeOrder.paymentMethod !== 'card' && (
+                          <button
+                            type="button"
+                            className="sf-btn sf-btn-ghost"
+                            style={{ fontSize: 12.5 }}
+                            onClick={() => void retryActiveOrderWithCard()}
+                            disabled={retryingOrder}
+                          >
+                            {retryingOrder ? 'Opening card payment…' : 'Switch to bank card'}
+                          </button>
+                        )}
                         {activeOrder.paymentMethod === 'card' && (
                           <button
                             type="button"
