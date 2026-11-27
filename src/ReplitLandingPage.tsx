@@ -18,6 +18,7 @@ import {
   Truck,
   X,
 } from 'lucide-react';
+import { PWAInstallButton } from './pwa/PWAInstallButton';
 
 function Brand({ compact = false }: { compact?: boolean }) {
   return (
@@ -214,6 +215,7 @@ export function ReplitLandingPage() {
                 <a className="dm-btn dm-btn-primary" href="/signup" data-testid="button-start-shop">
                   Create your shop <ArrowRight size={16} />
                 </a>
+                <PWAInstallButton variant="landing-light" label="Install App" appName="DASMARKET" showFallback={false} />
                 <a className="dm-text-link" href="/login" data-testid="button-hero-sign-in">
                   Already have a shop? Sign in <ArrowRight size={14} />
                 </a>

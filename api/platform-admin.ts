@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { storageUrl } from './store.js';
 import { getDb } from '../server/db.js';
 import { sendTenantTransactionalEmail, brandedEmail } from '../server/email.js';
+import { fetchTenantDedupIndex, insertBulkProducts, partitionBulkDuplicates, validateAndNormalizeBulkRows } from '../server/bulkImport.js';
 const env=(k:string)=>(process.env[k]||'').trim();
 const db=()=>getDb();
 const hash=(s:string)=>crypto.createHash('sha256').update(s).digest('hex');
@@ -38,6 +39,12 @@ export default async function handler(req:any,res:any){
     return {tenantId:k.tenant_id,shopName:k.shop_name,slug:k.slug,identity,phone:k.phone,phoneVerified:!!k.phone_verified_at,status:k.status,submittedAt:k.submitted_at,reviewedAt:k.reviewed_at,reviewNote:k.review_note,idFrontUrl:k.id_front_object_key?storageUrl(k.id_front_object_key,'GET'):null,idBackUrl:k.id_back_object_key?storageUrl(k.id_back_object_key,'GET'):null,businessDocumentUrl:k.business_document_object_key?storageUrl(k.business_document_object_key,'GET'):null,documentsComplete:!!(k.id_front_object_key&&k.id_back_object_key)};
    });
    return send(res,200,{items});
+  }
+  if(req.method==='GET'&&String(req.query?.action||'')==='tenant_dedup_index'){
+   const tenantId=String(req.query?.tenantId||'').trim();
+   if(!/^[0-9a-f-]{36}$/i.test(tenantId))return send(res,400,{error:'Select a valid shop.'});
+   const index=await fetchTenantDedupIndex(sql,tenantId);
+   return send(res,200,{ok:true,...index});
   }
   if(req.method==='GET'&&String(req.query?.action||'')==='detail'){
    const type=String(req.query?.type||''),id=String(req.query?.id||'');
@@ -243,6 +250,24 @@ export default async function handler(req:any,res:any){
    await sql`INSERT INTO public.platform_settings(setting_key,setting_value,updated_at) VALUES('subscription',${JSON.stringify(config)}::jsonb,now()) ON CONFLICT(setting_key) DO UPDATE SET setting_value=EXCLUDED.setting_value,updated_at=now()`;
    await sql`INSERT INTO public.audit_logs(actor_user_id,action,resource_type,resource_id,metadata) VALUES(${users[0].id},'platform.subscription_settings.updated','platform_setting','subscription',${JSON.stringify(config)}::jsonb)`;
    return send(res,200,{ok:true,settings:config});
+  }
+  if(req.method==='POST'&&req.body?.action==='bulk_import_products'){
+   const tenantId=String(req.body?.tenantId||'').trim();
+   if(!/^[0-9a-f-]{36}$/i.test(tenantId))return send(res,400,{error:'Select a valid target shop.'});
+   const shopRows=await sql`SELECT id,name,slug FROM public.tenants WHERE id=${tenantId} LIMIT 1`;
+   if(!shopRows.length)return send(res,404,{error:'Target shop was not found.'});
+   const rows=Array.isArray(req.body?.products)?req.body.products:[];
+   if(!rows.length||rows.length>500)return send(res,400,{error:'Import between 1 and 500 products per batch.'});
+   const normalized=validateAndNormalizeBulkRows(rows,tenantId);
+   if(normalized.error)return send(res,400,{error:normalized.error});
+   const skipDuplicates=req.body?.skipDuplicates!==false;
+   const {toInsert,skipped}=skipDuplicates?await partitionBulkDuplicates(sql,tenantId,normalized.items):{toInsert:normalized.items,skipped:[]};
+   const imported=await insertBulkProducts(sql,tenantId,toInsert);
+   await sql`INSERT INTO public.audit_logs(tenant_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES(${tenantId},${users[0].id},'platform.products.bulk_imported','product',NULL,${JSON.stringify({imported,skippedDuplicates:skipped.length,totalSubmitted:normalized.items.length})}::jsonb)`;
+   const message=imported>0
+    ?`${imported} new product${imported===1?'':'s'} imported to ${shopRows[0].name}${skipped.length?` · ${skipped.length} duplicate${skipped.length===1?'':'s'} skipped`:''}.`
+    :`0 new products imported to ${shopRows[0].name} · ${skipped.length} duplicate${skipped.length===1?'':'s'} skipped.`;
+   return send(res,imported>0?201:200,{ok:true,imported,skippedDuplicates:skipped.length,skippedSamples:skipped.slice(0,25),message});
   }
   if(req.method==='POST'&&req.body?.action==='complaint_restrict'){
    const id=String(req.body?.id||''),target=String(req.body?.target||''),days=Number(req.body?.durationDays||0),reason=String(req.body?.reason||'').trim().slice(0,1500);

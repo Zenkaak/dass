@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { getDb, hasDatabaseConfig } from '../server/db.js';
 import { quoteUsdInKes, initializeCentralPaystack, getSellerPaystackCredentials, getCentralPaystackCredentials, extractPaystackFailureReason, logPaymentCallbackFailure, sanitizeReturnOrigin, resolveTenantPaystackCallbackUrl } from '../server/paystack.js';
 import { sendTransactionalEmail, sendTenantTransactionalEmail, sendUsingResendConfig, brandedEmail, encryptTenantEmailConfig, decryptTenantEmailConfig, escapeEmailHtml } from '../server/email.js';
+import { fetchTenantDedupIndex, insertBulkProducts, partitionBulkDuplicates, validateAndNormalizeBulkRows } from '../server/bulkImport.js';
 
 // Keep a stack trace for legacy URL parser warnings so the originating dependency
 // can be identified and upgraded instead of hiding the warning.
@@ -1844,13 +1845,27 @@ if(req.method==='POST'&&action==='subscription-paystack'){
    const imageKey=me.tenant_id+'/products/'+crypto.randomUUID()+'-'+safeFileName(name);
    return send(res,200,{ok:true,imageKey,uploadUrl:storageUrl(imageKey,'PUT',mime),expiresIn:300});
   }
+  if(req.method==='GET'&&action==='products-dedup-index'){
+   const index=await fetchTenantDedupIndex(sql,me.tenant_id);
+   return send(res,200,{ok:true,...index});
+  }
   if(req.method==='POST'&&action==='products-bulk'){
    if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission to import products.'});
-   const rows=Array.isArray(req.body?.products)?req.body.products:[];if(!rows.length||rows.length>500)return send(res,400,{error:'Import between 1 and 500 products.'});
-   const clean:any[]=[];for(let i=0;i<rows.length;i++){const r=rows[i]||{},name=String(r.name||'').trim().slice(0,120),price=Number(r.price),description=String(r.description||'').trim().slice(0,2000),type=['physical','data_bundle','digital'].includes(String(r.type||'').toLowerCase())?String(r.type).toLowerCase():'physical',stock=r.stock===null||r.stock===''?null:Number(r.stock),sku=String(r.sku||'').trim().slice(0,80)||null,image=String(r.image||'').trim(),imageKey=String(r.imageKey||'').trim();if(!name||!Number.isFinite(price)||price<0||price>100000000||(stock!==null&&(!Number.isInteger(stock)||stock<0)))return send(res,400,{error:'Invalid product on CSV row '+String(r.row||i+2)});if(image&&(!/^https:\/\//i.test(image)||image.length>2000))return send(res,400,{error:'Invalid HTTPS image URL on CSV row '+String(r.row||i+2)});if(imageKey&&!imageKey.startsWith(me.tenant_id+'/products/'))return send(res,400,{error:'Invalid uploaded image on CSV row '+String(r.row||i+2)});clean.push({name,price,description,type,stock,sku,images:imageKey?['neon-object:'+imageKey]:image?[image]:[]});}
-   const capacity=await productCapacity(sql,me.tenant_id,clean.length);if(!capacity.ok)return send(res,403,capacity);
-   for(const p of clean){await sql`INSERT INTO public.products(tenant_id,name,slug,description,product_type,price_minor,stock_quantity,sku,images,metadata) VALUES(${me.tenant_id},${p.name},${slugify(p.name)+'-'+crypto.randomBytes(4).toString('hex')},${p.description},${p.type},${Math.round(p.price*100)},${p.stock},${p.sku},${JSON.stringify(p.images)}::jsonb,'{}'::jsonb)`;}
-   await audit(sql,me.tenant_id,me.user_id,'products.bulk_imported','product',null,{count:clean.length});return send(res,201,{ok:true,imported:clean.length,message:clean.length+' products imported successfully.'});
+   const rows=Array.isArray(req.body?.products)?req.body.products:[];if(!rows.length||rows.length>500)return send(res,400,{error:'Import between 1 and 500 products per batch.'});
+   const normalized=validateAndNormalizeBulkRows(rows,me.tenant_id);
+   if(normalized.error)return send(res,400,{error:normalized.error});
+   const skipDuplicates=req.body?.skipDuplicates!==false;
+   const {toInsert,skipped}=skipDuplicates?await partitionBulkDuplicates(sql,me.tenant_id,normalized.items):{toInsert:normalized.items,skipped:[]};
+   if(toInsert.length>0){
+    const capacity=await productCapacity(sql,me.tenant_id,toInsert.length);
+    if(!capacity.ok)return send(res,403,capacity);
+   }
+   const imported=await insertBulkProducts(sql,me.tenant_id,toInsert);
+   await audit(sql,me.tenant_id,me.user_id,'products.bulk_imported','product',null,{imported,skippedDuplicates:skipped.length,totalSubmitted:normalized.items.length});
+   const message=imported>0
+    ?`${imported} new product${imported===1?'':'s'} imported${skipped.length?` · ${skipped.length} duplicate${skipped.length===1?'':'s'} skipped`:''}.`
+    :`0 new products imported · ${skipped.length} duplicate${skipped.length===1?'':'s'} already existed and were skipped.`;
+   return send(res,imported>0?201:200,{ok:true,imported,skippedDuplicates:skipped.length,skippedSamples:skipped.slice(0,25),message});
   }
   if(req.method==='POST'&&action==='product'){
    if(!['owner','admin','editor'].includes(me.role))return send(res,403,{error:'You do not have permission to edit products.'});
