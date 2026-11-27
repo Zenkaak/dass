@@ -18,6 +18,8 @@ export type LiveProduct = {
   imageUrl?: string;
   ratingAverage?: number;
   ratingCount?: number;
+  catalogRating?: number;
+  catalogRatingCount?: number;
 };
 
 export function fallbackProductImage(label: string) {
@@ -430,9 +432,9 @@ export function StorefrontProductDetail({
               <h1>{product.name}</h1>
               <div className="sf-pdp-submeta">
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <Stars value={summary.average} />
-                  <strong>{summary.average ? summary.average.toFixed(1) : 'New'}</strong>
-                  <span>({summary.count} verified ratings)</span>
+                  <Stars value={summary.average || Number(product.catalogRating || 0)} />
+                  <strong>{summary.average ? summary.average.toFixed(1) : Number(product.catalogRating || 0) ? Number(product.catalogRating).toFixed(1) : 'New'}</strong>
+                  <span>{summary.count ? `(${summary.count} verified ratings)` : Number(product.catalogRating || 0) ? 'Catalogue rating' : 'No ratings yet'}</span>
                 </span>
                 <span aria-hidden="true">·</span>
                 <span className="sf-mono">SKU {product.sku || product.id.slice(0, 8).toUpperCase()}</span>
@@ -510,7 +512,7 @@ export function StorefrontProductDetail({
               </div>
             </section>
 
-            <details className="sf-pdp-accordion" open>
+            <details className="sf-pdp-accordion">
               <summary>
                 <span>Description</span>
                 <ChevronDown size={16} className="sf-pdp-chevron" />
