@@ -24,6 +24,17 @@
         link.rel = 'manifest';
         link.href = href;
         document.head.appendChild(link);
+        if (storefront) {
+          fetch(href, { cache: 'no-store' }).then(function (response) { return response.ok ? response.json() : null; }).then(function (manifest) {
+            if (!manifest) return;
+            var appName = manifest.name || manifest.short_name || 'Shop';
+            var appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+            var applicationName = document.querySelector('meta[name="application-name"]');
+            if (appleTitle) appleTitle.setAttribute('content', appName);
+            if (applicationName) applicationName.setAttribute('content', appName);
+            document.title = appName;
+          }).catch(function () {});
+        }
       })();
     </script>
     <meta name="theme-color" content="#0f52ba" />
