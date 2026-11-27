@@ -8,6 +8,24 @@
     <link rel="dns-prefetch" href="https://ke.jumia.is" />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&family=Manrope:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function () {
+        var host = location.hostname.toLowerCase();
+        var path = location.pathname.replace(/^\\/+|\\/+$/g, '');
+        var first = path.split('/')[0] || '';
+        var platformHosts = ['dasmarket.co.ke','www.dasmarket.co.ke','app.dasmarket.co.ke','mambu.dasmarket.co.ke','localhost','127.0.0.1'];
+        var platform = platformHosts.indexOf(host) !== -1 || host.endsWith('.vercel.app') || host.endsWith('.run.app');
+        var tenantSub = host.endsWith('.dasmarket.co.ke') && ['www','app','mambu'].indexOf(host.split('.')[0]) === -1;
+        var reserved = ['', 'login','signup','reset-password','dashboard','platform-admin','create-online-store','ecommerce-platform','sell-online-with-mpesa','custom-domain-online-store','online-store-management'];
+        var seller = host.startsWith('adm.') || first === 'dashboard';
+        var storefront = !seller && (tenantSub || !platform || (first && reserved.indexOf(first) === -1));
+        var href = seller ? '/api/manifest?type=seller' : storefront ? '/api/manifest?type=store' : '/api/manifest?type=platform';
+        var link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = href;
+        document.head.appendChild(link);
+      })();
+    </script>
     <meta name="theme-color" content="#0f52ba" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
