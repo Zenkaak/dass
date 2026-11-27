@@ -1604,6 +1604,19 @@ export function StorefrontFlow({
     });
   }
 
+  function adjustQuantity(id: string, delta: number) {
+    const product = products.find((item) => item.id === id);
+    const available = product?.stockQuantity == null || product.stockQuantity <= 0
+      ? 99
+      : Math.max(0, product.stockQuantity);
+    onCartChange((current) => {
+      const next = { ...current };
+      const nextQuantity = Math.min(99, available, Math.max(0, Number(current[id] || 0) + delta));
+      if (nextQuantity <= 0) delete next[id];
+      else next[id] = nextQuantity;
+      return next;
+    });
+  }
   async function applyVoucher() {
     if (!voucherCode.trim()) {
       setAppliedCoupon(null);
@@ -2170,7 +2183,7 @@ export function StorefrontFlow({
                           <button
                             type="button"
                             aria-label={`Decrease ${product.name} quantity`}
-                            onClick={() => updateQuantity(product.id, quantity - 1)}
+                            onClick={() => adjustQuantity(product.id, -1)}
                           >
                             −
                           </button>
@@ -2184,7 +2197,7 @@ export function StorefrontFlow({
                               product.stockQuantity > 0 &&
                               quantity >= product.stockQuantity
                             }
-                            onClick={() => updateQuantity(product.id, quantity + 1)}
+                            onClick={() => adjustQuantity(product.id, 1)}
                           >
                             +
                           </button>
