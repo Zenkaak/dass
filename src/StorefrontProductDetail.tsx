@@ -50,6 +50,71 @@ async function readJsonSafe(response: Response) {
   return data;
 }
 
+function renderFormattedDescription(rawDescription?: string) {
+  const clean = String(rawDescription || '').replace(/\r\n/g, '\n').trim();
+  if (!clean) {
+    return <p>The seller has not added a product description yet.</p>;
+  }
+
+  let segments = clean
+    .split(/\n+|(?:\s*[•●▪■►✓✔]\s*)|(?:\s+-\s+(?=[A-Z0-9]))/)
+    .map((line) => line.replace(/^[\s\-*•●▪■►✓✔]+|^\d+[.)]\s+/, '').trim())
+    .filter(Boolean);
+
+  if (segments.length === 1) {
+    const single = segments[0];
+    if (single.includes(';')) {
+      segments = single.split(/;\s*/).map((s) => s.trim()).filter(Boolean);
+    } else if (single.length > 70) {
+      const sentenceSplit = single
+        .split(/(?<=[.!?])\s+(?=[A-Z0-9])/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (sentenceSplit.length > 1) {
+        segments = sentenceSplit;
+      } else if (single.includes(', ') && single.split(', ').length >= 3) {
+        segments = single.split(/,\s+/).map((s) => s.trim()).filter(Boolean);
+      }
+    }
+  }
+
+  const kvRows: { label: string; value: string }[] = [];
+  const bullets: string[] = [];
+
+  for (const item of segments) {
+    const kvMatch = item.match(/^([A-Za-z0-9][A-Za-z0-9 /&(),'-]{1,34}):\s+(.+)$/);
+    if (kvMatch && !/^https?$/i.test(kvMatch[1].trim())) {
+      kvRows.push({ label: kvMatch[1].trim(), value: kvMatch[2].trim() });
+    } else {
+      bullets.push(item);
+    }
+  }
+
+  return (
+    <div className="sf-desc-structured">
+      {bullets.length > 0 && (
+        <ul className="sf-desc-bullets">
+          {bullets.map((item, idx) => (
+            <li key={idx}>{item}</li>
+          ))}
+        </ul>
+      )}
+      {kvRows.length > 0 && (
+        <table className="sf-desc-table">
+          <tbody>
+            {kvRows.map((row, idx) => (
+              <tr key={idx}>
+                <th scope="row">{row.label}</th>
+                <td>{row.value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
 export function StorefrontProductDetail({
   product,
   products,
@@ -406,7 +471,7 @@ export function StorefrontProductDetail({
                 <ChevronDown size={16} className="sf-pdp-chevron" />
               </summary>
               <div className="sf-pdp-accordion-body">
-                <p>{product.description || 'The seller has not added a product description yet.'}</p>
+                {renderFormattedDescription(product.description)}
               </div>
             </details>
 

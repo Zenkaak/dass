@@ -537,7 +537,8 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
   />
  );
 
- const homeCatalogueList=filter==='All products'&&!search.trim()&&sortOrder==='recommended'&&!buyerPage.startsWith('collection/')
+ const isFilteringStore=filter!=='All products'||search.trim().length>0||sortOrder!=='recommended';
+ const homeCatalogueList=!isFilteringStore&&!buyerPage.startsWith('collection/')
   ?storePreviewProducts
   :mixedProducts;
  const totalMatchingCount=Math.max(homeCatalogueList.length,catalogueTotal);
@@ -611,7 +612,8 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
      {renderShopDrawer()}
      {renderStoreHeader()}
      <div className="sf-container">
-      {/* 1. Editorial Hero Showcase */}
+      {/* 1. Editorial Hero Showcase (hidden when customer filters or searches) */}
+      {!isFilteringStore&&(
       <section className="sf-hero-wrap" aria-label="Featured showcase">
        <div
         className={'sf-hero'+(heroSlides.length>1?' has-controls':'')+(heroPaused?' is-paused':'')}
@@ -683,9 +685,10 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
         )}
        </div>
       </section>
+      )}
 
-      {/* 2. Featured Spotlight Grid (if configured) */}
-      {spotlightProducts.length>0&&(
+      {/* 2. Featured Spotlight Grid (if configured and not filtering) */}
+      {!isFilteringStore&&spotlightProducts.length>0&&(
        <section className="sf-section">
         <div className="sf-section-head">
          <div>

@@ -1938,6 +1938,61 @@
   line-height: 1.62;
 }
 
+.sf-desc-structured {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sf-desc-bullets {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 14px;
+  color: var(--sf-ink-2);
+  line-height: 1.55;
+}
+
+.sf-desc-bullets li::marker {
+  color: var(--sf-accent);
+}
+
+.sf-desc-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--sf-line);
+  border-radius: var(--sf-radius-sm);
+  overflow: hidden;
+  font-size: 13.5px;
+}
+
+.sf-desc-table th,
+.sf-desc-table td {
+  padding: 8px 11px;
+  border-bottom: 1px solid var(--sf-line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.sf-desc-table tr:last-child th,
+.sf-desc-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.sf-desc-table th {
+  width: 38%;
+  background: var(--sf-stone);
+  color: var(--sf-muted);
+  font-weight: 600;
+}
+
+.sf-desc-table td {
+  color: var(--sf-ink);
+  font-weight: 500;
+}
+
 .sf-pdp-sticky-bar {
   display: none;
 }
@@ -4635,25 +4690,25 @@
 
   .sf-header-inner {
     grid-template-columns: 1fr auto;
-    gap: 6px;
-    padding: 6px 10px 8px;
+    gap: 5px;
+    padding: 5px 10px 6px;
   }
 
   .sf-brand-name {
     max-width: 175px;
-    font-size: 16.5px;
+    font-size: 16px;
   }
 
   .sf-search-form {
     grid-column: 1 / -1;
     order: 3;
     max-width: none;
-    padding: 1px 8px 1px 12px;
+    padding: 0 8px 0 11px;
   }
 
   .sf-search-form input {
-    padding: 6px 8px;
-    font-size: 13.5px;
+    padding: 5px 8px;
+    font-size: 13px;
   }
 
   .sf-header-action {
@@ -4665,32 +4720,32 @@
   }
 
   .sf-hero-wrap {
-    padding-top: 8px;
-    padding-bottom: 2px;
+    padding-top: 6px;
+    padding-bottom: 0;
   }
 
   .sf-hero {
-    min-height: 124px;
+    min-height: 102px;
   }
 
   .sf-hero-slide {
     grid-template-columns: minmax(0, 1.18fr) minmax(0, 0.82fr);
-    min-height: 124px;
+    min-height: 102px;
   }
 
   .sf-hero.has-controls .sf-hero-media-col {
-    padding-bottom: 30px;
+    padding-bottom: 24px;
   }
 
   .sf-hero-copy {
-    padding: 10px 10px 10px 12px;
-    gap: 4px;
+    padding: 8px 8px 8px 10px;
+    gap: 3px;
   }
 
   .sf-hero-copy h1,
   .sf-hero-copy h2 {
-    font-size: 15px;
-    line-height: 1.18;
+    font-size: 14px;
+    line-height: 1.15;
   }
 
   .sf-hero-desc {
@@ -4698,34 +4753,34 @@
   }
 
   .sf-hero-price {
-    font-size: 15px;
+    font-size: 14px;
   }
 
   .sf-hero-actions .sf-btn {
-    min-height: 28px;
-    padding: 0 10px;
-    font-size: 11.5px;
+    min-height: 26px;
+    padding: 0 9px;
+    font-size: 11px;
   }
 
   .sf-hero-media {
-    min-height: 92px;
-    max-height: 108px;
-    padding: 6px 6px 2px;
+    min-height: 76px;
+    max-height: 86px;
+    padding: 4px 6px 2px;
   }
 
   .sf-hero-media img {
-    max-height: 94px;
+    max-height: 78px;
   }
 
   .sf-hero-controls {
     width: 41%;
-    padding: 3px 5px 5px;
+    padding: 2px 4px 4px;
     gap: 4px;
   }
 
   .sf-hero-arrow {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
   }
 
   .sf-hero-dots button {
@@ -4737,12 +4792,12 @@
   }
 
   .sf-section {
-    padding-top: 12px;
+    padding-top: 8px;
   }
 
   .sf-section-head {
-    padding-bottom: 6px;
-    margin-bottom: 8px;
+    padding-bottom: 4px;
+    margin-bottom: 5px;
     gap: 8px;
   }
 
@@ -4751,44 +4806,45 @@
   }
 
   .sf-section-head h2 {
-    font-size: 16px;
+    font-size: 15px;
     margin-top: 0;
   }
 
   .sf-link-action {
-    font-size: 12px;
+    font-size: 11.5px;
+    padding: 2px 0;
   }
 
   .sf-cat-tabs {
     gap: 5px;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
   }
 
   .sf-cat-tab {
-    min-height: 28px;
-    padding: 0 9px;
-    font-size: 11.5px;
+    min-height: 26px;
+    padding: 0 8px;
+    font-size: 11px;
   }
 
   .sf-toolbar {
-    padding: 5px 7px;
-    margin-bottom: 10px;
+    padding: 3px 6px;
+    margin-bottom: 7px;
     gap: 6px;
   }
 
   .sf-toolbar-controls {
-    gap: 6px;
+    gap: 5px;
   }
 
   .sf-select {
-    min-height: 30px;
-    height: 30px;
-    padding: 0 7px;
-    font-size: 12px;
+    min-height: 28px;
+    height: 28px;
+    padding: 0 6px;
+    font-size: 11.5px;
   }
 
   .sf-result-count {
-    font-size: 11.5px;
+    font-size: 11px;
     padding-left: 2px;
   }
 
@@ -4878,43 +4934,43 @@
   }
 
   .sf-card-media {
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 5 / 4;
   }
 
   .sf-card-media img {
-    padding: 3px;
+    padding: 2px;
   }
 
   .sf-card-body {
-    padding: 7px 9px 6px;
-    gap: 3px;
+    padding: 5px 8px 5px;
+    gap: 2px;
   }
 
   .sf-card-cat {
-    font-size: 9.5px;
+    font-size: 9px;
   }
 
   .sf-card-title {
-    font-size: 12.5px;
-    line-height: 1.24;
-    min-height: 31px;
+    font-size: 12px;
+    line-height: 1.2;
+    min-height: 29px;
   }
 
   .sf-card-meta-row {
-    padding-top: 2px;
+    padding-top: 1px;
     gap: 4px;
   }
 
   .sf-card-price {
-    font-size: 13.5px;
+    font-size: 13px;
   }
 
   .sf-card-stock {
-    font-size: 10.5px;
+    font-size: 10px;
   }
 
   .sf-card-foot {
-    padding: 0 9px 9px;
+    padding: 0 8px 7px;
   }
 
   .sf-card-foot.is-out {
