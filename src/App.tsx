@@ -276,7 +276,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
      <div className="sf-card-body">
       <span className="sf-card-cat">{p.category||'Shop'}</span>
       <span className="sf-card-title">{p.name}</span>
-      {(p.ratingCount??0)>0&&<span className="sf-card-rating"><Star size={12} fill="currentColor"/> {Number(p.ratingAverage||0).toFixed(1)} ({p.ratingCount})</span>}
+      {(p.ratingCount??0)>0||Number(p.catalogRating||0)>0?<span className="sf-card-rating"><Star size={12} fill="currentColor"/> {Number((p.ratingCount??0)>0?p.ratingAverage:p.catalogRating||0).toFixed(1)}{(p.ratingCount??0)>0?` (${p.ratingCount})`:''}</span>:null}
       <div className="sf-card-meta-row">
        <strong className="sf-card-price">KES {p.price.toLocaleString('en-KE')}</strong>
        <small className="sf-card-stock">{hasPositiveStock?`${p.stockQuantity} left`:'Available'}</small>
