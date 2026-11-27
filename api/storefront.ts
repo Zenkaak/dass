@@ -55,7 +55,7 @@ function productOut(p:any,includeMetadata=false){
   const value=typeof item==='string'?item:String(item?.url||item?.src||item?.publicUrl||item?.public_url||item?.key||item?.path||'');
   if(!value)return '';
   if(value.startsWith('neon-object:'))return storageUrl(value.slice(12),'GET');
-  if(value.startsWith('s3://'))return storageUrl(value.slice(5).replace(/^documents\\//,''),'GET');
+  if(value.startsWith('s3://'))return storageUrl(value.slice(5).replace(/^documents\//,''),'GET');
   return value;
  }).filter(Boolean);
  const categories=productCategoryInfo(p.metadata,p.product_type);
