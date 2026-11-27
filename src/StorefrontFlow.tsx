@@ -5,7 +5,7 @@ import { DisputesPanel } from './DisputesPanel';
 import { fallbackProductImage } from './StorefrontProductDetail';
 import { CardNetworkLogos, CardProviderIcon, CashProviderIcon, MpesaProviderIcon } from './PaymentProviderIcons';
 import PaystackPop, { type PaystackPopupTransaction, type PaystackTransactionStatus } from '@paystack/inline-js';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import {
   AlertCircle,
   ArrowLeft,
@@ -199,7 +199,7 @@ type StorefrontFlowProps = {
   recentlyViewed?: string[];
   cart: Record<string, number>;
   cartLoading?: boolean;
-  onCartChange: (next: Record<string, number>) => void;
+  onCartChange: Dispatch<SetStateAction<Record<string, number>>>;
   view: string;
   initialReportId?: string;
   initialOrderNumber?: string;
@@ -1587,15 +1587,21 @@ export function StorefrontFlow({
   };
 
   function updateQuantity(id: string, quantity: number) {
-    const next = { ...cart };
-    if (quantity <= 0) delete next[id];
-    else {
-      const product = products.find((item) => item.id === id);
-      const available = product?.stockQuantity == null ? 99 : Math.max(0, product.stockQuantity);
-      next[id] = Math.min(99, available, quantity);
-      if (next[id] <= 0) delete next[id];
-    }
-    onCartChange(next);
+    const product = products.find((item) => item.id === id);
+    const available = product?.stockQuantity == null || product.stockQuantity <= 0
+      ? 99
+      : Math.max(0, product.stockQuantity);
+    onCartChange((current) => {
+      const next = { ...current };
+      if (quantity <= 0) {
+        delete next[id];
+      } else {
+        const nextQuantity = Math.min(99, available, quantity);
+        if (nextQuantity <= 0) delete next[id];
+        else next[id] = nextQuantity;
+      }
+      return next;
+    });
   }
 
   async function applyVoucher() {
