@@ -1,25 +1,37 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight, ArrowUpDown, Baby, Bell, Briefcase, Building2, Car, Check, ChevronDown, ChevronRight, Download, Dumbbell, Flag, Gamepad2, Heart, HelpCircle, Home, Laptop, LogOut, MapPin, Menu, MessageCircle, Package, PawPrint, Plus, Refrigerator, Search, ShieldCheck, Shirt, ShoppingBag, ShoppingCart, SlidersHorizontal, Smartphone, Sofa, Sparkles, Sprout, Star, Store, TicketPercent, Tv, UserCheck, UserRound, Wrench, X } from 'lucide-react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { unzipSync } from 'fflate';
+import { Activity, ArrowRight, ArrowUpRight, Baby, Bell, Briefcase, Building2, Car, Check, ChevronLeft, ChevronRight, CircleAlert, CreditCard, Download, Dumbbell, FileText, Flag, Gamepad2, Globe, Heart, HelpCircle, Home, Laptop, LayoutDashboard, LogOut, MapPin, Menu, MessageCircle, Package, PawPrint, Plus, RefreshCw, Refrigerator, Search, Send, Settings, ShieldCheck, Shirt, ShoppingBag, ShoppingCart, Smartphone, Sofa, Sparkles, Sprout, Star, Store, TicketPercent, Tv, UserCheck, UserRound, Wallet, WalletCards, Wrench, X } from 'lucide-react';
 import { storefrontCategories } from './storefrontCatalog';
 import { marketplaceFaqs } from './marketplaceFaqs';
+import { AuthPage } from './AuthPage';
+import ReplitLandingPage from './ReplitLandingPage';
+import PlatformSeoPage, { isPlatformSeoPath } from './PlatformSeoPage';
 import { StorefrontProductDetail, fallbackProductImage, type LiveProduct } from './StorefrontProductDetail';
-import { StorefrontHeroCarousel } from './StorefrontHeroCarousel';
-import { StorefrontQuickView } from './StorefrontQuickView';
 import './storefront-redesign.css';
 
 
 const StorefrontFlow = lazy(()=>import('./StorefrontFlow').then(m=>({default:m.StorefrontFlow})));
+const SellerShopControls = lazy(()=>import('./SellerShopControls').then(m=>({default:m.SellerShopControls})));
+const SellerDomains = lazy(()=>import('./SellerDomains').then(m=>({default:m.SellerDomains})));
 const BuyerAuthPage = lazy(()=>import('./BuyerAuthPage').then(m=>({default:m.BuyerAuthPage})));
 const PlatformAdminDashboard = lazy(()=>import('./PlatformAdminDashboard').then(m=>({default:m.PlatformAdminDashboard})));
-const SellerDashboard = lazy(()=>import('./SellerDashboard').then(m=>({default:m.SellerDashboard})));
-const AuthPage = lazy(()=>import('./AuthPage').then(m=>({default:m.AuthPage})));
-const ReplitLandingPage = lazy(()=>import('./ReplitLandingPage'));
-const PlatformSeoPage = lazy(()=>import('./PlatformSeoPage'));
-const PLATFORM_SEO_PATHS = new Set(['create-online-store','ecommerce-platform','sell-online-with-mpesa','custom-domain-online-store','online-store-management']);
-function isPlatformSeoPath(path: string){return PLATFORM_SEO_PATHS.has(path.replace(/^\/+|\/+$/g,''));}
+const DisputesPanel = lazy(()=>import('./DisputesPanel').then(m=>({default:m.DisputesPanel})));
 function Deferred({children}:{children:any}) {
  return <Suspense fallback={<div className="dasnet-route-loading" role="status">Loading…</div>}>{children}</Suspense>;
 }
+
+const sellerCategoryOptions = Array.from(new Set(storefrontCategories.flatMap(category => [category.name, ...category.subcategories.filter(child => !child.startsWith('All '))])));
+const storeAccentColors = [
+  {name:'Marketplace orange',value:'#e47a13'},
+  {name:'Ocean blue',value:'#2563eb'},
+  {name:'Forest green',value:'#16803d'},
+  {name:'Rose pink',value:'#db2777'},
+  {name:'Royal purple',value:'#7c3aed'},
+  {name:'Deep teal',value:'#0f766e'},
+  {name:'Classic red',value:'#c62828'},
+  {name:'Charcoal',value:'#374151'},
+  {name:'Luxury gold',value:'#9a7628'},
+];
 
 
 
@@ -40,8 +52,11 @@ async function uploadToObjectStorage(url:string,file:File,label='File'){
   }
  return response;
 }
+function Brand() {
+  return <a className="brand" href="/" aria-label="DASNET home"><span className="brand-mark">D</span><span>DASNET</span></a>;
+}
 
-function LandingPage() { return <Deferred><ReplitLandingPage/></Deferred>; }
+function LandingPage() { return <ReplitLandingPage/>; }
 function categorySlug(value:string){return value.toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
 function storeCategoryIcon(name:string){
  const key=name.toLowerCase();
@@ -64,36 +79,13 @@ function storeCategoryIcon(name:string){
 }
 function categoryApiFilter(value:string){const group=storefrontCategories.find(c=>c.name.toLocaleLowerCase()===value.toLocaleLowerCase()||c.subcategories.some(child=>child.toLocaleLowerCase()===value.toLocaleLowerCase()));return group&&group.name.toLocaleLowerCase()===value.toLocaleLowerCase()?[group.name,...group.subcategories.filter(child=>!child.startsWith('All '))].join('|'):value;}
 function categoryRoute(value:string){const parent=storefrontCategories.find(c=>c.name===value||c.subcategories.includes(value));if(!parent)return '';if(value===parent.name)return categorySlug(parent.name);if(value.startsWith('All '))return categorySlug(parent.name)+'/'+(parent.name==='Gaming'?'all-games':'all-'+categorySlug(parent.name));return categorySlug(parent.name)+'/'+categorySlug(value);}
-function isHostScopedDomain(){const host=window.location.hostname.toLowerCase();const tenantSubdomain=host.endsWith('.dasmarket.co.ke')&&!['www','app','mambu'].includes(host.split('.')[0]);const isPlatformHost=host==='dasmarket.co.ke'||host==='www.dasmarket.co.ke'||host==='app.dasmarket.co.ke'||host==='mambu.dasmarket.co.ke'||host.endsWith('.vercel.app')||host.endsWith('.run.app')||host.endsWith('.googleusercontent.com')||host.endsWith('.aistudio.google.com')||host==='localhost'||host==='127.0.0.1';return Boolean(tenantSubdomain||(!isPlatformHost&&!tenantSubdomain));}
-function getCartScopeKey(slug:string){return slug.trim()||('host:'+window.location.hostname.toLowerCase());}
-function sanitizeCartMap(saved:any):Record<string,number>{if(!saved||typeof saved!=='object'||Array.isArray(saved))return {};return Object.fromEntries(Object.entries(saved).filter(([id,q])=>typeof id==='string'&&id.trim().length>0&&Number.isInteger(q)&&Number(q)>0).map(([id,q])=>[id,Math.min(99,Number(q))]));}
-function readBuyerSessionHint(scopeKey:string){try{const raw=sessionStorage.getItem('dasnet-buyer-session-'+scopeKey);if(!raw)return null;const parsed=JSON.parse(raw);return parsed&&typeof parsed==='object'&&parsed.phone?parsed:null;}catch{return null;}}
-function readCachedStorefront(slug:string){if(!slug)return null;try{const raw=localStorage.getItem('dasnet-storefront-cache-'+slug);if(!raw)return null;const value=JSON.parse(raw);if(!value||!Array.isArray(value.products)||!value.shop)return null;/* A legacy partial cache without totalProducts must never make a large catalogue look complete. */if(value.products.length<35&&value.totalProducts===undefined)return null;return {shop:value.shop,products:value.products.slice(0,60) as LiveProduct[],totalProducts:Number(value.totalProducts??value.products.length)}}catch{return null}}
+function readCachedStorefront(slug:string){try{const raw=localStorage.getItem('dasnet-storefront-cache-'+slug);if(!raw)return null;const value=JSON.parse(raw);if(!value||!Array.isArray(value.products)||!value.shop)return null;/* A legacy partial cache must never make a large catalogue look complete. */if(value.products.length<35)return null;return {shop:value.shop,products:value.products.slice(0,60) as LiveProduct[],totalProducts:Number(value.totalProducts||value.products.length)}}catch{return null}}
 function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug: string; initialBuyerPage?: string }) {
  const [slug,setSlug]=useState(initialSlug);
- const slugRef=useRef<string>(initialSlug);
- slugRef.current=slug;
- const initialCartScope=getCartScopeKey(initialSlug);
- const cartScopeRef=useRef<string>(initialCartScope);
- const cachedStorefront=useMemo(()=>readCachedStorefront(slug),[slug]);
- const [reconnectTick,setReconnectTick]=useState(0);
- useEffect(()=>{const bump=()=>setReconnectTick(t=>t+1);window.addEventListener('online',bump);return()=>window.removeEventListener('online',bump)},[]);
- useEffect(()=>{
-  try{
-   for(let i=localStorage.length-1;i>=0;i--){
-    const key=localStorage.key(i);
-    if(key&&(key.startsWith('dasnet-cart-')||key.startsWith('dasnet-cart-items-')||key.startsWith('dasnet-delivery-pref-')))localStorage.removeItem(key);
-   }
-  }catch{}
- },[]);
+ const cachedStorefront=readCachedStorefront(slug);
  const previousPaymentStatus=useRef<string|null>(null);const [chatToken,setChatToken]=useState(''),[chatOrderId,setChatOrderId]=useState(''),[chatOrderNumber,setChatOrderNumber]=useState(''),[chatOrder,setChatOrder]=useState<any>(null),[chatMessages,setChatMessages]=useState<any[]>([]),[chatAttachments,setChatAttachments]=useState<any[]>([]),[chatDraft,setChatDraft]=useState(''),[chatSending,setChatSending]=useState(false),[paymentCelebration,setPaymentCelebration]=useState(false),[chatError,setChatError]=useState('');
- const [filter,setFilter]=useState('All products'),[search,setSearch]=useState(''),[sortOrder,setSortOrder]=useState('recommended'),[priceBand,setPriceBand]=useState<'all'|'under-1000'|'1000-5000'|'5000-15000'|'15000-plus'>('all'),[inStockOnly,setInStockOnly]=useState(false),[collectionSheet,setCollectionSheet]=useState<null|'sort'|'filter'>(null),[products,setProducts]=useState<LiveProduct[]>(()=>cachedStorefront?.products||[]);
- const [catalogueOffset,setCatalogueOffset]=useState(cachedStorefront?.products.length||0),[catalogueTotal,setCatalogueTotal]=useState(cachedStorefront?.totalProducts||0),[catalogueHasMore,setCatalogueHasMore]=useState(true),[loadingMore,setLoadingMore]=useState(false);const catalogueSentinelRef=useRef<HTMLDivElement|null>(null);const [shop,setShop]=useState<{name:string;description:string;logoUrl?:string;whatsappNumber?:string;contactPhone?:string;contactEmail?:string;termsAndConditions?:string;privacyPolicy?:string;returnPolicy?:string;deliveryPolicy?:string;deliveryHomeFee?:number;deliveryPickupFee?:number;cashOnDeliveryEnabled?:boolean;cashOnPickupEnabled?:boolean;faqs?:Array<{question:string;answer:string}>;theme?:string}|null>(()=>cachedStorefront?.shop||null),[loading,setLoading]=useState(!cachedStorefront),[error,setError]=useState(''),[notFound,setNotFound]=useState(false),[cart,setCart]=useState<Record<string,number>>({}),[cartHydrating,setCartHydrating]=useState(false),[selectedProduct,setSelectedProduct]=useState<LiveProduct|null>(null),[quickViewProduct,setQuickViewProduct]=useState<LiveProduct|null>(null),[mobileSidebarOpen,setMobileSidebarOpen]=useState(false),[desktopSidebarOpen,setDesktopSidebarOpen]=useState(false),[buyerMobileNavOpen,setBuyerMobileNavOpen]=useState(false);
- const cartRef=useRef<Record<string,number>>({});
- const guestPendingCartRef=useRef<Record<string,number>>({});
- const cartHydratedForUserRef=useRef<string>('');
- const cartSyncQueueRef=useRef<Promise<void>>(Promise.resolve());
- const cartSyncPendingCountRef=useRef<number>(0);
+ const [filter,setFilter]=useState('All products'),[search,setSearch]=useState(''),[sortOrder,setSortOrder]=useState('recommended'),[products,setProducts]=useState<LiveProduct[]>(()=>cachedStorefront?.products||[]);
+ const [catalogueOffset,setCatalogueOffset]=useState(cachedStorefront?.products.length||0),[catalogueTotal,setCatalogueTotal]=useState(cachedStorefront?.totalProducts||0),[catalogueHasMore,setCatalogueHasMore]=useState(true),[loadingMore,setLoadingMore]=useState(false);const catalogueSentinelRef=useRef<HTMLDivElement|null>(null);const [shop,setShop]=useState<{name:string;description:string;logoUrl?:string;whatsappNumber?:string;contactPhone?:string;contactEmail?:string;termsAndConditions?:string;privacyPolicy?:string;returnPolicy?:string;deliveryPolicy?:string;deliveryHomeFee?:number;deliveryPickupFee?:number;cashOnDeliveryEnabled?:boolean;cashOnPickupEnabled?:boolean;faqs?:Array<{question:string;answer:string}>;theme?:string}|null>(()=>cachedStorefront?.shop||null),[loading,setLoading]=useState(!cachedStorefront),[error,setError]=useState(''),[notFound,setNotFound]=useState(false),[cart,setCart]=useState<Record<string,number>>(()=>{try{const saved=JSON.parse(localStorage.getItem('dasnet-cart-'+slug)||'{}');if(!saved||typeof saved!=='object'||Array.isArray(saved))return {};return Object.fromEntries(Object.entries(saved).filter(([id,q])=>typeof id==='string'&&Number.isInteger(q)&&Number(q)>0).map(([id,q])=>[id,Math.min(99,Number(q))]));}catch{return {};}}),[selectedProduct,setSelectedProduct]=useState<LiveProduct|null>(null),[mobileSidebarOpen,setMobileSidebarOpen]=useState(false),[desktopSidebarOpen,setDesktopSidebarOpen]=useState(false),[buyerMobileNavOpen,setBuyerMobileNavOpen]=useState(false);
  useEffect(()=>{if(!notFound)return;const previousTitle=document.title;const robots=document.head.querySelector('meta[name="robots"]') as HTMLMetaElement|null;const previousRobots=robots?.content||'';const meta=robots||document.createElement('meta');meta.name='robots';meta.content='noindex,nofollow';if(!robots)document.head.appendChild(meta);const canonical=document.head.querySelector('link[rel="canonical"]') as HTMLLinkElement|null;const previousCanonical=canonical?.href||'';canonical?.remove();document.title='Shop not found | DASMARKET';return()=>{document.title=previousTitle;if(previousRobots){meta.content=previousRobots}else{meta.remove()}if(previousCanonical){const restored=document.createElement('link');restored.rel='canonical';restored.href=previousCanonical;document.head.appendChild(restored)}}},[notFound]);
   useEffect(()=>{
     if(!mobileSidebarOpen&&!desktopSidebarOpen&&!buyerMobileNavOpen)return;
@@ -103,285 +95,107 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
   },[mobileSidebarOpen,desktopSidebarOpen,buyerMobileNavOpen]);
  const [buyerPage,setBuyerPage]=useState(initialBuyerPage||'store'),[expandedCategory,setExpandedCategory]=useState('');
  const emailOrderNumber=useRef(new URLSearchParams(window.location.search).get('order')||'');
-  const [wishlistIds,setWishlistIds]=useState<string[]>(()=>{try{const saved=JSON.parse(localStorage.getItem('dasnet-wishlist-'+initialCartScope)||'[]');return Array.isArray(saved)?saved.filter((id:any)=>typeof id==='string'):[]}catch{return[]}});
-  useEffect(()=>{if(cartScopeRef.current!==getCartScopeKey(slug))return;try{localStorage.setItem('dasnet-wishlist-'+cartScopeRef.current,JSON.stringify(wishlistIds))}catch{}},[wishlistIds,slug]);
+  const [wishlistIds,setWishlistIds]=useState<string[]>(()=>{try{const saved=JSON.parse(localStorage.getItem('dasnet-wishlist-'+slug)||'[]');return Array.isArray(saved)?saved.filter((id:any)=>typeof id==='string'):[]}catch{return[]}});
+  useEffect(()=>{try{localStorage.setItem('dasnet-wishlist-'+slug,JSON.stringify(wishlistIds))}catch{}},[wishlistIds,slug]);
   function toggleWishlist(id:string){
   setWishlistIds(current=>{
     const enabled=!current.includes(id);
-    if(buyerCustomer?.phone&&slug)fetch('/api/buyer?action=buyer-wishlist',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug,productId:id,enabled})}).then(async response=>{if(!response.ok){const data=await response.json().catch(()=>({}));throw Error(data.error||'Wishlist could not be synced.');}}).catch(error=>console.warn('Buyer wishlist sync failed:',error));
+    if(buyerCustomer?.phone)fetch('/api/buyer?action=buyer-wishlist',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug,productId:id,enabled})}).then(async response=>{if(!response.ok){const data=await response.json().catch(()=>({}));throw Error(data.error||'Wishlist could not be synced.');}}).catch(error=>console.warn('Buyer wishlist sync failed:',error));
     return enabled?[...current,id]:current.filter(value=>value!==id);
   });
 }
- const [buyerCustomer,setBuyerCustomer]=useState<any>(()=>readBuyerSessionHint(initialCartScope)),[buyerAuthChecked,setBuyerAuthChecked]=useState(false),[buyerReturnPage,setBuyerReturnPage]=useState<string>(()=>{try{return sessionStorage.getItem('dasnet-buyer-return-'+initialCartScope)||'account';}catch{return 'account';}});
- const buyerCustomerRef=useRef<any>(buyerCustomer);
- buyerCustomerRef.current=buyerCustomer;
- const buyerAuthCheckedRef=useRef<boolean>(buyerAuthChecked);
- buyerAuthCheckedRef.current=buyerAuthChecked;
- const updateBuyerReturnPage=(next:string)=>{setBuyerReturnPage(next);try{sessionStorage.setItem('dasnet-buyer-return-'+getCartScopeKey(slug),next);}catch{}};
- async function hydrateServerCart(targetSlug:string,guestItemsToMerge?:Record<string,number>,forUserPhone?:string){
-  if(!targetSlug)return;
-  const cleanMerge=sanitizeCartMap(guestItemsToMerge);
-  const hasMerge=Object.keys(cleanMerge).length>0;
-  setCartHydrating(true);
-  try{
-   const response=await fetch(
-    '/api/buyer?action=buyer-cart'+(hasMerge?'':'&slug='+encodeURIComponent(targetSlug)),
-    hasMerge
-     ?{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug:targetSlug,mode:'merge',cart:cleanMerge})}
-     :{credentials:'same-origin',cache:'no-store'}
-   );
-   if(response.status===401||response.status===403)return;
-   const data=await readApiResponse(response);
-   if(!response.ok)throw Error(data.error||'Could not load saved cart.');
-   const serverCart=sanitizeCartMap(data.cart);
-   if(hasMerge||cartSyncPendingCountRef.current===0){
-    cartRef.current=serverCart;
-    setCart(serverCart);
-   }
-   const serverProducts:LiveProduct[]=Array.isArray(data.items)
-    ?data.items.map((entry:any)=>entry?.product).filter((p:any):p is LiveProduct=>Boolean(p&&p.id))
-    :[];
-   if(serverProducts.length){
-    setProducts((current:LiveProduct[])=>{
-     const byId=new Map(current.map((p:LiveProduct)=>[p.id,p]));
-     for(const sp of serverProducts)byId.set(sp.id,sp);
-     return Array.from(byId.values());
-    });
-   }
-   const userKey=forUserPhone||buyerCustomerRef.current?.phone;
-   if(userKey)cartHydratedForUserRef.current=`${targetSlug}:${userKey}`;
-  }catch(err){
-   console.warn('Database cart sync unavailable:',err);
-  }finally{
-   setCartHydrating(false);
-  }
- }
- function updateCart(nextOrUpdater:Record<string,number>|((prev:Record<string,number>)=>Record<string,number>)){
-  const resolvedNext=sanitizeCartMap(typeof nextOrUpdater==='function'?nextOrUpdater(cartRef.current):nextOrUpdater);
-  cartRef.current=resolvedNext;
-  setCart(resolvedNext);
-  const activeCustomer=buyerCustomerRef.current;
-  const activeSlug=slugRef.current;
-  if(activeCustomer?.phone&&activeSlug){
-   guestPendingCartRef.current={};
-   cartSyncPendingCountRef.current+=1;
-   const snapshot={...resolvedNext};
-   cartSyncQueueRef.current=cartSyncQueueRef.current
-    .catch(()=>{})
-    .then(async()=>{
-     try{
-      const isEmpty=Object.keys(snapshot).length===0;
-      const response=await fetch('/api/buyer?action=buyer-cart',{
-       method:'POST',
-       credentials:'same-origin',
-       headers:{'Content-Type':'application/json'},
-       body:JSON.stringify(isEmpty?{slug:activeSlug,mode:'clear'}:{slug:activeSlug,mode:'sync',cart:snapshot}),
-      });
-      if(!response.ok){
-       const d=await response.json().catch(()=>({}));
-       throw Error(d.error||'Could not save cart.');
-      }
-     }catch(err){
-      console.warn('Cart database sync failed:',err);
-     }finally{
-      cartSyncPendingCountRef.current=Math.max(0,cartSyncPendingCountRef.current-1);
-     }
-    });
-  }else{
-   guestPendingCartRef.current={...resolvedNext};
-  }
- }
- function signOutBuyer(){
-  const activeSlug=slugRef.current;
-  fetch('/api/buyer-auth?action=logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug:activeSlug}),credentials:'same-origin'})
-   .finally(()=>{
-    const scope=getCartScopeKey(activeSlug);
-    try{
-     sessionStorage.removeItem('dasnet-buyer-session-'+scope);
-     sessionStorage.removeItem('dasnet-buyer-return-'+scope);
-    }catch{}
-    cartHydratedForUserRef.current='';
-    guestPendingCartRef.current={};
-    cartRef.current={};
-    setCart({});
-    buyerCustomerRef.current=null;
-    setBuyerCustomer(null);
-    navigateBuyerPage('store');
-   });
- }
+ const [buyerCustomer,setBuyerCustomer]=useState<any>(null),[buyerAuthChecked,setBuyerAuthChecked]=useState(false),[buyerReturnPage,setBuyerReturnPage]=useState('account');
   useEffect(()=>{
     let live=true;
-    if(!buyerCustomer?.phone||!buyerAuthChecked||!slug)return;
+    if(!buyerCustomer?.phone||!buyerAuthChecked)return;
     fetch('/api/buyer?action=buyer-account-data&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'})
       .then(async response=>{const data=await response.json().catch(()=>({}));if(!response.ok)throw Error(data.error||'Could not load buyer account data.');return data;})
       .then(data=>{if(live&&Array.isArray(data.wishlist))setWishlistIds(data.wishlist.map((item:any)=>String(item.id)));})
       .catch(error=>console.warn('Buyer account sync unavailable:',error));
     return()=>{live=false;};
   },[slug,buyerCustomer?.phone,buyerAuthChecked]);
-  useEffect(()=>{
-   if(!buyerAuthChecked||!slug)return;
-   if(!buyerCustomer?.phone){
-    cartHydratedForUserRef.current='';
-    return;
-   }
-   const key=`${slug}:${buyerCustomer.phone}`;
-   if(cartHydratedForUserRef.current!==key){
-    const pending=sanitizeCartMap(guestPendingCartRef.current);
-    guestPendingCartRef.current={};
-    void hydrateServerCart(slug,Object.keys(pending).length?pending:undefined,buyerCustomer.phone);
-   }
-  },[slug,buyerAuthChecked,buyerCustomer?.phone]);
-  useEffect(()=>{
-   if(!slug)return;
-   const refreshFromServer=()=>{
-    if(document.visibilityState==='hidden')return;
-    if(!buyerAuthCheckedRef.current||!buyerCustomerRef.current?.phone)return;
-    if(cartSyncPendingCountRef.current>0)return;
-    void hydrateServerCart(slugRef.current);
-   };
-   window.addEventListener('focus',refreshFromServer);
-   document.addEventListener('visibilitychange',refreshFromServer);
-   return()=>{
-    window.removeEventListener('focus',refreshFromServer);
-    document.removeEventListener('visibilitychange',refreshFromServer);
-   };
-  },[slug]);
 
  const [buyerNotifications,setBuyerNotifications]=useState<any[]>([]),[buyerNotificationsOpen,setBuyerNotificationsOpen]=useState(false),[buyerInitialReportId,setBuyerInitialReportId]=useState('');
- const [recentlyViewed,setRecentlyViewed]=useState<string[]>(()=>{try{const saved=JSON.parse(localStorage.getItem('dasnet-recently-viewed-'+initialCartScope)||'[]');return Array.isArray(saved)?saved:[]}catch{return[]}});
- const isHostScoped=isHostScopedDomain();
- const storeBasePath=isHostScoped?'':`/${slug}`;
+ const [recentlyViewed,setRecentlyViewed]=useState<string[]>(()=>{try{const saved=JSON.parse(localStorage.getItem('dasnet-recently-viewed-'+slug)||'[]');return Array.isArray(saved)?saved:[]}catch{return[]}});
+ const isTenantSubdomain=window.location.hostname.toLowerCase().endsWith('.dasmarket.co.ke')&&!['www','app'].includes(window.location.hostname.toLowerCase().split('.')[0]);
+ const storeBasePath=isTenantSubdomain?'':`/${slug}`;
  const buyerPath=(page:string)=>page==='store'?(storeBasePath||'/'):`${storeBasePath}/${page}`||`/${page}`;
- function navigateBuyerPage(page:string,preserveFilters=false){setQuickViewProduct(null);if(page==='reports'||page==='report-shop')page='my-reports';if(['recently-viewed','followed-shops','notification-settings','public-profile','newsletter'].includes(page))page='account';if((['account','profile','orders','order-detail','order-tracking','inbox','wishlist','recently-viewed','address-book','address-book/edit','vouchers','reviews','notifications','my-reports','followed-shops','newsletter','notification-settings','public-profile','account-management','close-account'].includes(page)||page.startsWith('orders/')||page.startsWith('my-reports/'))&&!buyerCustomer){updateBuyerReturnPage(page);page='buyer-login'}if((page==='checkout/delivery'||page==='checkout/payment'||page==='checkout/review')&&!buyerCustomer){updateBuyerReturnPage(page);page='buyer-login'}if(page==='store'&&!preserveFilters){setFilter('All products');setSearch('');setPriceBand('all');setInStockOnly(false);setExpandedCategory('');setSelectedProduct(null)}setCollectionSheet(null);setBuyerPage(page);if(page!=='product-detail')setSelectedProduct(null);setMobileSidebarOpen(false);setDesktopSidebarOpen(false);setBuyerMobileNavOpen(false);setBuyerNotificationsOpen(false);const nextPath=buyerPath(page);if(window.location.pathname!==nextPath)window.history.pushState({buyerPage:page},'',nextPath);if((page==='cart'||page.startsWith('checkout/'))&&buyerCustomerRef.current?.phone&&buyerAuthCheckedRef.current&&slugRef.current&&cartSyncPendingCountRef.current===0){void hydrateServerCart(slugRef.current);}window.scrollTo({top:0,behavior:'instant' as ScrollBehavior})}
- function selectStoreCategory(category:string){setQuickViewProduct(null);const parent=storefrontCategories.find(c=>c.name===category||c.subcategories.includes(category));const filterValue=category.startsWith('All ')?(parent?.name||category):category;setFilter(filterValue);setSearch('');setSelectedProduct(null);setCatalogueOffset(0);setCatalogueHasMore(false);setLoadingMore(false);setBuyerPage('store');setMobileSidebarOpen(false);setDesktopSidebarOpen(false);const nextPath=buyerPath('store');if(window.location.pathname!==nextPath)window.history.replaceState({buyerPage:'store'},'',nextPath)}
- function openProduct(product:LiveProduct){setQuickViewProduct(null);setSelectedProduct(product);setBuyerPage('product-detail');setMobileSidebarOpen(false);const parent=storefrontCategories.find(c=>c.name===product.category||c.subcategories.includes(product.category));const route=(parent?categorySlug(parent.name):'products')+'/'+(parent&&product.category!==parent.name?categorySlug(product.category).replace(/-/g,''):'products')+'/'+encodeURIComponent(product.sku||product.id);window.history.pushState({productSku:product.sku||product.id},'',(storeBasePath||'')+'/'+route);window.scrollTo({top:0,left:0,behavior:'instant' as ScrollBehavior})}
+ function navigateBuyerPage(page:string){if(page==='reports'||page==='report-shop')page='my-reports';if(['recently-viewed','followed-shops','notification-settings','public-profile','newsletter'].includes(page))page='account';if((['account','profile','orders','order-detail','order-tracking','inbox','wishlist','recently-viewed','address-book','address-book/edit','vouchers','reviews','notifications','my-reports','followed-shops','newsletter','notification-settings','public-profile','account-management','close-account'].includes(page)||page.startsWith('orders/')||page.startsWith('my-reports/'))&&!buyerCustomer){setBuyerReturnPage(page);page='buyer-login'}if((page==='checkout/delivery'||page==='checkout/payment'||page==='checkout/review')&&!buyerCustomer){setBuyerReturnPage(page);page='buyer-login'}if(page==='store'){setFilter('All products');setSearch('');setExpandedCategory('');setSelectedProduct(null)}setBuyerPage(page);if(page!=='product-detail')setSelectedProduct(null);setMobileSidebarOpen(false);setDesktopSidebarOpen(false);setBuyerMobileNavOpen(false);setBuyerNotificationsOpen(false);const nextPath=buyerPath(page);if(window.location.pathname!==nextPath)window.history.pushState({buyerPage:page},'',nextPath);window.scrollTo({top:0,behavior:'instant' as ScrollBehavior})}
+ function selectStoreCategory(category:string){const parent=storefrontCategories.find(c=>c.name===category||c.subcategories.includes(category));const filterValue=category.startsWith('All ')?(parent?.name||category):category;setFilter(filterValue);setSearch('');setSelectedProduct(null);setProducts([]);setCatalogueOffset(0);setCatalogueHasMore(false);setLoadingMore(false);setLoading(true);setBuyerPage('store');setMobileSidebarOpen(false);setDesktopSidebarOpen(false);const nextPath=buyerPath('store');if(window.location.pathname!==nextPath)window.history.replaceState({buyerPage:'store'},'',nextPath)}
+ function openProduct(product:LiveProduct){setSelectedProduct(product);setBuyerPage('product-detail');setMobileSidebarOpen(false);const parent=storefrontCategories.find(c=>c.name===product.category||c.subcategories.includes(product.category));const route=(parent?categorySlug(parent.name):'products')+'/'+(parent&&product.category!==parent.name?categorySlug(product.category).replace(/-/g,''):'products')+'/'+encodeURIComponent(product.sku||product.id);window.history.pushState({productSku:product.sku||product.id},'',(storeBasePath||'')+'/'+route);window.scrollTo({top:0,left:0,behavior:'instant' as ScrollBehavior})}
  function closeProduct(){const route=categoryRoute(selectedProduct?.category||'');if(selectedProduct?.category)setFilter(selectedProduct.category);setBuyerPage('store');setSelectedProduct(null);window.history.pushState({},'',route?(storeBasePath+'/'+route):buyerPath('store'))}
- // Migrate temporary host-scoped storefront preferences when custom-domain storefront resolves its slug.
- useEffect(()=>{
-  const nextScope=getCartScopeKey(slug);
-  const prevScope=cartScopeRef.current;
-  if(nextScope===prevScope)return;
-  cartScopeRef.current=nextScope;
-  const resolvedWish=(()=>{try{const s=JSON.parse(localStorage.getItem('dasnet-wishlist-'+nextScope)||'[]');return Array.isArray(s)?s.filter((id:any)=>typeof id==='string'):[];}catch{return[];}})();
-  if(resolvedWish.length)setWishlistIds(current=>Array.from(new Set([...resolvedWish,...current])));
-  const resolvedRecent=(()=>{try{const s=JSON.parse(localStorage.getItem('dasnet-recently-viewed-'+nextScope)||'[]');return Array.isArray(s)?s:[];}catch{return[];}})();
-  if(resolvedRecent.length)setRecentlyViewed(current=>Array.from(new Set([...current,...resolvedRecent])).slice(0,12));
-  try{const savedRet=sessionStorage.getItem('dasnet-buyer-return-'+nextScope);if(savedRet)setBuyerReturnPage(savedRet);}catch{}
-  const cachedForResolved=readCachedStorefront(nextScope);
-  setProducts(current=>{
-   const known=new Set(current.map(p=>p.id));
-   const cachedItems=(cachedForResolved?.products||[]).filter(p=>!known.has(p.id));
-   return [...current,...cachedItems];
-  });
-  const resolvedHint=readBuyerSessionHint(nextScope);
-  if(resolvedHint&&!buyerCustomerRef.current)setBuyerCustomer(resolvedHint);
-  try{if(prevScope.startsWith('host:'))sessionStorage.removeItem('dasnet-buyer-session-'+prevScope);}catch{}
- },[slug]);
- // Restore cart products outside the first catalogue page if missing from active product list.
- useEffect(()=>{let live=true;const missing=Object.keys(cart).filter(id=>cart[id]>0&&!products.some((product:LiveProduct)=>product.id===id)).slice(0,50);if(!slug||!missing.length)return()=>{live=false};const params=new URLSearchParams({limit:String(missing.length),offset:'0',ids:missing.join(',')});fetch('/api/storefront?slug='+encodeURIComponent(slug)+'&'+params.toString()).then(async response=>{const data=await readApiResponse(response);if(!response.ok)throw Error(data.error||'Could not restore saved cart items');if(!live)return;const restored:LiveProduct[]=Array.isArray(data.products)?data.products:[];if(restored.length)setProducts((current:LiveProduct[])=>{const known=new Set(current.map((product:LiveProduct)=>product.id));return [...current,...restored.filter((product:LiveProduct)=>!known.has(product.id))]});}).catch(error=>console.warn('Saved cart restoration failed:',error));return()=>{live=false}},[cart,products,slug,reconnectTick]);
+ useEffect(()=>{try{localStorage.setItem('dasnet-cart-'+slug,JSON.stringify(cart));}catch{}},[cart,slug]);
+ // Restore cart products outside the first catalogue page after refresh.
+ useEffect(()=>{let live=true;const missing=Object.keys(cart).filter(id=>!products.some((product:LiveProduct)=>product.id===id)).slice(0,50);if(!slug||!missing.length)return()=>{live=false};const params=new URLSearchParams({limit:String(missing.length),offset:'0',ids:missing.join(',')});fetch('/api/storefront?slug='+encodeURIComponent(slug)+'&'+params.toString(),{cache:'no-store'}).then(async response=>{const data=await readApiResponse(response);if(!response.ok)throw Error(data.error||'Could not restore saved cart items');if(!live)return;const restored:LiveProduct[]=Array.isArray(data.products)?data.products:[];if(restored.length)setProducts((current:LiveProduct[])=>{const known=new Set(current.map((product:LiveProduct)=>product.id));return [...current,...restored.filter((product:LiveProduct)=>!known.has(product.id))]});}).catch(error=>console.warn('Saved cart restoration failed:',error));return()=>{live=false}},[cart,products,slug]);
+  useEffect(()=>{const syncCart=(event:StorageEvent)=>{if(event.key==='dasnet-cart-'+slug){try{const saved=JSON.parse(event.newValue||'{}');if(saved&&typeof saved==='object'&&!Array.isArray(saved))setCart(Object.fromEntries(Object.entries(saved).filter(([id,q])=>typeof id==='string'&&Number.isInteger(q)&&Number(q)>0).map(([id,q])=>[id,Math.min(99,Number(q))])));}catch{}}};window.addEventListener('storage',syncCart);return()=>window.removeEventListener('storage',syncCart)},[slug]);
   useEffect(()=>{
     let live=true;
     // Custom-domain storefronts start with an empty slug until /api/storefront resolves
     // the domain mapping. Do not treat that temporary state as a signed-out session.
-    if(!slug){
-      const hint=readBuyerSessionHint(cartScopeRef.current);
-      if(hint)setBuyerCustomer(hint);
-      setBuyerAuthChecked(false);
-      return()=>{live=false};
-    }
-    const scope=getCartScopeKey(slug);
-    const cachedHint=readBuyerSessionHint(scope);
-    if(cachedHint)setBuyerCustomer((current:any)=>current||cachedHint);
+    if(!slug){setBuyerCustomer(null);setBuyerAuthChecked(false);return()=>{live=false};}
     setBuyerAuthChecked(false);
     fetch('/api/buyer-auth?action=session&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'})
-      .then(async r=>{
-        if(r.status===401||r.status===403)return {confirmed:true,customer:null};
-        if(!r.ok)throw new Error('HTTP_'+r.status);
-        const d=await r.json();
-        return {confirmed:true,customer:d.customer||null};
-      })
-      .then(res=>{
-        if(!live)return;
-        setBuyerCustomer(res.customer);
-        try{
-          if(res.customer)sessionStorage.setItem('dasnet-buyer-session-'+scope,JSON.stringify({id:res.customer.id,name:res.customer.name,phone:res.customer.phone,email:res.customer.email,address:res.customer.address,alternativePhone:res.customer.alternativePhone}));
-          else sessionStorage.removeItem('dasnet-buyer-session-'+scope);
-        }catch{}
-        setBuyerAuthChecked(true);
-      })
-      .catch(()=>{
-        // Network loss or transient 5xx must not sign out the buyer or kick them off checkout.
-        if(!live)return;
-        if(cachedHint){
-          setBuyerCustomer((current:any)=>current||cachedHint);
-          setBuyerAuthChecked(true);
-        }else if(!buyerPage.startsWith('checkout/')){
-          setBuyerCustomer(null);
-          setBuyerAuthChecked(true);
-        }
-      });
+      .then(async r=>{if(!r.ok)return null;const d=await r.json();return d.customer||null})
+      .then(customer=>{if(live)setBuyerCustomer(customer)})
+      .catch(()=>{if(live)setBuyerCustomer(null)})
+      .finally(()=>{if(live)setBuyerAuthChecked(true)});
     return()=>{live=false};
-  },[slug,reconnectTick]);
- useEffect(()=>{if(!buyerAuthChecked||buyerCustomer)return;const protectedPage=['account','profile','orders','order-detail','order-tracking','inbox','wishlist','recently-viewed','address-book','vouchers','reviews','notifications','my-reports','report-shop','followed-shops','newsletter','notification-settings','public-profile','account-management','close-account','checkout/delivery','checkout/payment','checkout/review'];if(protectedPage.includes(buyerPage)||buyerPage.startsWith('my-reports/')||buyerPage.startsWith('address-book/')){updateBuyerReturnPage(buyerPage);setBuyerPage('buyer-login');const next=buyerPath('buyer-login');if(window.location.pathname!==next)window.history.replaceState({buyerPage:'buyer-login'},'',next)}},[buyerAuthChecked,buyerCustomer,buyerPage]);
- useEffect(()=>{let live=true;const syncBuyerPage=()=>{const parts=window.location.pathname.replace(/^\/+|\/+$/g,'').split('/').filter(Boolean);const hostIsScoped=isHostScopedDomain();const routeParts=hostIsScoped?parts:(parts[0]===slug?parts.slice(1):[]);if(routeParts.length>=3){const key=decodeURIComponent(routeParts[routeParts.length-1]);const found=products.find(p=>p.sku===key||p.id===key);if(found){setSelectedProduct(found);setBuyerPage('product-detail');return}if(!slug)return;fetch('/api/storefront?slug='+encodeURIComponent(slug)+'&limit=1&productKey='+encodeURIComponent(key),{cache:'no-store'}).then(async response=>{const data=await readApiResponse(response);if(!response.ok)throw Error(data.error||'Product unavailable');return data.products?.[0] as LiveProduct|undefined}).then((product:LiveProduct|undefined)=>{if(live&&product){setProducts(current=>current.some(item=>item.id===product.id)?current:[...current,product]);setSelectedProduct(product);setBuyerPage('product-detail')}}).catch(error=>console.warn('Direct product link could not be restored:',error));return}if(routeParts.length>=1){const parent=storefrontCategories.find(c=>categorySlug(c.name)===routeParts[0]);if(parent){setFilter('All products');setBuyerPage('store');setSelectedProduct(null);const homePath=buyerPath('store');if(window.location.pathname!==homePath)window.history.replaceState({buyerPage:'store'},'',homePath);return}}const routeKey=routeParts.map(part=>part.toLowerCase()).join('/');if(routeKey==='buyer-login'&&buyerCustomer?.phone){setBuyerPage('store');setSelectedProduct(null);const homePath=buyerPath('store');if(window.location.pathname!==homePath)window.history.replaceState({buyerPage:'store'},'',homePath);return}if(routeKey==='my-reports/reports/new'||routeKey==='my-reports/reports'){setBuyerInitialReportId('');setBuyerPage('my-reports');setSelectedProduct(null);return}const retiredBuyerRoutes:Record<string,string>={'recently-viewed':'account','followed-shops':'account','notification-settings':'account','public-profile':'account','newsletter':'account'};const canonicalRoute=retiredBuyerRoutes[routeKey]||routeKey;if(canonicalRoute!==routeKey)window.history.replaceState({buyerPage:canonicalRoute},'',buyerPath(canonicalRoute));if(!canonicalRoute)setFilter('All products');setBuyerPage(canonicalRoute==='orders/ongoing'||canonicalRoute==='orders/delivered'||canonicalRoute==='orders/cancelled'?canonicalRoute:canonicalRoute||'store');setSelectedProduct(null)};syncBuyerPage();window.addEventListener('popstate',syncBuyerPage);return()=>{live=false;window.removeEventListener('popstate',syncBuyerPage)}},[slug,buyerCustomer?.phone]); useEffect(()=>{if(!selectedProduct||cartScopeRef.current!==getCartScopeKey(slug))return;setRecentlyViewed(current=>{const next=[selectedProduct.id,...current.filter(id=>id!==selectedProduct.id)].slice(0,12);try{localStorage.setItem('dasnet-recently-viewed-'+cartScopeRef.current,JSON.stringify(next))}catch{}return next})},[selectedProduct?.id,slug]);
+  },[slug]);
+ useEffect(()=>{if(!buyerAuthChecked||buyerCustomer)return;const protectedPage=['account','profile','orders','order-detail','order-tracking','inbox','wishlist','recently-viewed','address-book','vouchers','reviews','notifications','my-reports','report-shop','followed-shops','newsletter','notification-settings','public-profile','account-management','close-account','checkout/delivery','checkout/payment','checkout/review'];if(protectedPage.includes(buyerPage)||buyerPage.startsWith('my-reports/')||buyerPage.startsWith('address-book/')){setBuyerReturnPage(buyerPage);setBuyerPage('buyer-login');const next=buyerPath('buyer-login');if(window.location.pathname!==next)window.history.replaceState({buyerPage:'buyer-login'},'',next)}},[buyerAuthChecked,buyerCustomer,buyerPage]);
+ useEffect(()=>{let live=true;const syncBuyerPage=()=>{const parts=window.location.pathname.replace(/^\/+|\/+$/g,'').split('/').filter(Boolean);const hostIsTenant=window.location.hostname.toLowerCase().endsWith('.dasmarket.co.ke')&&!['www','app'].includes(window.location.hostname.toLowerCase().split('.')[0]);const routeParts=hostIsTenant?parts:(parts[0]===slug?parts.slice(1):[]);if(routeParts.length>=3){const key=decodeURIComponent(routeParts[routeParts.length-1]);const found=products.find(p=>p.sku===key||p.id===key);if(found){setSelectedProduct(found);setBuyerPage('product-detail');return}fetch('/api/storefront?slug='+encodeURIComponent(slug)+'&limit=1&productKey='+encodeURIComponent(key),{cache:'no-store'}).then(async response=>{const data=await readApiResponse(response);if(!response.ok)throw Error(data.error||'Product unavailable');return data.products?.[0] as LiveProduct|undefined}).then((product:LiveProduct|undefined)=>{if(live&&product){setProducts(current=>current.some(item=>item.id===product.id)?current:[...current,product]);setSelectedProduct(product);setBuyerPage('product-detail')}}).catch(error=>console.warn('Direct product link could not be restored:',error));return}if(routeParts.length>=1){const parent=storefrontCategories.find(c=>categorySlug(c.name)===routeParts[0]);if(parent){setFilter('All products');setBuyerPage('store');setSelectedProduct(null);const homePath=buyerPath('store');if(window.location.pathname!==homePath)window.history.replaceState({buyerPage:'store'},'',homePath);return}}const routeKey=routeParts.map(part=>part.toLowerCase()).join('/');if(routeKey==='buyer-login'&&buyerCustomer?.phone){setBuyerPage('store');setSelectedProduct(null);const homePath=buyerPath('store');if(window.location.pathname!==homePath)window.history.replaceState({buyerPage:'store'},'',homePath);return}if(routeKey==='my-reports/reports/new'||routeKey==='my-reports/reports'){setBuyerInitialReportId('');setBuyerPage('my-reports');setSelectedProduct(null);return}const retiredBuyerRoutes:Record<string,string>={'recently-viewed':'account','followed-shops':'account','notification-settings':'account','public-profile':'account','newsletter':'account'};const canonicalRoute=retiredBuyerRoutes[routeKey]||routeKey;if(canonicalRoute!==routeKey)window.history.replaceState({buyerPage:canonicalRoute},'',buyerPath(canonicalRoute));if(!canonicalRoute)setFilter('All products');setBuyerPage(canonicalRoute==='orders/ongoing'||canonicalRoute==='orders/delivered'||canonicalRoute==='orders/cancelled'?canonicalRoute:canonicalRoute||'store');setSelectedProduct(null)};syncBuyerPage();window.addEventListener('popstate',syncBuyerPage);return()=>{live=false;window.removeEventListener('popstate',syncBuyerPage)}},[slug,buyerCustomer?.phone]); useEffect(()=>{if(!selectedProduct)return;setRecentlyViewed(current=>{const next=[selectedProduct.id,...current.filter(id=>id!==selectedProduct.id)].slice(0,12);try{localStorage.setItem('dasnet-recently-viewed-'+slug,JSON.stringify(next))}catch{}return next})},[selectedProduct?.id,slug]);
  // Check the floating WhatsApp shortcut after navigation and viewport changes.
  // Avoid a document-wide MutationObserver: scanning every link/button after every
  // React DOM mutation becomes expensive on stores with large catalogues.
  useEffect(()=>{
-  let rafId=0;
   const checkOverlap=()=>{
-   rafId=0;
    const floating=document.querySelector<HTMLElement>('.sf-whatsapp-float');
    if(!floating)return;
    const a=floating.getBoundingClientRect(),pad=5;
-   const targets=document.querySelectorAll<HTMLElement>('.sf-mobile-cartbar,.sf-collection-floating-bar,.sf-checkout-footer-bar,.sf-footer a,.sf-footer button');
-   const overlaps=Array.from(targets).some(el=>{
-    if(el===floating||floating.contains(el)||el.getAttribute('aria-hidden')==='true')return false;
-    const b=el.getBoundingClientRect();
-    if(b.width<=0||b.height<=0||a.left>=b.right+pad||a.right<=b.left-pad||a.top>=b.bottom+pad||a.bottom<=b.top-pad)return false;
+   const overlaps=Array.from(document.querySelectorAll<HTMLElement>('button,a,[role="tab"]')).some(el=>{
+    if(el===floating||floating.contains(el)||el.closest('.sf-whatsapp-float'))return false;
     const style=window.getComputedStyle(el);
-    return style.display!=='none'&&style.visibility!=='hidden'&&Number(style.opacity)!==0;
+    if(style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0||el.getAttribute('aria-hidden')==='true')return false;
+    const b=el.getBoundingClientRect();
+    return b.width>0&&b.height>0&&a.left<b.right+pad&&a.right>b.left-pad&&a.top<b.bottom+pad&&a.bottom>b.top-pad;
    });
    floating.classList.toggle('is-obscured',overlaps);
   };
-  const scheduleCheck=()=>{if(!rafId)rafId=window.requestAnimationFrame(checkOverlap);};
-  scheduleCheck();
-  window.addEventListener('resize',scheduleCheck,{passive:true});
-  window.addEventListener('scroll',scheduleCheck,{passive:true});
-  return()=>{if(rafId)window.cancelAnimationFrame(rafId);window.removeEventListener('resize',scheduleCheck);window.removeEventListener('scroll',scheduleCheck)};
+  window.requestAnimationFrame(checkOverlap);
+  window.addEventListener('resize',checkOverlap);
+  window.addEventListener('scroll',checkOverlap,true);
+  return()=>{window.removeEventListener('resize',checkOverlap);window.removeEventListener('scroll',checkOverlap,true)};
  },[buyerPage,shop?.whatsappNumber]);
  // Customer conversations belong in the customer workspace, not on the public storefront.
  useEffect(()=>{if(!chatToken&&!chatOrderId)return;let live=true;const query=chatToken?'token='+encodeURIComponent(chatToken):'orderId='+encodeURIComponent(chatOrderId)+'&slug='+encodeURIComponent(slug);const refresh=()=>fetch('/api/buyer?action=customer-chat&'+query,{credentials:'same-origin',cache:'no-store'}).then(async r=>{const d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Could not load conversation');if(live){setChatMessages(d.messages||[]);setChatAttachments(d.attachments||[]);setChatOrder(d.order||null)}}).catch(e=>{if(live)setChatError(e.message)});refresh();const timer=window.setInterval(refresh,5000);return()=>{live=false;window.clearInterval(timer)}},[chatToken,chatOrderId,slug]);
  useEffect(()=>{const status=String(chatOrder?.paymentStatus||'');if(previousPaymentStatus.current&&previousPaymentStatus.current!=='succeeded'&&status==='succeeded'){setPaymentCelebration(true);const timer=window.setTimeout(()=>setPaymentCelebration(false),5200);previousPaymentStatus.current=status;return()=>window.clearTimeout(timer)}if(status)previousPaymentStatus.current=status},[chatOrder?.paymentStatus]);
 
- async function sendCustomerMessage(e:any){e.preventDefault();if(!chatDraft.trim()||chatSending)return;setChatSending(true);setChatError('');try{const r=await fetch('/api/buyer?action=customer-chat',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(chatToken?{token:chatToken,message:chatDraft}:{orderId:chatOrderId,slug,message:chatDraft})});const d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Message could not be sent');setChatMessages(d.messages||[]);setChatDraft('')}catch(e:any){setChatError(e.message)}finally{setChatSending(false)}}
+ async function sendCustomerMessage(e:any){e.preventDefault();if(!chatDraft.trim()||chatSending)return;setChatSending(true);setChatError('');try{const r=await fetch('/api/buyer?action=customer-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(chatToken?{token:chatToken,message:chatDraft}:{orderId:chatOrderId,slug,message:chatDraft})});const d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Message could not be sent');setChatMessages(d.messages||[]);setChatDraft('')}catch(e:any){setChatError(e.message)}finally{setChatSending(false)}}
 
- async function uploadCustomerAttachment(file?:File){if(!file||(!chatToken&&!chatOrderId))return;if(file.size>10485760){setChatError('Each attachment must be 10 MB or smaller.');return;}setChatError('');try{const sign=await fetch('/api/buyer?action=chat-attachment',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(chatToken?{token:chatToken,mode:'upload',fileName:file.name,contentType:file.type,size:file.size}:{orderId:chatOrderId,slug,mode:'upload',fileName:file.name,contentType:file.type,size:file.size})});const sd=await readApiResponse(sign);if(!sign.ok)throw Error(sd.error||'Could not prepare upload');await uploadToObjectStorage(sd.uploadUrl,file,'Chat attachment');const done=await fetch('/api/buyer?action=chat-attachment',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(chatToken?{token:chatToken,mode:'complete',attachmentId:sd.attachmentId}:{orderId:chatOrderId,slug,mode:'complete',attachmentId:sd.attachmentId})});const dd=await readApiResponse(done);if(!done.ok)throw Error(dd.error||'Could not confirm upload');setChatAttachments(a=>[...a,dd.attachment]);}catch(e:any){setChatError(e.message)}}
- async function downloadCustomerAttachment(id:string){try{const r=await fetch('/api/buyer?action=chat-attachment',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(chatToken?{token:chatToken,mode:'download',attachmentId:id}:{orderId:chatOrderId,slug,mode:'download',attachmentId:id})});const d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Download unavailable');window.open(d.url,'_blank','noopener,noreferrer')}catch(e:any){setChatError(e.message)}}
- useEffect(()=>{const w=window as any;let timer=0;let idle=0;const warm=()=>{void import('./StorefrontFlow');void import('./BuyerAuthPage');};if(typeof w.requestIdleCallback==='function'){idle=w.requestIdleCallback(warm,{timeout:2500});}else{timer=window.setTimeout(warm,1800);}return()=>{if(idle&&typeof w.cancelIdleCallback==='function')w.cancelIdleCallback(idle);if(timer)window.clearTimeout(timer);};},[]);
- useEffect(()=>{let live=true;const runFetch=()=>{setNotFound(false);if(!cachedStorefront&&!products.length)setLoading(true);const params=new URLSearchParams({limit:'24',offset:'0'});if(filter.trim()&&filter.trim().toLocaleLowerCase()!=='all products')params.set('category',categoryApiFilter(filter.trim()));if(search.trim())params.set('search',search.trim());const base=slug?'/api/storefront?slug='+encodeURIComponent(slug)+'&':'/api/storefront?';fetch(base+params.toString()).then(async r=>{const d=await readApiResponse(r);if(!r.ok){if(r.status===400||r.status===404){setNotFound(true);setCatalogueHasMore(false);setCatalogueTotal(0);setProducts([]);setShop(null)}throw Error(d.error||'Shop unavailable')}if(!live)return;const nextProducts:LiveProduct[]=Array.isArray(d.products)?d.products:[];const resolvedSlug=String(d.shop?.slug||slug||'').trim();setShop(d.shop);if(!slug&&resolvedSlug)setSlug(resolvedSlug);setProducts((current:LiveProduct[])=>{const incomingIds=new Set(nextProducts.map((p:LiveProduct)=>p.id));const preservedCartProducts=current.filter((p:LiveProduct)=>cartRef.current[p.id]>0&&!incomingIds.has(p.id));return [...nextProducts,...preservedCartProducts];});setCatalogueOffset(Number(d.nextOffset||nextProducts.length));setCatalogueTotal(Number(d.totalProducts??nextProducts.length));setCatalogueHasMore(Boolean(d.hasMore));const requestedProduct=new URLSearchParams(window.location.search).get('product');if(requestedProduct){const match=nextProducts.find((product:any)=>product.id===requestedProduct||product.sku===requestedProduct||product.slug===requestedProduct);if(match){setSelectedProduct(match);setBuyerPage('product-detail')}}setError('');if(resolvedSlug&&filter.trim().toLocaleLowerCase()==='all products'&&!search.trim()){try{localStorage.setItem('dasnet-storefront-cache-'+resolvedSlug,JSON.stringify({shop:d.shop,products:nextProducts.slice(0,24),totalProducts:Number(d.totalProducts??nextProducts.length),cachedAt:Date.now()}))}catch{}}}).catch(e=>{if(live)setError(e.message)}).finally(()=>{if(live)setLoading(false)})};if(!search.trim()){runFetch();return()=>{live=false};}const timer=window.setTimeout(runFetch,180);return()=>{live=false;window.clearTimeout(timer)}},[slug,filter,search,reconnectTick,cachedStorefront]);
+ async function uploadCustomerAttachment(file?:File){if(!file||(!chatToken&&!chatOrderId))return;if(file.size>10485760){setChatError('Each attachment must be 10 MB or smaller.');return;}setChatError('');try{const sign=await fetch('/api/buyer?action=chat-attachment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(chatToken?{token:chatToken,mode:'upload',fileName:file.name,contentType:file.type,size:file.size}:{orderId:chatOrderId,slug,mode:'upload',fileName:file.name,contentType:file.type,size:file.size})});const sd=await readApiResponse(sign);if(!sign.ok)throw Error(sd.error||'Could not prepare upload');await uploadToObjectStorage(sd.uploadUrl,file,'Chat attachment');const done=await fetch('/api/buyer?action=chat-attachment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(chatToken?{token:chatToken,mode:'complete',attachmentId:sd.attachmentId}:{orderId:chatOrderId,slug,mode:'complete',attachmentId:sd.attachmentId})});const dd=await readApiResponse(done);if(!done.ok)throw Error(dd.error||'Could not confirm upload');setChatAttachments(a=>[...a,dd.attachment]);}catch(e:any){setChatError(e.message)}}
+ async function downloadCustomerAttachment(id:string){try{const r=await fetch('/api/buyer?action=chat-attachment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(chatToken?{token:chatToken,mode:'download',attachmentId:id}:{orderId:chatOrderId,slug,mode:'download',attachmentId:id})});const d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Download unavailable');window.open(d.url,'_blank','noopener,noreferrer')}catch(e:any){setChatError(e.message)}}
+ useEffect(()=>{const t=window.setTimeout(()=>{void import('./StorefrontFlow');void import('./BuyerAuthPage');},60);return()=>window.clearTimeout(t);},[]);
+ useEffect(()=>{let live=true;const runFetch=()=>{setNotFound(false);if(!cachedStorefront||filter!=='All products'||search.trim())setLoading(true);const params=new URLSearchParams({limit:'60',offset:'0'});if(filter.trim()&&filter.trim().toLocaleLowerCase()!=='all products')params.set('category',categoryApiFilter(filter.trim()));if(search.trim())params.set('search',search.trim());const base=slug?'/api/storefront?slug='+encodeURIComponent(slug)+'&':'/api/storefront?';fetch(base+params.toString(),{cache:'no-store'}).then(async r=>{const d=await readApiResponse(r);if(!r.ok){if(r.status===400||r.status===404){setNotFound(true);setCatalogueHasMore(false);setCatalogueTotal(0);setProducts([]);setShop(null)}throw Error(d.error||'Shop unavailable')}if(!live)return;const nextProducts=Array.isArray(d.products)?d.products:[];setShop(d.shop);if(!slug&&d.shop?.slug)setSlug(String(d.shop.slug));setProducts(nextProducts);setCatalogueOffset(Number(d.nextOffset||nextProducts.length));setCatalogueTotal(Number(d.totalProducts??nextProducts.length));setCatalogueHasMore(Boolean(d.hasMore));const requestedProduct=new URLSearchParams(window.location.search).get('product');if(requestedProduct){const match=nextProducts.find((product:any)=>product.id===requestedProduct||product.sku===requestedProduct||product.slug===requestedProduct);if(match){setSelectedProduct(match);setBuyerPage('product-detail')}}setError('');if(filter.trim().toLocaleLowerCase()==='all products'&&!search.trim()){try{localStorage.setItem('dasnet-storefront-cache-'+slug,JSON.stringify({shop:d.shop,products:nextProducts.slice(0,60),totalProducts:Number(d.totalProducts??nextProducts.length),cachedAt:Date.now()}))}catch{}}}).catch(e=>{if(live)setError(e.message)}).finally(()=>{if(live)setLoading(false)})};if(!search.trim()){runFetch();return()=>{live=false};}const timer=window.setTimeout(runFetch,180);return()=>{live=false;window.clearTimeout(timer)}},[slug,filter,search]);
   // Contact details refresh with the storefront request; avoid polling the full catalogue.
-  useEffect(()=>{let live=true;const refresh=async()=>{if(!buyerCustomer||!slug){if(live)setBuyerNotifications([]);return}try{if(localStorage.getItem('dasnet-buyer-notifications-'+slug)==='false'){if(live)setBuyerNotifications([]);return}const r=await fetch('/api/buyer?action=buyer-notifications&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'});if(!r.ok)return;const d=await r.json();if(live)setBuyerNotifications(Array.isArray(d.notifications)?d.notifications:[])}catch{}};refresh();const timer=window.setInterval(refresh,15000);return()=>{live=false;window.clearInterval(timer)}},[slug,buyerCustomer?.id]);
-    async function loadMoreProducts(){if(loadingMore||!catalogueHasMore)return;setLoadingMore(true);try{const base=slug?'/api/storefront?slug='+encodeURIComponent(slug)+'&':'/api/storefront?';const params=new URLSearchParams({limit:'40',offset:String(catalogueOffset)});if(filter.trim()&&filter.trim().toLocaleLowerCase()!=='all products')params.set('category',categoryApiFilter(filter.trim()));if(search.trim())params.set('search',search.trim());const response=await fetch(base+params.toString());const data=await readApiResponse(response);if(!response.ok){const failure:any=new Error(data.error||'Could not load more products');failure.status=response.status;if(response.status===400||response.status===404)setCatalogueHasMore(false);throw failure;}const incoming=Array.isArray(data.products)?data.products:[];setProducts((current:LiveProduct[])=>{const known=new Set(current.map((p:LiveProduct)=>p.id));return [...current,...incoming.filter((p:LiveProduct)=>!known.has(p.id))]});setCatalogueOffset(Number(data.nextOffset||catalogueOffset+incoming.length));if(data.totalProducts!==undefined)setCatalogueTotal(Number(data.totalProducts));setCatalogueHasMore(Boolean(data.hasMore));}catch(error:any){if(error?.status===404||error?.status===400){setNotFound(true);setCatalogueHasMore(false);setProducts([]);setShop(null)}setError(error.message||'Could not load more products')}finally{setLoadingMore(false)}}
+  useEffect(()=>{let live=true;const refresh=async()=>{if(!buyerCustomer){if(live)setBuyerNotifications([]);return}try{if(localStorage.getItem('dasnet-buyer-notifications-'+slug)==='false'){if(live)setBuyerNotifications([]);return}const r=await fetch('/api/buyer?action=buyer-notifications&slug='+encodeURIComponent(slug),{credentials:'same-origin',cache:'no-store'});if(!r.ok)return;const d=await r.json();if(live)setBuyerNotifications(Array.isArray(d.notifications)?d.notifications:[])}catch{}};refresh();const timer=window.setInterval(refresh,15000);return()=>{live=false;window.clearInterval(timer)}},[slug,buyerCustomer?.id]);
+    async function loadMoreProducts(){if(loadingMore||!catalogueHasMore)return;setLoadingMore(true);try{const base=slug?'/api/storefront?slug='+encodeURIComponent(slug)+'&':'/api/storefront?';const params=new URLSearchParams({limit:'60',offset:String(catalogueOffset)});if(filter.trim()&&filter.trim().toLocaleLowerCase()!=='all products')params.set('category',categoryApiFilter(filter.trim()));if(search.trim())params.set('search',search.trim());const response=await fetch(base+params.toString(),{cache:'no-store'});const data=await readApiResponse(response);if(!response.ok){const failure:any=new Error(data.error||'Could not load more products');failure.status=response.status;if(response.status===400||response.status===404)setCatalogueHasMore(false);throw failure;}const incoming=Array.isArray(data.products)?data.products:[];setProducts((current:LiveProduct[])=>{const known=new Set(current.map((p:LiveProduct)=>p.id));return [...current,...incoming.filter((p:LiveProduct)=>!known.has(p.id))]});setCatalogueOffset(Number(data.nextOffset||catalogueOffset+incoming.length));if(data.totalProducts!==undefined)setCatalogueTotal(Number(data.totalProducts));setCatalogueHasMore(Boolean(data.hasMore));}catch(error:any){if(error?.status===404||error?.status===400){setNotFound(true);setCatalogueHasMore(false);setProducts([]);setShop(null)}setError(error.message||'Could not load more products')}finally{setLoadingMore(false)}}
  useEffect(()=>{const node=catalogueSentinelRef.current;const isCollection=buyerPage.startsWith('collection/')&&buyerPage!=='collection/featured-products';if(!node||!catalogueHasMore||loadingMore||(buyerPage!=='store'&&!isCollection))return;const observer=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting))void loadMoreProducts()},{rootMargin:'900px 0px'});observer.observe(node);return()=>observer.disconnect()},[catalogueHasMore,loadingMore,loading,catalogueOffset,buyerPage]);
  const normalizedFilter=filter.trim().toLocaleLowerCase();
- const normalizedSearch=search.trim().toLocaleLowerCase();
- const categoryMatches=(productCategoryValue:string,selectedValue:string,parentCategoryValue='')=>{const productCategory=String(productCategoryValue||'').trim().toLocaleLowerCase();const parentCategory=String(parentCategoryValue||'').trim().toLocaleLowerCase();const categoryParts=productCategory.split('>').map(part=>part.trim()).filter(Boolean);if(!selectedValue||selectedValue==='all products')return true;const parent=storefrontCategories.find(group=>group.name.toLocaleLowerCase()===selectedValue);if(parent){const allowed=[parent.name,...parent.subcategories.filter(child=>!child.startsWith('All '))].map(value=>value.toLocaleLowerCase());return allowed.includes(parentCategory)||allowed.includes(productCategory)||categoryParts.some(part=>allowed.includes(part));}return parentCategory===selectedValue||productCategory===selectedValue||categoryParts.includes(selectedValue);};
- const visible=useMemo(()=>products.filter(p=>{const haystack=[p.name,p.description,p.category,p.parentCategory,p.sku].filter(Boolean).join(' ').toLocaleLowerCase();return categoryMatches(p.category,normalizedFilter,p.parentCategory)&&haystack.includes(normalizedSearch)}),[products,normalizedFilter,normalizedSearch]);
- const sortedVisible=useMemo(()=>[...visible].sort((a,b)=>sortOrder==='price-low'?a.price-b.price:sortOrder==='price-high'?b.price-a.price:sortOrder==='name'?a.name.localeCompare(b.name):0),[visible,sortOrder]);
- const mixedProducts=sortedVisible;
+ const categoryMatches=(productCategoryValue:string,selectedValue:string)=>{const productCategory=String(productCategoryValue||'').trim().toLocaleLowerCase();if(!selectedValue||selectedValue==='all products')return true;const parent=storefrontCategories.find(group=>group.name.toLocaleLowerCase()===selectedValue);if(parent)return productCategory===selectedValue||parent.subcategories.filter(child=>!child.startsWith('All ')).some(child=>child.toLocaleLowerCase()===productCategory);return productCategory===selectedValue;};
+ const visible=products.filter(p=>{const haystack=[p.name,p.description,p.category,p.sku].filter(Boolean).join(' ').toLocaleLowerCase();return categoryMatches(p.category,normalizedFilter)&&haystack.includes(search.trim().toLocaleLowerCase())});
+ const sortedVisible=[...visible].sort((a,b)=>sortOrder==='price-low'?a.price-b.price:sortOrder==='price-high'?b.price-a.price:sortOrder==='name'?a.name.localeCompare(b.name):0);const mixedProducts=sortedVisible;
  const collectionKey=buyerPage.startsWith('collection/')?buyerPage.slice('collection/'.length):'';
- const collectionTitle=collectionKey==='featured-products'?'Featured Products':collectionKey==='top-picks'?'Top Picks':'All Products';
- const collectionSorted=useMemo(()=>{
-  const collectionBase=collectionKey==='featured-products'?(products.some(p=>p.spotlight)?products.filter(p=>p.spotlight):products.filter(p=>Boolean(p.images?.[0]||p.imageUrl)).slice(0,5)):collectionKey==='top-picks'?[...products].sort((a,b)=>(b.ratingAverage||0)-(a.ratingAverage||0)||(b.ratingCount||0)-(a.ratingCount||0)):products;
-  const matchesPriceBand=(price:number)=>{if(priceBand==='under-1000')return price<1000;if(priceBand==='1000-5000')return price>=1000&&price<=5000;if(priceBand==='5000-15000')return price>5000&&price<=15000;if(priceBand==='15000-plus')return price>15000;return true;};
-  const filtered=collectionBase.filter(p=>{const queryMatch=[p.name,p.description,p.category,p.parentCategory,p.sku].filter(Boolean).join(' ').toLocaleLowerCase().includes(normalizedSearch);const stockMatch=!inStockOnly||p.stockQuantity!==0;return categoryMatches(p.category,normalizedFilter,p.parentCategory)&&queryMatch&&stockMatch&&matchesPriceBand(Number(p.price||0));});
-  return [...filtered].sort((a,b)=>sortOrder==='price-low'?a.price-b.price:sortOrder==='price-high'?b.price-a.price:sortOrder==='rating'?(b.ratingAverage||0)-(a.ratingAverage||0)||(b.ratingCount||0)-(a.ratingCount||0):sortOrder==='name'?a.name.localeCompare(b.name):0);
- },[products,collectionKey,normalizedSearch,inStockOnly,normalizedFilter,priceBand,sortOrder]);
- const storePreviewProducts=useMemo(()=>{const groups=new Map<string,typeof products>();for(const product of products){const key=String(product.category||'Other').trim()||'Other';if(!groups.has(key))groups.set(key,[]);groups.get(key)!.push(product)}const buckets=[...groups.values()];const mixed:typeof products=[];for(let index=0;buckets.some(bucket=>bucket.length>index);index++){for(const bucket of buckets){if(bucket[index])mixed.push(bucket[index])}}return mixed},[products]);
- const spotlightProducts=useMemo(()=>products.filter(p=>Boolean((p as any).spotlight)).slice(0,5),[products]);
- const heroSlides=useMemo(()=>{const homeHeroProducts=(spotlightProducts.length?spotlightProducts:products.filter(p=>Boolean(p.images?.[0]||p.imageUrl))).slice(0,5);return homeHeroProducts.length?homeHeroProducts:(products[0]?[products[0]]:[])},[spotlightProducts,products]);
- const {total,totalCartUnits}=useMemo(()=>{const entries=Object.entries(cart).filter(([,q])=>q>0);const priceById=new Map(products.map(p=>[p.id,p.price]));let sum=0,units=0;for(const [id,q] of entries){sum+=(priceById.get(id)||0)*q;units+=q;}return {total:sum,totalCartUnits:units};},[cart,products]);
+ const collectionTitle=collectionKey==='featured-products'?'Featured products':collectionKey==='top-picks'?'Top picks':'All products';
+ const collectionBase=collectionKey==='featured-products'?(products.some(p=>p.spotlight)?products.filter(p=>p.spotlight):products.filter(p=>Boolean(p.images?.[0]||p.imageUrl)).slice(0,5)):collectionKey==='top-picks'?[...products].sort((a,b)=>(b.ratingAverage||0)-(a.ratingAverage||0)||(b.ratingCount||0)-(a.ratingCount||0)):products;
+ const collectionVisible=collectionBase.filter(p=>{const selected=filter.trim().toLocaleLowerCase();const queryMatch=[p.name,p.description,p.category,p.sku].filter(Boolean).join(' ').toLocaleLowerCase().includes(search.trim().toLocaleLowerCase());return categoryMatches(p.category,selected)&&queryMatch;});
+ const collectionSorted=[...collectionVisible].sort((a,b)=>sortOrder==='price-low'?a.price-b.price:sortOrder==='price-high'?b.price-a.price:sortOrder==='name'?a.name.localeCompare(b.name):0);
+ const storePreviewProducts=(()=>{const groups=new Map<string,typeof products>();for(const product of products){const key=String(product.category||'Other').trim()||'Other';if(!groups.has(key))groups.set(key,[]);groups.get(key)!.push(product)}const buckets=[...groups.values()];const mixed:typeof products=[];for(let index=0;buckets.some(bucket=>bucket.length>index);index++){for(const bucket of buckets){if(bucket[index])mixed.push(bucket[index])}}return mixed})();
+ const [homeHeroIndex,setHomeHeroIndex]=useState(0),[heroPaused,setHeroPaused]=useState(false);const heroTouchStartX=useRef<number|null>(null);
+ const spotlightProducts=products.filter(p=>Boolean((p as any).spotlight)).slice(0,5);const homeHeroProducts=(spotlightProducts.length?spotlightProducts:products.filter(p=>Boolean(p.images?.[0]||p.imageUrl))).slice(0,5);
+ const heroSlides=homeHeroProducts.length?homeHeroProducts:(products[0]?[products[0]]:[]);
+ const activeHeroIndex=heroSlides.length?homeHeroIndex%heroSlides.length:0;
+ useEffect(()=>{if(heroSlides.length<2||buyerPage!=='store'||heroPaused)return;const timer=window.setInterval(()=>setHomeHeroIndex(index=>(index+1)%heroSlides.length),5500);return()=>window.clearInterval(timer)},[heroSlides.length,buyerPage,heroPaused,activeHeroIndex]);
+ const cartItems=Object.entries(cart).filter(([,q])=>q>0),total=cartItems.reduce((s,[id,q])=>s+(products.find(p=>p.id===id)?.price||0)*q,0);
+ const totalCartUnits=cartItems.reduce((n,[,q])=>n+q,0);
  const unreadNotifs=buyerNotifications.some((n:any)=>!n.read_at);
  const chatPanel=Boolean(chatOrderId||chatToken)&&(buyerPage==='inbox'||buyerPage==='order-tracking')?(
   <section className="sf-chat-box">
@@ -436,10 +250,10 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
 
  const isBuyerAccountRoute=buyerPage==='account'||['orders','order-detail','order-tracking','profile','inbox','wishlist','recently-viewed','address-book','vouchers','reviews','notifications','my-reports','report-shop','followed-shops','newsletter','notification-settings','public-profile','account-management','close-account','assistant'].includes(buyerPage)||buyerPage.startsWith('orders/')||buyerPage.startsWith('my-reports/')||buyerPage.startsWith('address-book/');
 
- if(buyerPage==='buyer-login'||buyerPage==='buyer-signup') return <Deferred><BuyerAuthPage slug={slug} shopName={shop?.name||'This shop'} initial={buyerPage==='buyer-signup'?'signup':'login'} onBack={()=>navigateBuyerPage('store')} onPolicyNavigate={(page)=>navigateBuyerPage(page)} onAuthenticated={(customer)=>{buyerCustomerRef.current=customer;setBuyerCustomer(customer);buyerAuthCheckedRef.current=true;setBuyerAuthChecked(true);try{const scope=getCartScopeKey(slug);if(customer)sessionStorage.setItem('dasnet-buyer-session-'+scope,JSON.stringify({id:customer.id,name:customer.name,phone:customer.phone,email:customer.email,address:customer.address,alternativePhone:customer.alternativePhone}));}catch{}const guestPending=sanitizeCartMap(guestPendingCartRef.current);guestPendingCartRef.current={};if(slug&&customer?.phone)void hydrateServerCart(slug,Object.keys(guestPending).length?guestPending:undefined,customer.phone);const target=buyerReturnPage||'account';try{sessionStorage.removeItem('dasnet-buyer-return-'+getCartScopeKey(slug));}catch{}setBuyerPage(target);const next=buyerPath(target);if(window.location.pathname!==next)window.history.replaceState({buyerPage:target},'',next)}}/></Deferred>;
+ if(buyerPage==='buyer-login'||buyerPage==='buyer-signup') return <Deferred><BuyerAuthPage slug={slug} shopName={shop?.name||'This shop'} initial={buyerPage==='buyer-signup'?'signup':'login'} onBack={()=>navigateBuyerPage('store')} onPolicyNavigate={(page)=>navigateBuyerPage(page)} onAuthenticated={(customer)=>{setBuyerCustomer(customer);const target=buyerReturnPage||'account';setBuyerPage(target);const next=buyerPath(target);if(window.location.pathname!==next)window.history.replaceState({buyerPage:target},'',next)}}/></Deferred>;
 
  const addSingleToCart=(productId:string,stockQuantity:number|null)=>{
-  updateCart(c=>({...c,[productId]:Math.min(99,stockQuantity??99,(c[productId]||0)+1)}));
+  setCart(c=>({...c,[productId]:Math.min(99,stockQuantity??99,(c[productId]||0)+1)}));
  };
 
  const renderProductCard=(p:LiveProduct,tag?:string,eager=false)=>{
@@ -447,16 +261,15 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
   const inCart=Boolean(cart[p.id]);
   const saved=wishlistIds.includes(p.id);
   return (
-   <article className="sf-card" key={p.id}>
+   <article className={'sf-card'+(p.stockQuantity===0?' is-out':'')} key={p.id}>
     <button type="button" className={'sf-card-fav'+(saved?' active':'')} aria-label="Toggle wishlist" aria-pressed={saved} onClick={()=>toggleWishlist(p.id)}>
      <Heart size={16} fill={saved?'currentColor':'none'}/>
     </button>
-    <button type="button" className="sf-card-media sf-card-thumb-btn" aria-label={`Quick view ${p.name}`} onClick={()=>setQuickViewProduct(p)}>
-     <img src={p.images?.[0]||p.imageUrl||fallbackProductImage(p.name)} alt={p.name} loading={eager?'eager':'lazy'} decoding="async" fetchPriority={eager?'high':undefined} onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src=fallbackProductImage(p.name)}}/>
-     {tag&&<span className="sf-card-tag">{tag}</span>}
-     <span className="sf-thumb-qv" aria-hidden="true">Quick view</span>
-    </button>
-    <button type="button" className="sf-card-open sf-card-body-btn" onClick={()=>openProduct(p)}>
+    <button type="button" className="sf-card-open" onClick={()=>openProduct(p)}>
+     <span className="sf-card-media">
+      <img src={p.images?.[0]||p.imageUrl||fallbackProductImage(p.name)} alt={p.name} loading={eager?'eager':'lazy'} decoding="async" onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src=fallbackProductImage(p.name)}}/>
+      {p.stockQuantity===0?<span className="sf-card-tag is-out">Out of stock</span>:tag?<span className="sf-card-tag">{tag}</span>:null}
+     </span>
      <div className="sf-card-body">
       <span className="sf-card-cat">{p.category||'Shop'}</span>
       <span className="sf-card-title">{p.name}</span>
@@ -467,8 +280,8 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
       </div>
      </div>
     </button>
-    <div className="sf-card-foot">
-     <button type="button" className={'sf-card-add'+(inCart?' in-cart':'')} disabled={outOfStock} onClick={()=>addSingleToCart(p.id,p.stockQuantity)}>
+    <div className={'sf-card-foot'+(p.stockQuantity===0?' is-out':'')}>
+     <button type="button" className={'sf-card-add'+(inCart?' in-cart':'')+(p.stockQuantity===0?' is-out':'')} disabled={outOfStock} onClick={()=>addSingleToCart(p.id,p.stockQuantity)}>
       {p.stockQuantity===0?'Out of stock':inCart?`In cart (${cart[p.id]})`:'Add to cart'}
      </button>
     </div>
@@ -476,57 +289,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
   );
  };
 
-  const renderCollectionCard=(p:LiveProduct,eager=false)=>{
-   const outOfStock=p.stockQuantity===0||(p.stockQuantity!==null&&(cart[p.id]||0)>=p.stockQuantity);
-   const qtyInCart=cart[p.id]||0;
-   const saved=wishlistIds.includes(p.id);
-   const cardBadge=p.stockQuantity===0?'Out of stock':p.stockQuantity!==null&&p.stockQuantity<=5?`Only ${p.stockQuantity} left`:p.spotlight?'Featured':'';
-   return (
-    <article className="sf-collection-card" key={p.id}>
-     <button type="button" className={'sf-card-fav sf-collection-fav'+(saved?' active':'')} aria-label="Toggle wishlist" aria-pressed={saved} onClick={()=>toggleWishlist(p.id)}>
-      <Heart size={16} fill={saved?'currentColor':'none'}/>
-     </button>
-     <button type="button" className="sf-collection-card-media sf-card-thumb-btn" aria-label={`Quick view ${p.name}`} onClick={()=>setQuickViewProduct(p)}>
-      <img src={p.images?.[0]||p.imageUrl||fallbackProductImage(p.name)} alt={p.name} loading={eager?'eager':'lazy'} decoding="async" fetchPriority={eager?'high':undefined} onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src=fallbackProductImage(p.name)}}/>
-      {cardBadge&&<span className={'sf-collection-media-tag'+(p.stockQuantity===0?' is-out':'')}>{cardBadge}</span>}
-      <span className="sf-thumb-qv" aria-hidden="true">Quick view</span>
-     </button>
-     <button type="button" className="sf-collection-card-open sf-card-body-btn" onClick={()=>openProduct(p)}>
-      <div className="sf-collection-card-body">
-       <span className="sf-collection-card-title">{p.name}</span>
-       {(p.ratingCount??0)>0&&(
-        <span className="sf-collection-card-rating">
-         <Star size={12} fill="currentColor"/>
-         <strong>{Number(p.ratingAverage||0).toFixed(1)}</strong>
-         <span>({p.ratingCount})</span>
-        </span>
-       )}
-       <strong className="sf-collection-card-price sf-num">KES {p.price.toLocaleString('en-KE')}</strong>
-      </div>
-     </button>
-     <div className="sf-collection-card-foot">
-      <div className="sf-collection-card-meta">
-       <span className="sf-collection-card-store">{p.category||shop?.name||'Store'}</span>
-       <small className={p.stockQuantity===0?'is-out':''}>
-        {p.stockQuantity===0?'Out of stock':p.stockQuantity===null?'In stock':`${p.stockQuantity} available`}
-       </small>
-      </div>
-      <button
-       type="button"
-       className={'sf-collection-add-btn'+(qtyInCart>0?' in-cart':'')}
-       disabled={outOfStock}
-       aria-label={outOfStock?`${p.name} is out of stock`:qtyInCart>0?`Add another ${p.name} (${qtyInCart} in cart)`:`Add ${p.name} to cart`}
-       onClick={()=>addSingleToCart(p.id,p.stockQuantity)}
-      >
-       <Plus size={18} strokeWidth={2.4}/>
-       {qtyInCart>0&&<span className="sf-collection-add-count sf-num">{qtyInCart}</span>}
-      </button>
-     </div>
-    </article>
-   );
-  };
-
-  const renderSkeletonGrid=(count=8)=>(
+ const renderSkeletonGrid=(count=8)=>(
   <div className="sf-product-grid" aria-busy="true" aria-label="Loading products">
    {Array.from({length:count}).map((_,index)=>(
     <article className="sf-skeleton-card" key={index} aria-hidden="true">
@@ -571,17 +334,17 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
       <button type="button" className="sf-icon-btn sf-menu-trigger" aria-label="Browse shop categories" onClick={()=>{if(window.innerWidth>760)setDesktopSidebarOpen(v=>!v);else setMobileSidebarOpen(true)}}>
        <Menu size={22}/>
       </button>
-      <a className="sf-brand" href={buyerPath('store')} aria-label={shop?.name||'Store home'} title={shop?.name||'Store'} onClick={e=>{e.preventDefault();navigateBuyerPage('store')}}>
-       <strong className="sf-brand-name">{(()=>{const words=String(shop?.name||'').trim().split(/\s+/).filter(Boolean);if(!words.length)return 'STORE';return words[0].toLowerCase()==='the'&&words.length>1?words[1]:words[0];})()}</strong>
+      <a className="sf-brand" href={buyerPath('store')} onClick={e=>{e.preventDefault();navigateBuyerPage('store')}}>
+       <strong className="sf-brand-name">{shop?.name||'OUR STORE'}</strong>
        <span className={'sf-brand-badge'+(shop?.logoUrl?' has-logo':'')} aria-hidden="true">
         {shop?.logoUrl?<img src={shop.logoUrl} alt=""/>:<Star size={12} fill="#ffffff" strokeWidth={2}/>}
        </span>
       </a>
      </div>
      {!compact&&(
-      <form className={'sf-search-form'+(buyerPage.startsWith('collection/')?' is-pill-search':'')} onSubmit={e=>{e.preventDefault();if(document.activeElement instanceof HTMLElement)document.activeElement.blur();if(buyerPage==='store'){window.setTimeout(()=>document.getElementById('market-products-grid')?.scrollIntoView({behavior:'smooth',block:'start'}),60);}else if(!buyerPage.startsWith('collection/')){setFilter('All products');navigateBuyerPage('collection/all-products',true);}}}>
-       <button type="submit" className="sf-search-submit" aria-label="Search products"><Search size={18}/></button>
-       <input type="search" enterKeyHint="search" aria-label="Search products" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search products, categories and brands"/>
+      <form className="sf-search-form" onSubmit={e=>{e.preventDefault();setFilter('All products');navigateBuyerPage('store');window.setTimeout(()=>document.getElementById('market-products-grid')?.scrollIntoView({behavior:'smooth',block:'start'}),80)}}>
+       <Search size={18}/>
+       <input aria-label="Search products" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search products, categories and SKUs"/>
        {search.trim()&&(
         <button type="button" className="sf-search-clear" aria-label="Clear search" onClick={()=>setSearch('')}>
          <X size={16}/>
@@ -683,7 +446,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
     </div>
     {buyerCustomer&&(
      <div className="sf-drawer-footer">
-      <button type="button" className="sf-drawer-logout" onClick={signOutBuyer}>
+      <button type="button" className="sf-drawer-logout" onClick={()=>{fetch('/api/buyer-auth?action=logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug}),credentials:'same-origin'}).finally(()=>{setBuyerCustomer(null);setCart({});navigateBuyerPage('store')})}}>
        <LogOut size={16}/> Sign out
       </button>
      </div>
@@ -750,13 +513,9 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
    shopCashOnPickupEnabled={shop?.cashOnPickupEnabled===true}
    shopFaqs={shop?.faqs||[]}
    products={products}
-   productsLoading={loading}
-   storeError={error}
-   onRetryConnection={()=>setReconnectTick(t=>t+1)}
    recentlyViewed={recentlyViewed}
    cart={cart}
-   cartLoading={cartHydrating}
-   onCartChange={updateCart}
+   onCartChange={setCart}
    view={buyerPage}
    initialOrderNumber={emailOrderNumber.current}
    onNavigate={navigateBuyerPage}
@@ -771,7 +530,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
    onOpenProduct={(product)=>openProduct(product as LiveProduct)}
    notifications={buyerNotifications}
    onProfileUpdated={setBuyerCustomer}
-   onSignOut={signOutBuyer}
+   onSignOut={()=>{fetch('/api/buyer-auth?action=logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug})}).finally(()=>{setBuyerCustomer(null);navigateBuyerPage('store')})}}
    chatPanel={chatPanel}
    onOpenChat={(token,orderNumber,orderId)=>{setChatToken(token||'');setChatOrderId(orderId||'');setChatOrderNumber(orderNumber);setChatMessages([]);setChatAttachments([]);setChatOrder(null);setChatDraft('');setChatError('');}}
    onOrderCreated={(token,orderNumber)=>{setChatToken(token);setChatOrderId('');setChatOrderNumber(orderNumber);setChatError('');}}
@@ -837,7 +596,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
         <span>Our support team is ready to assist you.</span>
         <button type="button" className="sf-btn sf-btn-primary" style={{minHeight:36,fontSize:13}} onClick={()=>navigateBuyerPage('assistant')}>Contact Us</button>
        </div>
-       <button type="button" className="sf-account-logout" onClick={signOutBuyer}>
+       <button type="button" className="sf-account-logout" onClick={()=>{fetch('/api/buyer-auth?action=logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug}),credentials:'same-origin'}).finally(()=>{setBuyerCustomer(null);navigateBuyerPage('store')})}}>
         <LogOut size={16}/><span>Logout</span>
        </button>
       </aside>
@@ -853,14 +612,77 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
      {renderStoreHeader()}
      <div className="sf-container">
       {/* 1. Editorial Hero Showcase */}
-      <StorefrontHeroCarousel
-       slides={heroSlides}
-       shopName={shop?.name}
-       shopDescription={shop?.description}
-       active={buyerPage==='store'}
-       onOpenProduct={openProduct}
-       onShopCollection={()=>selectStoreCategory('All products')}
-      />
+      <section className="sf-hero-wrap" aria-label="Featured showcase">
+       <div
+        className={'sf-hero'+(heroSlides.length>1?' has-controls':'')+(heroPaused?' is-paused':'')}
+        onMouseEnter={()=>setHeroPaused(true)}
+        onMouseLeave={()=>setHeroPaused(false)}
+        onFocusCapture={()=>setHeroPaused(true)}
+        onBlurCapture={e=>{if(!e.currentTarget.contains(e.relatedTarget as Node))setHeroPaused(false)}}
+        onTouchStart={e=>{heroTouchStartX.current=e.touches[0]?.clientX??null}}
+        onTouchEnd={e=>{if(heroTouchStartX.current===null||heroSlides.length<2)return;const dx=(e.changedTouches[0]?.clientX??heroTouchStartX.current)-heroTouchStartX.current;heroTouchStartX.current=null;if(Math.abs(dx)>40)setHomeHeroIndex(i=>dx<0?(i+1)%heroSlides.length:(i+heroSlides.length-1)%heroSlides.length)}}
+       >
+        <div className="sf-hero-track" style={{transform:`translate3d(-${activeHeroIndex*100}%, 0, 0)`}}>
+         {heroSlides.length?(heroSlides.map((slideProduct,index)=>{
+          const isCurrent=index===activeHeroIndex;
+          return (
+           <div className={'sf-hero-slide'+(isCurrent?' is-active':'')} key={slideProduct.id} aria-hidden={!isCurrent}>
+            <div className="sf-hero-copy">
+             <div className="sf-hero-meta">
+              <span className="sf-hero-cat">{slideProduct.category||shop?.name||'Featured Collection'}</span>
+              {heroSlides.length>1&&<span className="sf-hero-index">· {String(index+1).padStart(2,'0')}/{String(heroSlides.length).padStart(2,'0')}</span>}
+             </div>
+             {isCurrent?<h1>{slideProduct.name}</h1>:<h2>{slideProduct.name}</h2>}
+             <p className="sf-hero-desc">{slideProduct.description||shop?.description||'Explore quality products with transparent pricing and direct seller coordination.'}</p>
+             <strong className="sf-hero-price">KES {slideProduct.price.toLocaleString('en-KE')}</strong>
+             <div className="sf-hero-actions">
+              <button type="button" className="sf-btn sf-btn-accent" tabIndex={isCurrent?0:-1} onClick={()=>openProduct(slideProduct)}>
+               View product <ArrowRight size={14}/>
+              </button>
+             </div>
+            </div>
+            <div className="sf-hero-media-col">
+             <button type="button" className="sf-hero-media" tabIndex={isCurrent?0:-1} onClick={()=>openProduct(slideProduct)} aria-label={`View ${slideProduct.name}`}>
+              <img src={slideProduct.images?.[0]||slideProduct.imageUrl||fallbackProductImage(slideProduct.name)} alt={slideProduct.name} loading={index===0?'eager':'lazy'} decoding="async" fetchPriority={index===0?'high':'auto'} onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src=fallbackProductImage(slideProduct.name)}}/>
+             </button>
+            </div>
+           </div>
+          );
+         })):(
+          <div className="sf-hero-slide is-active">
+           <div className="sf-hero-copy">
+            <div className="sf-hero-meta">
+             <span className="sf-hero-cat">{shop?.name||'Featured Collection'}</span>
+            </div>
+            <h1>{shop?.name||'Curated essentials for everyday living'}</h1>
+            <p className="sf-hero-desc">{shop?.description||'Explore quality products with transparent pricing and direct seller coordination.'}</p>
+            <div className="sf-hero-actions">
+             <button type="button" className="sf-btn sf-btn-accent" onClick={()=>selectStoreCategory('All products')}>
+              Shop collection <ArrowRight size={14}/>
+             </button>
+            </div>
+           </div>
+           <div className="sf-hero-media-col">
+            <div className="sf-hero-media" aria-hidden="true">
+             <ShoppingBag size={40} strokeWidth={1.3}/>
+            </div>
+           </div>
+          </div>
+         )}
+        </div>
+        {heroSlides.length>1&&(
+         <div className="sf-hero-controls">
+          <button type="button" className="sf-hero-arrow" aria-label="Previous slide" onClick={()=>setHomeHeroIndex(i=>(i+heroSlides.length-1)%heroSlides.length)}><ChevronLeft size={15}/></button>
+          <div className="sf-hero-dots">
+           {heroSlides.map((p,index)=>(
+            <button type="button" key={p.id+'-'+activeHeroIndex} aria-label={'Show featured product '+(index+1)} aria-current={index===activeHeroIndex?'true':'false'} className={index===activeHeroIndex?'active':''} onClick={()=>setHomeHeroIndex(index)}/>
+           ))}
+          </div>
+          <button type="button" className="sf-hero-arrow" aria-label="Next slide" onClick={()=>setHomeHeroIndex(i=>(i+1)%heroSlides.length)}><ChevronRight size={15}/></button>
+         </div>
+        )}
+       </div>
+      </section>
 
       {/* 2. Featured Spotlight Grid (if configured) */}
       {spotlightProducts.length>0&&(
@@ -874,7 +696,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
          <button type="button" className="sf-link-action" onClick={()=>navigateBuyerPage('collection/featured-products')}>See all <ChevronRight size={15}/></button>
         </div>
         <div className="sf-spotlight-grid">
-         {spotlightProducts.slice(0,4).map((p:LiveProduct)=>renderProductCard(p,'Featured'))}
+         {spotlightProducts.slice(0,4).map(p=>renderProductCard(p,'Featured'))}
         </div>
        </section>
       )}
@@ -929,7 +751,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
         </div>
        ):(
         <>
-         <div className="sf-product-grid">{homeCatalogueList.map((p:LiveProduct,idx:number)=>renderProductCard(p,undefined,idx<4))}</div>
+         <div className="sf-product-grid">{homeCatalogueList.map((p,idx)=>renderProductCard(p,undefined,idx<8))}</div>
          {catalogueHasMore&&(
           <div className="sf-load-more" ref={catalogueSentinelRef} aria-live="polite">
            <button type="button" className="sf-btn sf-btn-secondary" disabled={loadingMore} onClick={()=>void loadMoreProducts()}>
@@ -942,13 +764,17 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
       </section>
 
       {/* 4. Helpful Shopping Answers */}
-      <section className="sf-section sf-faq-compact" id="store-faq">
+      <section className="sf-section" id="store-faq" style={{paddingBottom:24}}>
        <div className="sf-section-head">
-        <h2>Frequently Asked Questions</h2>
+        <div>
+         <span className="sf-kicker">Help centre</span>
+         <h2>Frequently Asked Questions</h2>
+         <p>Helpful answers before you place an order.</p>
+        </div>
         <button type="button" className="sf-link-action" onClick={()=>navigateBuyerPage('faqs')}>View all FAQs <ArrowRight size={15}/></button>
        </div>
        <div className="sf-faq-list">
-        {marketplaceFaqs.slice(0,4).map(([question,answer])=>(
+        {marketplaceFaqs.slice(0,6).map(([question,answer])=>(
          <details key={question}>
           <summary>{question}<span>+</span></summary>
           <p>{answer}</p>
@@ -975,180 +801,60 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
     <>
      {renderShopDrawer()}
      {renderStoreHeader()}
-     <div className="sf-collection-page">
-      <div className="sf-collection-breadcrumb-bar">
-       <div className="sf-collection-container sf-collection-breadcrumb-inner">
-        <nav className="sf-collection-breadcrumb" aria-label="Breadcrumb">
-         <button type="button" onClick={()=>navigateBuyerPage('store')}>Home</button>
-         <ChevronRight size={14} aria-hidden="true"/>
-         <span aria-current="page">{collectionTitle}</span>
-        </nav>
-        <span className="sf-collection-count-desktop sf-num">
-         {totalCollectionCount>collectionSorted.length?`${collectionSorted.length} of ${totalCollectionCount.toLocaleString('en-KE')} products`:`${collectionSorted.length.toLocaleString('en-KE')} ${collectionSorted.length===1?'product':'products'}`}
-        </span>
+     <div className="sf-container" style={{paddingTop:28,paddingBottom:48}}>
+      <div className="sf-flow-head">
+       <button type="button" className="sf-back-btn" onClick={()=>navigateBuyerPage('store')}>← Back to shop</button>
+       <span className="sf-kicker">{shop?.name||'Store collection'}</span>
+       <h1>{collectionTitle}</h1>
+       <p className="sf-flow-sub">{collectionKey==='featured-products'?'Explore products highlighted by this shop.':collectionKey==='top-picks'?'Discover highly rated products from this shop.':'Browse the complete product catalogue.'}</p>
+      </div>
+      <div className="sf-toolbar">
+       <div className="sf-toolbar-controls">
+        <select className="sf-select" aria-label="Filter collection by category" value={filter} onChange={e=>setFilter(e.target.value)}>
+         <option value="All products">All categories</option>
+         {storefrontCategories.map(category=>(
+          <optgroup key={category.name} label={category.name}>
+           <option value={category.name}>{category.name}</option>
+           {category.subcategories.map(child=><option key={child} value={child}>{child}</option>)}
+          </optgroup>
+         ))}
+        </select>
+        <select className="sf-select" aria-label="Sort collection" value={sortOrder} onChange={e=>setSortOrder(e.target.value)}>
+         <option value="recommended">Recommended</option>
+         <option value="price-low">Price: Low to High</option>
+         <option value="price-high">Price: High to Low</option>
+         <option value="name">Name: A to Z</option>
+        </select>
        </div>
+       <p className="sf-result-count">{totalCollectionCount>collectionSorted.length?`${collectionSorted.length} of ${totalCollectionCount.toLocaleString('en-KE')}`:`${collectionSorted.length.toLocaleString('en-KE')} products`}</p>
       </div>
-
-      <div className="sf-collection-chips-bar">
-       <div className="sf-collection-container sf-collection-chips">
-        <button
-         type="button"
-         className={'sf-filter-chip'+(inStockOnly?' is-active':'')}
-         aria-pressed={inStockOnly}
-         onClick={()=>setInStockOnly(v=>!v)}
-        >
-         <Package size={14}/>
-         <span>In Stock</span>
-        </button>
-
-        <div className={'sf-filter-chip-select'+(filter!=='All products'?' is-active':'')}>
-         <select aria-label="Filter collection by category" value={filter} onChange={e=>setFilter(e.target.value)}>
-          <option value="All products">Category</option>
-          {storefrontCategories.map(category=>(
-           <optgroup key={category.name} label={category.name}>
-            <option value={category.name}>{category.name}</option>
-            {category.subcategories.map(child=><option key={child} value={child}>{child}</option>)}
-           </optgroup>
-          ))}
-         </select>
-         <ChevronDown size={14} aria-hidden="true"/>
-        </div>
-
-        <div className={'sf-filter-chip-select'+(priceBand!=='all'?' is-active':'')}>
-         <select aria-label="Filter collection by price" value={priceBand} onChange={e=>setPriceBand(e.target.value as any)}>
-          <option value="all">Price</option>
-          <option value="under-1000">Under KES 1,000</option>
-          <option value="1000-5000">KES 1,000 – 5,000</option>
-          <option value="5000-15000">KES 5,000 – 15,000</option>
-          <option value="15000-plus">KES 15,000+</option>
-         </select>
-         <ChevronDown size={14} aria-hidden="true"/>
-        </div>
-
-        <div className={'sf-filter-chip-select sf-collection-desktop-sort'+(sortOrder!=='recommended'?' is-active':'')}>
-         <select aria-label="Sort collection" value={sortOrder} onChange={e=>setSortOrder(e.target.value)}>
-          <option value="recommended">Sort: Recommended</option>
-          <option value="price-low">Price: Low to High</option>
-          <option value="price-high">Price: High to Low</option>
-          <option value="rating">Top Rated</option>
-          <option value="name">Name: A to Z</option>
-         </select>
-         <ChevronDown size={14} aria-hidden="true"/>
-        </div>
-
-        {(filter!=='All products'||priceBand!=='all'||inStockOnly||search.trim()!==''||sortOrder!=='recommended')&&(
-         <button
-          type="button"
-          className="sf-filter-chip sf-filter-reset"
-          onClick={()=>{setFilter('All products');setPriceBand('all');setInStockOnly(false);setSearch('');setSortOrder('recommended');}}
-         >
-          <X size={13}/>
-          <span>Clear</span>
-         </button>
-        )}
+      {loading&&collectionSorted.length===0?(
+       renderSkeletonGrid(8)
+      ):collectionSorted.length===0?(
+       <div className="sf-state-box">
+        <h2>{collectionKey==='featured-products'?'No featured products yet':'No products found'}</h2>
+        <p>{collectionKey==='featured-products'?'This shop has not highlighted any products yet. Browse all products instead.':'Try another search or browse the full collection.'}</p>
+        <button type="button" className="sf-btn sf-btn-primary" onClick={()=>{setSearch('');navigateBuyerPage('collection/all-products')}}>Browse all products</button>
        </div>
-      </div>
-
-      <div className="sf-collection-container sf-collection-body">
-       {loading&&collectionSorted.length===0?(
-        renderSkeletonGrid(8)
-       ):collectionSorted.length===0?(
-        <div className="sf-state-box">
-         <h2>{collectionKey==='featured-products'?'No featured products yet':'No matching products'}</h2>
-         <p>{collectionKey==='featured-products'?'This shop has not highlighted any products yet. Browse all products instead.':'Try clearing a filter or searching another keyword.'}</p>
-         <button type="button" className="sf-btn sf-btn-primary" onClick={()=>{setSearch('');setFilter('All products');setPriceBand('all');setInStockOnly(false);setSortOrder('recommended');navigateBuyerPage('collection/all-products')}}>Reset &amp; browse all</button>
-        </div>
-       ):(
-        <>
-         <div className="sf-collection-grid">{collectionSorted.map((p:LiveProduct,idx:number)=>renderCollectionCard(p,idx<4))}</div>
-         {catalogueHasMore&&collectionKey!=='featured-products'&&(
-          <div className="sf-load-more" ref={catalogueSentinelRef} aria-live="polite">
-           <button type="button" className="sf-btn sf-btn-secondary" disabled={loadingMore} onClick={()=>void loadMoreProducts()}>
-            {loadingMore?'Loading more products…':`Load more products (${collectionSorted.length} of ${totalCollectionCount.toLocaleString('en-KE')})`}
-           </button>
-          </div>
-         )}
-        </>
-       )}
-      </div>
-
-      <div className="sf-collection-floating-bar" role="region" aria-label="Sort and filter products">
-       <button type="button" onClick={()=>setCollectionSheet('sort')}>
-        <span>Sort by</span>
-        <ArrowUpDown size={15}/>
-       </button>
-       <span className="sf-collection-floating-sep" aria-hidden="true"/>
-       <button type="button" onClick={()=>setCollectionSheet('filter')}>
-        <span>Filter{(filter!=='All products'||priceBand!=='all'||inStockOnly)?` (${(filter!=='All products'?1:0)+(priceBand!=='all'?1:0)+(inStockOnly?1:0)})`:''}</span>
-        <SlidersHorizontal size={15}/>
-       </button>
-      </div>
-
-      {collectionSheet&&(
+      ):(
        <>
-        <button type="button" className="sf-scrim" aria-label="Close options" onClick={()=>setCollectionSheet(null)}/>
-        <section className="sf-collection-sheet" role="dialog" aria-modal="true" aria-label={collectionSheet==='sort'?'Sort products':'Filter products'}>
-         <div className="sf-collection-sheet-head">
-          <strong>{collectionSheet==='sort'?'Sort products':'Filter products'}</strong>
-          <button type="button" className="sf-icon-btn" aria-label="Close" onClick={()=>setCollectionSheet(null)}><X size={16}/></button>
+        <div className="sf-product-grid">{collectionSorted.map(p=>renderProductCard(p))}</div>
+        {catalogueHasMore&&collectionKey!=='featured-products'&&(
+         <div className="sf-load-more" ref={catalogueSentinelRef} aria-live="polite">
+          <button type="button" className="sf-btn sf-btn-secondary" disabled={loadingMore} onClick={()=>void loadMoreProducts()}>
+           {loadingMore?'Loading more products…':`Load more products (${collectionSorted.length} of ${totalCollectionCount.toLocaleString('en-KE')})`}
+          </button>
          </div>
-         {collectionSheet==='sort'?(
-          <div className="sf-collection-sheet-list">
-           {[['recommended','Recommended'],['price-low','Price: Low to High'],['price-high','Price: High to Low'],['rating','Top Rated'],['name','Name: A to Z']].map(([val,label])=>(
-            <button
-             type="button"
-             key={val}
-             className={'sf-collection-sheet-option'+(sortOrder===val?' is-active':'')}
-             onClick={()=>{setSortOrder(val);setCollectionSheet(null);}}
-            >
-             <span>{label}</span>
-             {sortOrder===val&&<Check size={16}/>}
-            </button>
-           ))}
-          </div>
-         ):(
-          <div className="sf-collection-sheet-filters">
-           <label className="sf-collection-toggle-row">
-            <span>In stock only</span>
-            <input type="checkbox" checked={inStockOnly} onChange={e=>setInStockOnly(e.target.checked)}/>
-           </label>
-           <div className="sf-collection-filter-group">
-            <span>Price range</span>
-            <div className="sf-collection-price-grid">
-             {[['all','All prices'],['under-1000','Under 1,000'],['1000-5000','1,000 – 5,000'],['5000-15000','5,000 – 15,000'],['15000-plus','15,000+']].map(([val,label])=>(
-              <button
-               type="button"
-               key={val}
-               className={'sf-filter-chip'+(priceBand===val?' is-active':'')}
-               onClick={()=>setPriceBand(val as any)}
-              >
-               {label}
-              </button>
-             ))}
-            </div>
-           </div>
-           <label className="sf-collection-filter-group">
-            <span>Category</span>
-            <select className="sf-select" style={{maxWidth:'none',width:'100%'}} value={filter} onChange={e=>setFilter(e.target.value)}>
-             <option value="All products">All categories</option>
-             {storefrontCategories.map(category=>(
-              <optgroup key={category.name} label={category.name}>
-               <option value={category.name}>{category.name}</option>
-               {category.subcategories.map(child=><option key={child} value={child}>{child}</option>)}
-              </optgroup>
-             ))}
-            </select>
-           </label>
-           <div className="sf-collection-sheet-actions">
-            <button type="button" className="sf-btn sf-btn-secondary" onClick={()=>{setFilter('All products');setPriceBand('all');setInStockOnly(false);}}>Reset</button>
-            <button type="button" className="sf-btn sf-btn-accent" onClick={()=>setCollectionSheet(null)}>Show {collectionSorted.length} products</button>
-           </div>
-          </div>
-         )}
-        </section>
+        )}
        </>
       )}
      </div>
+     {totalCartUnits>0&&(
+      <div className="sf-mobile-cartbar">
+       <div className="sf-mobile-cartbar-meta"><strong>{totalCartUnits} item{totalCartUnits===1?'':'s'}</strong><small>KES {total.toLocaleString('en-KE')}</small></div>
+       <button type="button" className="sf-btn sf-btn-accent" style={{minHeight:36,padding:'0 14px',fontSize:13}} onClick={()=>navigateBuyerPage('cart')}>Go to cart <ArrowRight size={15}/></button>
+      </div>
+     )}
      {renderFooter()}
     </>
    ):buyerPage==='product-detail'?(
@@ -1162,11 +868,13 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
        slug={slug}
        shopName={shop?.name||'This shop'}
        cartQuantity={cart[selectedProduct.id]||0}
+       totalCartUnits={totalCartUnits}
        saved={wishlistIds.includes(selectedProduct.id)}
        onToggleSaved={()=>toggleWishlist(selectedProduct.id)}
        onBack={closeProduct}
-       onAdd={(quantity)=>updateCart(c=>({...c,[selectedProduct.id]:Math.min(99,selectedProduct.stockQuantity??99,(c[selectedProduct.id]||0)+quantity)}))}
+       onAdd={(quantity)=>setCart(c=>({...c,[selectedProduct.id]:Math.min(99,selectedProduct.stockQuantity??99,(c[selectedProduct.id]||0)+quantity)}))}
        onOpen={openProduct}
+       onGoToCart={()=>navigateBuyerPage('cart')}
       />
      ):(
       <div className="sf-container" style={{paddingTop:28,paddingBottom:48}}>
@@ -1182,21 +890,13 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
        </div>
       </div>
      )}
-     {totalCartUnits>0&&(
-      <div className="sf-mobile-cartbar">
-       <div className="sf-mobile-cartbar-meta"><strong>{totalCartUnits} item{totalCartUnits===1?'':'s'}</strong><small>KES {total.toLocaleString('en-KE')}</small></div>
-       <button type="button" className="sf-btn sf-btn-accent" style={{minHeight:36,padding:'0 14px',fontSize:13}} onClick={()=>navigateBuyerPage('cart')}>Go to cart <ArrowRight size={15}/></button>
-      </div>
-     )}
      {renderFooter()}
     </>
-   ):isCheckoutFlowRoute?(
-    <Deferred>{renderFlow()}</Deferred>
    ):(
     <>
      {renderShopDrawer()}
-     {renderStoreHeader(false)}
-     {buyerPage!=='cart'&&(
+     {renderStoreHeader(isCheckoutFlowRoute)}
+     {!isCheckoutFlowRoute&&(
       <nav className="sf-routebar" aria-label="Store navigation">
        <div className="sf-routebar-inner">
         <div className="sf-routebar-nav">
@@ -1212,25 +912,279 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
     </>
    )}
    {buyerPage!=='cart'&&!isCheckoutFlowRoute&&shop?.whatsappNumber&&shop.whatsappNumber.replace(/\D/g,'').length>=10&&(
-    <a className="sf-whatsapp-float" href={`https://wa.me/${shop.whatsappNumber.replace(/\D/g,'')}?text=Hello%2C%20I%20need%20help%20with%20this%20storefront.`} target="_blank" rel="noopener noreferrer" aria-label={`Contact ${shop?.name||'this shop'} on WhatsApp`}>
+    <a className={'sf-whatsapp-float'+((totalCartUnits>0||buyerPage==='product-detail')?' has-bottom-bar':'')} href={`https://wa.me/${shop.whatsappNumber.replace(/\D/g,'')}?text=Hello%2C%20I%20need%20help%20with%20this%20storefront.`} target="_blank" rel="noopener noreferrer" aria-label={`Contact ${shop?.name||'this shop'} on WhatsApp`}>
      <MessageCircle size={18}/><span>Help</span>
     </a>
    )}
-   <StorefrontQuickView
-    product={quickViewProduct}
-    shopName={shop?.name||'This shop'}
-    cartQuantity={quickViewProduct?(cart[quickViewProduct.id]||0):0}
-    saved={quickViewProduct?wishlistIds.includes(quickViewProduct.id):false}
-    onClose={()=>setQuickViewProduct(null)}
-    onAdd={(quantity)=>{
-     if(!quickViewProduct)return;
-     updateCart(c=>({...c,[quickViewProduct.id]:Math.min(99,quickViewProduct.stockQuantity??99,(c[quickViewProduct.id]||0)+quantity)}));
-    }}
-    onToggleSaved={()=>{if(quickViewProduct)toggleWishlist(quickViewProduct.id);}}
-    onOpenFullDetails={(product)=>openProduct(product)}
-   />
   </main>
  );
+}
+const money=(n:number)=>'KES '+Number(n||0).toLocaleString('en-KE',{maximumFractionDigits:0});
+function SellerOrderPage({order,orderNumber,shop,payoutForm,paymentPromptPhone,paymentPrompting,paymentPromptMessage,orderChatMessages,paymentPromptMethod,onPaymentMethodChange,onBack,onOpenMessages,onPhoneChange,onPrompt,onStatusChange,onDeliveryStatusChange}:{order:any,orderNumber:string,shop:any,payoutForm:any,paymentPromptPhone:string,paymentPromptMethod:string,onPaymentMethodChange:(v:string)=>void,paymentPrompting:boolean,paymentPromptMessage:string,orderChatMessages:any[],onBack:()=>void,onOpenMessages:()=>void,onPhoneChange:(v:string)=>void,onPrompt:()=>void,onStatusChange:(v:string)=>void,onDeliveryStatusChange:(v:string)=>void}){
+ if(!order)return <div className="seller-order-route"><div className="seller-order-route-top"><button className="seller-secondary-btn" onClick={onBack}>← Back to orders</button><span>SELLER WORKSPACE / ORDERS</span></div><section className="seller-order-not-found"><span>ORDER NOT FOUND</span><h2>We couldn't find this order</h2><p>The order number <strong>{orderNumber}</strong> may be incorrect, or the order may no longer be available in this store.</p><button className="seller-primary-btn" onClick={onBack}>Return to orders</button></section></div>;
+ const paymentState=String(order.payment_status||'unknown').toLowerCase();
+ const orderState=String(order.status||'pending').toLowerCase();
+ const deliveryState=String(order.delivery_status||'pending_delivery').toLowerCase();
+ const paid=['succeeded','success','paid'].includes(paymentState);
+ const deliveryLabel=deliveryState==='in_transit'?'In transit':deliveryState==='delivered'?'Delivered':'Pending delivery';
+ const paymentMethod=paymentPromptMethod==='paybill'?'PayBill':'Till / Buy Goods';
+ const canUseTill=!!(payoutForm.tillPartyB||(payoutForm.defaultPayoutMethod==='till'&&payoutForm.partyB));
+ const canUsePaybill=!!(payoutForm.paybillPartyB&&payoutForm.accountReference);
+ const placedAt=new Date(order.created_at);
+ const updatedAt=order.updated_at?new Date(order.updated_at):null;
+ return <div className="seller-order-route">
+  <div className="seller-order-route-top"><button className="seller-secondary-btn" onClick={onBack}>← Back to Orders</button><button className="seller-secondary-btn seller-order-print" onClick={()=>window.print()}>▣ <span>Print</span></button></div>
+  <article className="seller-order-approved">
+   <section className="seller-order-hero">
+    <div className="seller-order-hero-icon">✓</div>
+    <div className="seller-order-hero-main"><span>ORDER DETAILS</span><h2>Order #{order.order_number}</h2><p>▦ {placedAt.toLocaleDateString('en-KE',{day:'2-digit',month:'short',year:'numeric'})} · {placedAt.toLocaleTimeString('en-KE',{hour:'2-digit',minute:'2-digit'})}</p></div>
+    <span className={'seller-order-payment-pill '+(paid?'is-paid':'is-unpaid')}>{paid?'✓ Payment: Successful':paymentState==='cancelled'?'Payment: Cancelled':paymentState==='failed'?'Payment: Failed':'Payment: Awaiting'}</span>
+    <div className="seller-order-amount"><strong>{money(order.total)}</strong><span>Total Amount</span></div>
+   </section>
+   <section className="seller-order-customer-payment">
+    <div className="seller-order-customer"><span className="seller-order-round-icon">♟</span><div><small>Customer</small><strong>{order.customer_name||'Customer'}</strong><a href={'tel:'+String(order.customer_phone||'').replace(/[^+0-9]/g,'')}>☎ {order.customer_phone||'Phone not provided'}</a></div></div>
+    <div className="seller-order-mpesa"><span className="seller-order-round-icon">▣</span><div><small>Payment Method</small><strong>M-PESA</strong><small>Transaction:</small><b className="seller-order-receipt">{order.provider_receipt||'Awaiting M-PESA receipt'}</b></div></div>
+   </section>
+   <section className="seller-order-state-row">
+    <div className="seller-order-fulfilment-pill">🚚 <span>Fulfilment: {deliveryLabel}</span></div>
+    <label className="seller-order-status-pill">✓ <span>Order Status:</span><select aria-label="Order status" value={order.status||'pending'} onChange={e=>onStatusChange(e.target.value)}><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="processing">Processing</option><option value="fulfilled">Fulfilled</option><option value="cancelled">Cancelled</option></select>⌄</label>
+   </section>
+   <section className="seller-order-items seller-order-approved-items">
+    <div className="seller-order-approved-section-head"><span>▦</span><h3>Order Items</h3></div>
+    <div className="seller-order-approved-items-body"><div className="seller-order-approved-table-head"><span>Product</span><span>Qty</span><span>Unit Price</span><span>Total</span></div>
+     {(order.items||[]).map((item:any,i:number)=><div className="seller-order-approved-item" key={i}><div className="seller-order-item-name">{item.imageUrl||item.image_url?<img src={item.imageUrl||item.image_url} alt=""/>:<span className="seller-order-product-placeholder">▣</span>}<div><strong>{item.name}</strong><small>{item.sku?'SKU: '+item.sku:'Product / Service'}</small></div></div><strong>{item.quantity}</strong><strong>{money(Number(item.unitPrice||0)/100)}</strong><strong>{money(Number(item.lineTotal||0)/100)}</strong></div>)}
+     <div className="seller-order-approved-total"><strong>Order Total:</strong><strong>{money(order.total)}</strong></div>
+    </div>
+   </section>
+   <section className="seller-delivery-card seller-order-approved-delivery">
+    <div className="seller-order-approved-section-head seller-order-delivery-head"><span>📍</span><div><h3>Delivery Information</h3><p>Original delivery instructions submitted by the buyer at checkout.</p></div></div>
+    <div className="seller-order-delivery-destination">
+     <div><small>Delivery method</small><strong>{order.delivery_method==='pickup'?'Pickup / collection':'Home delivery'}</strong></div>
+     {order.delivery_method==='pickup'?<div><small>Preferred pickup station / area</small><strong>{order.pickup_station||'Not provided'}</strong></div>:<>
+      <div><small>County</small><strong>{order.delivery_county||'Not provided'}</strong></div>
+      <div><small>Sub-county</small><strong>{order.delivery_sub_county||'Not provided'}</strong></div>
+      <div><small>Estate / area</small><strong>{order.delivery_estate||'Not provided'}</strong></div>
+      <div className="wide"><small>Physical delivery address</small><strong>{order.delivery_address||'Not provided'}</strong></div>
+      <div className="wide"><small>Directions / landmarks</small><strong>{order.delivery_directions||'No extra directions provided'}</strong></div>
+     </>}
+    </div>
+   </section>
+   <section className="seller-delivery-card seller-order-approved-delivery">
+    <div className="seller-order-approved-section-head seller-order-delivery-head"><span>🚚</span><div><h3>Delivery Status</h3><p>Update delivery status to keep the buyer informed.</p></div></div>
+    <div className="seller-delivery-progress"><span className="active">◷<b>Pending Delivery</b></span><i className={['in_transit','delivered'].includes(deliveryState)?'active':''}/><span className={['in_transit','delivered'].includes(deliveryState)?'active':''}>🚚<b>In Transit</b></span><i className={deliveryState==='delivered'?'active':''}/><span className={deliveryState==='delivered'?'active':''}>✓<b>Delivered</b></span></div>
+    <label>Update delivery status<select aria-label="Update delivery status" value={deliveryState} onChange={e=>onDeliveryStatusChange(e.target.value)}><option value="pending_delivery">Pending delivery</option><option value="in_transit">In transit</option><option value="delivered">Delivered</option></select></label>
+   </section>
+   <section className="seller-order-prompt seller-order-approved-prompt">
+    <div className="seller-order-approved-panel-title"><span>ϟ</span><div><h3>Request Customer Payment</h3><p>Send an STK Push to the customer for {money(order.total)}.</p></div></div>
+    <div className="seller-order-phone-field"><span className="seller-order-phone-icon">☎</span><div className="seller-order-phone-copy"><small>Customer M-PESA number</small><div className="seller-order-phone-input"><span className="seller-order-country-code">+254</span><input type="tel" inputMode="tel" autoComplete="tel-national" value={paymentPromptPhone.replace(/^\+?254/,'').replace(/^0/,'')} onChange={e=>onPhoneChange('+254'+e.target.value.replace(/\D/g,'').slice(0,9))} placeholder="7XX XXX XXX" aria-label="Customer M-PESA phone number"/></div></div></div>
+    <div className="seller-order-method-picker" role="group" aria-label="Choose M-PESA payment method"><button type="button" className={paymentPromptMethod==='till'?'selected':''} disabled={!canUseTill} onClick={()=>onPaymentMethodChange('till')}><span className="seller-order-method-radio"/><span><strong>Till / Buy Goods</strong><small>{canUseTill?'CustomerBuyGoodsOnline':'Till not configured'}</small></span></button><button type="button" className={paymentPromptMethod==='paybill'?'selected':''} disabled={!canUsePaybill} onClick={()=>onPaymentMethodChange('paybill')}><span className="seller-order-method-radio"/><span><strong>PayBill</strong><small>{canUsePaybill?'CustomerPayBillOnline':'PayBill not configured'}</small></span></button></div>
+    <p className="seller-order-daraja-note">ⓘ {paymentMethod} uses its matching saved Daraja credentials and payout destination.</p>
+    <button className="seller-order-send-prompt" type="button" disabled={paymentPrompting||paid} onClick={onPrompt}>{paymentPrompting?'Sending payment prompt…':paid?'Payment received':'➤　Send Payment Prompt'}</button>
+    {paymentPromptMessage&&<p className="seller-order-prompt-message" role="status">{paymentPromptMessage}</p>}
+    {order.payment_message&&['failed','cancelled'].includes(paymentState)&&<p className="seller-order-prompt-message">{order.payment_message}</p>}
+   </section>
+   <button type="button" className="seller-order-messages-link" onClick={onOpenMessages}>
+    <span className="seller-order-messages-icon"><MessageCircle size={21}/></span>
+    <span className="seller-order-messages-copy"><strong>Order Messages</strong><small>Private conversation with your customer</small></span>
+    <span className="seller-order-message-count" aria-label={orderChatMessages.length+" messages"}>{orderChatMessages.length}</span>
+    <ChevronRight size={19}/>
+   </button>
+   <section className="seller-order-timeline"><div className="seller-order-approved-section-head"><span>◷</span><h3>Order Timeline</h3></div><ol><li className="done"><i>✓</i><div><small>{placedAt.toLocaleString('en-KE')}</small><strong>Order placed · {money(order.total)}</strong></div></li>{paid&&<li className="done"><i>✓</i><div><small>{updatedAt?.toLocaleString('en-KE')||'Payment verified'}</small><strong>Payment received{order.provider_receipt?' · '+order.provider_receipt:''}</strong></div></li>}<li className={['confirmed','processing','fulfilled'].includes(orderState)?'done':''}><i>{['confirmed','processing','fulfilled'].includes(orderState)?'✓':'◷'}</i><div><small>{updatedAt?.toLocaleString('en-KE')||'Awaiting update'}</small><strong>{orderState==='confirmed'?'Order confirmed':orderState==='processing'?'Order processing':orderState==='fulfilled'?'Order fulfilled':orderState==='cancelled'?'Order cancelled':'Awaiting fulfilment'}</strong></div></li>{deliveryState!=='pending_delivery'&&<li className="done"><i>✓</i><div><small>{order.delivery_updated_at?new Date(order.delivery_updated_at).toLocaleString('en-KE'):'Updated'}</small><strong>Delivery {deliveryState==='in_transit'?'in transit':'completed'}</strong></div></li>}</ol>
+   </section>
+  </article>
+  <footer className="seller-order-route-footer"><span>{shop?.name||'Your store'} · DASNET Seller Workspace</span><span>Order information is private to your merchant account.</span></footer>
+ </div>;
+}
+function SellerOrderMessages({order,orderNumber,shop,messages,attachments,draft,sending,error,onBack,onDraftChange,onSubmit,onUpload,onDownload}:{order:any,orderNumber:string,shop:any,messages:any[],attachments:any[],draft:string,sending:boolean,error:string,onBack:()=>void,onDraftChange:(v:string)=>void,onSubmit:(e:any)=>void,onUpload:(file?:File)=>void,onDownload:(id:string)=>void}){
+ return <div className="seller-order-messages-page">
+  <div className="seller-order-messages-top"><button type="button" className="seller-secondary-btn" onClick={onBack}>← Back to order</button><span>SELLER WORKSPACE / ORDER MESSAGES</span></div>
+  <section className="seller-order-messages-panel">
+   <header><span className="seller-order-messages-icon"><MessageCircle size={23}/></span><div><span>PRIVATE ORDER CONVERSATION</span><h2>{order?.customer_name||'Customer'}</h2><p>Order #{orderNumber} · {shop?.name||'Your store'}</p></div><b><i/> Live</b></header>
+   <div className="seller-order-messages-feed">{messages.map((m:any)=><article key={m.id} className={'seller-chat-message '+(m.sender_type==='merchant'?'mine':'theirs')}><span>{m.sender_type==='merchant'?'Your store':'Customer'}</span><p>{m.message}</p><small>{new Date(m.created_at).toLocaleString('en-KE',{dateStyle:'medium',timeStyle:'short'})}</small></article>)}{!messages.length&&!error&&<div className="seller-order-messages-empty"><MessageCircle size={30}/><strong>No messages yet</strong><p>Send a message to start the conversation with your customer.</p></div>}</div>
+   {attachments?.length>0&&<div className="chat-attachments"><strong>Shared files</strong>{attachments.map((a:any)=><button type="button" key={a.id} onClick={()=>onDownload(a.id)}>📎 {a.file_name} · {(Number(a.size_bytes)/1024/1024).toFixed(2)} MB <Download size={14}/></button>)}</div>}
+   {error&&<p className="seller-order-prompt-message">{error}</p>}
+   <form className="seller-order-messages-compose" onSubmit={onSubmit}><input value={draft} onChange={e=>onDraftChange(e.target.value)} maxLength={2000} placeholder="Write a message to your customer…" aria-label="Message"/><button type="submit" disabled={sending||!draft.trim()}>{sending?'Sending…':<><Send size={17}/> Send</>}</button></form><label className="chat-file-upload"><Plus size={15}/> Attach file <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.webp" onChange={e=>{onUpload(e.target.files?.[0]);e.currentTarget.value=''}}/><small>PDF, Office, TXT or image · max 10 MB</small></label>
+  </section>
+ </div>;
+}
+function parseBulkProductsCsv(input:string){const rows:string[][]=[];let row:string[]=[],cell='',quoted=false;for(let i=0;i<input.length;i++){const ch=input[i];if(ch==='\"'&&quoted&&input[i+1]==='\"'){cell+='\"';i++;}else if(ch==='\"'){quoted=!quoted;}else if(ch===','&&!quoted){row.push(cell);cell='';}else if((ch==='\n'||ch==='\r')&&!quoted){if(ch==='\r'&&input[i+1]==='\n')i++;row.push(cell);if(row.some(v=>v.trim()))rows.push(row);row=[];cell='';}else cell+=ch;}row.push(cell);if(row.some(v=>v.trim()))rows.push(row);if(rows.length<2)throw Error('CSV needs a header and product rows.');const h=rows.shift()!.map(v=>v.trim().toLowerCase().replace(/[ _-]+/g,''));const ix=(...a:string[])=>h.findIndex(v=>a.includes(v));const n=ix('name','productname'),p=ix('price','pricekes'),d=ix('description'),t=ix('type','producttype'),s=ix('stock','quantity','stockquantity'),k=ix('sku'),im=ix('image','imageurl','productimage'),ifn=ix('imagefilename','filename','imagefile');if(n<0||p<0)throw Error('CSV needs Name and Price columns.');return rows.map((r,i)=>({row:i+2,name:(r[n]||'').trim(),price:(r[p]||'').trim(),description:d<0?'':r[d]||'',type:t<0?'physical':(r[t]||'physical').trim().toLowerCase(),stock:s<0||!(r[s]||'').trim()?null:(r[s]||'').trim(),sku:k<0?'':r[k]||'',image:im<0?'':(r[im]||'').trim(),imageFilename:ifn<0?'':(r[ifn]||'').trim()}));}
+function SellerSubscriptionsPanel({data,onRefresh,phone,checkoutPlanId,onCheckout,onBack}:{data:any;onRefresh:()=>void;phone?:string;checkoutPlanId?:string;onCheckout:(id:string)=>void;onBack:()=>void}){
+ const [selected,setSelected]=useState(checkoutPlanId||''),[mobile,setMobile]=useState(phone||''),[sending,setSending]=useState(false),[message,setMessage]=useState(''),[error,setError]=useState(''),[clock,setClock]=useState(Date.now());
+ useEffect(()=>{const timer=window.setInterval(()=>setClock(Date.now()),1000);return()=>window.clearInterval(timer)},[]);
+ useEffect(()=>{if(phone&&!mobile)setMobile(phone)},[phone]);
+ useEffect(()=>{setSelected(checkoutPlanId||'')},[checkoutPlanId]);
+ const plans=(data?.plans||[]).filter((p:any)=>p.is_active!==false);
+ const lifetimePlan=plans.find((p:any)=>p.code==='lifetime-license');
+ const recurringPlans=plans.filter((p:any)=>p.code!=='lifetime-license');
+ const trialDays=Math.max(0,Math.min(30,Number(data?.trialDays??7)));
+ const current=data?.subscription;
+ const ownsLifetime=current?.code==='lifetime-license';
+ const trialEnd=current?.trial_ends_at||current?.current_period_end;
+ const trialRemaining=Math.max(0,new Date(trialEnd||0).getTime()-clock);
+ const trialExpired=current?.status==='trialing'&&trialRemaining<=0;
+ const trialCountdown=Math.floor(trialRemaining/86400000)+'d '+Math.floor(trialRemaining%86400000/3600000)+'h '+Math.floor(trialRemaining%3600000/60000)+'m '+Math.floor(trialRemaining%60000/1000)+'s';
+ const payment=data?.lastPayment;
+ async function pay(){
+  if(!selected){setError('Choose a subscription plan first.');return}
+  if(!mobile.trim()){setError('Enter the M-PESA phone number to receive the STK prompt.');return}
+  setSending(true);setError('');setMessage('');
+  try{const r=await fetch('/api/merchant?action=subscription-stk',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({planId:selected,phone:mobile.trim()})});const d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Could not send M-PESA prompt.');setMessage(d.message||'M-PESA prompt sent. Enter your PIN to complete payment.');onRefresh();}
+  catch(e:any){setError(e.message)}finally{setSending(false)}
+ }
+ useEffect(()=>{if(payment?.status!=='pending'&&payment?.status!=='initiated')return;const timer=window.setInterval(onRefresh,5000);return()=>window.clearInterval(timer)},[payment?.status,onRefresh]);
+ return <section className={"seller-subscriptions"+(checkoutPlanId?" is-checkout-route":"")}>
+  <div className="seller-page-heading"><div><span className="seller-sub-eyebrow">YOUR SHOP · BILLING</span><h2>Subscription access</h2><p>Choose a recurring subscription or pay once for a lifetime platform-use licence. Hosting, domains and optional maintenance remain separate.</p></div><span className={'seller-sub-status '+(current?.status==='active'?'active':'')}><i/>{current?.status==='active'?'Active subscription':trialExpired?'Trial expired':current?.status==='trialing'?'Free trial':current?.status||'No subscription'}</span></div>
+  <div className="seller-sub-trial"><div className="seller-sub-trial-icon"><CreditCard size={21}/></div><div><strong>{trialDays>0?`${trialDays}-day free trial for new sellers`:'No free trial for new sellers'}</strong><p>Your customer sales remain commission-free. Subscription fees are paid separately to DASMARKET.</p></div><span className="seller-sub-trial-tag">0% COMMISSION</span></div>
+  {current&&<div className="seller-sub-selection"><div><span>YOUR CURRENT PLAN</span><strong>{current.name} · {ownsLifetime?'Lifetime licence':current.status==='trialing'?'Free trial':current.status==='active'?'Paid subscription':current.status}</strong><small>{ownsLifetime?'One-time payment · lifetime platform-use access':current.status==='trialing'?'Trial ends: '+new Date(current.trial_ends_at||current.current_period_end).toLocaleDateString('en-KE')+(trialExpired?' · expired':' · '+trialCountdown+' remaining'):'Current period ends: '+new Date(current.current_period_end).toLocaleDateString('en-KE')}</small></div><span className="seller-sub-current-price">KSh {(Number(current.price_minor||0)/100).toLocaleString('en-KE')} {ownsLifetime?'· paid once':' / '+(Number(current.interval_days)===30?'month':Number(current.interval_days)===90?'3 months':Number(current.interval_days)===180?'6 months':'year')}</span></div>}
+  {payment&&<div className={'seller-sub-payment-status '+payment.status}><strong>Latest payment: {payment.status}</strong><span>{payment.status==='pending'||payment.status==='initiated'?'An M-PESA prompt is awaiting confirmation.':payment.status==='succeeded'?'Receipt: '+(payment.provider_receipt||'Verified'):payment.status==='failed'||payment.status==='cancelled'?'You can try again by selecting a plan.':''}</span></div>}
+  <div className="seller-sub-benefits"><div><strong>0%</strong><span>Sales commission</span></div><div><strong>100%</strong><span>Your customer sales belong to you</span></div><div><strong>FULL</strong><span>Access to all features</span></div></div>
+  {lifetimePlan&&<article className={'seller-sub-plan featured seller-sub-lifetime-plan '+(ownsLifetime?'selected':'')}><div className="seller-sub-plan-top"><div><h3>Lifetime platform licence</h3><span>One payment. No recurring subscription fee.</span></div><span className="seller-sub-popular">ONE-TIME</span></div><div className="seller-sub-price"><strong>KSh {(Number(lifetimePlan.price_minor||0)/100).toLocaleString('en-KE')}</strong><span>once · lifetime access</span></div><p className="seller-sub-lifetime-copy">A lifetime licence to use the full DASMARKET platform for this shop, including all standard seller tools and features.</p><div className="seller-sub-feature-heading">Included</div><ul><li><Check size={15}/>Full DASMARKET platform access</li><li><Check size={15}/>Unlimited product listings and staff</li><li><Check size={15}/>Custom domains, analytics and promotions</li><li><Check size={15}/>0% sales commission</li></ul><p className="seller-sub-lifetime-exclusions">Hosting, domain renewals, third-party services and optional maintenance are charged separately.</p><button type="button" disabled={ownsLifetime} className={ownsLifetime?'seller-sub-select selected':'seller-sub-select'} onClick={()=>{setError('');setMessage('');onCheckout(lifetimePlan.id)}}>{ownsLifetime?'Lifetime licence active':'Buy lifetime licence'}</button></article>}
+  <div className="seller-sub-plan-grid">{recurringPlans.map((plan:any)=><article key={plan.id} className={'seller-sub-plan '+(plan.is_featured?'featured ':'')+(selected===plan.id?'selected':'')}><div className="seller-sub-plan-top"><div><h3>{plan.name}</h3><span>{plan.description||'Subscription plan'}</span></div>{plan.is_featured&&<span className="seller-sub-popular">POPULAR</span>}</div><div className="seller-sub-price"><strong>KSh {(Number(plan.price_minor||0)/100).toLocaleString('en-KE')}</strong><span>/ {Number(plan.interval_days)===30?'month':Number(plan.interval_days)===90?'3 months':Number(plan.interval_days)===180?'6 months':'year'}</span></div><div className="seller-sub-feature-heading">Everything included</div><ul><li><Check size={15}/>All DASMARKET features</li><li><Check size={15}/>Unlimited product listings</li><li><Check size={15}/>Full seller dashboard and tools</li><li><Check size={15}/>0% sales commission</li></ul><button type="button" className={selected===plan.id?'seller-sub-select selected':'seller-sub-select'} onClick={()=>{setError('');setMessage('');onCheckout(plan.id)}}>{selected===plan.id?'Selected plan':'Choose '+plan.name}</button></article>)}</div>
+  {checkoutPlanId&&selected&&<section className="seller-sub-checkout-page"><div className="seller-sub-checkout-page-top"><button type="button" className="seller-secondary-btn" onClick={onBack}>← Back to subscription plans</button><span>SECURE BILLING</span></div><div className="seller-sub-checkout-modal seller-sub-checkout-standalone" role="region" aria-labelledby="seller-sub-checkout-title"><header><div><span>{plans.find((p:any)=>p.id===selected)?.code==='lifetime-license'?'ONE-TIME LICENCE CHECKOUT':'SUBSCRIPTION CHECKOUT'}</span><h3 id="seller-sub-checkout-title">{plans.find((p:any)=>p.id===selected)?.code==='lifetime-license'?'Lifetime platform licence':plans.find((p:any)=>p.id===selected)?.name||'Selected plan'}</h3></div></header><div className="seller-sub-checkout-plan"><strong>KSh {(Number(plans.find((p:any)=>p.id===selected)?.price_minor||0)/100).toLocaleString('en-KE')}</strong><span>{plans.find((p:any)=>p.id===selected)?.code==='lifetime-license'?'once · lifetime access':'/ '+(Number(plans.find((p:any)=>p.id===selected)?.interval_days)===30?'month':Number(plans.find((p:any)=>p.id===selected)?.interval_days)===90?'3 months':Number(plans.find((p:any)=>p.id===selected)?.interval_days)===180?'6 months':'year')}</span><small>{plans.find((p:any)=>p.id===selected)?.description||'Subscription plan'}</small></div><label>M-PESA phone number<input type="tel" inputMode="tel" autoComplete="tel" placeholder="07XXXXXXXX or 2547XXXXXXXX" value={mobile} onChange={e=>setMobile(e.target.value)}/></label><button type="button" className="seller-sub-pay-button" disabled={!selected||sending||!data?.payment?.configured} onClick={pay}>{sending?'Sending prompt…':plans.find((p:any)=>p.id===selected)?.code==='lifetime-license'?'Pay once with M-PESA':'Pay with M-PESA'}</button>{!data?.payment?.configured&&<p className="seller-sub-modal-warning">Subscription payment destination is not configured by DASMARKET yet.</p>}{error&&<div className="auth-message error">{error}</div>}{message&&<div className="auth-message success">{message}</div>}<p className="seller-sub-modal-note">Your access is activated only after Safaricom independently confirms the payment.</p></div></section>}
+  <div className="seller-sub-footnote"><ShieldCheck size={16}/><p><strong>No sales commission.</strong> Customer payments go directly to the seller. DASMARKET subscription fees are separate.</p></div>
+  <p className="seller-sub-review-note">Your subscription is activated or changed only after the M-PESA payment is independently verified.</p>
+ </section>;
+}
+
+function SellerDashboard({initialOrderNumber='',initialSubscriptionCheckoutPlanId=''}:{initialOrderNumber?:string;initialSubscriptionCheckoutPlanId?:string}){
+ const [subscriptionCheckoutPlanId,setSubscriptionCheckoutPlanId]=useState(initialSubscriptionCheckoutPlanId);
+ const isSellerEditorRoute=window.location.pathname==='/dashboard/products/new'||window.location.pathname.endsWith('/edit')&&window.location.pathname.startsWith('/dashboard/products/');
+ const isSellerDetailRoute=(window.location.pathname.startsWith('/dashboard/products/')&&!isSellerEditorRoute)||window.location.pathname.startsWith('/dashboard/transactions/');
+ const [customStoreDomain,setCustomStoreDomain]=useState('');
+ const [orderChatMessages,setOrderChatMessages]=useState<any[]>([]),[orderChatAttachments,setOrderChatAttachments]=useState<any[]>([]),[orderChatDraft,setOrderChatDraft]=useState(''),[orderChatSending,setOrderChatSending]=useState(false),[orderChatError,setOrderChatError]=useState(''),[routeMessage,setRouteMessage]=useState(false);
+ const [testCatalogBusy,setTestCatalogBusy]=useState(false),[productSearch,setProductSearch]=useState(''),[transactionSearch,setTransactionSearch]=useState(''),[bulkRows,setBulkRows]=useState<any[]>([]),[bulkError,setBulkError]=useState(''),[bulkBusy,setBulkBusy]=useState(false),[bulkName,setBulkName]=useState(''),[bulkZipName,setBulkZipName]=useState(''),[bulkImageFiles,setBulkImageFiles]=useState<Record<string,File>>({});
+  const [paymentPromptPhone,setPaymentPromptPhone]=useState(''),[paymentPromptMethod,setPaymentPromptMethod]=useState('till'),[paymentPrompting,setPaymentPrompting]=useState(false),[paymentPromptMessage,setPaymentPromptMessage]=useState('');
+ const [sellerInitialReportId,setSellerInitialReportId]=useState(()=>{const p=window.location.pathname;const id=p.startsWith('/dashboard/reports/')?decodeURIComponent(p.slice('/dashboard/reports/'.length).split('/')[0]||''):'';return id&&id!=='new'?id:'';});
+ const [subscriptionClock,setSubscriptionClock]=useState(Date.now());useEffect(()=>{const timer=window.setInterval(()=>setSubscriptionClock(Date.now()),1000);return()=>window.clearInterval(timer)},[]);const [loading,setLoading]=useState(true),[user,setUser]=useState<{displayName?:string;phone?:string}|null>(null),[error,setError]=useState(''),[shop,setShop]=useState<{name:string;slug:string;status?:string;description:string;logoUrl?:string;whatsappNumber?:string;contactPhone?:string;contactEmail?:string;termsAndConditions?:string;privacyPolicy?:string;returnPolicy?:string;deliveryPolicy?:string;faqs?:Array<{question:string;answer:string}>;theme?:string}|null>(null),[products,setProducts]=useState<any[]>([]),[orders,setOrders]=useState<any[]>([]),[tab,setTab]=useState<'overview'|'orders'|'products'|'payments'|'transactions'|'payouts'|'api'|'tickets'|'notifications'|'account'|'settings'|'policies'|'coupons'|'reports'|'domains'|'subscriptions'>(()=>{if(window.location.pathname.startsWith('/dashboard/reports'))return 'reports';if(window.location.pathname.startsWith('/dashboard/subscriptions'))return 'subscriptions';const requested=new URLSearchParams(window.location.search).get('tab')||'';return (['overview','orders','products','payments','transactions','payouts','api','tickets','notifications','account','settings','policies','coupons','domains','subscriptions'].includes(requested)?requested:'overview') as any}),[editing,setEditing]=useState<any>(null),[saving,setSaving]=useState(false),[notice,setNotice]=useState(''),[query,setQuery]=useState(''),[orderFilter,setOrderFilter]=useState('all'),[period,setPeriod]=useState('7'),[mobileMenuOpen,setMobileMenuOpen]=useState(false),[profile,setProfile]=useState<any>({displayName:'',email:'',phone:'',avatarUrl:''}),[tickets,setTickets]=useState<any[]>([]),[transactions,setTransactions]=useState<any[]>([]),[selectedDetail,setSelectedDetail]=useState<any>(null),[routeOrderNumber,setRouteOrderNumber]=useState(initialOrderNumber),[ticketForm,setTicketForm]=useState<any>({subject:'',category:'general',message:''}),[credentialForm,setCredentialForm]=useState<any>({accountType:'CustomerBuyGoodsOnline',environment:'production',shortcode:'',consumerKey:'',consumerSecret:'',passkey:''}),[credentialStatus,setCredentialStatus]=useState<any>({till:{configured:false},paybill:{configured:false}}),[emailConfig,setEmailConfig]=useState<any>({fromName:'',fromEmail:'',replyToEmail:'',notificationEmail:'',apiKey:''}),[emailStatus,setEmailStatus]=useState<any>({configured:false,fromEmail:'',replyToEmail:''}),[emailTestTo,setEmailTestTo]=useState(''),[emailTestSending,setEmailTestSending]=useState(false),[payoutForm,setPayoutForm]=useState<any>({tillPartyB:'',paybillPartyB:'',accountReference:'',defaultPayoutMethod:'till'}),[subscriptionData,setSubscriptionData]=useState<any>(null);
+ async function load(){setError('');const s=await fetch('/api/auth?action=session',{credentials:'same-origin',cache:'no-store'});const sd=await readApiResponse(s);if(!s.ok){window.location.href='/login';return;}setUser(sd.user);setLoading(false);const [r,o]=await Promise.all([fetch('/api/merchant?action=products',{credentials:'same-origin',cache:'no-store'}),fetch('/api/merchant?action=orders',{credentials:'same-origin',cache:'no-store'})]);const [d,od]=await Promise.all([readApiResponse(r),readApiResponse(o)]);if(!r.ok)throw Error(d.error||'Could not load catalogue');if(!o.ok)throw Error(od.error||'Could not load orders');setShop(d.shop);setProducts(d.products||[]);setOrders(od.orders||[]);setLoading(false);void (async()=>{try{const dr=await fetch('/api/custom-domain',{credentials:'same-origin',cache:'no-store'});const dd=await readApiResponse(dr);if(dr.ok){const activeDomain=(dd.domains||[]).find((domain:any)=>domain.verified&&domain.storefrontVerified!==false);setCustomStoreDomain(activeDomain?.hostname||'');}}catch(domainLoadError){console.warn('Custom storefront domain could not be loaded.',domainLoadError)}try{const sr=await fetch('/api/merchant?action=subscription',{credentials:'same-origin',cache:'no-store'});const sub=await readApiResponse(sr);if(sr.ok)setSubscriptionData(sub);}catch(subscriptionLoadError){console.warn('Subscription status could not be loaded.',subscriptionLoadError)}})();const currentPath=window.location.pathname;const isReportsRoute=currentPath==='/dashboard/reports'||currentPath.startsWith('/dashboard/reports/');const isSubscriptionCheckout=currentPath.startsWith('/dashboard/subscriptions/checkout/');const routeParts=currentPath.replace(/^\/dashboard\/?/,'').split('/').filter(Boolean);const isMessages=!isReportsRoute&&routeParts[routeParts.length-1]==='message';const dashboardTabRoutes=['overview','orders','products','payments','transactions','payouts','api','tickets','notifications','account','settings','domains','policies','coupons','subscriptions'];const isDashboardTabRoute=routeParts.length===1&&dashboardTabRoutes.includes(routeParts[0]);const isSellerEditorRoute=routeParts[0]==='products'&&(routeParts[1]==='new'||routeParts[2]==='edit');const isSellerRecordRoute=routeParts.length===2&&(routeParts[0]==='products'||routeParts[0]==='transactions')&&!isSellerEditorRoute;const activeOrderNumber=(isReportsRoute||isSubscriptionCheckout||isDashboardTabRoute||isSellerRecordRoute)?'':decodeURIComponent(routeParts[isMessages?routeParts.length-2:routeParts.length-1]||'');if(isReportsRoute){setRouteMessage(false);setRouteOrderNumber('');setSelectedDetail(null);const reportPart=currentPath.slice('/dashboard/reports/'.length).split('/')[0]||'';setSellerInitialReportId(reportPart&&reportPart!=='new'?decodeURIComponent(reportPart):'');setTab('reports')}else if(isSubscriptionCheckout){setRouteMessage(false);setRouteOrderNumber('');setSelectedDetail(null);setSubscriptionCheckoutPlanId(decodeURIComponent(routeParts[2]||''));setTab('subscriptions')}else if(isSellerEditorRoute){setRouteMessage(false);setRouteOrderNumber('');setSelectedDetail(null);setSubscriptionCheckoutPlanId('');setTab('products');const productId=routeParts[1]==='new'?'':routeParts[1];const product=(d.products||[]).find((item:any)=>String(item.id)===productId);setEditing(product?{...product,type:product.type,price:String(product.price),stock:product.stockQuantity??'',metadata:product.metadata||{}}:{name:'',description:'',type:'physical',price:'',stock:'',sku:'',images:[],metadata:{}})}else if(isSellerDetailRoute){setRouteMessage(false);setRouteOrderNumber('');setSubscriptionCheckoutPlanId('');const type=routeParts[0]==='products'?'product':'transaction';const record=(type==='product'?d.products||[]:[]).find((item:any)=>String(item.id)===routeParts[1])||(type==='transaction'?[]:[]);setSelectedDetail(record?{type,data:record}:null);setTab(type==='product'?'products':'transactions')}else{setSubscriptionCheckoutPlanId('');setRouteMessage(isMessages);if(activeOrderNumber){const activeOrder=(od.orders||[]).find((item:any)=>item.order_number===activeOrderNumber);if(activeOrder){setSelectedDetail({type:'order',data:activeOrder});setRouteOrderNumber(activeOrderNumber);setPaymentPromptPhone(activeOrder.customer_phone||'');setTab('orders')}else{setSelectedDetail(null);setRouteOrderNumber(activeOrderNumber)}}else{const requested=new URLSearchParams(window.location.search).get('tab')||routeParts[0]||'';const allowedTabs=['overview','orders','reports','products','payments','transactions','payouts','api','tickets','notifications','account','settings','domains','policies','coupons','subscriptions'];setTab((allowedTabs.includes(requested)?requested:'overview') as any)}}try{const urls=['profile','payment-settings','tickets','transactions','api-credentials','email-credentials'];const rs=await Promise.all(urls.map(x=>fetch('/api/store?action='+x,{credentials:'same-origin',cache:'no-store'}).catch(()=>null)));const ds=await Promise.all(rs.map(async r=>r?readApiResponse(r):({})));if(rs[0]?.ok){const personalProfile=ds[0].profile||{};setProfile(personalProfile);if(String(personalProfile.displayName||'').trim())setUser((current:any)=>({...current,displayName:personalProfile.displayName}));}if(rs[1]?.ok){setPaymentPromptMethod(ds[1].defaultPayoutMethod||'till');setPayoutForm({tillPartyB:ds[1].tillPartyB||'',paybillPartyB:ds[1].paybillPartyB||'',accountReference:ds[1].accountReference||'',defaultPayoutMethod:ds[1].defaultPayoutMethod||'till'});setCredentialForm((v:any)=>({...v,shortcode:ds[1].shortcode||'',accountType:ds[1].accountType||'CustomerBuyGoodsOnline',environment:ds[1].environment||'production'}));}if(rs[2]?.ok)setTickets(ds[2].tickets||[]);if(rs[3]?.ok){setTransactions(ds[3].transactions||[]);const route=window.location.pathname.split('/').filter(Boolean);if(route.length===3&&route[0]==='dashboard'&&route[1]==='transactions'){const found=(ds[3].transactions||[]).find((item:any)=>String(item.id)===decodeURIComponent(route[2]));if(found)setSelectedDetail({type:'transaction',data:found});}}if(rs[4]?.ok){const status=ds[4].credentialsByType||{till:{configured:false},paybill:{configured:false}};setCredentialStatus(status);const selected=(ds[1].defaultPayoutMethod==='paybill'?'paybill':'till');setCredentialForm((v:any)=>({...v,shortcode:status[selected]?.shortcode||'',environment:status[selected]?.environment||'production'}));}if(rs[5]?.ok){const status=ds[5]||{};setEmailStatus(status);setEmailConfig((v:any)=>({...v,fromName:shop?.name||'',fromEmail:status.fromEmail||'',replyToEmail:status.replyToEmail||'',notificationEmail:status.notificationEmail||ds[0]?.profile?.email||'',apiKey:''}));}}catch(optionalError){console.warn('Some optional seller dashboard data could not be loaded.',optionalError)}}
+ useEffect(()=>{load().catch(e=>setError(e.message)).finally(()=>setLoading(false))},[]);
+ useEffect(()=>{if(!routeOrderNumber)return;let active=true,busy=false;const refreshOrder=async()=>{if(busy)return;busy=true;try{const r=await fetch('/api/merchant?action=orders',{credentials:'same-origin',cache:'no-store'});const d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Could not refresh order');if(!active)return;const latest=(d.orders||[]).find((item:any)=>item.order_number===routeOrderNumber);if(latest){setOrders(d.orders||[]);setSelectedDetail((current:any)=>current?.type==='order'&&current.data.id===latest.id?({...current,data:latest}):current)}}catch(e:any){if(active)setError(e.message)}finally{busy=false}};refreshOrder();const timer=window.setInterval(refreshOrder,5000);return()=>{active=false;window.clearInterval(timer)}},[routeOrderNumber]);
+ useEffect(()=>{const syncRoute=()=>{const currentPath=window.location.pathname;const isReportsRoute=currentPath==='/dashboard/reports'||currentPath.startsWith('/dashboard/reports/');if(currentPath.startsWith('/dashboard/subscriptions/checkout/')){setRouteMessage(false);setRouteOrderNumber('');setSelectedDetail(null);setSubscriptionCheckoutPlanId(decodeURIComponent(currentPath.split('/')[4]||''));setTab('subscriptions');return;}const detailParts=currentPath.split('/').filter(Boolean);if(!(detailParts[0]==='dashboard'&&detailParts[1]==='products'&&(detailParts[2]==='new'||detailParts[3]==='edit')))setEditing(null);if(detailParts[0]==='dashboard'&&detailParts[1]==='products'&&(detailParts[2]==='new'||detailParts[3]==='edit')){setSelectedDetail(null);setRouteOrderNumber('');setSubscriptionCheckoutPlanId('');setTab('products');const id=detailParts[2]==='new'?'':detailParts[2];const found=products.find((item:any)=>String(item.id)===decodeURIComponent(id));setEditing(found?{...found,type:found.type,price:String(found.price),stock:found.stockQuantity??'',metadata:found.metadata||{}}:{name:'',description:'',type:'physical',price:'',stock:'',sku:'',images:[],metadata:{}});return;}if(detailParts.length===3&&detailParts[0]==='dashboard'&&['products','transactions'].includes(detailParts[1])){const type=detailParts[1]==='products'?'product':'transaction';const list=type==='product'?products:transactions;const record=list.find((item:any)=>String(item.id)===decodeURIComponent(detailParts[2]));setRouteMessage(false);setRouteOrderNumber('');setSubscriptionCheckoutPlanId('');setSelectedDetail(record?{type,data:record}:null);setTab(type==='product'?'products':'transactions');return;}setSubscriptionCheckoutPlanId('');if(isReportsRoute){setRouteMessage(false);setRouteOrderNumber('');setSelectedDetail(null);const reportPart=currentPath.slice('/dashboard/reports/'.length).split('/')[0]||'';setSellerInitialReportId(reportPart&&reportPart!=='new'?decodeURIComponent(reportPart):'');setTab('reports');return}const parts=currentPath.replace(/^\/dashboard\/?/,'').split('/').filter(Boolean);const isMessages=parts[parts.length-1]==='message';const dashboardTabs=['overview','orders','products','payments','transactions','payouts','api','tickets','notifications','account','settings','domains','policies','coupons','subscriptions'];const isTabRoute=parts.length===1&&dashboardTabs.includes(parts[0]);const number=isTabRoute?'':parts.length?decodeURIComponent(parts[isMessages?parts.length-2:parts.length-1]||''):'';setRouteMessage(isMessages);setRouteOrderNumber(number);if(number){const match=orders.find((item:any)=>item.order_number===number);if(match){setSelectedDetail({type:'order',data:match});setPaymentPromptPhone(match.customer_phone||'')}setTab('orders')}else{setSelectedDetail(null);const requested=new URLSearchParams(window.location.search).get('tab')||parts[0]||'';setTab((['overview','orders','products','payments','transactions','payouts','api','tickets','notifications','account','settings','domains','policies','coupons','subscriptions'].includes(requested)?requested:'overview') as any)}};window.addEventListener('popstate',syncRoute);return()=>window.removeEventListener('popstate',syncRoute)},[orders]); 
+ function navigateSellerTab(nextTab:any){if(!['overview','orders','reports','products','payments','transactions','payouts','api','tickets','notifications','account','settings','domains','policies','coupons','subscriptions'].includes(nextTab))return;const target=nextTab==='overview'?'/dashboard':'/dashboard/'+encodeURIComponent(nextTab);if(window.location.pathname+window.location.search!==target)window.history.pushState({sellerTab:nextTab},'',target);setRouteMessage(false);setRouteOrderNumber('');setSelectedDetail(null);setSubscriptionCheckoutPlanId('');setTab(nextTab);setError('');setNotice('');setMobileMenuOpen(false);window.scrollTo(0,0)}
+ function openSubscriptionCheckout(planId:string){setSubscriptionCheckoutPlanId(planId);setTab('subscriptions');setRouteMessage(false);setRouteOrderNumber('');setSelectedDetail(null);window.history.pushState({subscriptionCheckoutPlanId:planId},'','/dashboard/subscriptions/checkout/'+encodeURIComponent(planId));window.scrollTo(0,0)}
+ function closeSubscriptionCheckout(){setSubscriptionCheckoutPlanId('');window.history.pushState({sellerTab:'subscriptions'},'','/dashboard/subscriptions');setTab('subscriptions');window.scrollTo(0,0)}
+ function openProductEditor(product?:any){const next=product?{...product,type:product.type,price:String(product.price),stock:product.stockQuantity??'',metadata:product.metadata||{}}:{name:'',description:'',type:'physical',price:'',stock:'',sku:'',images:[],metadata:{}};setEditing(next);setSelectedDetail(null);setTab('products');const target=product?'/dashboard/products/'+encodeURIComponent(String(product.id))+'/edit':'/dashboard/products/new';window.history.pushState({productEditor:true},'',target);window.scrollTo(0,0)}
+ function closeProductEditor(){setEditing(null);window.history.pushState({sellerTab:'products'},'','/dashboard/products');window.scrollTo(0,0)}
+ function openSellerDetail(type:'product'|'transaction',data:any){setSelectedDetail({type,data});setTab(type==='product'?'products':'transactions');setRouteOrderNumber('');const target='/dashboard/'+(type==='product'?'products':'transactions')+'/'+encodeURIComponent(String(data.id));if(window.location.pathname!==target)window.history.pushState({sellerDetailType:type,sellerDetailId:data.id},'',target);window.scrollTo(0,0)}
+ function closeSellerDetail(){const target='/dashboard/'+(selectedDetail?.type==='transaction'?'transactions':'products');setSelectedDetail(null);window.history.pushState({},'',target);setTab(selectedDetail?.type==='transaction'?'transactions':'products');window.scrollTo(0,0)}
+ function openOrder(order:any){const number=String(order.order_number||'');window.history.pushState({orderNumber:number},'', '/dashboard/'+encodeURIComponent(number));setRouteMessage(false);setRouteOrderNumber(number);setTab('orders');setSelectedDetail({type:'order',data:order});setPaymentPromptPhone(order.customer_phone||'');setOrderChatDraft('');setPaymentPromptMessage('')}
+ function closeOrder(){window.history.pushState({},'', '/dashboard');setRouteMessage(false);setRouteOrderNumber('');setSelectedDetail(null);setTab('orders')}
+ function openOrderMessages(){if(!routeOrderNumber)return;window.history.pushState({},'','/dashboard/'+encodeURIComponent(routeOrderNumber)+'/message');setRouteMessage(true);setOrderChatDraft('')}
+ function closeOrderMessages(){window.history.pushState({},'','/dashboard/'+encodeURIComponent(routeOrderNumber));setRouteMessage(false)}
+ useEffect(()=>{if(selectedDetail?.type!=='order'){setOrderChatMessages([]);setOrderChatError('');return}let live=true;const refresh=()=>fetch('/api/merchant?action=order-chat&orderId='+encodeURIComponent(selectedDetail.data.id),{credentials:'same-origin',cache:'no-store'}).then(async r=>{const d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Could not load conversation');if(live){setOrderChatMessages(d.messages||[]);setOrderChatAttachments(d.attachments||[])}}).catch(e=>{if(live)setOrderChatError(e.message)});refresh();const timer=window.setInterval(refresh,5000);return()=>{live=false;window.clearInterval(timer)}},[selectedDetail?.type,selectedDetail?.data?.id]);
+ useEffect(()=>{if(selectedDetail?.type==='order')setPaymentPromptPhone(selectedDetail.data.customer_phone||'')},[selectedDetail?.type,selectedDetail?.data?.id]);
+ async function sendMerchantMessage(e:any){e.preventDefault();if(!orderChatDraft.trim()||orderChatSending||selectedDetail?.type!=='order')return;setOrderChatSending(true);setOrderChatError('');try{const r=await fetch('/api/merchant?action=order-chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({orderId:selectedDetail.data.id,message:orderChatDraft})});const d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Message could not be sent');setOrderChatMessages(d.messages||[]);setOrderChatDraft('')}catch(e:any){setOrderChatError(e.message)}finally{setOrderChatSending(false)}}
+
+
+ async function uploadMerchantAttachment(file?:File){if(!file||selectedDetail?.type!=='order')return;if(file.size>10485760){setOrderChatError('Each attachment must be 10 MB or smaller.');return;}setOrderChatError('');try{const sign=await fetch('/api/store?action=chat-attachment',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({orderId:selectedDetail.data.id,mode:'upload',fileName:file.name,contentType:file.type,size:file.size})});const sd=await readApiResponse(sign);if(!sign.ok)throw Error(sd.error||'Could not prepare upload');const put=await fetch(sd.uploadUrl,{method:'PUT',headers:{'Content-Type':file.type},body:file});if(!put.ok)throw Error('File upload failed. Please retry.');const done=await fetch('/api/store?action=chat-attachment',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({orderId:selectedDetail.data.id,mode:'complete',attachmentId:sd.attachmentId})});const dd=await readApiResponse(done);if(!done.ok)throw Error(dd.error||'Could not confirm upload');setOrderChatAttachments(a=>[...a,dd.attachment]);}catch(e:any){setOrderChatError(e.message)}}
+ async function downloadMerchantAttachment(id:string){try{const r=await fetch('/api/store?action=chat-attachment',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({orderId:selectedDetail.data.id,mode:'download',attachmentId:id})});const d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Download unavailable');window.open(d.url,'_blank','noopener,noreferrer')}catch(e:any){setOrderChatError(e.message)}}
+ async function logout(){await fetch('/api/auth?action=logout',{method:'POST',credentials:'same-origin'});window.location.href='/login'}
+ async function saveProduct(e:any){e.preventDefault();setSaving(true);setNotice('');setError('');try{const r=await fetch('/api/merchant?action=product',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify(editing)});const d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Save failed');setEditing(null);if(window.location.pathname.startsWith('/dashboard/products/')&&(window.location.pathname.endsWith('/edit')||window.location.pathname.endsWith('/new')))window.history.pushState({sellerTab:'products'},'','/dashboard/products');await load();setNotice('Product saved successfully.')}catch(e:any){setError(e.message)}finally{setSaving(false)}}
+ async function chooseBulkCsv(file?:File){if(!file)return;setBulkName(file.name);setBulkRows([]);setBulkError('');setBulkImageFiles({});if(!file.name.toLowerCase().endsWith('.csv')||file.size>2097152){setBulkError('Choose a CSV file no larger than 2 MB.');return;}try{const rows=parseBulkProductsCsv(await file.text());if(rows.length>500)throw Error('Maximum 500 products per import.');for(const p of rows){if(!p.name||!Number.isFinite(Number(p.price))||Number(p.price)<0)throw Error('Invalid name or price on row '+p.row);if(p.stock!==null&&(!Number.isInteger(Number(p.stock))||Number(p.stock)<0))throw Error('Invalid stock on row '+p.row);if(p.image&&!/^https:\/\//i.test(p.image))throw Error('Image URL on row '+p.row+' must be HTTPS.');}setBulkRows(rows);}catch(e:any){setBulkError(e.message)}}
+ async function chooseBulkZip(file?:File){if(!file)return;setBulkZipName(file.name);setBulkImageFiles({});setBulkError('');if(!file.name.toLowerCase().endsWith('.zip')||file.size>52428800){setBulkError('Choose an images ZIP no larger than 50 MB.');return;}try{const archive=unzipSync(new Uint8Array(await file.arrayBuffer()));const found:Record<string,File>={};let total=0;for(const [path,data] of Object.entries(archive as Record<string,Uint8Array>)){if(path.endsWith('/')||path.startsWith('__MACOSX/')||path.split('/').some(part=>part==='..'))continue;const name=path.split('/').pop()||'';const ext=name.split('.').pop()?.toLowerCase()||'';const mime=({jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp'} as Record<string,string>)[ext];if(!mime)continue;if(data.length>5242880)throw Error(name+' is larger than 5 MB.');total+=data.length;if(total>52428800)throw Error('Images in the ZIP exceed 50 MB total.');if(found[name.toLowerCase()])throw Error('Duplicate image filename: '+name);found[name.toLowerCase()]=new File([data.slice().buffer as ArrayBuffer],name,{type:mime});}if(!Object.keys(found).length)throw Error('ZIP contains no JPG, PNG or WebP images.');setBulkImageFiles(found);}catch(e:any){setBulkError('Could not read images ZIP: '+e.message)}}
+ async function submitBulkCsv(){if(!bulkRows.length||bulkBusy)return;setBulkBusy(true);setBulkError('');try{const products=[];for(const p of bulkRows){let imageKey='';if(p.imageFilename){const file=bulkImageFiles[p.imageFilename.split('/').pop().toLowerCase()];if(!file)throw Error('Missing image '+p.imageFilename+' for CSV row '+p.row);const sign=await fetch('/api/merchant?action=product-image-upload',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({fileName:file.name,contentType:file.type,size:file.size})});const sd=await readApiResponse(sign);if(!sign.ok)throw Error(sd.error||'Could not prepare image upload');await uploadToObjectStorage(sd.uploadUrl,file,'Product image '+file.name);imageKey=sd.imageKey;}products.push({...p,imageKey});}const r=await fetch('/api/merchant?action=products-bulk',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({products})});const d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Bulk import failed');setBulkRows([]);setBulkName('');setBulkZipName('');setBulkImageFiles({});await load();setNotice(d.message||d.imported+' products imported.')}catch(e:any){setBulkError(e.message)}finally{setBulkBusy(false)}}
+ function downloadBulkTemplate(){const csv='Name,Description,Type,Price,Stock,SKU,Image Filename,Image URL\r\nExample product,Description,physical,250,10,SKU-001,example.jpg,\r\n';const url=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='dasnet-product-template.csv';a.click();URL.revokeObjectURL(url)}
+ async function removeProduct(id:string){if(!window.confirm('Delete this product? This cannot be undone.'))return;const r=await fetch('/api/merchant?action=product&id='+encodeURIComponent(id),{method:'DELETE',credentials:'same-origin'});const d=await readApiResponse(r);if(!r.ok){setError(d.error||'Delete failed');return}await load();setNotice('Product deleted.')}
+ async function setStatus(id:string,active:boolean){const r=await fetch('/api/merchant?action=product-status',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({id,active})});const d=await readApiResponse(r);if(!r.ok){setError(d.error||'Update failed');return}setSelectedDetail((current:any)=>current?.type==='product'&&current.data.id===id?({...current,data:{...current.data,active}}):current);await load();setNotice(active?'Product published.':'Product hidden from your shop.')}
+ async function promptOrderPayment(order:any){
+  if(paymentPrompting)return;setPaymentPrompting(true);setPaymentPromptMessage('');
+  try{const r=await fetch('/api/payments?action=order-prompt',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({orderId:order.id,phone:paymentPromptPhone||order.customer_phone,paymentMethod:paymentPromptMethod})});const d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Could not send payment prompt');setPaymentPromptMessage(d.message||'STK prompt sent.');setNotice('M-PESA payment prompt sent for '+order.order_number+'.');await load();}
+  catch(e:any){setPaymentPromptMessage(e.message||'Payment prompt failed.');}
+  finally{setPaymentPrompting(false);}
+ }
+ async function updateDeliveryStatus(id:string,deliveryStatus:string){const r=await fetch('/api/merchant?action=order-delivery-status',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({id,deliveryStatus})});const d=await readApiResponse(r);if(!r.ok){setError(d.error||'Delivery update failed');return}setSelectedDetail((current:any)=>current?.type==='order'&&current.data.id===id?({...current,data:{...current.data,delivery_status:deliveryStatus}}):current);await load();setNotice('Delivery status updated. The buyer can now see this update.')}
+ async function updateOrder(id:string,status:string){const r=await fetch('/api/merchant?action=order-status',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({id,status})});const d=await readApiResponse(r);if(!r.ok){setError(d.error||'Update failed');return}setSelectedDetail((current:any)=>current?.type==='order'&&current.data.id===id?({...current,data:{...current.data,status}}):current);await load();setNotice('Order status updated.')}
+ async function saveSettings(e:any){e.preventDefault();setSaving(true);setError('');try{const r=await fetch('/api/merchant?action=settings',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({name:shop?.name,description:shop?.description||'',logoUrl:shop?.logoUrl||'',whatsappNumber:shop?.whatsappNumber||'',theme:shop?.theme||'#e47a13'})});const d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Settings save failed');setNotice('Shop settings saved.');await load()}catch(e:any){setError(e.message)}finally{setSaving(false)}}
+ const money=(n:number)=>'KES '+Number(n||0).toLocaleString('en-KE',{maximumFractionDigits:0});
+ const pending=orders.filter(o=>['pending','confirmed','processing'].includes(String(o.status).toLowerCase()));
+ const orderValue=orders.reduce((sum,o)=>sum+Number(o.total||0),0);
+ const activeProducts=products.filter(p=>p.active);
+ const lowStock=products.filter(p=>p.stockQuantity!==null&&Number(p.stockQuantity)<=5&&p.active);
+ const filteredOrders=orders.filter(o=>{const q=query.trim().toLowerCase();const matches=!q||[o.order_number,o.customer_name,o.customer_phone,o.status].some(v=>String(v||'').toLowerCase().includes(q));return matches&&(orderFilter==='all'||String(o.status).toLowerCase()===orderFilter)});
+ const days=Array.from({length:Number(period)},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(Number(period)-1-i));d.setHours(0,0,0,0);const next=new Date(d);next.setDate(next.getDate()+1);const list=orders.filter(o=>{const t=new Date(o.created_at);return t>=d&&t<next});return {label:d.toLocaleDateString('en-KE',{day:'numeric',month:'short'}),count:list.length,value:list.reduce((s,o)=>s+Number(o.total||0),0)}});
+ const maxValue=Math.max(1,...days.map(d=>d.value));
+ const categories=['Digital products','Data bundles','Shop products'].map(name=>({name,count:products.filter(p=>p.category===name).length})).filter(x=>x.count>0);
+ const notifications=[...orders.slice(0,4).map(o=>({title:'New order '+o.order_number,detail:o.customer_name+' · '+money(o.total),time:o.created_at,kind:'order',data:o})),...lowStock.slice(0,3).map(p=>({title:'Low stock: '+p.name,detail:String(p.stockQuantity)+' remaining',time:'',kind:'stock',data:p}))].slice(0,6);
+ function exportOrders(){const rows=[['Order number','Date','Customer','Phone','Total KES','Status'],...filteredOrders.map(o=>[o.order_number,o.created_at,o.customer_name,o.customer_phone,o.total,o.status])];const csv='\ufeff'+rows.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='dasnet-orders-'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(url);}
+ const storeUrl=shop?(customStoreDomain?'https://'+customStoreDomain:'https://'+shop.slug+'.dasmarket.co.ke'):'';
+ async function copyStore(){if(!storeUrl)return;try{await navigator.clipboard.writeText(storeUrl);setNotice('Store link copied.')}catch{setNotice(storeUrl)}}
+ const nav=[{id:'overview',label:'Overview',icon:LayoutDashboard},{id:'orders',label:'Orders & Sales',icon:ShoppingBag},{id:'reports',label:'Reports & Complaints',icon:MessageCircle},{id:'products',label:'Products',icon:Package},{id:'payments',label:'Payments',icon:WalletCards},{id:'subscriptions',label:'Subscriptions',icon:CreditCard},{id:'coupons',label:'Coupons & Offers',icon:TicketPercent},{id:'policies',label:'Shop Policies',icon:FileText},{id:'transactions',label:'Transactions',icon:WalletCards},{id:'payouts',label:'Payout Settings',icon:Wallet},{id:'api',label:'API Credentials',icon:ShieldCheck},{id:'tickets',label:'Support Tickets',icon:HelpCircle},{id:'notifications',label:'Notifications',icon:Bell},{id:'account',label:'My Account',icon:Store},{id:'settings',label:'Shop Settings',icon:Settings},{id:'domains',label:'Custom Domain',icon:Globe}];
+  const title=nav.find(x=>x.id===tab)?.label||'Overview';
+  const isSellerPageRoute=Boolean(isSellerDetailRoute||editing||sellerInitialReportId||routeOrderNumber||routeMessage||subscriptionCheckoutPlanId||window.location.pathname==='/dashboard/reports/new');
+  return <main className={(mobileMenuOpen?"seller-app mobile-menu-open":"seller-app")+(isSellerPageRoute?" seller-page-route":"")+(isSellerDetailRoute?" seller-record-page":"")+(editing?" seller-product-editor-page":"")} data-theme="light">
+  <>{mobileMenuOpen&&<button className="seller-mobile-scrim" aria-label="Close navigation" onClick={()=>setMobileMenuOpen(false)}/>}<aside className="seller-rail">
+   <div className="seller-brand"><Brand/></div>
+   <div className="seller-profile"><div className="seller-avatar">{(user?.displayName||'S').slice(0,1).toUpperCase()}</div><div className="seller-profile-copy"><strong>{user?.displayName||'Seller'}</strong><span><i/> Verified seller</span><small>Seller workspace</small></div></div>
+   <div className="seller-nav-caption">WORKSPACE</div>
+   <nav className="seller-nav">{nav.map(item=><button key={item.id} className={tab===item.id?'seller-nav-link active':'seller-nav-link'} onClick={()=>navigateSellerTab(item.id)}><item.icon size={16}/><span>{item.label}</span>{item.id==='orders'&&pending.length>0&&<b>{pending.length}</b>}{item.id==='notifications'&&notifications.length>0&&<b>{notifications.length}</b>}</button>)}</nav>
+   <div className="seller-rail-bottom"><button className="seller-nav-link" onClick={()=>navigateSellerTab('tickets')}><HelpCircle size={16}/>Help & Support</button><button className="seller-nav-link" onClick={logout}><LogOut size={16}/>Sign out</button><div className="seller-help-card"><strong>Need a hand?</strong><span>Manage your shop with confidence.</span><button onClick={()=>navigateSellerTab('tickets')}>Contact support</button></div><small>DASNET Seller Workspace · v1</small></div>
+  </aside></>
+  <section className="seller-workarea">
+   <header className="seller-topbar"><div className="seller-topbar-title"><button className="seller-mobile-menu-btn" aria-label="Toggle navigation" onClick={()=>setMobileMenuOpen(v=>!v)}>{mobileMenuOpen?<X size={20}/>:<Menu size={20}/>}</button><div><h1>{tab==='overview'?'Seller Dashboard':title}</h1><p>Track your performance and manage your store</p></div></div><div className="seller-top-actions"><button className="seller-icon-btn" title="Notifications" onClick={()=>navigateSellerTab('notifications')}><Bell size={17}/></button><button className="seller-icon-btn" title="Refresh dashboard" onClick={()=>{load().catch(e=>setError(e.message))}}><RefreshCw size={17}/></button><button type="button" className="seller-top-user" onClick={()=>navigateSellerTab('account')} aria-label="Open seller account overview"><span>{(user?.displayName||'S').slice(0,1).toUpperCase()}</span><div><strong>{user?.displayName||'Seller'}</strong><small>Seller account</small></div></button></div></header>
+   <div className="seller-content">
+    {error&&<div className="auth-message error seller-alert">{error}</div>}{notice&&<div className="auth-message success seller-alert">{notice}</div>}
+    {loading?<div className="seller-loading"><span className="seller-spinner"/>Loading your workspace…</div>:<>
+    {routeOrderNumber?(routeMessage?<SellerOrderMessages order={selectedDetail?.type==='order'?selectedDetail.data:null} orderNumber={routeOrderNumber} shop={shop} messages={orderChatMessages} attachments={orderChatAttachments} onUpload={uploadMerchantAttachment} onDownload={downloadMerchantAttachment} draft={orderChatDraft} sending={orderChatSending} error={orderChatError} onBack={closeOrderMessages} onDraftChange={setOrderChatDraft} onSubmit={sendMerchantMessage}/>:<SellerOrderPage order={selectedDetail?.type==='order'?selectedDetail.data:null} orderNumber={routeOrderNumber} shop={shop} payoutForm={payoutForm} paymentPromptPhone={paymentPromptPhone} paymentPrompting={paymentPrompting} paymentPromptMessage={paymentPromptMessage} orderChatMessages={orderChatMessages} onBack={closeOrder} onOpenMessages={openOrderMessages} onPhoneChange={setPaymentPromptPhone} paymentPromptMethod={paymentPromptMethod} onPaymentMethodChange={setPaymentPromptMethod} onPrompt={()=>selectedDetail?.type==='order'&&promptOrderPayment(selectedDetail.data)} onStatusChange={v=>selectedDetail?.type==='order'&&updateOrder(selectedDetail.data.id,v)} onDeliveryStatusChange={v=>selectedDetail?.type==='order'&&updateDeliveryStatus(selectedDetail.data.id,v)}/>) : <>{tab==='overview'&&<>
+     <section className="seller-welcome-strip"><div><strong>Welcome back, {user?.displayName||'Seller'}! <span>✦</span></strong><p>Here’s what’s happening with your store today.</p></div><div className="seller-store-summary"><span className="seller-store-icon"><Store size={19}/></span><div><strong>{shop?.name||'My Store'} <i className={shop?.status==='past_due'?'expired':''}>● {shop?.status==='past_due'?'Offline · payment required':'Active'}</i></strong><a href={storeUrl||'/dashboard'} target="_blank" rel="noreferrer">{storeUrl?storeUrl.replace(/^https:\/\//,''):'Set up your store'}</a></div><button className="seller-primary-btn" onClick={()=>storeUrl&&window.open(storeUrl,'_blank','noopener,noreferrer')}>View Store <ArrowUpRight size={14}/></button></div></section>
+     <section className="seller-sub-overview"><div><span>SUBSCRIPTION</span><strong>{subscriptionData?.subscription?.name||'No active plan'}</strong><small>{subscriptionData?.subscription?.status==='trialing'?(new Date(subscriptionData.subscription.trial_ends_at||subscriptionData.subscription.current_period_end||0).getTime()>subscriptionClock?'Free trial · '+(()=>{const ms=Math.max(0,new Date(subscriptionData.subscription.trial_ends_at||subscriptionData.subscription.current_period_end).getTime()-subscriptionClock),d=Math.floor(ms/86400000),h=Math.floor(ms%86400000/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000);return d+'d '+h+'h '+m+'m '+s+'s remaining'})():'Trial expired · choose a paid plan'):subscriptionData?.subscription?.status==='active'?'Active · renews '+(subscriptionData.subscription.current_period_end?new Date(subscriptionData.subscription.current_period_end).toLocaleDateString('en-KE'):'—'):subscriptionData?.subscription?.status||'Choose a plan to activate your shop subscription'}</small></div><button type="button" onClick={()=>navigateSellerTab('subscriptions')}>{subscriptionData?.subscription?'Change plan':'Choose plan'} <ArrowRight size={15}/></button></section>
+     <div className="seller-kpis">
+      <article><span className="seller-kpi-icon"><WalletCards size={18}/></span><label>Total order value</label><strong>{money(orderValue)}</strong><small>Value of orders recorded</small></article>
+      <article><span className="seller-kpi-icon"><ShoppingBag size={18}/></span><label>Orders</label><strong>{orders.length}</strong><small>{pending.length} awaiting fulfilment</small></article>
+      <article><span className="seller-kpi-icon"><Package size={18}/></span><label>Products</label><strong>{products.length}</strong><small>{activeProducts.length} published listings</small></article>
+      <article><span className="seller-kpi-icon"><CircleAlert size={18}/></span><label>Low stock</label><strong>{lowStock.length}</strong><small>Products with 5 or fewer left</small></article>
+     </div>
+     <div className="seller-dashboard-grid">
+      <section className="seller-panel seller-trend-panel"><div className="seller-panel-head"><div><h2>Order activity</h2><p>Order value recorded over time</p></div><select value={period} onChange={e=>setPeriod(e.target.value)}><option value="7">Last 7 days</option><option value="14">Last 14 days</option><option value="30">Last 30 days</option></select></div>
+       <div className="seller-chart">{days.map((d,i)=><div className="seller-chart-col" key={d.label+'-'+i}><div className="seller-chart-bar-wrap"><div className="seller-chart-bar" style={{height:Math.max(4,d.value/maxValue*100)+'%'}} title={money(d.value)+' · '+d.count+' orders'}/></div><small>{d.label}</small></div>)}</div>
+       <div className="seller-chart-foot"><strong>{money(days.reduce((s,d)=>s+d.value,0))}</strong><span>{days.reduce((s,d)=>s+d.count,0)} orders in selected period</span></div>
+      </section>
+      <section className="seller-panel seller-recent-panel"><div className="seller-panel-head"><div><h2>Recent orders</h2><p>Latest customer activity</p></div><button className="seller-text-action" onClick={()=>setTab('orders')}>View all <ArrowRight size={14}/></button></div>
+       <div className="seller-mini-table"><div className="seller-mini-head"><span>Order</span><span>Customer</span><span>Amount</span><span>Status</span></div>{orders.slice(0,5).map(o=><div className="seller-mini-row" key={o.id}><strong>{o.order_number}</strong><span>{o.customer_name}</span><span>{money(o.total)}</span><em className={'seller-status '+String(o.status).toLowerCase()}>{o.status}</em></div>)}{orders.length===0&&<p className="seller-empty">No orders yet. Share your shop link to get started.</p>}</div>
+      </section>
+      <section className="seller-panel seller-products-panel"><div className="seller-panel-head"><div><h2>Top products</h2><p>Your current catalogue</p></div><button className="seller-text-action" onClick={()=>setTab('products')}>View all <ArrowRight size={14}/></button></div>
+       {products.slice(0,5).map(p=><div className="seller-product-line" key={p.id}><span className="seller-product-thumb"><Package size={17}/></span><div><strong>{p.name}</strong><small>{p.category}</small></div><b>{money(p.price)}</b><i>{p.active?'Published':'Hidden'}</i></div>)}{products.length===0&&<p className="seller-empty">Add your first product to start building your catalogue.</p>}
+      </section>
+      <section className="seller-panel seller-category-panel"><div className="seller-panel-head"><div><h2>Catalogue breakdown</h2><p>Listings by product type</p></div></div>
+       {categories.length?categories.map((c,i)=><div className="seller-category-row" key={c.name}><span className={'seller-category-dot dot-'+i}/><span>{c.name}</span><b>{c.count}</b><div><i style={{width:(c.count/Math.max(1,products.length)*100)+'%'}}/></div></div>):<p className="seller-empty">Your product categories will appear here.</p>}
+      </section>
+      <section className="seller-panel seller-quick-panel"><div className="seller-panel-head"><div><h2>Quick actions</h2><p>Common store tasks</p></div></div><button className="seller-quick-primary" onClick={()=>{openProductEditor()}}><Plus size={16}/>Add product</button><button onClick={()=>setTab('orders')}><ShoppingBag size={16}/>View orders</button><button onClick={copyStore}><Store size={16}/>Copy store link</button><button onClick={()=>setTab('payouts')}><Wallet size={16}/>Payout settings</button></section>
+      <section className="seller-panel seller-notification-panel"><div className="seller-panel-head"><div><h2>Recent notifications</h2><p>Orders and stock reminders</p></div><button className="seller-text-action" onClick={()=>setTab('notifications')}>View all <ArrowRight size={14}/></button></div>{notifications.map((n,i)=><button type="button" className="seller-notice-row seller-notice-button" key={n.title+i} onClick={()=>{if(n.kind==='order'){setTab('orders');openOrder(n.data)}else{setTab('products');openSellerDetail('product',n.data)}}}><span className={n.kind==='stock'?'stock':'order'}>{n.kind==='stock'?<CircleAlert size={15}/>:<ShoppingBag size={15}/>}</span><span className="seller-notice-copy"><strong>{n.title}</strong><small>{n.detail}</small></span><time>{n.time?new Date(n.time).toLocaleDateString('en-KE'):'Now'}</time><ArrowRight className="seller-notice-arrow" size={15}/></button>)}{notifications.length===0&&<p className="seller-empty">No new notifications.</p>}</section>
+     </div>
+    </>}
+    {tab==='products'&&<>
+     <div className="seller-page-heading"><div><h2>Product catalogue</h2><p>Create, edit, publish and manage your listings. {Number(subscriptionData?.subscription?.features?.product_limit??50)>0?products.length+' / '+Number(subscriptionData?.subscription?.features?.product_limit??50)+' products used':'Product limit: unlimited'}</p></div><div className="seller-product-heading-actions"><button type="button" className="seller-secondary-btn" disabled={testCatalogBusy} onClick={async()=>{if(testCatalogBusy)return;setTestCatalogBusy(true);setError('');setNotice('');try{const r=await fetch('/api/merchant?action=products-test-seed',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({})});const d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Could not generate test products');await load();setNotice(d.message+' Test listings are clearly labelled and do not create orders or sales.')}catch(e:any){setError(e.message)}finally{setTestCatalogBusy(false)}}}>{testCatalogBusy?'Generating…':'Generate 50 test products / category'}</button><button type="button" className="seller-secondary-btn" onClick={downloadBulkTemplate}><Download size={15}/> CSV template</button><label className="seller-secondary-btn seller-bulk-file-label">Import CSV<input type="file" accept=".csv,text/csv" onChange={e=>{chooseBulkCsv(e.target.files?.[0]);e.currentTarget.value=''}}/></label><label className="seller-secondary-btn seller-bulk-file-label">Images ZIP<input type="file" accept=".zip,application/zip" onChange={e=>{chooseBulkZip(e.target.files?.[0]);e.currentTarget.value=''}}/></label>{Number(subscriptionData?.subscription?.features?.product_limit??50)>0&&products.length>=Number(subscriptionData?.subscription?.features?.product_limit??50)?<button type="button" className="seller-primary-btn" onClick={()=>navigateSellerTab('subscriptions')}>Upgrade plan <ArrowUpRight size={15}/></button>:<button className="seller-primary-btn" onClick={()=>openProductEditor()}><Plus size={15}/> Add product</button>}</div></div>{(bulkName||bulkZipName||bulkError||bulkRows.length>0)&&<section className="seller-bulk-import"><strong>Bulk import · {bulkName} {bulkZipName&&<span>+ {bulkZipName} ({Object.keys(bulkImageFiles).length} images)</span>}</strong>{bulkError&&<p className="seller-bulk-error">{bulkError}</p>}{bulkRows.length>0&&<><p>{bulkRows.length} products ready. Add Image Filename values in the CSV and upload the matching images ZIP, or use HTTPS image URLs.</p><div className="seller-bulk-preview">{bulkRows.slice(0,5).map((p:any)=><span key={p.row}>Row {p.row}: {p.name} · KES {p.price} {p.imageFilename?'· '+p.imageFilename:p.image?'· image URL':'· no image'}</span>)}</div><button type="button" className="seller-primary-btn" disabled={bulkBusy} onClick={submitBulkCsv}>{bulkBusy?'Importing…':'Import '+bulkRows.length+' products'}</button><button type="button" className="seller-secondary-btn" onClick={()=>{setBulkRows([]);setBulkName('');setBulkZipName('');setBulkImageFiles({});setBulkError('')}}>Clear</button></>}</section>}
+     {editing&&<form className="seller-editor seller-editor-route" onSubmit={saveProduct}><div className="seller-editor-route-top"><button type="button" className="seller-secondary-btn" onClick={closeProductEditor}>← Back to products</button><span>PRODUCT EDITOR</span></div><div className="seller-editor-grid"><label>Product name<input required maxLength={120} value={editing.name} onChange={e=>setEditing({...editing,name:e.target.value})}/></label><label>Product type<select value={editing.type} onChange={e=>setEditing({...editing,type:e.target.value})}><option value="physical">Shop product</option><option value="data_bundle">Data bundle</option><option value="digital">Digital product</option></select></label><label>Store category<select value={editing.metadata?.category||''} onChange={e=>setEditing({...editing,metadata:{...(editing.metadata||{}),category:e.target.value}})}><option value="">Select a category</option>{sellerCategoryOptions.map(category=><option key={category} value={category}>{category}</option>)}</select><small>Choose the exact category buyers will use to find this listing.</small></label><label className="seller-featured-toggle"><input type="checkbox" checked={!!editing.metadata?.spotlight} onChange={e=>setEditing({...editing,metadata:{...(editing.metadata||{}),spotlight:e.target.checked}})}/> Feature in storefront hero <small>Choose up to five products. Featured items scroll automatically on your shop.</small></label><label>Price (KES)<input required type="number" min="0" step="0.01" value={editing.price} onChange={e=>setEditing({...editing,price:e.target.value})}/></label><label>Stock quantity<input type="number" min="0" step="1" placeholder="Leave blank if not tracked" value={editing.stock??''} onChange={e=>setEditing({...editing,stock:e.target.value})}/></label><label className="wide">Description<textarea maxLength={2000} rows={3} value={editing.description} onChange={e=>setEditing({...editing,description:e.target.value})}/></label><label>SKU<input maxLength={80} value={editing.sku||''} onChange={e=>setEditing({...editing,sku:e.target.value})}/></label><label>Unit of measure<input maxLength={40} placeholder="e.g. piece, kg, pack" value={editing.metadata?.unitOfMeasure||''} onChange={e=>setEditing({...editing,metadata:{...(editing.metadata||{}),unitOfMeasure:e.target.value}})}/></label><label>Purchase cost (KES)<input type="number" min="0" step="0.01" value={editing.metadata?.purchaseCost??''} onChange={e=>setEditing({...editing,metadata:{...(editing.metadata||{}),purchaseCost:e.target.value}})}/></label><label>Tax rate (%)<input type="number" min="0" max="100" step="0.01" value={editing.metadata?.taxRate??''} onChange={e=>setEditing({...editing,metadata:{...(editing.metadata||{}),taxRate:e.target.value}})}/></label><label>Reorder level<input type="number" min="0" step="1" value={editing.metadata?.reorderLevel??''} onChange={e=>setEditing({...editing,metadata:{...(editing.metadata||{}),reorderLevel:e.target.value}})}/></label><label>Preferred vendor<input maxLength={120} value={editing.metadata?.preferredVendor||''} onChange={e=>setEditing({...editing,metadata:{...(editing.metadata||{}),preferredVendor:e.target.value}})}/></label><label>Sales account<input maxLength={80} value={editing.metadata?.salesAccount||''} onChange={e=>setEditing({...editing,metadata:{...(editing.metadata||{}),salesAccount:e.target.value}})}/></label><label>Purchase account<input maxLength={80} value={editing.metadata?.purchaseAccount||''} onChange={e=>setEditing({...editing,metadata:{...(editing.metadata||{}),purchaseAccount:e.target.value}})}/></label><label>Inventory account<input maxLength={80} value={editing.metadata?.inventoryAccount||''} onChange={e=>setEditing({...editing,metadata:{...(editing.metadata||{}),inventoryAccount:e.target.value}})}/></label><label className="wide">Tags<input maxLength={250} value={editing.metadata?.tags||''} onChange={e=>setEditing({...editing,metadata:{...(editing.metadata||{}),tags:e.target.value}})}/></label><label className="wide">Product images<input type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={async e=>{const files=Array.from(e.target.files||[]);if(files.length>5){setError('Maximum five images.');return;}try{const images=await Promise.all(files.map(file=>new Promise<string>((resolve,reject)=>{if(file.size>900000){reject(Error('Each image must be under 900 KB.'));return;}const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(Error('Image read failed'));reader.readAsDataURL(file)})));setEditing((v:any)=>({...v,images}));}catch(err:any){setError(err.message)}}}/><small>PNG, JPEG or WebP · up to 5 images</small><div className="seller-image-preview">{(editing.images||[]).map((src:string,i:number)=><img key={i} src={src} alt={'Product '+(i+1)}/>)}</div></label></div><div className="seller-editor-actions"><button className="seller-primary-btn" disabled={saving}>{saving?'Saving…':'Save product'}</button><button type="button" className="seller-secondary-btn" onClick={closeProductEditor}>Cancel</button></div></form>}
+     <div className="seller-table-panel"><div className="seller-table-toolbar"><strong>{products.length} products</strong><span>{activeProducts.length} published · {products.length-activeProducts.length} hidden</span></div><label className="seller-list-search"><Search size={16}/><input value={productSearch} onChange={e=>setProductSearch(e.target.value)} placeholder="Search products by name, SKU or category"/></label><div className="seller-table-scroll"><table className="seller-table"><thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead><tbody>{products.filter(p=>(p.name+' '+(p.sku||'')+' '+(p.category||'')).toLowerCase().includes(productSearch.toLowerCase())).map(p=><tr key={p.id} className="seller-clickable-row" role="button" tabIndex={0} onClick={()=>openSellerDetail('product',p)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openSellerDetail('product',p)}}}><td><strong>{p.name}</strong><small>{p.testProduct?'TEST LISTING':p.sku||'No SKU'}</small></td><td>{p.category}</td><td>{money(p.price)}</td><td>{p.stockQuantity===null?'Not tracked':p.stockQuantity}</td><td><em className={'seller-status '+(p.active?'published':'hidden')}>{p.active?'Published':'Hidden'}</em></td><td><div className="seller-table-actions"><button onClick={e=>{e.stopPropagation();setEditing({...p,type:p.type,price:String(p.price),stock:p.stockQuantity??'',metadata:p.metadata||{}})}}>Edit</button><button onClick={e=>{e.stopPropagation();setStatus(p.id,!p.active)}}>{p.active?'Hide':'Publish'}</button><button className="danger" onClick={e=>{e.stopPropagation();removeProduct(p.id)}}>Delete</button></div></td></tr>)}</tbody></table>{products.length===0&&<p className="seller-empty">No products yet. Add your first listing.</p>}</div></div>
+    </>}
+    {tab==='orders'&&<><div className="seller-page-heading"><div><h2>Orders & sales</h2><p>Review customer orders and update fulfilment status.</p></div><button className="seller-secondary-btn" onClick={exportOrders}><Download size={15}/> Export CSV</button></div><div className="seller-orders-toolbar"><input placeholder="Search order, customer or phone" value={query} onChange={e=>setQuery(e.target.value)}/><select value={orderFilter} onChange={e=>setOrderFilter(e.target.value)}><option value="all">All statuses</option><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="processing">Processing</option><option value="fulfilled">Fulfilled</option><option value="cancelled">Cancelled</option></select><button className="seller-secondary-btn" onClick={()=>{load().catch(e=>setError(e.message))}}><RefreshCw size={14}/> Refresh</button></div><div className="seller-table-panel"><div className="seller-table-scroll"><table className="seller-table"><thead><tr><th>Order</th><th>Customer</th><th>Date</th><th>Amount</th><th>Status</th><th>Update status</th></tr></thead><tbody>{filteredOrders.map(o=><tr key={o.id} className="seller-clickable-row" role="button" tabIndex={0} onClick={()=>openOrder(o)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openOrder(o)}}}><td><strong>{o.order_number}</strong><small>{o.customer_phone}</small></td><td>{o.customer_name}</td><td>{new Date(o.created_at).toLocaleDateString('en-KE')}</td><td>{money(o.total)}</td><td><em className={'seller-status '+String(o.status).toLowerCase()}>{o.status}</em></td><td><select value={o.status} onClick={e=>e.stopPropagation()} onChange={e=>{e.stopPropagation();updateOrder(o.id,e.target.value)}}><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="processing">Processing</option><option value="fulfilled">Fulfilled</option><option value="cancelled">Cancelled</option></select></td></tr>)}</tbody></table>{filteredOrders.length===0&&<p className="seller-empty">No orders match your filters.</p>}</div></div></>}
+    {tab==='transactions'&&<><div className="seller-page-heading"><div><h2>Transactions</h2><p>Customer payment records for this store.</p></div><button className="seller-secondary-btn" onClick={()=>load()}>Refresh</button></div><div className="seller-table-panel"><label className="seller-list-search"><Search size={16}/><input value={transactionSearch} onChange={e=>setTransactionSearch(e.target.value)} placeholder="Search by order, phone, receipt or status"/></label><div className="seller-table-scroll"><table className="seller-table"><thead><tr><th>Date</th><th>Order</th><th>Phone</th><th>Amount</th><th>Receipt</th><th>Status</th></tr></thead><tbody>{transactions.filter((t:any)=>(String(t.order_number||'')+' '+String(t.phone||'')+' '+String(t.provider_receipt||'')+' '+String(t.status||'')).toLowerCase().includes(transactionSearch.toLowerCase())).map((t:any)=><tr key={t.id} className="seller-clickable-row" role="button" tabIndex={0} onClick={()=>openSellerDetail('transaction',t)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openSellerDetail('transaction',t)}}}><td>{new Date(t.created_at).toLocaleString('en-KE')}</td><td>{t.order_number||'—'}</td><td>{t.phone||'—'}</td><td>{money(t.amount)}</td><td>{t.provider_receipt||'—'}</td><td>{t.status}</td></tr>)}</tbody></table>{!transactions.length&&<p className="seller-empty">No payment transactions recorded yet.</p>}</div></div></>}
+    {tab==='payouts'&&<><div className="seller-page-heading"><div><h2>Payout settings</h2><p>Save both merchant collection destinations, then choose which one customers use by default.</p></div></div><form className="seller-editor" onSubmit={async e=>{e.preventDefault();setSaving(true);setError('');try{const r=await fetch('/api/merchant?action=payout-settings',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify(payoutForm)}),d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Could not save payout destinations');setNotice('Payout destinations saved. Default: '+(d.defaultPayoutMethod==='paybill'?'PayBill':'Till')+'.')}catch(err:any){setError(err.message)}finally{setSaving(false)}}}><label>Storefront business name<input value={shop?.name||''} readOnly/></label><label>Till Party B<input inputMode="numeric" pattern="[0-9]{5,12}" placeholder="Enter merchant Till number" value={payoutForm.tillPartyB} onChange={e=>setPayoutForm({...payoutForm,tillPartyB:e.target.value})}/><small>Buy Goods destination. You can save this alongside a PayBill.</small></label><label>PayBill Party B<input inputMode="numeric" pattern="[0-9]{5,12}" placeholder="Enter merchant PayBill number" value={payoutForm.paybillPartyB} onChange={e=>setPayoutForm({...payoutForm,paybillPartyB:e.target.value})}/><small>PayBill destination. It does not overwrite the Till.</small></label><label>PayBill account number / reference<input value={payoutForm.accountReference} onChange={e=>setPayoutForm({...payoutForm,accountReference:e.target.value})} placeholder="Account reference"/><small>Required when a PayBill is configured.</small></label><label>Default customer payment method<select value={payoutForm.defaultPayoutMethod} onChange={e=>setPayoutForm({...payoutForm,defaultPayoutMethod:e.target.value})}><option value="till">Till / Buy Goods</option><option value="paybill">PayBill</option></select><small>This determines the method used for new customer checkouts. Both destinations remain saved.</small></label><p className="seller-muted">Saving payout details only configures the destination. It does not initiate a payout or transfer.</p><button className="seller-primary-btn" disabled={saving}>{saving?'Saving…':'Save payout settings'}</button></form></>}
+    {tab==='api'&&<><section className="seller-table-panel" style={{marginBottom:20,padding:20}}><div className="seller-page-heading"><div><h2>Email delivery · Resend</h2><p>Connect your own Resend account so order and delivery emails are sent using your shop's verified sender address.</p></div><span className={emailStatus.configured?'seller-status-pill status-active':'seller-status-pill status-pending'}>{emailStatus.configured?'Connected':'Not connected'}</span></div><form className="seller-editor" onSubmit={async e=>{e.preventDefault();setSaving(true);setError('');setNotice('');try{const r=await fetch('/api/merchant?action=email-credentials',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify(emailConfig)}),d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Could not save Resend settings');setEmailStatus({configured:true,fromEmail:d.fromEmail,replyToEmail:d.replyToEmail,notificationEmail:d.notificationEmail||emailConfig.notificationEmail});setEmailConfig((v:any)=>({...v,apiKey:''}));setNotice('Your Resend API settings have been encrypted and saved. Send a test email to verify the sender.')}catch(err:any){setError(err.message)}finally{setSaving(false)}}}><label>Sender name<input value={emailConfig.fromName} onChange={e=>setEmailConfig({...emailConfig,fromName:e.target.value})} placeholder={shop?.name||'Your shop name'} maxLength={100}/><small>Displayed as the sender name in customer inboxes.</small></label><label>Sender email address<input type="email" required value={emailConfig.fromEmail} onChange={e=>setEmailConfig({...emailConfig,fromEmail:e.target.value})} placeholder="orders@yourdomain.co.ke"/><small>Must belong to a domain or address verified in your Resend account.</small></label><label>Reply-to email address<input type="email" required value={emailConfig.replyToEmail} onChange={e=>setEmailConfig({...emailConfig,replyToEmail:e.target.value})} placeholder="support@yourdomain.co.ke"/><small>Customer replies will be directed here.</small></label><label>Order notification email<input type="email" required value={emailConfig.notificationEmail||''} onChange={e=>setEmailConfig({...emailConfig,notificationEmail:e.target.value})} placeholder={profile.email||'orders@yourdomain.co.ke'}/><small>New order alerts for the seller will be sent to this inbox. This is separate from the sender and reply-to addresses.</small></label><label>Resend API key<input type="password" autoComplete="new-password" value={emailConfig.apiKey} onChange={e=>setEmailConfig({...emailConfig,apiKey:e.target.value})} placeholder={emailStatus.configured?'Saved securely — enter a new key only to replace it':'re_…'} required={!emailStatus.configured}/><small>Generate a sending API key in Resend. It is encrypted on the server and never shown again. Leave blank to keep the saved key.</small></label><button className="seller-primary-btn" disabled={saving}>{saving?'Saving…':'Save email settings'}</button></form><div style={{display:'grid',gridTemplateColumns:'minmax(0,1fr) auto',gap:12,alignItems:'end',marginTop:18}}><label>Send test email to<input type="email" value={emailTestTo} onChange={e=>setEmailTestTo(e.target.value)} placeholder={profile.email||'you@example.com'}/></label><button type="button" className="seller-secondary-btn" disabled={!emailStatus.configured||emailTestSending||!emailTestTo.trim()} onClick={async()=>{setEmailTestSending(true);setError('');setNotice('');try{const r=await fetch('/api/merchant?action=email-test',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({to:emailTestTo.trim()})}),d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Test email failed');setNotice(d.message||'Test email accepted by Resend.')}catch(err:any){setError(err.message)}finally{setEmailTestSending(false)}}}>{emailTestSending?'Sending…':'Send test email'}</button></div><p className="seller-muted">Before sending, add the DNS records Resend gives you and wait until the sender domain is marked verified. DASMARKET platform billing and security emails continue using the platform's own sender.</p></section><div className="seller-page-heading"><div><h2>Payment credentials</h2><p>Configure the payment account used for this shop.</p></div></div><form className="seller-editor" onSubmit={async e=>{e.preventDefault();setSaving(true);try{const r=await fetch('/api/merchant?action=api-credentials',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify(credentialForm)}),d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Credential save failed');setCredentialForm((v:any)=>({...v,consumerKey:'',consumerSecret:'',passkey:''}));const statusResponse=await fetch('/api/merchant?action=api-credentials',{credentials:'same-origin',cache:'no-store'});const statusData=await readApiResponse(statusResponse);if(statusResponse.ok)setCredentialStatus(statusData.credentialsByType||{});setNotice('Credentials for this transaction type encrypted and saved. The other type remains unchanged.')}catch(err:any){setError(err.message)}finally{setSaving(false)}}}><label>Daraja transaction type<select value={credentialForm.accountType} onChange={e=>{const type=e.target.value,method=type==='CustomerPayBillOnline'?'paybill':'till';setCredentialForm((v:any)=>({...v,accountType:type,shortcode:credentialStatus[method]?.shortcode||'',environment:credentialStatus[method]?.environment||'production',consumerKey:'',consumerSecret:'',passkey:''}))}}><option value="CustomerBuyGoodsOnline">CustomerBuyGoodsOnline — Till / Buy Goods</option><option value="CustomerPayBillOnline">CustomerPayBillOnline — PayBill</option></select><small>{credentialStatus[credentialForm.accountType==='CustomerPayBillOnline'?'paybill':'till']?.configured?'Credentials saved for this transaction type.':'No credentials saved for this transaction type yet.'}</small></label><label>Environment<select value={credentialForm.environment} onChange={e=>setCredentialForm({...credentialForm,environment:e.target.value})}><option value="production">Production</option><option value="sandbox">Sandbox</option></select></label><label>Shortcode<input required value={credentialForm.shortcode} onChange={e=>setCredentialForm({...credentialForm,shortcode:e.target.value})}/></label><label>Consumer key<input autoComplete="off" value={credentialForm.consumerKey} onChange={e=>setCredentialForm({...credentialForm,consumerKey:e.target.value})}/></label><label>Consumer secret<input type="password" autoComplete="new-password" value={credentialForm.consumerSecret} onChange={e=>setCredentialForm({...credentialForm,consumerSecret:e.target.value})}/></label><label>Passkey<input type="password" autoComplete="new-password" value={credentialForm.passkey} onChange={e=>setCredentialForm({...credentialForm,passkey:e.target.value})}/></label><p className="seller-muted">Secrets are encrypted at rest. Leave secret fields blank to retain the previously saved values. Credentials are not displayed again.</p><button className="seller-primary-btn" disabled={saving}>Save encrypted credentials</button></form></>}
+    {tab==='tickets'&&<><div className="seller-page-heading"><div><h2>Support tickets</h2><p>Contact the DASNET support team or open a ticket.</p></div></div><form className="seller-editor" onSubmit={async e=>{e.preventDefault();setSaving(true);try{const r=await fetch('/api/merchant?action=ticket',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify(ticketForm)}),d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Ticket creation failed');setTickets([d.ticket,...tickets]);setTicketForm({subject:'',category:'general',message:''});setNotice('Support ticket created: '+d.ticket.ticket_number)}catch(err:any){setError(err.message)}finally{setSaving(false)}}}><label>Subject<input required minLength={4} value={ticketForm.subject} onChange={e=>setTicketForm({...ticketForm,subject:e.target.value})}/></label><label>Category<select value={ticketForm.category} onChange={e=>setTicketForm({...ticketForm,category:e.target.value})}><option value="general">General</option><option value="payments">Payments</option><option value="orders">Orders</option><option value="products">Products</option><option value="account">Account</option></select></label><label className="wide">Message<textarea required minLength={10} rows={4} value={ticketForm.message} onChange={e=>setTicketForm({...ticketForm,message:e.target.value})}/></label><button className="seller-primary-btn" disabled={saving}>Submit ticket</button></form><div className="seller-table-panel">{tickets.map((t:any)=><div className="seller-notice-row expanded" key={t.id}><div><strong>{t.ticket_number} · {t.subject}</strong><small>{t.category} · {t.status}</small></div><time>{new Date(t.created_at).toLocaleString('en-KE')}</time></div>)}{!tickets.length&&<p className="seller-empty">No tickets yet.</p>}</div><p>Call <a href="tel:+254758884861">+254 758 884 861</a> or email <a href="mailto:support@dasnet.co.ke">support@dasnet.co.ke</a>.</p></>}
+    {tab==='account'&&<><div className="seller-page-heading"><div><h2>My account</h2><p>Your personal details, profile and sign-in security.</p></div></div><section className="seller-account-hero"><div className="seller-account-avatar">{profile.avatarUrl?<img src={profile.avatarUrl} alt="Profile"/>:<span>{(profile.displayName||user?.displayName||'S').slice(0,1).toUpperCase()}</span>}</div><div className="seller-account-identity"><span className="seller-account-eyebrow">SELLER PROFILE</span><h3>{profile.displayName||user?.displayName||'Seller'}</h3><p>{profile.email||'No email address added'} · {profile.phone||user?.phone||'Phone not available'}</p><span className="seller-account-status"><i/> Active seller account</span></div></section><div className="seller-account-grid"><section className="seller-account-card"><div className="seller-account-card-head"><div><span>01</span><div><h3>Personal information</h3><p>Update the details shown on your account.</p></div></div></div><form className="seller-account-form" onSubmit={async e=>{e.preventDefault();setSaving(true);setError('');try{const r=await fetch('/api/merchant?action=profile',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify(profile)}),d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Profile update failed');setUser((current:any)=>({...current,displayName:profile.displayName}));setNotice('Profile updated successfully.')}catch(err:any){setError(err.message)}finally{setSaving(false)}}}><label>Full name<input required maxLength={100} name="seller-personal-display-name" autoComplete="off" autoCorrect="off" spellCheck={false} value={profile.displayName??user?.displayName??''} onChange={e=>setProfile((current:any)=>({...current,displayName:e.target.value}))}/></label><label>Email address<input type="email" value={profile.email||''} onChange={e=>setProfile({...profile,email:e.target.value})}/></label><label>Verified phone number<input readOnly value={profile.phone||user?.phone||''}/><small>For security, contact support to change your verified phone.</small></label><label className="seller-account-upload">Profile photo<input type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>{const file=e.target.files?.[0];if(!file)return;if(file.size>700000){setError('Choose an image under 700 KB.');return;}const rd=new FileReader();rd.onload=()=>setProfile({...profile,avatarUrl:String(rd.result)});rd.readAsDataURL(file)}}/><small>PNG, JPEG or WebP · Maximum 700 KB</small></label><button className="seller-primary-btn" disabled={saving}>{saving?'Saving…':'Save profile changes'}</button></form></section><section className="seller-account-card seller-security-card"><div className="seller-account-card-head"><div><span>02</span><div><h3>Sign-in security</h3><p>Keep your seller workspace protected.</p></div></div></div><form className="seller-account-form" onSubmit={async e=>{e.preventDefault();const form=e.currentTarget;const data=new FormData(form);setSaving(true);setError('');try{const r=await fetch('/api/auth?action=change-password',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({currentPassword:data.get('currentPassword'),newPassword:data.get('newPassword'),confirmPassword:data.get('confirmPassword')})}),d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Password change failed');form.reset();setNotice('Password changed successfully.')}catch(err:any){setError(err.message)}finally{setSaving(false)}}}><label>Current password<input type="password" name="currentPassword" required autoComplete="current-password"/></label><label>New password<input type="password" name="newPassword" required minLength={10} autoComplete="new-password"/><small>Use at least 10 characters with letters and numbers.</small></label><label>Confirm new password<input type="password" name="confirmPassword" required minLength={10} autoComplete="new-password"/></label><button className="seller-primary-btn" disabled={saving}>{saving?'Updating…':'Update password'}</button></form><a className="seller-recovery-link" href="/reset-password">Forgot your current password? Use secure account recovery <ArrowRight size={14}/></a></section></div><section className="seller-account-support"><HelpCircle size={18}/><div><strong>Need to update your verified phone?</strong><span>Contact DASNET support at <a href="mailto:support@dasnet.co.ke">support@dasnet.co.ke</a> or <a href="tel:+254758884861">+254 758 884 861</a>.</span></div></section></>}
+    {selectedDetail&&selectedDetail.type!=='order'&&<div className={isSellerDetailRoute?'seller-detail-overlay seller-detail-route':'seller-detail-overlay'} onClick={()=>isSellerDetailRoute?closeSellerDetail():setSelectedDetail(null)}><section className="seller-detail-card" onClick={e=>e.stopPropagation()}><button className="seller-secondary-btn" onClick={closeSellerDetail}>Back</button><h2>{selectedDetail.type==='order'?'Order details':selectedDetail.type==='product'?'Product details':'Transaction details'}</h2><p className="seller-detail-subtitle">{selectedDetail.type==='order'?'Order and payment information is stored in your merchant workspace.':selectedDetail.type==='product'?'Product and service information is stored in your merchant workspace.':'Payment transaction information and verification details.'}</p>{selectedDetail.type==='order'?<div className="seller-order-document"><header className="seller-order-document-head"><div><span className="seller-order-kicker">ORDER RECORD</span><h3>{selectedDetail.data.order_number}</h3><p>Placed {new Date(selectedDetail.data.created_at).toLocaleString('en-KE')}</p></div><span className={'seller-order-status status-'+String(selectedDetail.data.status||'pending').toLowerCase()}>{String(selectedDetail.data.status||'pending').replace(/_/g,' ')}</span></header><div className="seller-order-info-grid"><section><span>Customer</span><strong>{selectedDetail.data.customer_name||'—'}</strong></section><section><span>Phone number</span><strong>{selectedDetail.data.customer_phone||'—'}</strong><a href={'tel:'+String(selectedDetail.data.customer_phone||'').replace(/[^+0-9]/g,'')}>Call customer</a></section></div><section className="seller-order-payment"><div><span>Order total</span><strong>{money(selectedDetail.data.total)}</strong></div><div><span>Payment status</span><strong className={'payment-'+String(selectedDetail.data.payment_status||'unknown').toLowerCase()}>{String(selectedDetail.data.payment_status||'No payment attempt').replace(/_/g,' ')}</strong></div><div><span>M-PESA receipt</span><strong>{selectedDetail.data.provider_receipt||'Not available'}</strong></div></section><section className="seller-order-prompt"><div className="seller-order-section-title"><div><h3>Request M-PESA payment</h3><p>Send an STK Push for this order's full total using the store's default payout method.</p></div><span className="seller-order-prompt-method">{payoutForm.defaultPayoutMethod==='paybill'?'PayBill':'Till / Buy Goods'}</span></div><label>Customer phone number<input type="tel" value={paymentPromptPhone||selectedDetail.data.customer_phone||''} onChange={e=>setPaymentPromptPhone(e.target.value)} placeholder="07… or +254…"/></label><div className="seller-order-prompt-footer"><div><small>Amount requested</small><strong>{money(selectedDetail.data.total)}</strong></div><button className="button primary" disabled={paymentPrompting||['succeeded','pending','initiated'].includes(String(selectedDetail.data.payment_status||''))} onClick={()=>promptOrderPayment(selectedDetail.data)}>{paymentPrompting?'Sending prompt…':selectedDetail.data.payment_status==='succeeded'?'Payment received':['pending','initiated'].includes(String(selectedDetail.data.payment_status||''))?'Payment awaiting result':'Send STK prompt'}</button></div>{paymentPromptMessage&&<p className="seller-order-prompt-message" role="status">{paymentPromptMessage}</p>}</section><section className="seller-order-items"><div className="seller-order-section-title"><h3>Items ordered</h3><span>{(selectedDetail.data.items||[]).length} line(s)</span></div><div className="seller-order-table"><div className="seller-order-table-head"><span>Product</span><span>Qty</span><span>Unit price</span><span>Line total</span></div>{(selectedDetail.data.items||[]).map((item:any,i:number)=><div className="seller-order-table-row" key={i}><strong>{item.name}</strong><span>{item.quantity}</span><span>{money(Number(item.unitPrice||0)/100)}</span><b>{money(Number(item.lineTotal||0)/100)}</b></div>)}</div><div className="seller-order-total"><span>Total payable</span><strong>{money(selectedDetail.data.total)}</strong></div></section><section className="seller-order-status-editor"><div><h3>Update fulfilment</h3><p>Order fulfilment is separate from payment confirmation.</p></div><div className="seller-order-status-actions"><select aria-label="Fulfilment status" value={selectedDetail.data.status} onChange={e=>updateOrder(selectedDetail.data.id,e.target.value)}><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="processing">Processing</option><option value="fulfilled">Fulfilled</option><option value="cancelled">Cancelled</option></select></div></section><p className="seller-order-security-note">Payment status is verified from the payment record. Updating fulfilment will never mark an M-PESA payment as successful.</p><section className="seller-order-chat"><div className="seller-order-section-title"><div><h3>Customer conversation</h3><p>Messages linked to this order.</p></div><span className="seller-order-prompt-method">In-app chat</span></div><div className="seller-chat-messages">{orderChatMessages.map((m:any)=><div key={m.id} className={'seller-chat-message '+(m.sender_type==='merchant'?'mine':'theirs')}><span>{m.sender_type==='merchant'?'Your store':'Customer'}</span><p>{m.message}</p><small>{new Date(m.created_at).toLocaleString('en-KE')}</small></div>)}</div>{orderChatError&&<p className="seller-order-prompt-message">{orderChatError}</p>}<form className="seller-chat-compose" onSubmit={sendMerchantMessage}><input value={orderChatDraft} onChange={e=>setOrderChatDraft(e.target.value)} maxLength={2000} placeholder="Reply to your customer…"/><button className="button primary" disabled={orderChatSending||!orderChatDraft.trim()}>{orderChatSending?'Sending…':'Send message'}</button></form></section></div>:selectedDetail.type==='product'?<div className="seller-product-detail"><div className="seller-product-detail-head"><div className="seller-product-image">{(selectedDetail.data.images||[])[0]?<img src={selectedDetail.data.images[0]} alt={selectedDetail.data.name}/>:shop?.logoUrl?<img src={shop.logoUrl} alt="Shop logo"/>:<Package size={34}/>}</div><div className="seller-product-title"><span>PRODUCT / SERVICE</span><h3>{selectedDetail.data.name}</h3><div className="seller-product-tags"><em className={selectedDetail.data.active?'active':'inactive'}>{selectedDetail.data.active?'Published':'Inactive'}</em><span>SKU: {selectedDetail.data.sku||'—'}</span><span>{selectedDetail.data.type==='physical'?'Goods':selectedDetail.data.type==='data_bundle'?'Data bundle':'Digital service'}</span><span>{selectedDetail.data.category||'Uncategorised'}</span></div></div><div className="seller-product-actions"><button className="seller-secondary-btn" onClick={()=>{openProductEditor(selectedDetail.data)}}>Edit product</button><button className="seller-primary-btn" onClick={()=>setStatus(selectedDetail.data.id,!selectedDetail.data.active)}>{selectedDetail.data.active?'Disable':'Enable'}</button></div></div><div className="seller-product-metrics"><article><span>Selling price</span><strong>{money(selectedDetail.data.price)}</strong><small>Customer price per unit</small></article><article><span>Stock on hand</span><strong>{selectedDetail.data.stockQuantity===null?'Not tracked':selectedDetail.data.stockQuantity}</strong><small>Reorder level: {selectedDetail.data.metadata?.reorderLevel??'—'}</small></article><article><span>Purchase cost</span><strong>{selectedDetail.data.metadata?.purchaseCost!==null&&selectedDetail.data.metadata?.purchaseCost!==undefined?money(selectedDetail.data.metadata.purchaseCost):'Not recorded'}</strong><small>Recorded unit cost</small></article></div><div className="seller-product-sections"><section><header><span>01</span><h3>Product information</h3></header><dl><div><dt>Item type</dt><dd>{selectedDetail.data.type==='physical'?'Goods':selectedDetail.data.type==='data_bundle'?'Data bundle':'Digital service'}</dd></div><div><dt>Category</dt><dd>{selectedDetail.data.category||'—'}</dd></div><div><dt>SKU</dt><dd>{selectedDetail.data.sku||'—'}</dd></div><div><dt>Unit of measure</dt><dd>{selectedDetail.data.metadata?.unitOfMeasure||'—'}</dd></div><div><dt>Product status</dt><dd>{selectedDetail.data.active?'Published':'Inactive'}</dd></div><div className="wide"><dt>Tags</dt><dd>{selectedDetail.data.metadata?.tags||'—'}</dd></div><div className="wide"><dt>Description</dt><dd>{selectedDetail.data.description||'No description recorded'}</dd></div><div className="wide"><dt>Additional images</dt><dd className="seller-product-gallery">{(selectedDetail.data.images||[]).length?(selectedDetail.data.images||[]).map((src:string,i:number)=><img key={i} src={src} alt={selectedDetail.data.name+' '+(i+1)}/>):'No additional images'}</dd></div></dl></section><section><header><span>02</span><h3>Pricing & tax</h3></header><dl><div><dt>Selling price</dt><dd>{money(selectedDetail.data.price)}</dd></div><div><dt>Currency</dt><dd>{selectedDetail.data.currency||'KES'}</dd></div><div><dt>Purchase cost</dt><dd>{selectedDetail.data.metadata?.purchaseCost!==null&&selectedDetail.data.metadata?.purchaseCost!==undefined?money(selectedDetail.data.metadata.purchaseCost):'Not recorded'}</dd></div><div><dt>Tax rate</dt><dd>{selectedDetail.data.metadata?.taxRate!==null&&selectedDetail.data.metadata?.taxRate!==undefined?selectedDetail.data.metadata.taxRate+'%':'Not configured'}</dd></div></dl></section><section className="wide"><header><span>03</span><h3>Inventory & accounts</h3></header><dl><div><dt>Stock on hand</dt><dd>{selectedDetail.data.stockQuantity===null?'Not tracked':selectedDetail.data.stockQuantity}</dd></div><div><dt>Reorder level</dt><dd>{selectedDetail.data.metadata?.reorderLevel??'—'}</dd></div><div><dt>Preferred vendor</dt><dd>{selectedDetail.data.metadata?.preferredVendor||'—'}</dd></div><div><dt>Sales account</dt><dd>{selectedDetail.data.metadata?.salesAccount||'—'}</dd></div><div><dt>Purchase account</dt><dd>{selectedDetail.data.metadata?.purchaseAccount||'—'}</dd></div><div><dt>Inventory account</dt><dd>{selectedDetail.data.metadata?.inventoryAccount||'—'}</dd></div></dl></section></div></div>:<div className="seller-detail-fields"><p><strong>Order</strong><span>{selectedDetail.data.order_number||'—'}</span></p><p><strong>Phone</strong><span>{selectedDetail.data.phone||'—'}</span></p><p><strong>Amount</strong><span>{money(selectedDetail.data.amount)}</span></p><p><strong>Status</strong><span>{selectedDetail.data.status}</span></p><p><strong>M-PESA receipt</strong><span>{selectedDetail.data.provider_receipt||'Pending'}</span></p><p><strong>Checkout reference</strong><span>{selectedDetail.data.provider_checkout_id||'—'}</span></p><p><strong>Created</strong><span>{new Date(selectedDetail.data.created_at).toLocaleString('en-KE')}</span></p><p><strong>Verified at</strong><span>{selectedDetail.data.verified_at?new Date(selectedDetail.data.verified_at).toLocaleString('en-KE'):'Not verified'}</span></p></div>}</section></div>}
+    {tab==='payments'&&<><div className="seller-page-heading"><div><h2>Payments</h2><p>Monitor customer collections and payment readiness.</p></div></div><div className="seller-feature-grid"><article><WalletCards/><strong>M-PESA collections</strong><span>M-PESA STK prompts are available from order details. Payment status is confirmed through the Daraja callback and verified transaction record.</span><em>Order-linked</em></article><article><ShieldCheck/><strong>Payment security</strong><span>Live collections must verify Daraja callbacks, amount, phone and checkout reference before an order is marked paid.</span><em>Required before launch</em></article></div></>}
+    {tab==='payouts'&&<><div className="seller-page-heading"><div><h2>Payout settings</h2><p>Settlement preferences and withdrawal history.</p></div></div><div className="seller-feature-grid"><article><Wallet/><strong>Merchant collection destination</strong>{(payoutForm.tillPartyB||payoutForm.paybillPartyB)?<><span>{payoutForm.tillPartyB?'Till / Buy Goods: '+payoutForm.tillPartyB:''}{payoutForm.tillPartyB&&payoutForm.paybillPartyB?' · ':''}{payoutForm.paybillPartyB?'PayBill: '+payoutForm.paybillPartyB:''}</span><span>Default for new checkouts: {payoutForm.defaultPayoutMethod==='paybill'?'PayBill':'Till / Buy Goods'}</span><em className="seller-configured-label">Destination saved</em></>:<><span>No merchant collection destination has been saved yet.</span><em>Setup required</em></>}</article><article><Activity/><strong>Payout history</strong><span>There is no payout ledger or automated transfer workflow connected yet. Customer collection settings do not enable seller withdrawals.</span><em>Not enabled</em></article></div></>}
+    {tab==='api'&&<><div className="seller-page-heading"><div><h2>API credentials</h2><p>Secure integrations for your shop.</p></div></div><div className="seller-feature-grid"><article><ShieldCheck/><strong>Payment processing</strong><span>Payment processing is configured securely for your shop.</span><em>Managed</em></article><article><Activity/><strong>Integrations</strong><span>Additional integration options will appear here when available.</span><em>Coming later</em></article></div></>}
+    {tab==='reports'&&shop?.slug&&<Deferred><DisputesPanel slug={shop.slug} viewerRole="seller" initialReportId={sellerInitialReportId==='new'?'':sellerInitialReportId} onRouteChange={setSellerInitialReportId} orders={orders.map(o=>({id:o.id,label:o.order_number}))}/></Deferred>}
+    {tab==='notifications'&&<><div className="seller-page-heading"><div><h2>Notifications</h2><p>Recent order activity, stock alerts and report verdicts from DASNET support.</p></div><button className="seller-icon-btn" title="Refresh notifications" onClick={()=>load().catch(e=>setError(e.message))}><RefreshCw size={17}/></button></div>{shop?.slug&&<Deferred><DisputesPanel slug={shop.slug} viewerRole="seller" embedded compactNotifications onOpenReport={(id)=>{setSellerInitialReportId(id);navigateSellerTab('reports')}} orders={orders.map(o=>({id:o.id,label:o.order_number}))}/></Deferred>}<div className="seller-table-panel">{notifications.map((n,i)=><button type="button" className="seller-notice-row expanded seller-notice-button" key={n.title+i} onClick={()=>{if(n.kind==='order'){setTab('orders');openOrder(n.data)}else{openSellerDetail('product',n.data)}}}><span className={n.kind==='stock'?'stock':'order'}>{n.kind==='stock'?<CircleAlert size={16}/>:<ShoppingBag size={16}/>}</span><span className="seller-notice-copy"><strong>{n.title}</strong><small>{n.detail}</small></span><time>{n.time?new Date(n.time).toLocaleString('en-KE'):'Just now'}</time><ArrowRight className="seller-notice-arrow" size={15}/></button>)}{notifications.length===0&&<p className="seller-empty">You're all caught up.</p>}</div></>}
+    {(tab==='policies'||tab==='coupons')&&<Deferred><SellerShopControls section={tab} shopName={shop?.name||"Your shop"} shopWhatsappNumber={shop?.contactPhone||shop?.whatsappNumber||""} shopContactEmail={shop?.contactEmail||""} onNotice={setNotice}/></Deferred>}
+    {tab==='subscriptions'&&<SellerSubscriptionsPanel data={subscriptionData} phone={user?.phone} checkoutPlanId={subscriptionCheckoutPlanId} onCheckout={openSubscriptionCheckout} onBack={closeSubscriptionCheckout} onRefresh={()=>fetch('/api/merchant?action=subscription',{credentials:'same-origin',cache:'no-store'}).then(readApiResponse).then(d=>setSubscriptionData(d)).catch(e=>setError(e.message))}/>}{tab==='domains'&&<><div className="seller-page-heading"><div><h2>Custom domain</h2><p>Connect a domain you own to your storefront.</p></div></div><Deferred><SellerDomains/></Deferred></>}
+    {tab==='settings'&&<><div className="seller-page-heading"><div><h2>Shop settings</h2><p>Update your public shop identity and description.</p></div></div><form className="seller-editor seller-settings-form" onSubmit={saveSettings}><label>Shop name<input required maxLength={100} value={shop?.name||''} onChange={e=>setShop(s=>s?{...s,name:e.target.value}:s)}/></label><label>Shop description<textarea maxLength={1000} rows={4} value={shop?.description||''} onChange={e=>setShop(s=>s?{...s,description:e.target.value}:s)}/></label><label>WhatsApp number<input type="tel" inputMode="tel" autoComplete="tel" placeholder="0712 345 678 or +254712345678" value={shop?.whatsappNumber||''} onChange={e=>setShop(s=>s?{...s,whatsappNumber:e.target.value}:s)}/><small>Customers will use this number to contact your shop from the floating WhatsApp button. Use a Kenyan mobile number.</small></label><div className="seller-theme-picker"><div className="seller-theme-picker-heading"><strong>Store theme colour</strong><small>Choose an accent colour for buttons, links and highlights. Your storefront layout and template stay the same.</small></div><div className="seller-colour-options" role="group" aria-label="Store theme colour">{storeAccentColors.map(color=><button type="button" key={color.value} title={color.name} aria-label={color.name} aria-pressed={(shop?.theme||'#e47a13')===color.value} className={'seller-colour-option '+((shop?.theme||'#e47a13')===color.value?'selected':'')} style={{'--swatch':color.value} as any} onClick={()=>setShop(s=>s?{...s,theme:color.value}:s)}><span/><small>{color.name}</small></button>)}</div><label className="seller-custom-colour">Custom colour<input type="color" value={/^#[0-9a-f]{6}$/i.test(shop?.theme||'')?shop!.theme!:'#e47a13'} onChange={e=>setShop(s=>s?{...s,theme:e.target.value}:s)}/><code>{shop?.theme||'#e47a13'}</code></label></div><label>Store logo<input type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>{const file=e.target.files?.[0];if(!file)return;if(file.size>700000){setError('Choose a logo under 700 KB.');return;}const rd=new FileReader();rd.onload=()=>setShop(s=>s?{...s,logoUrl:String(rd.result)}:s);rd.readAsDataURL(file)}}/><small>PNG, JPEG or WebP · max 700 KB</small>{shop?.logoUrl&&<img className="seller-shop-logo-preview" src={shop.logoUrl} alt="Store logo preview"/>}</label><label>Shop slug<input readOnly value={shop?.slug||''}/><small>Your unique shop address. Contact support if you need to change the slug.</small></label><label>Public store link<div className="seller-copy-field"><input readOnly value={shop?'https://'+shop.slug+'.dasmarket.co.ke':''}/><button type="button" onClick={copyStore}>Copy</button></div></label><button className="seller-primary-btn" disabled={saving}>{saving?'Saving…':'Save settings'}</button></form></>}
+    </>}</>}
+   </div>
+  </section>
+  <nav className="seller-mobile-bottom" aria-label="Seller shortcuts">{[{id:'overview',label:'Home',icon:LayoutDashboard},{id:'orders',label:'Orders',icon:ShoppingBag},{id:'products',label:'Products',icon:Package},{id:'reports',label:'Reports',icon:MessageCircle},{id:'account',label:'Account',icon:Store}].map(x=><button type="button" key={x.id} className={tab===x.id?'active':''} onClick={()=>navigateSellerTab(x.id)}><x.icon size={18}/><span>{x.label}</span></button>)}</nav>
+ {shop?.whatsappNumber&&<a className="seller-whatsapp-float" href={`https://wa.me/${shop.whatsappNumber.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer" aria-label={`Chat with ${shop.name} on WhatsApp`}><MessageCircle size={23}/></a>}
+ </main>;
+}
+function PlatformAdmin(){
+ const [data,setData]=useState<any>(null),[error,setError]=useState(''),[busy,setBusy]=useState(''),[tab,setTab]=useState<'overview'|'daraja'>('overview'),[daraja,setDaraja]=useState<any>({consumerKey:'',consumerSecret:'',passkey:'',shortcode:'',partyB:'',accountType:'CustomerPayBillOnline',environment:'production'}),[darajaStatus,setDarajaStatus]=useState<any>(null),[savingDaraja,setSavingDaraja]=useState(false),[notice,setNotice]=useState('');
+ async function load(){const r=await fetch('/api/platform-admin',{credentials:'same-origin'}),d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Admin access unavailable');setData(d);setDarajaStatus(d.daraja||null)}
+ useEffect(()=>{load().catch(e=>setError(e.message))},[]);
+ async function change(id:string,status:string){setBusy(id);setError('');try{const r=await fetch('/api/platform-admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tenantId:id,status})}),d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Update failed');await load()}catch(e:any){setError(e.message)}finally{setBusy('')}}
+ async function saveDaraja(e:any){e.preventDefault();setSavingDaraja(true);setError('');setNotice('');try{const r=await fetch('/api/platform-admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'save_daraja',...daraja})}),d=await readApiResponse(r);if(!r.ok)throw Error(d.error||'Could not save Daraja settings');setDaraja({consumerKey:'',consumerSecret:'',passkey:'',shortcode:'',partyB:'',accountType:daraja.accountType,environment:daraja.environment});setNotice('Central Daraja settings saved securely. Secret values are not displayed again.');await load()}catch(e:any){setError(e.message)}finally{setSavingDaraja(false)}}
+ return <main className="account-page"><nav className="nav shell"><Brand/><a className="nav-quiet" href="/dashboard">Seller dashboard</a></nav><section className="account-card" style={{width:'min(1080px,calc(100% - 28px))',margin:'34px auto'}}><div className="eyebrow">DASNET PLATFORM ADMIN</div><h1>Platform administration</h1><div className="dashboard-actions"><button className={tab==='overview'?'button primary':'button secondary'} onClick={()=>setTab('overview')}>Overview</button><button className={tab==='daraja'?'button primary':'button secondary'} onClick={()=>setTab('daraja')}>Central Daraja settings</button></div>{error&&<div className="auth-message error">{error}</div>}{notice&&<div className="auth-message success">{notice}</div>}{tab==='daraja'?<><h2>Central M-PESA Daraja credentials</h2><p>Configure the platform collection account here. Credentials are encrypted before storage and never returned to the browser. Do not enter these values in chat.</p><div className="seller-feature-card"><strong>{darajaStatus?.configured?'Credentials saved':'Setup required'}</strong><span>{darajaStatus?.shortcode?('Shortcode: '+darajaStatus.shortcode+' · '+darajaStatus.environment):'No central Daraja account configured.'}</span><small>Secret fields are write-only. Leave a field blank to keep its saved value.</small></div><form className="auth-form" onSubmit={saveDaraja}><label>Consumer Key<input autoComplete="off" value={daraja.consumerKey} onChange={e=>setDaraja({...daraja,consumerKey:e.target.value})}/></label><label>Consumer Secret<input type="password" autoComplete="new-password" value={daraja.consumerSecret} onChange={e=>setDaraja({...daraja,consumerSecret:e.target.value})}/></label><label>Passkey<input type="password" autoComplete="new-password" value={daraja.passkey} onChange={e=>setDaraja({...daraja,passkey:e.target.value})}/></label><label>Shortcode<input value={daraja.shortcode} onChange={e=>setDaraja({...daraja,shortcode:e.target.value})}/></label><label>Party B<input value={daraja.partyB} onChange={e=>setDaraja({...daraja,partyB:e.target.value})}/></label><label>Account type<select value={daraja.accountType} onChange={e=>setDaraja({...daraja,accountType:e.target.value})}><option value="CustomerPayBillOnline">CustomerPayBillOnline</option><option value="CustomerBuyGoodsOnline">CustomerBuyGoodsOnline</option></select></label><label>Environment<select value={daraja.environment} onChange={e=>setDaraja({...daraja,environment:e.target.value})}><option value="sandbox">Sandbox</option><option value="production">Production</option></select></label><button className="button primary" disabled={savingDaraja}>{savingDaraja?'Saving securely…':'Save central Daraja settings'}</button></form><p className="catalogue-note">Saving credentials does not by itself activate customer charges. STK Push and callback verification must be implemented and tested separately.</p></>:!data?<p>Loading admin data…</p>:<><div className="metric-grid">{Object.entries(data.summary).map(([k,v])=><div className="metric" key={k}><span>{k.replaceAll('_',' ')}</span><strong>{String(v)}</strong></div>)}</div><h2>Seller accounts</h2>{data.tenants.map((t:any)=><div className="setup-panel" key={t.id} style={{flexWrap:'wrap'}}><div className="setup-copy" style={{flex:1}}><strong>{t.name} · /{t.slug}</strong><span>{t.owner_name||'Owner'} · {t.owner_phone||'No phone'} · {t.products} products · {t.orders} orders · {t.status}</span></div>{t.status==='suspended'?<button className="button primary" disabled={busy===t.id} onClick={()=>change(t.id,'active')}>Reactivate</button>:<button className="button secondary" disabled={busy===t.id} onClick={()=>change(t.id,'suspended')}>Suspend</button>}</div>)}</>}</section></main>;
 }
 export default function App() {
   const path = window.location.pathname.replace(/^\/+|\/+$/g, '');
@@ -1249,21 +1203,24 @@ export default function App() {
   const isPlatformHost=hostname==='dasmarket.co.ke'||hostname==='www.dasmarket.co.ke'||hostname==='app.dasmarket.co.ke'||hostname==='mambu.dasmarket.co.ke'||hostname.endsWith('.vercel.app')||hostname.endsWith('.run.app')||hostname.endsWith('.googleusercontent.com')||hostname.endsWith('.aistudio.google.com')||hostname==='localhost'||hostname==='127.0.0.1';
   const isCustomDomain=!isPlatformHost&&!tenantSubdomain;
   const isAdminCustomHost=hostname.startsWith('adm.')&&isCustomDomain;
+  // Warm the storefront UI chunks while the shop data request is in flight.
+  useEffect(()=>{if(tenantSubdomain){import('./StorefrontFlow').catch(()=>{});import('./BuyerAuthPage').catch(()=>{});}},[tenantSubdomain]);
+  useEffect(()=>{if(hostname==='mambu.dasmarket.co.ke'||hostname.startsWith('adm.')||path==='dashboard'||path.startsWith('dashboard/')||path==='platform-admin')import('./mambu-admin.css').catch(()=>{});},[hostname,path]);
   if (hostname === 'mambu.dasmarket.co.ke') {
     if (path === 'login') return <Deferred><AuthPage initial="login" /></Deferred>;
     if (path === 'reset-password') return <Deferred><AuthPage initial="reset" /></Deferred>;
     return <Deferred><PlatformAdminDashboard /></Deferred>;
   }
-  if (isAdminCustomHost) { if (path === 'login') return <Deferred><AuthPage initial="login" /></Deferred>; if (path === 'reset-password') return <Deferred><AuthPage initial="reset" /></Deferred>; return <Deferred><SellerDashboard initialOrderNumber={path.startsWith('dashboard/')&&!path.startsWith('dashboard/subscriptions/')&&!path.startsWith('dashboard/reports/')?decodeURIComponent(path.slice('dashboard/'.length)):''} initialSubscriptionCheckoutPlanId={path.startsWith('dashboard/subscriptions/checkout/')?decodeURIComponent(path.slice('dashboard/subscriptions/checkout/'.length)):''} /></Deferred>; }
+  if (isAdminCustomHost) { if (path === 'login') return <Deferred><AuthPage initial="login" /></Deferred>; if (path === 'reset-password') return <Deferred><AuthPage initial="reset" /></Deferred>; return <SellerDashboard initialOrderNumber={path.startsWith('dashboard/')&&!path.startsWith('dashboard/subscriptions/')&&!path.startsWith('dashboard/reports/')?decodeURIComponent(path.slice('dashboard/'.length)):''} initialSubscriptionCheckoutPlanId={path.startsWith('dashboard/subscriptions/checkout/')?decodeURIComponent(path.slice('dashboard/subscriptions/checkout/'.length)):''} />; }
   if (tenantSubdomain) return <MerchantStore slug={tenantSubdomain} initialBuyerPage={path||'store'} />;
   if (isCustomDomain) return <MerchantStore slug="" initialBuyerPage={path||'store'} />;
-  if (isPlatformHost && isPlatformSeoPath(path)) return <Deferred><PlatformSeoPage slug={path} /></Deferred>;
+  if (isPlatformHost && isPlatformSeoPath(path)) return <PlatformSeoPage slug={path} />;
   if (!path) return <LandingPage />;
   if (path === 'signup') return <Deferred><AuthPage initial="signup" /></Deferred>;
   if (path === 'login') return <Deferred><AuthPage initial="login" /></Deferred>;
   if (path === 'reset-password') return <Deferred><AuthPage initial="reset" /></Deferred>;
-  if (path === 'dashboard' || path.startsWith('dashboard/')) { const dashboardSubpath=path.slice('dashboard/'.length); const isReportRoute=dashboardSubpath==='reports'||dashboardSubpath.startsWith('reports/'); const isSubscriptionRoute=dashboardSubpath.startsWith('subscriptions/'); return <Deferred><SellerDashboard initialOrderNumber={path.startsWith('dashboard/')&&!isReportRoute&&!isSubscriptionRoute?decodeURIComponent(dashboardSubpath):''} initialSubscriptionCheckoutPlanId={dashboardSubpath.startsWith('subscriptions/checkout/')?decodeURIComponent(dashboardSubpath.slice('subscriptions/checkout/'.length)):''} /></Deferred>; }
-  if (path === 'platform-admin' || path.startsWith('platform-admin/')) return <Deferred><PlatformAdminDashboard /></Deferred>;
+  if (path === 'dashboard' || path.startsWith('dashboard/')) { const dashboardSubpath=path.slice('dashboard/'.length); const isReportRoute=dashboardSubpath==='reports'||dashboardSubpath.startsWith('reports/'); const isSubscriptionRoute=dashboardSubpath.startsWith('subscriptions/'); return <SellerDashboard initialOrderNumber={path.startsWith('dashboard/')&&!isReportRoute&&!isSubscriptionRoute?decodeURIComponent(dashboardSubpath):''} initialSubscriptionCheckoutPlanId={dashboardSubpath.startsWith('subscriptions/checkout/')?decodeURIComponent(dashboardSubpath.slice('subscriptions/checkout/'.length)):''} />; }
+  if (path === 'platform-admin' || path.startsWith('platform-admin/')) return <PlatformAdmin />;
   const storePathParts=path.split('/');
   return <MerchantStore slug={storePathParts[0]} initialBuyerPage={storePathParts.slice(1).join('/')||'store'} />;
 }

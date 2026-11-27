@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Heart, ShieldCheck, Store } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ChevronDown, Heart, ShieldCheck, ShoppingCart, Store } from 'lucide-react';
 
 export type LiveProduct = {
   id: string;
   name: string;
   description: string;
   category: string;
-  parentCategory?: string;
   type: string;
   price: number;
   currency: string;
@@ -19,9 +18,6 @@ export type LiveProduct = {
   imageUrl?: string;
   ratingAverage?: number;
   ratingCount?: number;
-  catalogRating?: number;
-  catalogRatingCount?: number;
-  condition?: string;
 };
 
 export function fallbackProductImage(label: string) {
@@ -38,9 +34,26 @@ export function fallbackProductImage(label: string) {
   return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
 }
 
+async function readJsonSafe(response: Response) {
+  const raw = await response.text();
+  let data: any = {};
+  try {
+    data = raw ? JSON.parse(raw) : {};
+  } catch {
+    data = {
+      error: response.ok
+        ? 'The server returned an unreadable response.'
+        : `Server error (HTTP ${response.status}). Please retry and share the time if it continues.`,
+    };
+  }
+  if (!response.ok && !data.error) data.error = `Request failed (HTTP ${response.status}).`;
+  return data;
+}
+
 export function StorefrontProductDetail({
   product,
   products,
+  slug,
   shopName,
   cartQuantity,
   onBack,
@@ -48,6 +61,8 @@ export function StorefrontProductDetail({
   onOpen,
   saved,
   onToggleSaved,
+  totalCartUnits = 0,
+  onGoToCart,
 }: {
   product: LiveProduct;
   products: LiveProduct[];
@@ -59,8 +74,18 @@ export function StorefrontProductDetail({
   onOpen: (p: LiveProduct) => void;
   saved: boolean;
   onToggleSaved: () => void;
+  totalCartUnits?: number;
+  onGoToCart?: () => void;
 }) {
   const [imageIndex, setImageIndex] = useState(0);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [summary, setSummary] = useState({ average: 0, count: 0 });
+  const [token, setToken] = useState('');
+  const [reviewOrderId, setReviewOrderId] = useState('');
+  const [rating, setRating] = useState(5);
+  const [body, setBody] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
   const [addedFeedback, setAddedFeedback] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
@@ -80,8 +105,90 @@ export function StorefrontProductDetail({
   const relatedTrackRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    let live = true;
     setImageIndex(0);
-  }, [product.id]);
+    fetch(
+      '/api/buyer?action=product-reviews&slug=' +
+        encodeURIComponent(slug) +
+        '&productId=' +
+        encodeURIComponent(product.id),
+      { cache: 'no-store' },
+    )
+      .then(async (r) => {
+        const d = await readJsonSafe(r);
+        if (!r.ok) throw Error(d.error);
+        if (live) {
+          setReviews(d.reviews || []);
+          setSummary(d.summary || { average: 0, count: 0 });
+        }
+      })
+      .catch(() => {});
+
+    try {
+      const savedOrders = JSON.parse(localStorage.getItem('dasnet-storefront-orders-' + slug) || '[]');
+      const found = Array.isArray(savedOrders)
+        ? savedOrders.find((o: any) => (o.lines || []).some((line: any) => line.product?.id === product.id) && o.chatToken)
+        : null;
+      if (live) setToken(found?.chatToken || '');
+    } catch {}
+
+    return () => {
+      live = false;
+    };
+  }, [slug, product.id]);
+
+  useEffect(() => {
+    let live = true;
+    fetch('/api/buyer?action=customer-orders&slug=' + encodeURIComponent(slug), {
+      credentials: 'same-origin',
+      cache: 'no-store',
+    })
+      .then(async (r) => {
+        if (!r.ok) return null;
+        const d = await r.json();
+        const match = (d.orders || []).find(
+          (o: any) =>
+            o.paymentStatus === 'succeeded' &&
+            String(o.deliveryStatus || '').toLowerCase() === 'delivered' &&
+            (o.items || []).some((item: any) => item.id === product.id),
+        );
+        if (live) setReviewOrderId(match?.id || '');
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [slug, product.id]);
+
+  async function submitReview(e: any) {
+    e.preventDefault();
+    if ((!token && !reviewOrderId) || body.trim().length < 8 || busy) return;
+    setBusy(true);
+    setMessage('');
+    try {
+      const r = await fetch('/api/buyer?action=product-reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug,
+          productId: product.id,
+          ...(token ? { chatToken: token } : { orderId: reviewOrderId }),
+          rating,
+          body: body.trim(),
+        }),
+      });
+      const d = await readJsonSafe(r);
+      if (!r.ok) throw Error(d.error || 'Review submission failed');
+      setReviews(d.reviews || []);
+      setSummary(d.summary || { average: 0, count: 0 });
+      setBody('');
+      setMessage('Your verified-purchase review has been published.');
+    } catch (err: any) {
+      setMessage(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   function handleAddToCart() {
     onAdd(quantity);
@@ -104,9 +211,9 @@ export function StorefrontProductDetail({
             <ArrowLeft size={15} /> Back to shop
           </button>
           <span aria-hidden="true">/</span>
-          <span>{product.category || 'Products'}</span>
-          <span aria-hidden="true">/</span>
-          <strong>{product.name}</strong>
+          <span className="sf-crumb-cat">{product.category || 'Products'}</span>
+          <span className="sf-crumb-sep" aria-hidden="true">/</span>
+          <strong className="sf-crumb-product">{product.name}</strong>
         </nav>
 
         <div className="sf-pdp-layout">
@@ -157,6 +264,19 @@ export function StorefrontProductDetail({
                   <span className="sf-pdp-counter">
                     {imageIndex + 1} / {images.length}
                   </span>
+                  <div className="sf-pdp-dots" role="tablist" aria-label="Product images">
+                    {images.map((src, i) => (
+                      <button
+                        type="button"
+                        key={src + '-dot-' + i}
+                        role="tab"
+                        aria-selected={imageIndex === i}
+                        aria-label={`Image ${i + 1}`}
+                        className={imageIndex === i ? 'active' : ''}
+                        onClick={() => setImageIndex(i)}
+                      />
+                    ))}
+                  </div>
                 </>
               )}
             </div>
@@ -174,8 +294,6 @@ export function StorefrontProductDetail({
                     <img
                       src={src}
                       alt={`${product.name} view ${i + 1}`}
-                      loading="lazy"
-                      decoding="async"
                       onError={(e) => {
                         e.currentTarget.onerror = null;
                         e.currentTarget.src = fallbackProductImage(product.name);
@@ -197,15 +315,11 @@ export function StorefrontProductDetail({
               </div>
               <h1>{product.name}</h1>
               <div className="sf-pdp-submeta">
-                {product.catalogRating && product.catalogRating > 0 ? (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                    <Stars value={product.catalogRating} />
-                    <strong>{product.catalogRating.toFixed(1)}</strong>
-                    <span>Catalogue source rating{product.catalogRatingCount ? ` · ${product.catalogRatingCount} source reviews` : ''}</span>
-                  </span>
-                ) : (
-                  <span>No ratings yet</span>
-                )}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <Stars value={summary.average} />
+                  <strong>{summary.average ? summary.average.toFixed(1) : 'New'}</strong>
+                  <span>({summary.count} verified ratings)</span>
+                </span>
                 <span aria-hidden="true">·</span>
                 <span className="sf-mono">SKU {product.sku || product.id.slice(0, 8).toUpperCase()}</span>
               </div>
@@ -286,46 +400,61 @@ export function StorefrontProductDetail({
               </div>
             </section>
 
-            <section className="sf-pdp-block">
-              <h2>Description</h2>
-              <p>{product.description || 'The seller has not added a product description yet.'}</p>
-            </section>
+            <details className="sf-pdp-accordion" open>
+              <summary>
+                <span>Description</span>
+                <ChevronDown size={16} className="sf-pdp-chevron" />
+              </summary>
+              <div className="sf-pdp-accordion-body">
+                <p>{product.description || 'The seller has not added a product description yet.'}</p>
+              </div>
+            </details>
 
-            <section className="sf-pdp-block">
-              <h2>Specifications</h2>
-              <div className="sf-specs-grid">
-                <div>
-                  <span>Condition</span>
-                  <strong>{product.condition || 'Not specified'}</strong>
-                </div>
-                <div>
-                  <span>Category</span>
-                  <strong>{product.category || 'Product'}</strong>
-                </div>
-                <div>
-                  <span>SKU</span>
-                  <strong className="sf-mono">{product.sku || product.id.slice(0, 8).toUpperCase()}</strong>
-                </div>
-                <div>
-                  <span>Availability</span>
-                  <strong>
-                    {product.stockQuantity === 0
-                      ? 'Out of stock'
-                      : product.stockQuantity === null
-                      ? 'Available'
-                      : `${product.stockQuantity} in stock`}
-                  </strong>
+            <details className="sf-pdp-accordion">
+              <summary>
+                <span>Specifications</span>
+                <ChevronDown size={16} className="sf-pdp-chevron" />
+              </summary>
+              <div className="sf-pdp-accordion-body">
+                <div className="sf-specs-grid">
+                  <div>
+                    <span>Condition</span>
+                    <strong>{(product as any).condition || 'Not specified'}</strong>
+                  </div>
+                  <div>
+                    <span>Category</span>
+                    <strong>{product.category || 'Product'}</strong>
+                  </div>
+                  <div>
+                    <span>SKU</span>
+                    <strong className="sf-mono">{product.sku || product.id.slice(0, 8).toUpperCase()}</strong>
+                  </div>
+                  <div>
+                    <span>Availability</span>
+                    <strong>
+                      {product.stockQuantity === 0
+                        ? 'Out of stock'
+                        : product.stockQuantity === null
+                        ? 'Available'
+                        : `${product.stockQuantity} in stock`}
+                    </strong>
+                  </div>
                 </div>
               </div>
-            </section>
+            </details>
 
-            <section className="sf-pdp-block">
-              <h2>Delivery &amp; Returns</h2>
-              <p>
-                Delivery arrangements and charges are confirmed with {shopName || 'the shop'} before payment. Review the
-                shop's delivery and return policies before placing your order.
-              </p>
-            </section>
+            <details className="sf-pdp-accordion">
+              <summary>
+                <span>Delivery &amp; Returns</span>
+                <ChevronDown size={16} className="sf-pdp-chevron" />
+              </summary>
+              <div className="sf-pdp-accordion-body">
+                <p>
+                  Delivery arrangements and charges are confirmed with {shopName || 'the shop'} before payment. Review
+                  the shop's delivery and return policies before placing your order.
+                </p>
+              </div>
+            </details>
 
             <div className="sf-pdp-seller-row">
               <span className="sf-assurance-icon">
@@ -350,7 +479,81 @@ export function StorefrontProductDetail({
           </ul>
         </section>
 
-        {/* Customer reviews are hidden on the storefront until genuine reviews are available. */}
+        <section className="sf-pdp-reviews">
+          <div className="sf-pdp-reviews-head">
+            <div>
+              <span className="sf-kicker">Product rating &amp; reviews</span>
+              <h2 style={{ marginTop: 4 }}>Customer reviews</h2>
+            </div>
+            <div className="sf-pdp-reviews-score">
+              <Stars value={summary.average} />
+              <strong>{summary.average ? `${summary.average.toFixed(1)}/5` : 'No ratings yet'}</strong>
+              <span style={{ color: 'var(--sf-muted)', fontSize: 13 }}>({summary.count} verified ratings)</span>
+            </div>
+          </div>
+
+          {reviews.length ? (
+            <div className="sf-review-grid">
+              {reviews.map((r: any) => (
+                <article className="sf-review-card" key={r.id}>
+                  <div className="sf-review-card-top">
+                    <strong>{r.customerName || 'Verified buyer'}</strong>
+                    <small>Verified purchase</small>
+                  </div>
+                  <Stars value={r.rating} />
+                  <p>{r.body}</p>
+                  <small>{new Date(r.createdAt).toLocaleDateString('en-KE')}</small>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p style={{ color: 'var(--sf-muted)', fontSize: 14 }}>No buyer reviews yet.</p>
+          )}
+
+          {token || reviewOrderId ? (
+            <form className="sf-review-form" onSubmit={submitReview}>
+              <h3>Share your experience</h3>
+              <label className="sf-field">
+                Rating
+                <select value={rating} onChange={(e) => setRating(Number(e.target.value))}>
+                  <option value={5}>★★★★★ Excellent</option>
+                  <option value={4}>★★★★ Good</option>
+                  <option value={3}>★★★ Average</option>
+                  <option value={2}>★★ Poor</option>
+                  <option value={1}>★ Very poor</option>
+                </select>
+              </label>
+              <label className="sf-field">
+                Your review
+                <textarea
+                  required
+                  minLength={8}
+                  maxLength={1200}
+                  rows={4}
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  placeholder="What should other buyers know?"
+                />
+              </label>
+              <button
+                type="submit"
+                className="sf-btn sf-btn-primary"
+                disabled={busy || body.trim().length < 8}
+              >
+                {busy ? 'Submitting…' : 'Submit verified review'}
+              </button>
+              {message && (
+                <p className="sf-alert success" role="status">
+                  {message}
+                </p>
+              )}
+            </form>
+          ) : (
+            <p style={{ color: 'var(--sf-muted)', fontSize: 13.5, marginTop: 12 }}>
+              Only buyers with a completed, paid order for this product can submit a verified review.
+            </p>
+          )}
+        </section>
 
         {related.length > 0 && (
           <section className="sf-section">
@@ -363,7 +566,7 @@ export function StorefrontProductDetail({
             </div>
             <div className="sf-product-grid" ref={relatedTrackRef}>
               {related.map((p) => (
-                <article className="sf-card" key={p.id}>
+                <article className={`sf-card${p.stockQuantity === 0 ? ' is-out' : ''}`} key={p.id}>
                   <button
                     type="button"
                     className="sf-card-open"
@@ -380,6 +583,7 @@ export function StorefrontProductDetail({
                           e.currentTarget.src = fallbackProductImage(p.name);
                         }}
                       />
+                      {p.stockQuantity === 0 && <span className="sf-card-tag is-out">Out of stock</span>}
                     </span>
                     <div className="sf-card-body">
                       <span className="sf-card-cat">{p.category || 'Product'}</span>
@@ -396,7 +600,7 @@ export function StorefrontProductDetail({
                       </div>
                     </div>
                   </button>
-                  <div className="sf-card-foot">
+                  <div className={`sf-card-foot${p.stockQuantity === 0 ? ' is-out' : ''}`}>
                     <button type="button" className="sf-card-add" onClick={() => onOpen(p)}>
                       View product <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />
                     </button>
@@ -406,6 +610,34 @@ export function StorefrontProductDetail({
             </div>
           </section>
         )}
+      </div>
+
+      <div className="sf-pdp-sticky-bar">
+        <div className="sf-pdp-sticky-price">
+          <small>{maxAdd === 0 ? 'Availability' : quantity > 1 ? `Total (${quantity})` : 'Unit price'}</small>
+          <strong>KES {(product.price * quantity).toLocaleString('en-KE')}</strong>
+        </div>
+        <div className="sf-pdp-sticky-actions">
+          {totalCartUnits > 0 && onGoToCart && (
+            <button
+              type="button"
+              className="sf-btn sf-btn-secondary sf-pdp-sticky-cart"
+              onClick={onGoToCart}
+              aria-label={`Go to cart (${totalCartUnits} items)`}
+            >
+              <ShoppingCart size={16} />
+              <span>{totalCartUnits}</span>
+            </button>
+          )}
+          <button
+            type="button"
+            className="sf-btn sf-btn-accent sf-pdp-sticky-cta"
+            disabled={maxAdd === 0}
+            onClick={handleAddToCart}
+          >
+            {maxAdd === 0 ? 'Out of stock' : addedFeedback ? 'Added ✓' : 'Add to cart'}
+          </button>
+        </div>
       </div>
     </section>
   );
