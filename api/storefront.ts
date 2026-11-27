@@ -70,6 +70,7 @@ export default async function handler(req:any,res:any){
    ];
    const base={theme_color:'#0f52ba',background_color:'#f8fafc',display:'standalone',icons};
    res.setHeader('Cache-Control','no-store');
+   res.setHeader('Content-Type','application/manifest+json; charset=utf-8');
    if(kind==='seller'){
     const start=host.startsWith('adm.')?'/':'/dashboard';
     return res.status(200).json({...base,id:start,name:'DASMARKET Seller Dashboard',short_name:'DAS Seller',description:'Manage your shop, products and orders.',start_url:start,scope:start});
