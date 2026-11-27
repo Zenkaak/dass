@@ -1234,7 +1234,7 @@ export default function App() {
   } else if (isAdminCustomHost) {
     // The seller app's root is an authentication entry point, never the public
     // DASMARKET marketing page. Successful login continues to /dashboard.
-    if (!path || path === 'login') viewContent = <Deferred><AuthPage initial="login" /></Deferred>;
+    if (!path || path === 'login' || path === 'auth') viewContent = <Deferred><AuthPage initial="login" /></Deferred>;
     else if (path === 'reset-password') viewContent = <Deferred><AuthPage initial="reset" /></Deferred>;
     else viewContent = <SellerDashboard initialOrderNumber={path.startsWith('dashboard/')&&!path.startsWith('dashboard/subscriptions/')&&!path.startsWith('dashboard/reports/')?decodeURIComponent(path.slice('dashboard/'.length)):''} initialSubscriptionCheckoutPlanId={path.startsWith('dashboard/subscriptions/checkout/')?decodeURIComponent(path.slice('dashboard/subscriptions/checkout/'.length)):''} />;
   } else if (tenantSubdomain) {
