@@ -61,6 +61,39 @@ export default async function handler(req:any,res:any){
   const sql=db();
   let slug=String(req.query?.slug||'').toLowerCase().trim();
   const host=String(req.headers['x-forwarded-host']||req.headers.host||'').split(',')[0].trim().split(':')[0].toLowerCase();
+  if(String(req.query?.manifest||'')==='1'){
+   const kind=String(req.query?.type||'store');
+   const icons=[
+    {src:'/pwa-192x192.png',sizes:'192x192',type:'image/png',purpose:'any'},
+    {src:'/pwa-512x512.png',sizes:'512x512',type:'image/png',purpose:'any'},
+    {src:'/pwa-maskable-512x512.png',sizes:'512x512',type:'image/png',purpose:'maskable'}
+   ];
+   const base={theme_color:'#0f52ba',background_color:'#f8fafc',display:'standalone',icons};
+   res.setHeader('Cache-Control','no-store');
+   if(kind==='seller'){
+    const start=host.startsWith('adm.')?'/':'/dashboard';
+    return res.status(200).json({...base,id:start,name:'DASMARKET Seller Dashboard',short_name:'DAS Seller',description:'Manage your shop, products and orders.',start_url:start,scope:start});
+   }
+   if(kind!=='store'){
+    return res.status(200).json({...base,id:'/',name:'DASMARKET Kenya',short_name:'DASMARKET',description:'Create and manage your online shop with DASMARKET.',start_url:'/',scope:'/'});
+   }
+   let storeSlug=String(req.query?.slug||'').toLowerCase().trim();
+   const tenantSub=host.endsWith('.dasmarket.co.ke')&&!['www','app','mambu'].includes(host.split('.')[0])?host.split('.')[0]:'';
+   const custom=Boolean(host&&host!=='dasmarket.co.ke'&&host!=='www.dasmarket.co.ke'&&!host.endsWith('.dasmarket.co.ke')&&!host.endsWith('.vercel.app')&&!host.endsWith('.run.app')&&!host.endsWith('.googleusercontent.com')&&!host.endsWith('.aistudio.google.com')&&host!=='localhost'&&host!=='127.0.0.1');
+   let manifestRows:any[]=[];
+   if(custom){
+    manifestRows=await sql`SELECT t.name,t.slug,s.description,s.theme FROM public.domains d JOIN public.tenants t ON t.id=d.tenant_id LEFT JOIN public.sites s ON s.tenant_id=t.id WHERE lower(d.hostname)=${host} AND (d.verified_at IS NOT NULL OR d.verification_data->>'storefrontVerified'='true') AND COALESCE(d.status,'pending') IN ('active','pending') AND t.status IN ('trial','active') LIMIT 1`;
+   }else{
+    storeSlug=tenantSub||storeSlug;
+    if(storeSlug)manifestRows=await sql`SELECT t.name,t.slug,s.description,s.theme FROM public.tenants t LEFT JOIN public.sites s ON s.tenant_id=t.id WHERE lower(t.slug)=${storeSlug} AND t.status IN ('trial','active') LIMIT 1`;
+   }
+   const row=manifestRows[0];
+   const name=String(row?.name|| (storeSlug?storeSlug.replace(/[-_]+/g,' ').replace(/\\b\\w/g,(v:string)=>v.toUpperCase()):'Online Shop')).trim().slice(0,80);
+   const actualSlug=String(row?.slug||storeSlug||'').trim();
+   const start=custom||tenantSub||!actualSlug?'/':'/'+encodeURIComponent(actualSlug);
+   const theme=/^#[0-9a-f]{6}$/i.test(String(row?.theme||''))?String(row.theme):'#ea580c';
+   return res.status(200).json({...base,id:start,name,short_name:name.slice(0,12).trim()||'Shop',description:String(row?.description||'Browse products, place orders and shop online.').slice(0,200),theme_color:theme,start_url:start,scope:start});
+  }
   const customHost=Boolean(host&&host!=='dasmarket.co.ke'&&host!=='www.dasmarket.co.ke'&&!host.endsWith('.dasmarket.co.ke')&&!host.endsWith('.vercel.app')&&!host.endsWith('.run.app')&&!host.endsWith('.googleusercontent.com')&&!host.endsWith('.aistudio.google.com')&&host!=='localhost'&&host!=='127.0.0.1');
   if(customHost){
    const mapped=await sql`SELECT t.slug FROM public.domains d JOIN public.tenants t ON t.id=d.tenant_id WHERE lower(d.hostname)=${host} AND (d.verified_at IS NOT NULL OR d.verification_data->>'storefrontVerified'='true') AND COALESCE(d.status,'pending') IN ('active','pending') AND t.status IN ('trial','active') LIMIT 1`;
