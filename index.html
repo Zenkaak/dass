@@ -19,7 +19,8 @@
         var reserved = ['', 'login','signup','reset-password','dashboard','platform-admin','create-online-store','ecommerce-platform','sell-online-with-mpesa','custom-domain-online-store','online-store-management'];
         var seller = host.startsWith('adm.') || first === 'dashboard';
         var storefront = !seller && (tenantSub || !platform || (first && reserved.indexOf(first) === -1));
-        var storeSlug = first && reserved.indexOf(first) === -1 ? '&slug=' + encodeURIComponent(first) : '';\n        var href = seller ? '/api/storefront?manifest=1&type=seller' : storefront ? '/api/storefront?manifest=1&type=store' + storeSlug : '/api/storefront?manifest=1&type=platform';
+        var storeSlug = first && reserved.indexOf(first) === -1 ? '&slug=' + encodeURIComponent(first) : '';
+        var href = seller ? '/api/storefront?manifest=1&type=seller' : storefront ? '/api/storefront?manifest=1&type=store' + storeSlug : '/api/storefront?manifest=1&type=platform';
         var link = document.createElement('link');
         link.rel = 'manifest';
         link.href = href;
