@@ -392,20 +392,82 @@ function ProductThumb({ product }: { product: StoreProduct }) {
 
 function CheckoutTopBar({
   title,
+  stepLabel,
   onBack,
 }: {
   title: string;
+  stepLabel?: string;
   onBack: () => void;
 }) {
   return (
     <header className="sf-checkout-topbar">
       <div className="sf-checkout-topbar-inner">
-        <button type="button" className="sf-checkout-topbar-back" onClick={onBack} aria-label="Go back">
-          <ArrowLeft size={20} strokeWidth={2} />
-        </button>
-        <h1>{title}</h1>
+        <div className="sf-checkout-topbar-left">
+          <button type="button" className="sf-checkout-topbar-back" onClick={onBack} aria-label="Go back">
+            <ArrowLeft size={18} strokeWidth={2.2} />
+          </button>
+          <h1>{title}</h1>
+        </div>
+        {stepLabel && <span className="sf-checkout-topbar-step">{stepLabel}</span>}
       </div>
     </header>
+  );
+}
+
+function CheckoutSteps({
+  currentStep,
+  onSelectStep,
+}: {
+  currentStep: 1 | 2 | 3;
+  onSelectStep?: (step: 1 | 2 | 3) => void;
+}) {
+  const steps: Array<{ step: 1 | 2 | 3; title: string; subtitle: string }> = [
+    { step: 1, title: 'Delivery', subtitle: 'Address & contact' },
+    { step: 2, title: 'Payment', subtitle: 'Choose method' },
+    { step: 3, title: 'Review', subtitle: 'Confirm order' },
+  ];
+
+  return (
+    <nav className="sf-checkout-progress" aria-label="Checkout steps">
+      {steps.map(({ step, title, subtitle }) => {
+        const isComplete = step < currentStep;
+        const isCurrent = step === currentStep;
+        const statusClass = isCurrent ? 'current' : isComplete ? 'complete' : '';
+        const clickable = isComplete && Boolean(onSelectStep);
+        const content = (
+          <>
+            <span aria-hidden="true">{isComplete ? <Check size={14} strokeWidth={2.5} /> : step}</span>
+            <div>
+              <strong>{title}</strong>
+              <small>{subtitle}</small>
+            </div>
+          </>
+        );
+
+        if (clickable) {
+          return (
+            <button
+              key={step}
+              type="button"
+              className={`sf-progress-step ${statusClass} is-clickable`}
+              onClick={() => onSelectStep?.(step)}
+            >
+              {content}
+            </button>
+          );
+        }
+
+        return (
+          <div
+            key={step}
+            className={`sf-progress-step ${statusClass}`}
+            aria-current={isCurrent ? 'step' : undefined}
+          >
+            {content}
+          </div>
+        );
+      })}
+    </nav>
   );
 }
 
@@ -1966,10 +2028,19 @@ export function StorefrontFlow({
         ? 'Place your order'
         : `Cart (${rawCartCount})`;
     const isCheckout = currentStep.startsWith('checkout/');
+    const checkoutStepNum: 1 | 2 | 3 =
+      currentStep === 'checkout/payment' ? 2 : currentStep === 'checkout/review' ? 3 : 1;
     return (
       <>
-        {isCheckout && <CheckoutTopBar title={stepLabel} onBack={() => onNavigate('cart')} />}
+        {isCheckout && (
+          <CheckoutTopBar
+            title={stepLabel}
+            stepLabel={`Step ${checkoutStepNum} of 3`}
+            onBack={() => onNavigate('cart')}
+          />
+        )}
         <section className="sf-flow sf-flow-compact">
+          {isCheckout && <CheckoutSteps currentStep={checkoutStepNum} />}
           {!isCheckout && (
             <FlowHeading
               title={stepLabel}
@@ -2266,6 +2337,7 @@ export function StorefrontFlow({
       <>
         <CheckoutTopBar
           title="Delivery details"
+          stepLabel="Step 1 of 3"
           onBack={() => {
             const backTarget = checkoutReturnToSummary ? 'checkout/review' : 'cart';
             setCheckoutReturnToSummary(false);
@@ -2273,6 +2345,7 @@ export function StorefrontFlow({
           }}
         />
         <section className="sf-flow sf-flow-compact sf-checkout-page-flow">
+          <CheckoutSteps currentStep={1} />
           {renderOfflineBanner()}
 
           <div className="sf-choice-grid" role="tablist" aria-label="Delivery method">
@@ -2742,6 +2815,7 @@ export function StorefrontFlow({
       <>
         <CheckoutTopBar
           title="Select payment"
+          stepLabel="Step 2 of 3"
           onBack={() => {
             const backTarget = checkoutReturnToSummary ? 'checkout/review' : 'checkout/delivery';
             setCheckoutReturnToSummary(false);
@@ -2749,6 +2823,15 @@ export function StorefrontFlow({
           }}
         />
         <section className="sf-flow sf-flow-compact sf-place-order-flow sf-select-payment-flow">
+          <CheckoutSteps
+            currentStep={2}
+            onSelectStep={(step) => {
+              if (step === 1) {
+                setCheckoutReturnToSummary(false);
+                onNavigate('checkout/delivery');
+              }
+            }}
+          />
           {renderOfflineBanner()}
 
           <div className="sf-two-col sf-review-layout">
@@ -3007,12 +3090,20 @@ export function StorefrontFlow({
       <>
         <CheckoutTopBar
           title="Place your order"
+          stepLabel="Step 3 of 3"
           onBack={() => {
             setCheckoutReturnToSummary(false);
-            onNavigate('cart');
+            onNavigate('checkout/payment');
           }}
         />
         <section className="sf-flow sf-flow-compact sf-place-order-flow">
+          <CheckoutSteps
+            currentStep={3}
+            onSelectStep={(step) => {
+              setCheckoutReturnToSummary(true);
+              onNavigate(step === 1 ? 'checkout/delivery' : 'checkout/payment');
+            }}
+          />
           <p className="sf-checkout-terms-strip">
             By proceeding, you are automatically accepting the{' '}
             <button
