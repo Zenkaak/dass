@@ -8,6 +8,7 @@
     <link rel="dns-prefetch" href="https://ke.jumia.is" />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&family=Manrope:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="manifest" href="/api/storefront?manifest=1&amp;type=store" />
     <script>
       (function () {
         var host = location.hostname.toLowerCase();
@@ -21,10 +22,13 @@
         var storefront = !seller && (tenantSub || !platform || (first && reserved.indexOf(first) === -1));
         var storeSlug = first && reserved.indexOf(first) === -1 ? '&slug=' + encodeURIComponent(first) : '';
         var href = seller ? '/api/storefront?manifest=1&type=seller' : storefront ? '/api/storefront?manifest=1&type=store' + storeSlug : '/api/storefront?manifest=1&type=platform';
-        var link = document.createElement('link');
-        link.rel = 'manifest';
+        var link = document.querySelector('link[rel="manifest"]');
+        if (!link) {
+          link = document.createElement('link');
+          link.rel = 'manifest';
+          document.head.appendChild(link);
+        }
         link.href = href;
-        document.head.appendChild(link);
         if (storefront) {
           fetch(href, { cache: 'no-store' }).then(function (response) { return response.ok ? response.json() : null; }).then(function (manifest) {
             if (!manifest) return;
