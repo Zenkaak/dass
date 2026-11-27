@@ -1225,6 +1225,7 @@ export default function App() {
   // Warm the storefront UI chunks while the shop data request is in flight.
   useEffect(()=>{if(tenantSubdomain){import('./StorefrontFlow').catch(()=>{});import('./BuyerAuthPage').catch(()=>{});}},[tenantSubdomain]);
   useEffect(()=>{if(hostname==='mambu.dasmarket.co.ke'||hostname.startsWith('adm.')||path==='dashboard'||path.startsWith('dashboard/')||path==='platform-admin')import('./mambu-admin.css').catch(()=>{});},[hostname,path]);
+ useEffect(()=>{if(path==='dashboard'||path.startsWith('dashboard/'))import('./styles.css').catch(()=>{});},[path]);
   let viewContent: any = null;
   if (hostname === 'mambu.dasmarket.co.ke') {
     if (path === 'login') viewContent = <Deferred><AuthPage initial="login" /></Deferred>;
