@@ -302,3 +302,56 @@
   color: #b45309;
   font: 500 12px/1.4 'DM Sans', system-ui, sans-serif;
 }
+
+
+.dm-pwa-btn--floating {
+  position: fixed;
+  right: 18px;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  z-index: 1800;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #0f52ba;
+  color: #fff;
+  font-size: 13px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, .22);
+}
+.dm-pwa-btn--floating:hover { background: #0b438f; }
+.dm-pwa-float-dismiss {
+  position: fixed;
+  right: 10px;
+  bottom: calc(51px + env(safe-area-inset-bottom, 0px));
+  z-index: 1801;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 50%;
+  background: #fff;
+  color: #475569;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, .16);
+  cursor: pointer;
+}
+.dm-pwa-btn--floating + .dm-pwa-float-dismiss { right: 10px; }
+.dm-pwa-btn--floating ~ .dm-pwa-install-status {
+  position: fixed;
+  right: 18px;
+  bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+  z-index: 1800;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  background: #fffbeb;
+  color: #92400e;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, .12);
+}
+@media (max-width: 640px) {
+  .dm-pwa-btn--floating { right: 14px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+  .dm-pwa-float-dismiss { right: 7px; bottom: calc(117px + env(safe-area-inset-bottom, 0px)); }
+  .dm-pwa-btn--floating ~ .dm-pwa-install-status { right: 14px; bottom: calc(136px + env(safe-area-inset-bottom, 0px)); max-width: calc(100vw - 28px); }
+}
