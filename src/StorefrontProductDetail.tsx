@@ -50,10 +50,19 @@ async function readJsonSafe(response: Response) {
   return data;
 }
 
-function renderFormattedDescription(rawDescription?: string) {
+function trimClause(text: string, maxLen = 115) {
+  const clean = text.replace(/\s+/g, ' ').trim();
+  if (clean.length <= maxLen) return clean;
+  const slice = clean.slice(0, maxLen);
+  const lastSpace = slice.lastIndexOf(' ');
+  const cut = lastSpace > Math.floor(maxLen * 0.55) ? slice.slice(0, lastSpace) : slice;
+  return cut.replace(/[.,;:\-–—]+$/, '') + '…';
+}
+
+function parseDescriptionSegments(rawDescription?: string) {
   const clean = String(rawDescription || '').replace(/\r\n/g, '\n').trim();
   if (!clean) {
-    return <p>The seller has not added a product description yet.</p>;
+    return { bullets: [] as string[], kvRows: [] as { label: string; value: string }[] };
   }
 
   let segments = clean
@@ -90,19 +99,49 @@ function renderFormattedDescription(rawDescription?: string) {
     }
   }
 
+  return { bullets, kvRows };
+}
+
+function ProductDescription({ rawDescription, productId }: { rawDescription?: string; productId: string }) {
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    setExpanded(false);
+  }, [productId]);
+
+  const { bullets, kvRows } = parseDescriptionSegments(rawDescription);
+
+  if (!bullets.length && !kvRows.length) {
+    return <p>No additional description provided.</p>;
+  }
+
+  const maxBullets = kvRows.length > 0 ? 2 : 3;
+  const maxRows = bullets.length > 0 ? 3 : 4;
+
+  const visibleBullets = expanded ? bullets : bullets.slice(0, maxBullets).map((b) => trimClause(b, 115));
+  const visibleRows = expanded
+    ? kvRows
+    : kvRows.slice(0, maxRows).map((r) => ({ label: r.label, value: trimClause(r.value, 90) }));
+
+  const isTruncated =
+    bullets.length > maxBullets ||
+    kvRows.length > maxRows ||
+    bullets.slice(0, maxBullets).some((b) => b.replace(/\s+/g, ' ').trim().length > 115) ||
+    kvRows.slice(0, maxRows).some((r) => r.value.replace(/\s+/g, ' ').trim().length > 90);
+
   return (
     <div className="sf-desc-structured">
-      {bullets.length > 0 && (
+      {visibleBullets.length > 0 && (
         <ul className="sf-desc-bullets">
-          {bullets.map((item, idx) => (
+          {visibleBullets.map((item, idx) => (
             <li key={idx}>{item}</li>
           ))}
         </ul>
       )}
-      {kvRows.length > 0 && (
+      {visibleRows.length > 0 && (
         <table className="sf-desc-table">
           <tbody>
-            {kvRows.map((row, idx) => (
+            {visibleRows.map((row, idx) => (
               <tr key={idx}>
                 <th scope="row">{row.label}</th>
                 <td>{row.value}</td>
@@ -110,6 +149,15 @@ function renderFormattedDescription(rawDescription?: string) {
             ))}
           </tbody>
         </table>
+      )}
+      {isTruncated && (
+        <button
+          type="button"
+          className="sf-desc-toggle"
+          onClick={() => setExpanded((prev) => !prev)}
+        >
+          {expanded ? 'Show less' : 'Read full description'}
+        </button>
       )}
     </div>
   );
@@ -468,7 +516,7 @@ export function StorefrontProductDetail({
                 <ChevronDown size={16} className="sf-pdp-chevron" />
               </summary>
               <div className="sf-pdp-accordion-body">
-                {renderFormattedDescription(product.description)}
+                <ProductDescription rawDescription={product.description} productId={product.id} />
               </div>
             </details>
 

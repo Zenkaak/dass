@@ -1941,7 +1941,7 @@
 .sf-desc-structured {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .sf-desc-bullets {
@@ -1949,10 +1949,10 @@
   padding-left: 18px;
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  font-size: 14px;
+  gap: 5px;
+  font-size: 13.5px;
   color: var(--sf-ink-2);
-  line-height: 1.55;
+  line-height: 1.48;
 }
 
 .sf-desc-bullets li::marker {
@@ -1965,12 +1965,12 @@
   border: 1px solid var(--sf-line);
   border-radius: var(--sf-radius-sm);
   overflow: hidden;
-  font-size: 13.5px;
+  font-size: 13px;
 }
 
 .sf-desc-table th,
 .sf-desc-table td {
-  padding: 8px 11px;
+  padding: 6px 10px;
   border-bottom: 1px solid var(--sf-line);
   text-align: left;
   vertical-align: top;
@@ -1991,6 +1991,31 @@
 .sf-desc-table td {
   color: var(--sf-ink);
   font-weight: 500;
+}
+
+.sf-desc-toggle {
+  align-self: flex-start;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: var(--sf-accent);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sf-desc-toggle:hover {
+  text-decoration: underline;
+}
+
+.sf-qv-desc {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--sf-ink-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .sf-pdp-sticky-bar {

@@ -151,9 +151,14 @@ export function StorefrontQuickView({
             </div>
 
             <div className="sf-qv-desc">
-              {product.description?.trim()
-                ? product.description.trim()
-                : `Sold by ${shopName}. Open full details for specifications and delivery options.`}
+              {(() => {
+                const raw = (product.description || '').replace(/\s+/g, ' ').trim();
+                if (!raw) return `Sold by ${shopName}. Open full details for specifications and delivery options.`;
+                if (raw.length <= 140) return raw;
+                const slice = raw.slice(0, 140);
+                const lastSpace = slice.lastIndexOf(' ');
+                return (lastSpace > 80 ? slice.slice(0, lastSpace) : slice).replace(/[.,;:\-]+$/, '') + '…';
+              })()}
             </div>
 
             <div className="sf-qv-controls">

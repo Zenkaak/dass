@@ -95,8 +95,8 @@ export default async function handler(req:any,res:any){
       UPDATE public.payments SET status='succeeded',provider_receipt=${String(tx.id||reference)},verified_at=now(),provider_result=COALESCE(provider_result,'{}'::jsonb)||${JSON.stringify({paystack:{reference,channel:tx.channel||null,paidAt:tx.paid_at||null},callbackSettlement:true})}::jsonb,updated_at=now()
       WHERE id=${p.id} AND tenant_id=${p.tenant_id} AND status IN ('initiated','pending') RETURNING id,tenant_id,order_id
      ), stock_update AS (
-      UPDATE public.products pr SET stock_quantity=CASE WHEN pr.stock_quantity IS NULL THEN NULL ELSE pr.stock_quantity-w.quantity END,updated_at=now()
-      FROM wanted w,payment_mark pm WHERE pr.id=w.product_id AND pr.tenant_id=${p.tenant_id} AND (pr.stock_quantity IS NULL OR pr.stock_quantity>=w.quantity)
+      UPDATE public.products pr SET stock_quantity=CASE WHEN pr.stock_quantity IS NULL OR pr.stock_quantity<=0 THEN pr.stock_quantity ELSE GREATEST(0,pr.stock_quantity-w.quantity) END,updated_at=now()
+      FROM wanted w,payment_mark pm WHERE pr.id=w.product_id AND pr.tenant_id=${p.tenant_id}
       AND NOT EXISTS(SELECT 1 FROM public.inventory_reservations ir WHERE ir.payment_id=pm.id) RETURNING pr.id
      ), inventory_finalize AS (
       UPDATE public.payments p2 SET provider_result=p2.provider_result||jsonb_build_object(
