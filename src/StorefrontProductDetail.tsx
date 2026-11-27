@@ -41,7 +41,6 @@ export function fallbackProductImage(label: string) {
 export function StorefrontProductDetail({
   product,
   products,
-  slug,
   shopName,
   cartQuantity,
   onBack,
