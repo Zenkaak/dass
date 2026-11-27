@@ -28,10 +28,11 @@ export function usePWAInstall() {
     };
 
     const handleAppInstalled = () => {
-      // The browser's appinstalled event is the authoritative install confirmation.
+      // Do not mark installed unless this page is actually running standalone.
+      // Some browsers fire appinstalled before the shortcut is usable.
       setDeferredPrompt(null);
       setPromptReady(false);
-      setIsInstalled(true);
+      setIsInstalled(checkStandalone());
     };
 
     const mql = window.matchMedia('(display-mode: standalone)');
