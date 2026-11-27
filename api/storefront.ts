@@ -51,7 +51,7 @@ function productOut(p:any,includeMetadata=false){
   if(value.startsWith('s3://'))return storageUrl(value.slice(5).replace(/^documents\//,''),'GET');
   return value;
  }).filter(Boolean);
- return {id:p.id,name:p.name,description:p.description,images,imageUrl:images[0]||'',category:String(p.metadata?.category||(p.product_type==='data_bundle'?'Data bundles':p.product_type==='digital'?'Digital products':'Shop products')),parentCategory:String(p.metadata?.parent_category||''),spotlight:Boolean(p.metadata?.spotlight),testProduct:Boolean(p.metadata?.test_product),type:p.product_type,price:Number(p.price_minor)/100,currency:p.currency,stockQuantity:p.stock_quantity,active:p.is_active,sku:p.sku||'',ratingAverage:Number(p.rating_average||0),ratingCount:Number(p.rating_count||0),...(includeMetadata?{metadata:p.metadata||{}}:{})};
+ return {id:p.id,name:p.name,description:p.description,images,imageUrl:images[0]||'',category:String(p.metadata?.category||(p.product_type==='data_bundle'?'Data bundles':p.product_type==='digital'?'Digital products':'Shop products')),parentCategory:String(p.metadata?.parent_category||''),spotlight:Boolean(p.metadata?.spotlight),testProduct:Boolean(p.metadata?.test_product),type:p.product_type,price:Number(p.price_minor)/100,currency:p.currency,stockQuantity:p.stock_quantity,active:p.is_active,sku:p.sku||'',ratingAverage:Number(p.rating_average||0),ratingCount:Number(p.rating_count||0),catalogRating:Number(p.metadata?.specifications?.rating||p.metadata?.rating||0),catalogRatingCount:Number(p.metadata?.specifications?.review_count||p.metadata?.review_count||0),condition:String(p.metadata?.condition||''),...(includeMetadata?{metadata:p.metadata||{}}:{})};
 }
 
 export default async function handler(req:any,res:any){
