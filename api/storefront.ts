@@ -18,16 +18,48 @@ function storageUrl(key:string,method:'PUT'|'GET',mime='application/octet-stream
  const kDate=hmac('AWS4'+secret,day),kRegion=hmac(kDate,region),kService=hmac(kRegion,'s3'),kSigning=hmac(kService,'aws4_request'),signature=hmac(kSigning,toSign,'hex');
  return endpoint.replace(/\/$/,'')+path+'?'+canonicalQuery+'&X-Amz-Signature='+signature;
 }
+function productCategoryInfo(metadata:any,productType:string){
+ const raw=metadata?.category;
+ let path:string[]=[];
+ if(Array.isArray(raw))path=raw.map((v:any)=>String(v||'').trim()).filter(Boolean);
+ else if(typeof raw==='string'&&raw.trim()){
+  try{const parsed=JSON.parse(raw);if(Array.isArray(parsed))path=parsed.map((v:any)=>String(v||'').trim()).filter(Boolean);else path=raw.split('>').map((v:string)=>v.trim()).filter(Boolean);}catch{path=raw.split('>').map((v:string)=>v.trim()).filter(Boolean);}
+ }
+ const parent=String(metadata?.parent_category||path[0]|| (productType==='data_bundle'?'Data bundles':productType==='digital'?'Digital products':'Shop products'));
+ const joined=path.join(' ').toLowerCase();
+ let category=String(path[1]||parent);
+ if(parent==='Phones & Tablets'){
+  if(/mobile phones|cell phones|smartphones/.test(joined))category='Mobile Phones';
+  else if(/tablets|pads/.test(joined))category='Tablets & Pads';
+  else if(/smart watches|fitness trackers/.test(joined))category='Smart Watches & Trackers';
+  else category='Phone Accessories';
+ }else if(parent==='Computers & Laptops'){
+  if(/laptop|notebook/.test(joined))category='Laptops';
+  else if(/desktop/.test(joined))category='Desktop Computers';
+  else if(/monitor/.test(joined))category='Monitors';
+  else if(/printer|scanner/.test(joined))category='Printers & Scanners';
+  else if(/network|router|wi-fi/.test(joined))category='Networking & Wi-Fi';
+  else category='Computer Accessories';
+ }else if(parent==='TV, Audio & Cameras'){
+  if(/television|\\btv\\b/.test(joined))category='TVs';
+  else if(/headphone|earbud|headset/.test(joined))category='Headphones & Earbuds';
+  else if(/speaker|audio/.test(joined))category='Speakers & Home Audio';
+  else if(/camera|drone/.test(joined))category='Cameras & Drones';
+  else if(/cctv|security/.test(joined))category='CCTV & Security';
+ }
+ return {category,parentCategory:parent,categoryPath:path};
+}
 function productOut(p:any,includeMetadata=false){
  const raw=Array.isArray(p.images)?p.images:[];
  const images=raw.map((item:any)=>{
   const value=typeof item==='string'?item:String(item?.url||item?.src||item?.publicUrl||item?.public_url||item?.key||item?.path||'');
   if(!value)return '';
   if(value.startsWith('neon-object:'))return storageUrl(value.slice(12),'GET');
-  if(value.startsWith('s3://'))return storageUrl(value.slice(5).replace(/^documents\//,''),'GET');
+  if(value.startsWith('s3://'))return storageUrl(value.slice(5).replace(/^documents\\//,''),'GET');
   return value;
  }).filter(Boolean);
- return {id:p.id,name:p.name,description:p.description,images,imageUrl:images[0]||'',category:String(p.metadata?.category||(p.product_type==='data_bundle'?'Data bundles':p.product_type==='digital'?'Digital products':'Shop products')),parentCategory:String(p.metadata?.parent_category||''),spotlight:Boolean(p.metadata?.spotlight),testProduct:Boolean(p.metadata?.test_product),type:p.product_type,price:Number(p.price_minor)/100,currency:p.currency,stockQuantity:p.stock_quantity,active:p.is_active,sku:p.sku||'',ratingAverage:Number(p.rating_average||0),ratingCount:Number(p.rating_count||0),...(includeMetadata?{metadata:p.metadata||{}}:{})};
+ const categories=productCategoryInfo(p.metadata,p.product_type);
+ return {id:p.id,name:p.name,description:p.description,images,imageUrl:images[0]||'',category:categories.category,parentCategory:categories.parentCategory,spotlight:Boolean(p.metadata?.spotlight),testProduct:Boolean(p.metadata?.test_product),type:p.product_type,price:Number(p.price_minor)/100,currency:p.currency,stockQuantity:p.stock_quantity,active:p.is_active,sku:p.sku||'',ratingAverage:Number(p.rating_average||0),ratingCount:Number(p.rating_count||0),...(includeMetadata?{metadata:p.metadata||{},categoryPath:categories.categoryPath}:{})};
 }
 
 export default async function handler(req:any,res:any){
@@ -79,10 +111,9 @@ export default async function handler(req:any,res:any){
         SELECT 1 FROM unnest(string_to_array(${requestedCategory},'|')) AS selected(value)
         WHERE lower(trim(COALESCE(p.metadata->>'parent_category','')))=lower(trim(selected.value))
           OR lower(trim(COALESCE(p.metadata->>'category',CASE WHEN p.product_type='data_bundle' THEN 'Data bundles' WHEN p.product_type='digital' THEN 'Digital products' ELSE 'Shop products' END)))=lower(trim(selected.value))
-          OR EXISTS (
-            SELECT 1 FROM unnest(string_to_array(COALESCE(p.metadata->>'category',''),'>')) AS category_part(value)
-            WHERE lower(trim(category_part.value))=lower(trim(selected.value))
-          )
+          OR COALESCE(p.metadata->>'category','') ILIKE '%' || selected.value || '%'
+          OR (lower(trim(selected.value))='phone accessories' AND COALESCE(p.metadata->>'category','') ILIKE '%Accessories%')
+          OR (lower(trim(selected.value))='computer accessories' AND COALESCE(p.metadata->>'category','') ILIKE '%Accessories%')
       ))
       AND (cardinality(${requestedIds}::uuid[])=0 OR p.id=ANY(${requestedIds}::uuid[]))
       AND (${requestedProductKey}='' OR p.sku=${requestedProductKey} OR p.id::text=${requestedProductKey})
