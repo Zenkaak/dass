@@ -1224,7 +1224,7 @@ export default function App() {
   const isAdminCustomHost=hostname.startsWith('adm.')&&isCustomDomain;
   // Warm the storefront UI chunks while the shop data request is in flight.
   useEffect(()=>{if(tenantSubdomain){import('./StorefrontFlow').catch(()=>{});import('./BuyerAuthPage').catch(()=>{});}},[tenantSubdomain]);
-  useEffect(()=>{if(hostname==='mambu.dasmarket.co.ke'||hostname.startsWith('adm.')||path==='dashboard'||path.startsWith('dashboard/')||path==='platform-admin')import('./mambu-admin.css').catch(()=>{});if(path==='dashboard'||path.startsWith('dashboard/'))import('./styles.css').catch(()=>{});},[hostname,path]);
+  useEffect(()=>{if(hostname==='mambu.dasmarket.co.ke'||hostname.startsWith('adm.')||path==='dashboard'||path.startsWith('dashboard/')||path==='platform-admin')import('./mambu-admin.css').catch(()=>{});},[hostname,path]);
   let viewContent: any = null;
   if (hostname === 'mambu.dasmarket.co.ke') {
     if (path === 'login') viewContent = <Deferred><AuthPage initial="login" /></Deferred>;
@@ -1244,6 +1244,8 @@ export default function App() {
     viewContent = <PlatformSeoPage slug={path} />;
   } else if (!path) {
     viewContent = <LandingPage />;
+  } else if (path === 'auth') {
+    viewContent = <Deferred><AuthPage initial="login" /></Deferred>;
   } else if (path === 'signup') {
     viewContent = <Deferred><AuthPage initial="signup" /></Deferred>;
   } else if (path === 'login') {
