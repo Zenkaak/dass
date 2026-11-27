@@ -38,22 +38,6 @@ export function fallbackProductImage(label: string) {
   return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
 }
 
-async function readJsonSafe(response: Response) {
-  const raw = await response.text();
-  let data: any = {};
-  try {
-    data = raw ? JSON.parse(raw) : {};
-  } catch {
-    data = {
-      error: response.ok
-        ? 'The server returned an unreadable response.'
-        : `Server error (HTTP ${response.status}). Please retry and share the time if it continues.`,
-    };
-  }
-  if (!response.ok && !data.error) data.error = `Request failed (HTTP ${response.status}).`;
-  return data;
-}
-
 export function StorefrontProductDetail({
   product,
   products,
@@ -78,14 +62,6 @@ export function StorefrontProductDetail({
   onToggleSaved: () => void;
 }) {
   const [imageIndex, setImageIndex] = useState(0);
-  const [reviews, setReviews] = useState<any[]>([]);
-  const [summary, setSummary] = useState({ average: 0, count: 0 });
-  const [token, setToken] = useState('');
-  const [reviewOrderId, setReviewOrderId] = useState('');
-  const [rating, setRating] = useState(5);
-  const [body, setBody] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState('');
   const [addedFeedback, setAddedFeedback] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
@@ -105,90 +81,8 @@ export function StorefrontProductDetail({
   const relatedTrackRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    let live = true;
     setImageIndex(0);
-    fetch(
-      '/api/buyer?action=product-reviews&slug=' +
-        encodeURIComponent(slug) +
-        '&productId=' +
-        encodeURIComponent(product.id),
-      { cache: 'no-store' },
-    )
-      .then(async (r) => {
-        const d = await readJsonSafe(r);
-        if (!r.ok) throw Error(d.error);
-        if (live) {
-          setReviews(d.reviews || []);
-          setSummary(d.summary || { average: 0, count: 0 });
-        }
-      })
-      .catch(() => {});
-
-    try {
-      const savedOrders = JSON.parse(localStorage.getItem('dasnet-storefront-orders-' + slug) || '[]');
-      const found = Array.isArray(savedOrders)
-        ? savedOrders.find((o: any) => (o.lines || []).some((line: any) => line.product?.id === product.id) && o.chatToken)
-        : null;
-      if (live) setToken(found?.chatToken || '');
-    } catch {}
-
-    return () => {
-      live = false;
-    };
-  }, [slug, product.id]);
-
-  useEffect(() => {
-    let live = true;
-    fetch('/api/buyer?action=customer-orders&slug=' + encodeURIComponent(slug), {
-      credentials: 'same-origin',
-      cache: 'no-store',
-    })
-      .then(async (r) => {
-        if (!r.ok) return null;
-        const d = await r.json();
-        const match = (d.orders || []).find(
-          (o: any) =>
-            o.paymentStatus === 'succeeded' &&
-            String(o.deliveryStatus || '').toLowerCase() === 'delivered' &&
-            (o.items || []).some((item: any) => item.id === product.id),
-        );
-        if (live) setReviewOrderId(match?.id || '');
-      })
-      .catch(() => {});
-    return () => {
-      live = false;
-    };
-  }, [slug, product.id]);
-
-  async function submitReview(e: any) {
-    e.preventDefault();
-    if ((!token && !reviewOrderId) || body.trim().length < 8 || busy) return;
-    setBusy(true);
-    setMessage('');
-    try {
-      const r = await fetch('/api/buyer?action=product-reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          slug,
-          productId: product.id,
-          ...(token ? { chatToken: token } : { orderId: reviewOrderId }),
-          rating,
-          body: body.trim(),
-        }),
-      });
-      const d = await readJsonSafe(r);
-      if (!r.ok) throw Error(d.error || 'Review submission failed');
-      setReviews(d.reviews || []);
-      setSummary(d.summary || { average: 0, count: 0 });
-      setBody('');
-      setMessage('Your verified-purchase review has been published.');
-    } catch (err: any) {
-      setMessage(err.message);
-    } finally {
-      setBusy(false);
-    }
-  }
+  }, [product.id]);
 
   function handleAddToCart() {
     onAdd(quantity);
@@ -304,13 +198,7 @@ export function StorefrontProductDetail({
               </div>
               <h1>{product.name}</h1>
               <div className="sf-pdp-submeta">
-                {summary.count > 0 ? (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                    <Stars value={summary.average} />
-                    <strong>{summary.average.toFixed(1)}</strong>
-                    <span>({summary.count} verified buyer ratings)</span>
-                  </span>
-                ) : product.catalogRating && product.catalogRating > 0 ? (
+                {product.catalogRating && product.catalogRating > 0 ? (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                     <Stars value={product.catalogRating} />
                     <strong>{product.catalogRating.toFixed(1)}</strong>
