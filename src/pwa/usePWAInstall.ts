@@ -28,9 +28,10 @@ export function usePWAInstall() {
     };
 
     const handleAppInstalled = () => {
+      // Only hide the install control when standalone mode confirms the app is running.
       setDeferredPrompt(null);
       setPromptReady(false);
-      setIsInstalled(true);
+      setIsInstalled(checkStandalone());
     };
 
     const mql = window.matchMedia('(display-mode: standalone)');
