@@ -253,22 +253,24 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
  if(buyerPage==='buyer-login'||buyerPage==='buyer-signup') return <Deferred><BuyerAuthPage slug={slug} shopName={shop?.name||'This shop'} initial={buyerPage==='buyer-signup'?'signup':'login'} onBack={()=>navigateBuyerPage('store')} onPolicyNavigate={(page)=>navigateBuyerPage(page)} onAuthenticated={(customer)=>{setBuyerCustomer(customer);const target=buyerReturnPage||'account';setBuyerPage(target);const next=buyerPath(target);if(window.location.pathname!==next)window.history.replaceState({buyerPage:target},'',next)}}/></Deferred>;
 
  const addSingleToCart=(productId:string,stockQuantity:number|null)=>{
-  setCart(c=>({...c,[productId]:Math.min(99,stockQuantity??99,(c[productId]||0)+1)}));
+  const limit=stockQuantity!==null&&stockQuantity>0?stockQuantity:99;
+  setCart(c=>({...c,[productId]:Math.min(99,limit,(c[productId]||0)+1)}));
  };
 
  const renderProductCard=(p:LiveProduct,tag?:string,eager=false)=>{
-  const outOfStock=p.stockQuantity===0||(p.stockQuantity!==null&&(cart[p.id]||0)>=p.stockQuantity);
+  const hasPositiveStock=p.stockQuantity!==null&&p.stockQuantity>0;
+  const stockCapped=hasPositiveStock&&(cart[p.id]||0)>=p.stockQuantity!;
   const inCart=Boolean(cart[p.id]);
   const saved=wishlistIds.includes(p.id);
   return (
-   <article className={'sf-card'+(p.stockQuantity===0?' is-out':'')} key={p.id}>
+   <article className="sf-card" key={p.id}>
     <button type="button" className={'sf-card-fav'+(saved?' active':'')} aria-label="Toggle wishlist" aria-pressed={saved} onClick={()=>toggleWishlist(p.id)}>
      <Heart size={16} fill={saved?'currentColor':'none'}/>
     </button>
     <button type="button" className="sf-card-open" onClick={()=>openProduct(p)}>
      <span className="sf-card-media">
       <img src={p.images?.[0]||p.imageUrl||fallbackProductImage(p.name)} alt={p.name} loading={eager?'eager':'lazy'} decoding="async" onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src=fallbackProductImage(p.name)}}/>
-      {p.stockQuantity===0?<span className="sf-card-tag is-out">Out of stock</span>:tag?<span className="sf-card-tag">{tag}</span>:null}
+      {tag?<span className="sf-card-tag">{tag}</span>:null}
      </span>
      <div className="sf-card-body">
       <span className="sf-card-cat">{p.category||'Shop'}</span>
@@ -276,13 +278,13 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
       {(p.ratingCount??0)>0&&<span className="sf-card-rating"><Star size={12} fill="currentColor"/> {Number(p.ratingAverage||0).toFixed(1)} ({p.ratingCount})</span>}
       <div className="sf-card-meta-row">
        <strong className="sf-card-price">KES {p.price.toLocaleString('en-KE')}</strong>
-       <small className={'sf-card-stock'+(p.stockQuantity===0?' out':'')}>{p.stockQuantity===0?'Out of stock':p.stockQuantity===null?'Available':`${p.stockQuantity} left`}</small>
+       <small className="sf-card-stock">{hasPositiveStock?`${p.stockQuantity} left`:'Available'}</small>
       </div>
      </div>
     </button>
-    <div className={'sf-card-foot'+(p.stockQuantity===0?' is-out':'')}>
-     <button type="button" className={'sf-card-add'+(inCart?' in-cart':'')+(p.stockQuantity===0?' is-out':'')} disabled={outOfStock} onClick={()=>addSingleToCart(p.id,p.stockQuantity)}>
-      {p.stockQuantity===0?'Out of stock':inCart?`In cart (${cart[p.id]})`:'Add to cart'}
+    <div className="sf-card-foot">
+     <button type="button" className={'sf-card-add'+(inCart?' in-cart':'')} disabled={stockCapped} onClick={()=>addSingleToCart(p.id,p.stockQuantity)}>
+      {stockCapped?`Max in cart (${cart[p.id]})`:inCart?`In cart (${cart[p.id]})`:'Add to cart'}
      </button>
     </div>
    </article>
@@ -875,7 +877,7 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
        saved={wishlistIds.includes(selectedProduct.id)}
        onToggleSaved={()=>toggleWishlist(selectedProduct.id)}
        onBack={closeProduct}
-       onAdd={(quantity)=>setCart(c=>({...c,[selectedProduct.id]:Math.min(99,selectedProduct.stockQuantity??99,(c[selectedProduct.id]||0)+quantity)}))}
+       onAdd={(quantity)=>setCart(c=>({...c,[selectedProduct.id]:Math.min(99,selectedProduct.stockQuantity!==null&&selectedProduct.stockQuantity>0?selectedProduct.stockQuantity:99,(c[selectedProduct.id]||0)+quantity)}))}
        onOpen={openProduct}
        onGoToCart={()=>navigateBuyerPage('cart')}
       />

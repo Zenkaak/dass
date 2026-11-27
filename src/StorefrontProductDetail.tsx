@@ -154,7 +154,8 @@ export function StorefrontProductDetail({
   const [addedFeedback, setAddedFeedback] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
-  const maxAdd = Math.max(0, Math.min(99, product.stockQuantity ?? 99) - cartQuantity);
+  const effectiveStock = product.stockQuantity !== null && product.stockQuantity > 0 ? product.stockQuantity : null;
+  const maxAdd = Math.max(0, Math.min(99, effectiveStock ?? 99) - cartQuantity);
 
   useEffect(() => {
     setQuantity(1);
@@ -393,21 +394,17 @@ export function StorefrontProductDetail({
             <section className="sf-pdp-purchase-box">
               <div className="sf-pdp-price-row">
                 <strong className="sf-pdp-price">KES {product.price.toLocaleString('en-KE')}</strong>
-                <span className={`sf-pdp-stock-text ${product.stockQuantity === 0 ? 'out' : ''}`}>
-                  {product.stockQuantity === 0
-                    ? 'Out of stock'
-                    : product.stockQuantity === null
-                    ? 'Available'
-                    : `${product.stockQuantity} in stock`}
+                <span className="sf-pdp-stock-text">
+                  {effectiveStock === null ? 'Available' : `${effectiveStock} in stock`}
                 </span>
               </div>
               <div className="sf-pdp-stock-track" aria-hidden="true">
                 <i
                   style={{
                     width:
-                      product.stockQuantity === null
+                      effectiveStock === null
                         ? '100%'
-                        : `${Math.max(0, Math.min(100, product.stockQuantity))}%`,
+                        : `${Math.max(12, Math.min(100, effectiveStock))}%`,
                   }}
                 />
               </div>
@@ -415,7 +412,7 @@ export function StorefrontProductDetail({
               <div className="sf-qty-row">
                 <div className="sf-qty-label">
                   Quantity
-                  <small>{maxAdd === 0 ? 'No more units available' : `${maxAdd} available to add`}</small>
+                  <small>{maxAdd === 0 ? `Max in cart (${cartQuantity})` : `${maxAdd} available to add`}</small>
                 </div>
                 <div className="sf-stepper">
                   <button
@@ -445,7 +442,7 @@ export function StorefrontProductDetail({
                   disabled={maxAdd === 0}
                   onClick={handleAddToCart}
                 >
-                  {maxAdd === 0 ? 'Out of stock' : addedFeedback ? 'Added to cart' : 'Add to cart'}
+                  {maxAdd === 0 ? `Max in cart (${cartQuantity})` : addedFeedback ? 'Added to cart' : 'Add to cart'}
                 </button>
                 <button
                   type="button"
@@ -497,11 +494,7 @@ export function StorefrontProductDetail({
                   <div>
                     <span>Availability</span>
                     <strong>
-                      {product.stockQuantity === 0
-                        ? 'Out of stock'
-                        : product.stockQuantity === null
-                        ? 'Available'
-                        : `${product.stockQuantity} in stock`}
+                      {effectiveStock === null ? 'Available' : `${effectiveStock} in stock`}
                     </strong>
                   </div>
                 </div>
@@ -630,48 +623,46 @@ export function StorefrontProductDetail({
               </div>
             </div>
             <div className="sf-product-grid" ref={relatedTrackRef}>
-              {related.map((p) => (
-                <article className={`sf-card${p.stockQuantity === 0 ? ' is-out' : ''}`} key={p.id}>
-                  <button
-                    type="button"
-                    className="sf-card-open"
-                    onClick={() => onOpen(p)}
-                    aria-label={`View ${p.name}`}
-                  >
-                    <span className="sf-card-media">
-                      <img
-                        src={p.images?.[0] || p.imageUrl || fallbackProductImage(p.name)}
-                        alt={p.name}
-                        loading="lazy"
-                        onError={(e) => {
-                          e.currentTarget.onerror = null;
-                          e.currentTarget.src = fallbackProductImage(p.name);
-                        }}
-                      />
-                      {p.stockQuantity === 0 && <span className="sf-card-tag is-out">Out of stock</span>}
-                    </span>
-                    <div className="sf-card-body">
-                      <span className="sf-card-cat">{p.category || 'Product'}</span>
-                      <span className="sf-card-title">{p.name}</span>
-                      <div className="sf-card-meta-row">
-                        <strong className="sf-card-price">KES {p.price.toLocaleString('en-KE')}</strong>
-                        <small className={`sf-card-stock ${p.stockQuantity === 0 ? 'out' : ''}`}>
-                          {p.stockQuantity === 0
-                            ? 'Out of stock'
-                            : p.stockQuantity == null
-                            ? 'Available'
-                            : `${p.stockQuantity} left`}
-                        </small>
+              {related.map((p) => {
+                const relHasStock = p.stockQuantity !== null && p.stockQuantity > 0;
+                return (
+                  <article className="sf-card" key={p.id}>
+                    <button
+                      type="button"
+                      className="sf-card-open"
+                      onClick={() => onOpen(p)}
+                      aria-label={`View ${p.name}`}
+                    >
+                      <span className="sf-card-media">
+                        <img
+                          src={p.images?.[0] || p.imageUrl || fallbackProductImage(p.name)}
+                          alt={p.name}
+                          loading="lazy"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = fallbackProductImage(p.name);
+                          }}
+                        />
+                      </span>
+                      <div className="sf-card-body">
+                        <span className="sf-card-cat">{p.category || 'Product'}</span>
+                        <span className="sf-card-title">{p.name}</span>
+                        <div className="sf-card-meta-row">
+                          <strong className="sf-card-price">KES {p.price.toLocaleString('en-KE')}</strong>
+                          <small className="sf-card-stock">
+                            {relHasStock ? `${p.stockQuantity} left` : 'Available'}
+                          </small>
+                        </div>
                       </div>
-                    </div>
-                  </button>
-                  <div className={`sf-card-foot${p.stockQuantity === 0 ? ' is-out' : ''}`}>
-                    <button type="button" className="sf-card-add" onClick={() => onOpen(p)}>
-                      View product <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />
                     </button>
-                  </div>
-                </article>
-              ))}
+                    <div className="sf-card-foot">
+                      <button type="button" className="sf-card-add" onClick={() => onOpen(p)}>
+                        View product <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           </section>
         )}
@@ -679,7 +670,7 @@ export function StorefrontProductDetail({
 
       <div className="sf-pdp-sticky-bar">
         <div className="sf-pdp-sticky-price">
-          <small>{maxAdd === 0 ? 'Availability' : quantity > 1 ? `Total (${quantity})` : 'Unit price'}</small>
+          <small>{quantity > 1 ? `Total (${quantity})` : 'Unit price'}</small>
           <strong>KES {(product.price * quantity).toLocaleString('en-KE')}</strong>
         </div>
         <div className="sf-pdp-sticky-actions">
@@ -700,7 +691,7 @@ export function StorefrontProductDetail({
             disabled={maxAdd === 0}
             onClick={handleAddToCart}
           >
-            {maxAdd === 0 ? 'Out of stock' : addedFeedback ? 'Added ✓' : 'Add to cart'}
+            {maxAdd === 0 ? `Max (${cartQuantity})` : addedFeedback ? 'Added ✓' : 'Add to cart'}
           </button>
         </div>
       </div>

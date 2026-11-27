@@ -25,7 +25,8 @@ export function StorefrontQuickView({
   const [quantity, setQuantity] = useState(1);
   const [addedFeedback, setAddedFeedback] = useState(false);
 
-  const maxAdd = product ? Math.max(0, Math.min(99, product.stockQuantity ?? 99) - cartQuantity) : 0;
+  const effectiveStock = product && product.stockQuantity !== null && product.stockQuantity > 0 ? product.stockQuantity : null;
+  const maxAdd = product ? Math.max(0, Math.min(99, effectiveStock ?? 99) - cartQuantity) : 0;
 
   useEffect(() => {
     if (!product) return;
@@ -56,7 +57,7 @@ export function StorefrontQuickView({
 
   const images = (product.images?.length ? product.images : [product.imageUrl || '']).filter(Boolean);
   const activeImage = images[imageIndex] || fallbackProductImage(product.name);
-  const outOfStock = product.stockQuantity === 0 || maxAdd <= 0;
+  const outOfStock = maxAdd <= 0;
 
   return (
     <div className="sf-qv-backdrop" role="presentation" onClick={onClose}>
@@ -88,9 +89,6 @@ export function StorefrontQuickView({
                   e.currentTarget.src = fallbackProductImage(product.name);
                 }}
               />
-              {product.stockQuantity === 0 && (
-                <span className="sf-qv-tag is-out">Out of stock</span>
-              )}
               {images.length > 1 && (
                 <>
                   <button
@@ -147,12 +145,8 @@ export function StorefrontQuickView({
 
             <div className="sf-qv-price-row">
               <strong className="sf-qv-price sf-num">KES {product.price.toLocaleString('en-KE')}</strong>
-              <span className={'sf-qv-stock' + (product.stockQuantity === 0 ? ' is-out' : '')}>
-                {product.stockQuantity === 0
-                  ? 'Out of stock'
-                  : product.stockQuantity === null
-                    ? 'In stock'
-                    : `${product.stockQuantity} available`}
+              <span className="sf-qv-stock">
+                {effectiveStock === null ? 'In stock' : `${effectiveStock} available`}
               </span>
             </div>
 
@@ -193,9 +187,7 @@ export function StorefrontQuickView({
                   window.setTimeout(() => setAddedFeedback(false), 1600);
                 }}
               >
-                {product.stockQuantity === 0 ? (
-                  'Out of stock'
-                ) : maxAdd <= 0 ? (
+                {maxAdd <= 0 ? (
                   `Max in cart (${cartQuantity})`
                 ) : addedFeedback ? (
                   <>

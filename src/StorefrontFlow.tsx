@@ -2072,15 +2072,11 @@ export function StorefrontFlow({
                             </span>
                           )}
                         </div>
-                        <small
-                          className={`sf-cart-stock ${product.stockQuantity === 0 ? 'is-out' : 'is-in'}`}
-                        >
-                          {product.stockQuantity === 0
-                            ? 'Out of stock'
-                            : product.stockQuantity == null
+                        <small className="sf-cart-stock is-in">
+                          {product.stockQuantity == null || product.stockQuantity <= 0
                             ? 'In Stock'
                             : product.stockQuantity <= 5
-                            ? `Only ${Math.max(0, product.stockQuantity)} left`
+                            ? `Only ${product.stockQuantity} left`
                             : 'In Stock'}
                         </small>
                       </div>
@@ -2108,6 +2104,7 @@ export function StorefrontFlow({
                             disabled={
                               product.stockQuantity !== null &&
                               product.stockQuantity !== undefined &&
+                              product.stockQuantity > 0 &&
                               quantity >= product.stockQuantity
                             }
                             onClick={() => updateQuantity(product.id, quantity + 1)}
