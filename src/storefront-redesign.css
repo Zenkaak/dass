@@ -1509,17 +1509,31 @@
 }
 
 /* ---------- FAQs Section ---------- */
+.sf-faq-compact {
+  padding-top: 12px;
+  padding-bottom: 16px;
+}
+
+.sf-faq-compact .sf-section-head {
+  margin-bottom: 10px;
+}
+
+.sf-faq-compact .sf-section-head h2 {
+  font-size: 18px;
+}
+
 .sf-faq-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 8px;
+  align-items: start;
 }
 
 .sf-faq-list details {
   background: var(--sf-surface);
   border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: var(--sf-radius-md);
-  padding: 16px 18px;
+  border-radius: var(--sf-radius-sm);
+  padding: 10px 14px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -1533,9 +1547,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   font-family: var(--sf-font-display);
-  font-size: 14.5px;
+  font-size: 13.5px;
+  line-height: 1.35;
   font-weight: 600;
   color: var(--sf-ink);
   cursor: pointer;
@@ -1546,12 +1561,12 @@
 }
 
 .sf-faq-list details p {
-  margin: 12px 0 0;
-  padding-top: 12px;
+  margin: 8px 0 0;
+  padding-top: 8px;
   border-top: 1px solid var(--sf-line);
-  font-size: 14px;
+  font-size: 13px;
   color: var(--sf-muted);
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 /* ---------- Empty / Loading States ---------- */

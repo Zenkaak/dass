@@ -942,17 +942,13 @@ function MerchantStore({ slug: initialSlug, initialBuyerPage = 'store' }: { slug
       </section>
 
       {/* 4. Helpful Shopping Answers */}
-      <section className="sf-section" id="store-faq" style={{paddingBottom:24}}>
+      <section className="sf-section sf-faq-compact" id="store-faq">
        <div className="sf-section-head">
-        <div>
-         <span className="sf-kicker">Help centre</span>
-         <h2>Frequently Asked Questions</h2>
-         <p>Helpful answers before you place an order.</p>
-        </div>
+        <h2>Frequently Asked Questions</h2>
         <button type="button" className="sf-link-action" onClick={()=>navigateBuyerPage('faqs')}>View all FAQs <ArrowRight size={15}/></button>
        </div>
        <div className="sf-faq-list">
-        {marketplaceFaqs.slice(0,6).map(([question,answer])=>(
+        {marketplaceFaqs.slice(0,4).map(([question,answer])=>(
          <details key={question}>
           <summary>{question}<span>+</span></summary>
           <p>{answer}</p>
