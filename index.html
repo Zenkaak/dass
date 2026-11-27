@@ -11,7 +11,7 @@
     <script>
       (function () {
         var host = location.hostname.toLowerCase();
-        var path = location.pathname.replace(/^\\/+|\\/+$/g, '');
+        var path = location.pathname.replace(/^\/+|\/+$/g, '');
         var first = path.split('/')[0] || '';
         var platformHosts = ['dasmarket.co.ke','www.dasmarket.co.ke','app.dasmarket.co.ke','mambu.dasmarket.co.ke','localhost','127.0.0.1'];
         var platform = platformHosts.indexOf(host) !== -1 || host.endsWith('.vercel.app') || host.endsWith('.run.app');
