@@ -135,11 +135,11 @@ export function StorefrontQuickView({
 
             <h2 id="sf-qv-title">{product.name}</h2>
 
-            {(product.ratingCount ?? 0) > 0 && (
+            {((product.ratingCount ?? 0) > 0 || Number(product.catalogRating || 0) > 0) && (
               <div className="sf-qv-rating">
                 <Star size={14} fill="currentColor" />
-                <strong>{Number(product.ratingAverage || 0).toFixed(1)}</strong>
-                <span>({product.ratingCount} {product.ratingCount === 1 ? 'review' : 'reviews'})</span>
+                <strong>{Number((product.ratingCount ?? 0) > 0 ? product.ratingAverage : product.catalogRating || 0).toFixed(1)}</strong>
+                <span>{(product.ratingCount ?? 0) > 0 ? `(${product.ratingCount} ${product.ratingCount === 1 ? 'review' : 'reviews'})` : 'Catalogue rating'}</span>
               </div>
             )}
 
