@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Download, WifiOff, X } from 'lucide-react';
+import { useState } from 'react';
+import { Download, WifiOff } from 'lucide-react';
 import { useOnlineStatus, usePWAInstall } from './usePWAInstall';
 import './pwa.css';
 
@@ -20,13 +20,7 @@ export function PWAInstallButton({
 }: PWAInstallButtonProps) {
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
   const [installMessage, setInstallMessage] = useState('');
-  const [dismissed, setDismissed] = useState(false);
-  useEffect(() => {
-    if (variant !== 'floating') return;
-    try { setDismissed(window.localStorage.getItem('dm-pwa-dismissed:' + window.location.hostname) === '1'); } catch { /* storage may be unavailable */ }
-  }, [variant]);
-
-  if (isInstalled || (variant === 'floating' && dismissed)) return null;
+  if (isInstalled) return null;
   if (!isInstallable && !isIOS && !showFallback) return null;
 
   const handleClick = async () => {
@@ -72,10 +66,6 @@ export function PWAInstallButton({
         <Download size={variant === 'storefront' ? 12 : 15} />
         <span className={variant === 'seller' ? 'dm-pwa-label-hide-xs' : undefined}>{label}</span>
       </button>
-      {variant === 'floating' && <button type="button" className="dm-pwa-float-dismiss" aria-label="Dismiss install button" onClick={() => {
-        setDismissed(true);
-        try { window.localStorage.setItem('dm-pwa-dismissed:' + window.location.hostname, '1'); } catch { /* ignore */ }
-      }}><X size={14}/></button>}
       {installMessage && <span className="dm-pwa-install-status" role="status" aria-live="polite">{installMessage}</span>}
     </>
   );
