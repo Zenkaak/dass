@@ -72,7 +72,7 @@ export default async function handler(req:any,res:any){
    res.setHeader('Cache-Control','no-store');
    res.setHeader('Content-Type','application/manifest+json; charset=utf-8');
    if(kind==='seller'){
-    const start=host.startsWith('adm.')?'/':'/auth?app=seller';
+    const start='/auth?app=seller';
     return res.status(200).json({...base,id:'/auth',name:'DASMARKET Seller Dashboard',short_name:'DAS Seller',description:'Manage your shop, products and orders.',start_url:start,scope:'/'});
    }
    if(kind!=='store'){
