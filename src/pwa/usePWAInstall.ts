@@ -9,6 +9,7 @@ export function usePWAInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [promptReady, setPromptReady] = useState(false);
 
   useEffect(() => {
     const checkStandalone = () =>
@@ -23,10 +24,12 @@ export function usePWAInstall() {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
+      setPromptReady(true);
     };
 
     const handleAppInstalled = () => {
       setDeferredPrompt(null);
+      setPromptReady(false);
       setIsInstalled(true);
     };
 
@@ -51,6 +54,7 @@ export function usePWAInstall() {
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') {
         setDeferredPrompt(null);
+        setPromptReady(false);
         setIsInstalled(true);
       }
       return outcome;
@@ -61,6 +65,7 @@ export function usePWAInstall() {
 
   return {
     isInstallable: Boolean(deferredPrompt) && !isInstalled,
+    promptReady,
     isInstalled,
     isIOS,
     install,
