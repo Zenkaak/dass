@@ -27,9 +27,18 @@ export function PWAInstallButton({
   const handleClick = async () => {
     setInstallMessage('');
     if (!isInstallable) {
+      const ua = navigator.userAgent.toLowerCase();
+      const isAndroid = /android/.test(ua);
+      const isEmbeddedBrowser = /; wv\)|\bwv\b|fban|fbav|instagram|tiktok|line\//i.test(ua);
+      if (isAndroid && isEmbeddedBrowser) {
+        const target = window.location.href.replace(/^https?:\/\//, '');
+        const fallback = encodeURIComponent(window.location.href);
+        window.location.href = `intent://${target}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${fallback};end`;
+        return;
+      }
       setInstallMessage(isIOS
-        ? 'Direct installation is not supported by iOS. Use the browser’s Add to Home Screen feature.'
-        : 'The browser has not made the install prompt available yet. Open this site in Chrome or Edge, then try again.');
+        ? 'iOS does not allow websites to open the install prompt automatically.'
+        : 'Your browser has not provided its native install prompt yet.');
       return;
     }
     const outcome = await install();
